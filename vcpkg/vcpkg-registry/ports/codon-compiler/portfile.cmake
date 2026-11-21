@@ -13,7 +13,7 @@
 vcpkg_from_git( # TEMPORARY local fork
         OUT_SOURCE_PATH SOURCE_PATH
         URL file:///tmp/claude-2545/-data-ssd-lukas-claude-worktrees-nebulastream-a028c2b88b466dcf-python-udfs-perf-eval-c8fd23/af5b8720-7207-407f-82df-37469afa0a76/scratchpad/codon-fork
-        REF 557f0fff7ef86def7830997332c3cede092dad1d
+        REF 94ba688752c5b7a44966836381730feed25f0434
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

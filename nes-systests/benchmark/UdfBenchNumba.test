@@ -2,7 +2,7 @@
 # description: benchmark/UdfBenchCodonNumba.test with every UDF compiled by Numba (EXECUTION INLINE COMPILER NUMBA) instead of
 # Codon, the same UDFs, queries and data. Needs NES_NUMBA_PYTHON. The Codon test's description: Per-row cost of the UDFBench
 # scalar UDFs as INLINE (Codon): each query of the INLINE section of
-# udf/StreamUDFBench/StreamUDFBenchScalarUdfs.test (and frequentterms, which gives other terms than CPython for ties) on the tiny
+# udf/StreamUDFBench/StreamUDFBenchScalarUdfs.test on the tiny
 # data and on the same data ten times (x10, nes-python-udf/benchmark/harness/make_udfbench_x10.sh), into a Void sink. The
 # difference of the two times over the difference of the rows is the cost per row without fixed costs such as compilation.
 # Run with nes-python-udf/benchmark/harness/udfbench_codon_bench.py.

@@ -320,8 +320,6 @@ CREATE FUNCTION lowerize_inline (val VARSIZED NOT NULL) RETURNS VARSIZED EXECUTI
 CREATE FUNCTION removeshortterms_inline (jval VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.removeshortterms';
 CREATE FUNCTION stem_inline (input VARSIZED NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'StreamUDFBench.udfbench_scalar_inline.stem';
 
-# Not in this section, as Codon cannot compile or run them, or gives other results:
-# - frequentterms: among terms with equal counts, Counter and heapq.nlargest choose other terms than in CPython
 
 SELECT id, jaccard_inline(authorlist, '["Guy Boucher"]') AS r FROM artifact_authorlists INTO Checksum();
 ----
@@ -378,6 +376,10 @@ SELECT id, extractyear_inline(date) AS r FROM artifacts INTO Checksum();
 SELECT id, filterstopwords_inline(abstract) AS r FROM artifact_abstracts INTO Checksum();
 ----
 16845 1007785841
+
+SELECT id, frequentterms_inline(abstract, INT64(5)) AS r FROM artifact_abstracts INTO Checksum();
+----
+16845 100299983
 
 SELECT id, jpack_inline(title) AS r FROM artifacts INTO Checksum();
 ----

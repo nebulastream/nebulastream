@@ -1,0 +1,163 @@
+# name: udf/CodonOrder.test
+# description: Results that depend on the order of a dict or on the order of equal elements in a sort are the same in
+# EXECUTION INLINE (Codon) as in CPython. A dict keeps the insertion order (Python 3.7), popitem removes the last item,
+# sorted and list.sort are stable also with reverse=True, and Counter.most_common and heapq.nlargest give equal counts in
+# the order of first occurrence. Each UDF runs a sequence of operations chosen by the seed and returns the items in their
+# order (nes-systests/udf/pyudfs/dict_order.py). The IN_PROCESS queries give CPython's checksum, the INLINE queries
+# must give the same.
+# groups: [PythonUdf]
+
+CREATE LOGICAL SOURCE seeds(seed INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR seeds TYPE File;
+ATTACH INLINE
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+
+CREATE FUNCTION fuzz_cpython (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'dict_order.fuzz';
+CREATE FUNCTION fuzz_inline (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'dict_order.fuzz';
+CREATE FUNCTION strings_cpython (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'dict_order.strings';
+CREATE FUNCTION strings_inline (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'dict_order.strings';
+CREATE FUNCTION counter_cpython (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'dict_order.counter';
+CREATE FUNCTION counter_inline (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'dict_order.counter';
+CREATE FUNCTION sorting_cpython (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'dict_order.sorting';
+CREATE FUNCTION sorting_inline (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'dict_order.sorting';
+CREATE FUNCTION grow_cpython (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION IN_PROCESS ENTRYPOINT 'dict_order.grow';
+CREATE FUNCTION grow_inline (seed INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'dict_order.grow';
+
+SELECT seed, fuzz_cpython(seed) AS r FROM seeds INTO Checksum();
+----
+100 7480824
+
+SELECT seed, fuzz_inline(seed) AS r FROM seeds INTO Checksum();
+----
+100 7480824
+
+SELECT seed, strings_cpython(seed) AS r FROM seeds INTO Checksum();
+----
+100 6077049
+
+SELECT seed, strings_inline(seed) AS r FROM seeds INTO Checksum();
+----
+100 6077049
+
+SELECT seed, counter_cpython(seed) AS r FROM seeds INTO Checksum();
+----
+100 2845355
+
+SELECT seed, counter_inline(seed) AS r FROM seeds INTO Checksum();
+----
+100 2845355
+
+SELECT seed, sorting_cpython(seed) AS r FROM seeds INTO Checksum();
+----
+100 463698
+
+SELECT seed, sorting_inline(seed) AS r FROM seeds INTO Checksum();
+----
+100 463698
+
+SELECT seed, grow_cpython(seed) AS r FROM seeds INTO Checksum();
+----
+100 1056832
+
+SELECT seed, grow_inline(seed) AS r FROM seeds INTO Checksum();
+----
+100 1056832
