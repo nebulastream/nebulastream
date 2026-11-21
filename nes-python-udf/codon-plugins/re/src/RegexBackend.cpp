@@ -202,7 +202,12 @@ std::unique_ptr<NesRegexPattern> compile(const std::string& pattern, const int64
             &errorCode,
             &errorOffset,
             nullptr));
-        if (!compiled->pcre2 && needsUnicodeClasses)
+        if (compiled->pcre2)
+        {
+            /// pcre2_match uses the JIT code when it exists. If the JIT compile fails, the interpreter matches.
+            pcre2_jit_compile(compiled->pcre2.get(), PCRE2_JIT_COMPLETE);
+        }
+        else if (needsUnicodeClasses)
         {
             /// PCRE2 rejected the pattern: RE2 reports the error, or matches with ASCII classes.
             compiled->re2 = std::make_unique<re2::RE2>(pattern, toRe2Options(flags));
@@ -214,23 +219,55 @@ std::unique_ptr<NesRegexPattern> compile(const std::string& pattern, const int64
 /// Matches with PCRE2 and returns the spans of the first `groupCount` groups, all {-1, -1} without a match.
 /// ponytail: hitting PCRE2's default match limit (10M backtracking steps) counts as no match, because Codon's re module
 /// has no error channel for matching; add one to re.codon if a UDF needs to tell the two apart.
-std::vector<SeqSpan>
-pcre2Match(const pcre2_code* code, const int64_t anchor, const SeqStr s, const int64_t pos, const int64_t endpos, const uint32_t groupCount)
+/// The match data of the thread, reused by all calls, so that a match allocates nothing. PCRE2 keeps the backtracking
+/// frames of its interpreter in the match data, so these are reused too.
+/// ponytail: one per worker thread and never shrunk; its size is bounded by PCRE2's heap limit (20 MB by default).
+pcre2_match_data* threadMatchData(const uint32_t pairs)
 {
-    std::vector<SeqSpan> spans(groupCount, SeqSpan{-1, -1});
-    const std::unique_ptr<pcre2_match_data, decltype(&pcre2_match_data_free)> matchData{
-        pcre2_match_data_create_from_pattern(code, nullptr), &pcre2_match_data_free};
-    uint32_t options = 0;
+    thread_local std::unique_ptr<pcre2_match_data, decltype(&pcre2_match_data_free)> matchData{nullptr, &pcre2_match_data_free};
+    if (!matchData || pcre2_get_ovector_count(matchData.get()) < pairs)
+    {
+        matchData.reset(pcre2_match_data_create(std::max<uint32_t>(pairs, 16), nullptr));
+    }
+    return matchData.get();
+}
+
+/// Matches with PCRE2 and writes the spans of the first `groupCount` groups to `spans`, all {-1, -1} without a match.
+/// `utfChecked` skips PCRE2's UTF-8 check of the subject, which reads from `pos` (minus the longest lookbehind) to
+/// `endpos` at each call. The caller must know that an earlier call on the same subject checked that range and that
+/// `pos` is the start of a code point.
+/// ponytail: hitting PCRE2's default match limit (10M backtracking steps) counts as no match, because Codon's re module
+/// has no error channel for matching; add one to re.codon if a UDF needs to tell the two apart.
+void pcre2Match(
+    const pcre2_code* code,
+    const int64_t anchor,
+    const SeqStr s,
+    const int64_t pos,
+    const int64_t endpos,
+    const bool utfChecked,
+    SeqSpan* spans,
+    const uint32_t groupCount)
+{
+    std::fill_n(spans, groupCount, SeqSpan{-1, -1});
+    auto* matchData = threadMatchData(groupCount);
+    uint32_t options = utfChecked ? PCRE2_NO_UTF_CHECK : 0;
     options |= anchor == anchorStart || anchor == anchorBoth ? PCRE2_ANCHORED : 0;
     options |= anchor == anchorBoth ? PCRE2_ENDANCHORED : 0;
     /// Python's endpos truncates the subject, so it is passed as the subject length.
-    const auto result = pcre2_match(code, reinterpret_cast<PCRE2_SPTR>(s.str), endpos, pos, options, matchData.get(), nullptr);
+    const auto* subject = reinterpret_cast<PCRE2_SPTR>(s.str);
+    auto result = pcre2_match(code, subject, endpos, pos, options, matchData, nullptr);
+    if (result == PCRE2_ERROR_JIT_STACKLIMIT)
+    {
+        /// The JIT code ran out of its machine stack. The interpreter keeps its frames on the heap.
+        result = pcre2_match(code, subject, endpos, pos, options | PCRE2_NO_JIT, matchData, nullptr);
+    }
     if (result < 0)
     {
-        return spans;
+        return;
     }
-    const auto* ovector = pcre2_get_ovector_pointer(matchData.get());
-    const auto setGroups = std::min(groupCount, pcre2_get_ovector_count(matchData.get()));
+    const auto* ovector = pcre2_get_ovector_pointer(matchData);
+    /// A result of 0 means that the ovector was too small, which threadMatchData prevents. Groups above the result are unset.
+    const auto setGroups = std::min(groupCount, static_cast<uint32_t>(result));
     for (uint32_t i = 0; i < setGroups; ++i)
     {
         if (ovector[2 * i] != PCRE2_UNSET)
@@ -238,7 +275,6 @@ pcre2Match(const pcre2_code* code, const int64_t anchor, const SeqStr s, const i
             spans[i] = {static_cast<int64_t>(ovector[2 * i]), static_cast<int64_t>(ovector[(2 * i) + 1])};
         }
     }
-    return spans;
 }
 
 uint32_t pcre2GroupCount(const pcre2_code* code)
@@ -254,16 +290,14 @@ uint32_t pcre2GroupCount(const pcre2_code* code)
 /// ponytail: never evicted, bounded by the distinct patterns the UDFs use.
 std::mutex cacheMutex;
 std::map<std::pair<std::string, int64_t>, std::unique_ptr<NesRegexPattern>, std::less<>> cache;
-}
 
-extern "C" SeqSpan* seq_re_match(NesRegexPattern* pattern, const int64_t anchor, const SeqStr s, const int64_t pos, const int64_t endpos)
+SeqSpan* match(NesRegexPattern* pattern, const int64_t anchor, const SeqStr s, const int64_t pos, const int64_t endpos, const bool utfChecked)
 {
     const auto groupCount = seq_re_pattern_groups(pattern) + 1;
     auto* spans = static_cast<SeqSpan*>(seq_alloc_atomic(groupCount * sizeof(SeqSpan)));
     if (pattern->pcre2)
     {
-        const auto matched = pcre2Match(pattern->pcre2.get(), anchor, s, pos, endpos, static_cast<uint32_t>(groupCount));
-        std::memcpy(spans, matched.data(), groupCount * sizeof(SeqSpan));
+        pcre2Match(pattern->pcre2.get(), anchor, s, pos, endpos, utfChecked, spans, static_cast<uint32_t>(groupCount));
         return spans;
     }
 
@@ -280,12 +314,28 @@ extern "C" SeqSpan* seq_re_match(NesRegexPattern* pattern, const int64_t anchor,
     }
     return spans;
 }
+}
+
+extern "C" SeqSpan* seq_re_match(NesRegexPattern* pattern, const int64_t anchor, const SeqStr s, const int64_t pos, const int64_t endpos)
+{
+    return match(pattern, anchor, s, pos, endpos, false);
+}
+
+/// seq_re_match for the next match of a finditer loop: an earlier call on the same subject started at an offset at or
+/// before `pos`, so PCRE2 already checked the UTF-8 of the range this call reads. `pos` must start a code point.
+extern "C" SeqSpan*
+seq_re_match_next(NesRegexPattern* pattern, const int64_t anchor, const SeqStr s, const int64_t pos, const int64_t endpos)
+{
+    return match(pattern, anchor, s, pos, endpos, true);
+}
 
 extern "C" SeqSpan seq_re_match_one(NesRegexPattern* pattern, const int64_t anchor, const SeqStr s, const int64_t pos, const int64_t endpos)
 {
     if (pattern->pcre2)
     {
-        return pcre2Match(pattern->pcre2.get(), anchor, s, pos, endpos, 1)[0];
+        SeqSpan span{-1, -1};
+        pcre2Match(pattern->pcre2.get(), anchor, s, pos, endpos, false, &span, 1);
+        return span;
     }
     std::string_view match;
     if (!pattern->re2->Match(view(s), pos, endpos, static_cast<re2::RE2::Anchor>(anchor), &match, 1))

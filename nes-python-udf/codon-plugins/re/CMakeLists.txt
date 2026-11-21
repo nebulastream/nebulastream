@@ -22,6 +22,7 @@ add_codon_extension_plugin(nes-codon-re-plugin
     ADDITIONAL_SOURCES src/RegexBackend.cpp
     NATIVE_SYMBOLS
         seq_re_match
+        seq_re_match_next
         seq_re_match_one
         seq_re_escape
         seq_re_compile

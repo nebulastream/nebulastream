@@ -34,6 +34,7 @@ struct SeqSpan
 };
 
 extern "C" SeqSpan* seq_re_match(NesRegexPattern* pattern, int64_t anchor, SeqStr s, int64_t pos, int64_t endpos);
+extern "C" SeqSpan* seq_re_match_next(NesRegexPattern* pattern, int64_t anchor, SeqStr s, int64_t pos, int64_t endpos);
 extern "C" SeqSpan seq_re_match_one(NesRegexPattern* pattern, int64_t anchor, SeqStr s, int64_t pos, int64_t endpos);
 extern "C" SeqStr seq_re_escape(SeqStr pattern);
 extern "C" NesRegexPattern* seq_re_compile(SeqStr pattern, int64_t flags);

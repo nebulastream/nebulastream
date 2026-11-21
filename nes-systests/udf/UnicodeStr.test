@@ -141,18 +141,18 @@ SELECT id, characters_cpython(s) AS r FROM texts INTO file();
 
 SELECT id, regex_cpython(s) AS r FROM texts INTO file();
 ----
-0,['Hello', 'World', '123'] | Hello_World_123 | (0, 5) | ['Hello', 'World', '123'] | ['1', '2', '3'] | ['He', 'll', 'Wo', 'rl', '12'] | [] | [0, 6, 12] | ['Hello', 'World', '123']
-1,['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ'] | ὈΔΥΣΣΕΎΣ_ΣΑΣ_ΟΔΟΣ. | (0, 8) | ['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ', ''] | [] | ['ὈΔ', 'ΥΣ', 'ΣΕ', 'ΎΣ', 'ΣΑ', 'ΟΔ', 'ΟΣ'] | ['Σ', 'Σ', 'Σ', 'Σ', 'Σ', 'Σ'] | [0, 9, 13] | []
-2,['straße', 'ﬁx', 'ǅemal'] | straße_ﬁx_ǅemal | (0, 6) | ['straße', 'ﬁx', 'ǅemal'] | [] | ['st', 'ra', 'ße', 'ﬁx', 'ǅe', 'ma'] | ['ß'] | [0, 7, 10] | ['stra', 'e', 'x', 'emal']
-3,['İstanbul', 'ıi', 'İİ'] | İstanbul_ıi_İİ | (0, 8) | ['İstanbul', 'ıi', 'İİ'] | [] | ['İs', 'ta', 'nb', 'ul', 'ıi', 'İİ'] | [] | [0, 9, 12] | ['stanbul', 'i']
-4,['naïve', 'café', 'résumé'] | naïve_café_résumé | (0, 5) | ['naïve', 'café', 'résumé'] | [] | ['na', 'ïv', 'ca', 'fé', 'ré', 'su', 'mé'] | [] | [0, 6, 12] | ['na', 've', 'caf', 'r', 'sum']
-5,['e', 'te', 'combining'] | été_combining | (0, 1) | ['e', 'te', 'combining'] | [] | ['é', 'te', 'co', 'mb', 'in', 'in'] | [] | [0, 6] | ['e', 'te', 'combining']
-6,['日本語テキスト', '漢字'] | 日本語テキスト_漢字 | (0, 7) | ['日本語テキスト', '漢字'] | [] | ['日本', '語テ', 'キス', '漢字'] | [] | [0, 8] | []
-7,['emoji', 'ok'] | emoji_😀👍🏽_ok | (0, 5) | ['emoji', 'ok'] | [] | ['em', 'oj', '😀👍', 'ok'] | [] | [0, 6, 10] | ['emoji', 'ok']
-8,['١٢٣', '²³', '½', 'Ⅻ', '42'] | ١٢٣_²³_½_Ⅻ_42 | (0, 3) | ['١٢٣', '²³', '½', 'Ⅻ', '42'] | ['١', '٢', '٣', '4', '2'] | ['١٢', '²³', '42'] | [] | [0, 4, 7, 9, 11] | ['42']
-9,['thin', 'space', 'ideo', 'nbsp', 'nel'] | thin_space_ideo_nbsp_nel | (0, 4) | ['thin', 'space', 'ideo', 'nbsp', 'nel'] | [] | ['th', 'in', 'sp', 'ac', 'id', 'eo', 'nb', 'sp', 'ne'] | [] | [0, 5, 11, 16, 21] | ['thin', 'space', 'ideo', 'nbsp', 'nel']
-10,['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | ŉ_ΐ_ǰ_ﬃ | (0, 1) | ['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | [] | [] | [] | [0, 2, 4, 6] | []
-11,['line', 'sep', 'para', 'fs'] | line_sep_para_fs | (0, 4) | ['line', 'sep', 'para', 'fs'] | [] | ['li', 'ne', 'se', 'pa', 'ra', 'fs'] | [] | [0, 5, 9, 14] | ['line', 'sep', 'para', 'fs']
+0,['Hello', 'World', '123'] | Hello_World_123 | (0, 5) | ['Hello', 'World', '123'] | ['1', '2', '3'] | ['He', 'll', 'Wo', 'rl', '12'] | [] | [0, 6, 12] | ['Hello', 'World', '123'] | ['Hello', '', 'World', '', '123', ''] | ['Hello', 'World', '123']
+1,['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ'] | ὈΔΥΣΣΕΎΣ_ΣΑΣ_ΟΔΟΣ. | (0, 8) | ['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ', ''] | [] | ['ὈΔ', 'ΥΣ', 'ΣΕ', 'ΎΣ', 'ΣΑ', 'ΟΔ', 'ΟΣ'] | ['Σ', 'Σ', 'Σ', 'Σ', 'Σ', 'Σ'] | [0, 9, 13] | [] | ['ὈΔΥΣΣΕΎΣ', '', 'ΣΑΣ', '', 'ΟΔΟΣ', '', ''] | ['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ']
+2,['straße', 'ﬁx', 'ǅemal'] | straße_ﬁx_ǅemal | (0, 6) | ['straße', 'ﬁx', 'ǅemal'] | [] | ['st', 'ra', 'ße', 'ﬁx', 'ǅe', 'ma'] | ['ß'] | [0, 7, 10] | ['stra', 'e', 'x', 'emal'] | ['straße', '', 'ﬁx', '', 'ǅemal', ''] | ['straße', 'ﬁx', 'ǅemal']
+3,['İstanbul', 'ıi', 'İİ'] | İstanbul_ıi_İİ | (0, 8) | ['İstanbul', 'ıi', 'İİ'] | [] | ['İs', 'ta', 'nb', 'ul', 'ıi', 'İİ'] | [] | [0, 9, 12] | ['stanbul', 'i'] | ['İstanbul', '', 'ıi', '', 'İİ', ''] | ['İstanbul', 'ıi', 'İİ']
+4,['naïve', 'café', 'résumé'] | naïve_café_résumé | (0, 5) | ['naïve', 'café', 'résumé'] | [] | ['na', 'ïv', 'ca', 'fé', 'ré', 'su', 'mé'] | [] | [0, 6, 12] | ['na', 've', 'caf', 'r', 'sum'] | ['naïve', '', 'café', '', '', 'résumé', ''] | ['naïve', 'café', 'résumé']
+5,['e', 'te', 'combining'] | été_combining | (0, 1) | ['e', 'te', 'combining'] | [] | ['é', 'te', 'co', 'mb', 'in', 'in'] | [] | [0, 6] | ['e', 'te', 'combining'] | ['e', '', 'te', '', '', 'combining', ''] | ['e', 'te', 'combining']
+6,['日本語テキスト', '漢字'] | 日本語テキスト_漢字 | (0, 7) | ['日本語テキスト', '漢字'] | [] | ['日本', '語テ', 'キス', '漢字'] | [] | [0, 8] | [] | ['日本語テキスト', '', '漢字', ''] | ['日本語テキスト', '漢字']
+7,['emoji', 'ok'] | emoji_😀👍🏽_ok | (0, 5) | ['emoji', 'ok'] | [] | ['em', 'oj', '😀👍', 'ok'] | [] | [0, 6, 10] | ['emoji', 'ok'] | ['emoji', '', '', '', '', '', 'ok', ''] | ['emoji', 'ok']
+8,['١٢٣', '²³', '½', 'Ⅻ', '42'] | ١٢٣_²³_½_Ⅻ_42 | (0, 3) | ['١٢٣', '²³', '½', 'Ⅻ', '42'] | ['١', '٢', '٣', '4', '2'] | ['١٢', '²³', '42'] | [] | [0, 4, 7, 9, 11] | ['42'] | ['١٢٣', '', '²³', '', '½', '', 'Ⅻ', '', '42', ''] | ['١٢٣', '²³', '½', 'Ⅻ', '42']
+9,['thin', 'space', 'ideo', 'nbsp', 'nel'] | thin_space_ideo_nbsp_nel | (0, 4) | ['thin', 'space', 'ideo', 'nbsp', 'nel'] | [] | ['th', 'in', 'sp', 'ac', 'id', 'eo', 'nb', 'sp', 'ne'] | [] | [0, 5, 11, 16, 21] | ['thin', 'space', 'ideo', 'nbsp', 'nel'] | ['thin', '', 'space', '', 'ideo', '', 'nbsp', '', 'nel', ''] | ['thin', 'space', 'ideo', 'nbsp', 'nel']
+10,['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | ŉ_ΐ_ǰ_ﬃ | (0, 1) | ['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | [] | [] | [] | [0, 2, 4, 6] | [] | ['ŉ', '', 'ΐ', '', 'ǰ', '', 'ﬃ', ''] | ['ŉ', 'ΐ', 'ǰ', 'ﬃ']
+11,['line', 'sep', 'para', 'fs'] | line_sep_para_fs | (0, 4) | ['line', 'sep', 'para', 'fs'] | [] | ['li', 'ne', 'se', 'pa', 'ra', 'fs'] | [] | [0, 5, 9, 14] | ['line', 'sep', 'para', 'fs'] | ['line', '', 'sep', '', 'para', '', 'fs', ''] | ['line', 'sep', 'para', 'fs']
 
 CREATE FUNCTION indexing_codon (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'unicode_str.indexing';
 CREATE FUNCTION case_codon (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE ENTRYPOINT 'unicode_str.case';
@@ -270,18 +270,18 @@ SELECT id, characters_codon(s) AS r FROM texts INTO file();
 
 SELECT id, regex_codon(s) AS r FROM texts INTO file();
 ----
-0,['Hello', 'World', '123'] | Hello_World_123 | (0, 5) | ['Hello', 'World', '123'] | ['1', '2', '3'] | ['He', 'll', 'Wo', 'rl', '12'] | [] | [0, 6, 12] | ['Hello', 'World', '123']
-1,['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ'] | ὈΔΥΣΣΕΎΣ_ΣΑΣ_ΟΔΟΣ. | (0, 8) | ['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ', ''] | [] | ['ὈΔ', 'ΥΣ', 'ΣΕ', 'ΎΣ', 'ΣΑ', 'ΟΔ', 'ΟΣ'] | ['Σ', 'Σ', 'Σ', 'Σ', 'Σ', 'Σ'] | [0, 9, 13] | []
-2,['straße', 'ﬁx', 'ǅemal'] | straße_ﬁx_ǅemal | (0, 6) | ['straße', 'ﬁx', 'ǅemal'] | [] | ['st', 'ra', 'ße', 'ﬁx', 'ǅe', 'ma'] | ['ß'] | [0, 7, 10] | ['stra', 'e', 'x', 'emal']
-3,['İstanbul', 'ıi', 'İİ'] | İstanbul_ıi_İİ | (0, 8) | ['İstanbul', 'ıi', 'İİ'] | [] | ['İs', 'ta', 'nb', 'ul', 'ıi', 'İİ'] | [] | [0, 9, 12] | ['stanbul', 'i']
-4,['naïve', 'café', 'résumé'] | naïve_café_résumé | (0, 5) | ['naïve', 'café', 'résumé'] | [] | ['na', 'ïv', 'ca', 'fé', 'ré', 'su', 'mé'] | [] | [0, 6, 12] | ['na', 've', 'caf', 'r', 'sum']
-5,['e', 'te', 'combining'] | été_combining | (0, 1) | ['e', 'te', 'combining'] | [] | ['é', 'te', 'co', 'mb', 'in', 'in'] | [] | [0, 6] | ['e', 'te', 'combining']
-6,['日本語テキスト', '漢字'] | 日本語テキスト_漢字 | (0, 7) | ['日本語テキスト', '漢字'] | [] | ['日本', '語テ', 'キス', '漢字'] | [] | [0, 8] | []
-7,['emoji', 'ok'] | emoji_😀👍🏽_ok | (0, 5) | ['emoji', 'ok'] | [] | ['em', 'oj', '😀👍', 'ok'] | [] | [0, 6, 10] | ['emoji', 'ok']
-8,['١٢٣', '²³', '½', 'Ⅻ', '42'] | ١٢٣_²³_½_Ⅻ_42 | (0, 3) | ['١٢٣', '²³', '½', 'Ⅻ', '42'] | ['١', '٢', '٣', '4', '2'] | ['١٢', '²³', '42'] | [] | [0, 4, 7, 9, 11] | ['42']
-9,['thin', 'space', 'ideo', 'nbsp', 'nel'] | thin_space_ideo_nbsp_nel | (0, 4) | ['thin', 'space', 'ideo', 'nbsp', 'nel'] | [] | ['th', 'in', 'sp', 'ac', 'id', 'eo', 'nb', 'sp', 'ne'] | [] | [0, 5, 11, 16, 21] | ['thin', 'space', 'ideo', 'nbsp', 'nel']
-10,['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | ŉ_ΐ_ǰ_ﬃ | (0, 1) | ['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | [] | [] | [] | [0, 2, 4, 6] | []
-11,['line', 'sep', 'para', 'fs'] | line_sep_para_fs | (0, 4) | ['line', 'sep', 'para', 'fs'] | [] | ['li', 'ne', 'se', 'pa', 'ra', 'fs'] | [] | [0, 5, 9, 14] | ['line', 'sep', 'para', 'fs']
+0,['Hello', 'World', '123'] | Hello_World_123 | (0, 5) | ['Hello', 'World', '123'] | ['1', '2', '3'] | ['He', 'll', 'Wo', 'rl', '12'] | [] | [0, 6, 12] | ['Hello', 'World', '123'] | ['Hello', '', 'World', '', '123', ''] | ['Hello', 'World', '123']
+1,['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ'] | ὈΔΥΣΣΕΎΣ_ΣΑΣ_ΟΔΟΣ. | (0, 8) | ['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ', ''] | [] | ['ὈΔ', 'ΥΣ', 'ΣΕ', 'ΎΣ', 'ΣΑ', 'ΟΔ', 'ΟΣ'] | ['Σ', 'Σ', 'Σ', 'Σ', 'Σ', 'Σ'] | [0, 9, 13] | [] | ['ὈΔΥΣΣΕΎΣ', '', 'ΣΑΣ', '', 'ΟΔΟΣ', '', ''] | ['ὈΔΥΣΣΕΎΣ', 'ΣΑΣ', 'ΟΔΟΣ']
+2,['straße', 'ﬁx', 'ǅemal'] | straße_ﬁx_ǅemal | (0, 6) | ['straße', 'ﬁx', 'ǅemal'] | [] | ['st', 'ra', 'ße', 'ﬁx', 'ǅe', 'ma'] | ['ß'] | [0, 7, 10] | ['stra', 'e', 'x', 'emal'] | ['straße', '', 'ﬁx', '', 'ǅemal', ''] | ['straße', 'ﬁx', 'ǅemal']
+3,['İstanbul', 'ıi', 'İİ'] | İstanbul_ıi_İİ | (0, 8) | ['İstanbul', 'ıi', 'İİ'] | [] | ['İs', 'ta', 'nb', 'ul', 'ıi', 'İİ'] | [] | [0, 9, 12] | ['stanbul', 'i'] | ['İstanbul', '', 'ıi', '', 'İİ', ''] | ['İstanbul', 'ıi', 'İİ']
+4,['naïve', 'café', 'résumé'] | naïve_café_résumé | (0, 5) | ['naïve', 'café', 'résumé'] | [] | ['na', 'ïv', 'ca', 'fé', 'ré', 'su', 'mé'] | [] | [0, 6, 12] | ['na', 've', 'caf', 'r', 'sum'] | ['naïve', '', 'café', '', '', 'résumé', ''] | ['naïve', 'café', 'résumé']
+5,['e', 'te', 'combining'] | été_combining | (0, 1) | ['e', 'te', 'combining'] | [] | ['é', 'te', 'co', 'mb', 'in', 'in'] | [] | [0, 6] | ['e', 'te', 'combining'] | ['e', '', 'te', '', '', 'combining', ''] | ['e', 'te', 'combining']
+6,['日本語テキスト', '漢字'] | 日本語テキスト_漢字 | (0, 7) | ['日本語テキスト', '漢字'] | [] | ['日本', '語テ', 'キス', '漢字'] | [] | [0, 8] | [] | ['日本語テキスト', '', '漢字', ''] | ['日本語テキスト', '漢字']
+7,['emoji', 'ok'] | emoji_😀👍🏽_ok | (0, 5) | ['emoji', 'ok'] | [] | ['em', 'oj', '😀👍', 'ok'] | [] | [0, 6, 10] | ['emoji', 'ok'] | ['emoji', '', '', '', '', '', 'ok', ''] | ['emoji', 'ok']
+8,['١٢٣', '²³', '½', 'Ⅻ', '42'] | ١٢٣_²³_½_Ⅻ_42 | (0, 3) | ['١٢٣', '²³', '½', 'Ⅻ', '42'] | ['١', '٢', '٣', '4', '2'] | ['١٢', '²³', '42'] | [] | [0, 4, 7, 9, 11] | ['42'] | ['١٢٣', '', '²³', '', '½', '', 'Ⅻ', '', '42', ''] | ['١٢٣', '²³', '½', 'Ⅻ', '42']
+9,['thin', 'space', 'ideo', 'nbsp', 'nel'] | thin_space_ideo_nbsp_nel | (0, 4) | ['thin', 'space', 'ideo', 'nbsp', 'nel'] | [] | ['th', 'in', 'sp', 'ac', 'id', 'eo', 'nb', 'sp', 'ne'] | [] | [0, 5, 11, 16, 21] | ['thin', 'space', 'ideo', 'nbsp', 'nel'] | ['thin', '', 'space', '', 'ideo', '', 'nbsp', '', 'nel', ''] | ['thin', 'space', 'ideo', 'nbsp', 'nel']
+10,['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | ŉ_ΐ_ǰ_ﬃ | (0, 1) | ['ŉ', 'ΐ', 'ǰ', 'ﬃ'] | [] | [] | [] | [0, 2, 4, 6] | [] | ['ŉ', '', 'ΐ', '', 'ǰ', '', 'ﬃ', ''] | ['ŉ', 'ΐ', 'ǰ', 'ﬃ']
+11,['line', 'sep', 'para', 'fs'] | line_sep_para_fs | (0, 4) | ['line', 'sep', 'para', 'fs'] | [] | ['li', 'ne', 'se', 'pa', 'ra', 'fs'] | [] | [0, 5, 9, 14] | ['line', 'sep', 'para', 'fs'] | ['line', '', 'sep', '', 'para', '', 'fs', ''] | ['line', 'sep', 'para', 'fs']
 
 # Each code point of Unicode: a digest of its character classes, case mappings and repr, per block of 256 code points.
 # The expected digests are CPython's. Only INLINE runs this query: CPython needs about 15 s for all code points.

@@ -57,6 +57,16 @@ def seq_re_match(re: cobj,
                  endpos: int) -> Ptr[Span]:
     pass
 
+# NES: seq_re_match without PCRE2's UTF-8 check, for the later matches of one _match loop.
+@C
+@pure
+def seq_re_match_next(re: cobj,
+                      anchor: int,
+                      string: str,
+                      pos: int,
+                      endpos: int) -> Ptr[Span]:
+    pass
+
 @C
 @pure
 def seq_re_match_one(re: cobj,
@@ -407,9 +417,10 @@ class Pattern:
         # NES: the loop works on byte offsets.
         offset = string._nes_offset(posx)
         end_offset = string._nes_offset(endposx)
+        # NES: the first call checks the UTF-8 of the subject from offset on. The later offsets are larger and start a
+        # code point, so the later calls skip the check, which otherwise reads the rest of the subject at each match.
+        spans = seq_re_match(self._re, anchor, string, offset, end_offset)
         while True:
-            spans = seq_re_match(self._re, anchor, string, offset, end_offset)
-
             if not spans[0]:
                 break
 
@@ -424,6 +435,7 @@ class Pattern:
                 offset += string._nes_char_length(offset)
             else:
                 offset = spans[0][1]
+            spans = seq_re_match_next(self._re, anchor, string, offset, end_offset)
 
     def search(self, string: str, pos: Optional[int] = None, endpos: Optional[int] = None):
         return self._match_one(_ANCHOR_NONE, string, pos, endpos)

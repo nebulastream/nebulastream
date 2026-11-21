@@ -80,6 +80,8 @@ def regex(s: str) -> str:
         repr(re.findall(r"\w+", s)), re.sub(r"\s+", "_", s), repr(span), repr(re.split(r"\W+", s)),
         repr(re.findall(r"\d", s)), repr(re.findall(r"[^\s]{2}", s)), repr(re.findall(r"(?i)Σ|ß", s)),
         repr([m.start() for m in re.finditer(r"\S+", s)]), repr(re.findall(r"\w+", s, re.ASCII)),
+        # Empty matches between non-ASCII characters, and the pattern of StreamUDFBench's keywords (\b as lookarounds).
+        repr(re.findall(r"\w*", s)), repr(re.findall(r"([\d.]+\b|\w+)", s)),
     ])
 
 
