@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.physical;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +23,11 @@ import org.apache.calcite.rel.type.RelDataType;
  *
  * <p>The state of windows and joins has its own layout inside the operators; it is not an edge.
  */
-final class Layouts {
+public final class Layouts {
     private Layouts() {}
 
     /** sinkFormat: the sink's format (PlanRequest.sink_format), empty or NATIVE for a native sink. */
-    static void assign(List<Placement.Fragment> fragments, String sinkFormat, LayoutPolicy policy) {
+    public static void assign(List<Placement.Fragment> fragments, String sinkFormat, LayoutPolicy policy) {
         Edges edges = new Edges();
         Map<String, NesPhysical.NetworkSink> senders = new HashMap<>();
         List<NesPhysical.NetworkSource> receivers = new ArrayList<>();

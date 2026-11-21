@@ -1,5 +1,6 @@
-package nes.calcite;
+package nes.calcite.logical;
 
+import nes.calcite.Planner;
 import java.util.ArrayList;
 import java.util.List;
 import nes.calcite.proto.PhysicalSource;
@@ -18,7 +19,7 @@ import org.apache.calcite.rel.type.RelDataType;
  * Logical operators for placement (Placement), in Calcite's logical convention: the plan is placed before it becomes
  * physical operators, operator by operator, as our own optimizer places logical operators.
  */
-final class NesLogical {
+public final class NesLogical {
     private NesLogical() {}
 
     /**
@@ -26,8 +27,8 @@ final class NesLogical {
      * table, so that Calcite's rules and metadata handle it as a table (e.g. RelFieldTrimmer trims its unused columns,
      * column origins find its columns).
      */
-    static final class PhysicalSourceScan extends TableScan {
-        final PhysicalSource physicalSource;
+    public static final class PhysicalSourceScan extends TableScan {
+        public final PhysicalSource physicalSource;
 
         PhysicalSourceScan(RelOptCluster cluster, RelTraitSet traits, RelOptTable table, PhysicalSource physicalSource) {
             super(cluster, traits, List.of(), table);
@@ -56,9 +57,9 @@ final class NesLogical {
      * NesWindowAggregate's. The engine's probe emits window start, window end, the keys and the aggregates (spec's order,
      * maybe with an extra COUNT(*)); probeColumns is the probe column of each output column.
      */
-    static final class WindowAggregation extends org.apache.calcite.rel.SingleRel {
-        final nes.calcite.proto.WindowAggregate spec;
-        final List<Integer> probeColumns;
+    public static final class WindowAggregation extends org.apache.calcite.rel.SingleRel {
+        public final nes.calcite.proto.WindowAggregate spec;
+        public final List<Integer> probeColumns;
 
         WindowAggregation(RelOptCluster cluster, RelTraitSet traits, RelNode rows, nes.calcite.proto.WindowAggregate spec,
                           List<Integer> probeColumns, RelDataType rowType) {
@@ -80,7 +81,7 @@ final class NesLogical {
     }
 
     /** The plan with each NesWindowAggregate as a WindowAggregation. */
-    static RelNode lowerWindows(RelNode plan) {
+    public static RelNode lowerWindows(RelNode plan) {
         return plan.accept(new org.apache.calcite.rel.RelHomogeneousShuttle() {
             @Override
             public RelNode visit(RelNode other) {
@@ -112,10 +113,10 @@ final class NesLogical {
      * the source (Watermarks.assign), so it runs on the source's worker (Placement) and every row of the source, also one
      * that a later filter drops, advances the watermark.
      */
-    static final class WatermarkAssigner extends org.apache.calcite.rel.SingleRel {
-        final int timeField;
+    public static final class WatermarkAssigner extends org.apache.calcite.rel.SingleRel {
+        public final int timeField;
 
-        WatermarkAssigner(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
+        public WatermarkAssigner(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
             super(cluster, traits, input);
             this.timeField = timeField;
         }
@@ -132,14 +133,14 @@ final class NesLogical {
     }
 
     /** The rows that another worker sends over a network channel: the receiving end of a cut between two workers. */
-    static final class NetworkSource extends AbstractRelNode {
-        final String channel;
-        final String upstreamHost;
+    public static final class NetworkSource extends AbstractRelNode {
+        public final String channel;
+        public final String upstreamHost;
         /// Whether the sent rows carry watermarks (from an assigner after their sources or from a window operator), which
         /// must not be reassigned.
-        final boolean watermarked;
+        public final boolean watermarked;
 
-        NetworkSource(RelOptCluster cluster, RelTraitSet traits, RelDataType rowType, String channel, String upstreamHost,
+        public NetworkSource(RelOptCluster cluster, RelTraitSet traits, RelDataType rowType, String channel, String upstreamHost,
             boolean watermarked) {
             super(cluster, traits);
             this.rowType = rowType;
@@ -160,10 +161,10 @@ final class NesLogical {
     }
 
     /** Holds the parts of a placed plan, so that the planner turns all of them into physical operators at once. */
-    static final class Parts extends AbstractRelNode {
+    public static final class Parts extends AbstractRelNode {
         private List<RelNode> inputs;
 
-        Parts(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs) {
+        public Parts(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs) {
             super(cluster, traits);
             this.inputs = new ArrayList<>(inputs);
             this.rowType = cluster.getTypeFactory().builder().build();
@@ -194,7 +195,7 @@ final class NesLogical {
     }
 
     /** Replaces each scan of a logical source by a scan of each of its physical sources (a UNION ALL of several). */
-    static RelNode expandSources(RelNode plan) {
+    public static RelNode expandSources(RelNode plan) {
         return plan.accept(new org.apache.calcite.rel.RelHomogeneousShuttle() {
             /// Also the tables of subqueries, which are expressions until Calcite removes them.
             private final org.apache.calcite.rex.RexShuttle subqueries = new org.apache.calcite.rex.RexShuttle() {

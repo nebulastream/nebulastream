@@ -1,5 +1,7 @@
-package nes.calcite;
+package nes.calcite.steps;
 
+import nes.calcite.logical.NesLogical;
+import nes.calcite.physical.NesPhysical;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -17,23 +19,23 @@ import org.apache.calcite.rex.RexSubQuery;
  * A plan as a Graphviz graph (DOT), for inspection: one box per operator, arrows in the direction the rows flow. The parts
  * of a placed plan are boxes per worker, joined by their network channels; with pipelines, each pipeline is a box too.
  */
-final class PlanGraph {
+public final class PlanGraph {
     private PlanGraph() {}
 
     /**
      * A plan, or one part of a placed plan: the worker that runs it (null: not placed), and where its rows go if the plan
      * does not end in a sink operator itself (a logical part: null for physical parts).
      */
-    record Part(String worker, RelNode plan, Output output) {}
+    public record Part(String worker, RelNode plan, Output output) {}
 
     /** The rows of a logical part go into the query's sink (channel null), or over the channel to another worker. */
-    record Output(String channel, String downstreamHost) {}
+    public record Output(String channel, String downstreamHost) {}
 
-    static String of(RelNode plan, Predicate<RelNode> highlighted) {
+    public static String of(RelNode plan, Predicate<RelNode> highlighted) {
         return of(List.of(new Part(null, plan, null)), highlighted, false);
     }
 
-    static String of(List<Part> parts, Predicate<RelNode> highlighted, boolean pipelines) {
+    public static String of(List<Part> parts, Predicate<RelNode> highlighted, boolean pipelines) {
         StringBuilder dot = new StringBuilder("digraph plan {\n  rankdir=BT;\n  newrank=true;\n"
             + "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=10];\n"
             + "  edge [color=\"#555555\"];\n");

@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.sql;
 
 import io.substrait.extension.DefaultExtensionCatalog;
 import io.substrait.extension.SimpleExtension;
@@ -38,12 +38,12 @@ import org.apache.calcite.sql.type.SqlTypeName;
  * I). Casts between signed and unsigned types wrap, as in C (and our engine). Unsigned values of different widths are
  * widened, and a comparison of an unsigned value with non-negative literals stays exact (the literals are cast).
  */
-final class Unsigned {
+public final class Unsigned {
     static final String URN = "extension:io.substrait:unsigned_integers";
     private static final Map<SqlTypeName, String> NAMES = Map.of(
         SqlTypeName.UTINYINT, "u8", SqlTypeName.USMALLINT, "u16", SqlTypeName.UINTEGER, "u32", SqlTypeName.UBIGINT, "u64");
 
-    static final TypeConverter TYPES = new TypeConverter(new UserTypeMapper() {
+    public static final TypeConverter TYPES = new TypeConverter(new UserTypeMapper() {
         @Override
         public Type toSubstrait(RelDataType type) {
             String name = NAMES.get(type.getSqlTypeName());
@@ -56,7 +56,7 @@ final class Unsigned {
         }
     });
 
-    static final SimpleExtension.ExtensionCollection EXTENSIONS;
+    public static final SimpleExtension.ExtensionCollection EXTENSIONS;
 
     static {
         try (InputStream unsigned = Unsigned.class.getResourceAsStream("/nes_unsigned_integers.yaml");
@@ -112,7 +112,7 @@ final class Unsigned {
         return null;
     }
 
-    static RelNode prepare(RelNode rel) {
+    public static RelNode prepare(RelNode rel) {
         RexBuilder rexBuilder = rel.getCluster().getRexBuilder();
         RexShuttle shuttle = new RexShuttle() {
             @Override

@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.physical;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,10 +9,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 
 /** The last pass over a plan of NES physical operators (NesPhysical). */
-final class Pipelines {
+public final class Pipelines {
     private Pipelines() {}
 
-    static RelNode strip(RelNode node) {
+    public static RelNode strip(RelNode node) {
         return node instanceof RelSubset subset ? subset.getBest() : node;
     }
 
@@ -26,7 +26,7 @@ final class Pipelines {
      *   row, so their field references are renumbered.</li>
      * </ul>
      */
-    static RelNode finish(RelNode sink) {
+    public static RelNode finish(RelNode sink) {
         List<RelNode> inputs = new ArrayList<>();
         for (RelNode input : sink.getInputs()) {
             rewrite(input).forEach(branch -> inputs.add(branch.node()));

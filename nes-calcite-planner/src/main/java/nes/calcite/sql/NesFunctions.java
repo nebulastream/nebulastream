@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.sql;
 
 import io.substrait.isthmus.expression.FunctionMappings;
 import java.util.List;
@@ -17,11 +17,11 @@ import org.apache.calcite.util.Optionality;
  * Functions that NebulaStream has and Calcite's standard operator table lacks: the engine's own (PlanRequest.functions,
  * e.g. FROM_BASE64 and MEDIAN) and functions of Calcite's libraries.
  */
-final class NesFunctions {
+public final class NesFunctions {
     private NesFunctions() {}
 
     /** An aggregation of the engine (PlanRequest.functions), which a window computes under its name. */
-    static final class Aggregation extends SqlAggFunction {
+    public static final class Aggregation extends SqlAggFunction {
         Aggregation(String name, org.apache.calcite.sql.type.SqlReturnTypeInference result,
                     org.apache.calcite.sql.type.SqlOperandTypeChecker operands) {
             super(name, null, SqlKind.OTHER_FUNCTION, result, null, operands, SqlFunctionCategory.USER_DEFINED_FUNCTION, false, false,
@@ -30,7 +30,7 @@ final class NesFunctions {
     }
 
     /** The engine's functions and those of Calcite's libraries (MySQL, BigQuery) that the engine has. */
-    static SqlOperatorTable table(List<nes.calcite.proto.Function> functions) {
+    public static SqlOperatorTable table(List<nes.calcite.proto.Function> functions) {
         List<org.apache.calcite.sql.SqlOperator> operators = new java.util.ArrayList<>(List.of(SqlLibraryOperators.TO_BASE64,
             SqlLibraryOperators.IS_NAN));
         operators.addAll(operators(functions));
@@ -64,7 +64,7 @@ final class NesFunctions {
      * The Substrait names of the operators: also the engine's scalar functions, under their lower-case names. (Calcite's
      * operators are equal if their class, name and kind are, so these match the operators of table.)
      */
-    static List<FunctionMappings.Sig> substraitNames(List<nes.calcite.proto.Function> functions) {
+    public static List<FunctionMappings.Sig> substraitNames(List<nes.calcite.proto.Function> functions) {
         List<FunctionMappings.Sig> names = new java.util.ArrayList<>(SUBSTRAIT_NAMES);
         for (org.apache.calcite.sql.SqlOperator operator : operators(functions)) {
             if (!(operator instanceof Aggregation)) {
@@ -75,7 +75,7 @@ final class NesFunctions {
     }
 
     /** A Substrait extension that declares the engine's scalar functions (the engine checks the argument types itself). */
-    static io.substrait.extension.SimpleExtension.ExtensionCollection extension(List<nes.calcite.proto.Function> functions) {
+    public static io.substrait.extension.SimpleExtension.ExtensionCollection extension(List<nes.calcite.proto.Function> functions) {
         StringBuilder yaml = new StringBuilder("%YAML 1.2\n---\nurn: extension:nebulastream:engine_functions\nscalar_functions:\n");
         for (nes.calcite.proto.Function function : functions) {
             if (function.getAggregation()) {
@@ -110,7 +110,7 @@ final class NesFunctions {
      * Calls that our engine computes differently: Calcite expands SQRT(x) to POWER(x, 0.5) with a DECIMAL 0.5, which we
      * cannot represent, so it becomes SQRT(x) again; ABS of an unsigned value is the value.
      */
-    static org.apache.calcite.rel.RelNode normalize(org.apache.calcite.rel.RelNode rel) {
+    public static org.apache.calcite.rel.RelNode normalize(org.apache.calcite.rel.RelNode rel) {
         org.apache.calcite.rex.RexBuilder rexBuilder = rel.getCluster().getRexBuilder();
         org.apache.calcite.rex.RexShuttle shuttle = new org.apache.calcite.rex.RexShuttle() {
             @Override

@@ -1,5 +1,30 @@
 package nes.calcite;
 
+import nes.calcite.logical.AnonymousSources;
+import nes.calcite.physical.Conversions;
+import nes.calcite.rules.FilterWindowTransposeRule;
+import nes.calcite.rules.GlobalWindowRules;
+import nes.calcite.sql.InterpretingRexExecutor;
+import nes.calcite.physical.Layouts;
+import nes.calcite.rules.ModelInference;
+import nes.calcite.physical.NesConverterProvider;
+import nes.calcite.sql.NesFunctions;
+import nes.calcite.logical.NesLogical;
+import nes.calcite.physical.NesPhysical;
+import nes.calcite.logical.NesWindowJoin;
+import nes.calcite.sql.NumericLiterals;
+import nes.calcite.rules.OrFactors;
+import nes.calcite.physical.Pipelines;
+import nes.calcite.physical.Placement;
+import nes.calcite.steps.PlanGraph;
+import nes.calcite.rules.ProjectWindowTransposeRule;
+import nes.calcite.steps.Steps;
+import nes.calcite.sql.Unsigned;
+import nes.calcite.rules.ValuesFromGenerator;
+import nes.calcite.rules.Watermarks;
+import nes.calcite.rules.WindowAggregateRule;
+import nes.calcite.sql.WindowInputs;
+import nes.calcite.rules.WindowJoinRule;
 import io.substrait.isthmus.SubstraitRelVisitor;
 import io.substrait.plan.Plan;
 import java.util.HashSet;
@@ -670,7 +695,7 @@ public final class Planner {
     }
 
     /** Calcite's type for one of our field types (non-nullable). name: for the error message. */
-    static RelDataType relType(RelDataTypeFactory typeFactory, FieldType fieldType, String name) {
+    public static RelDataType relType(RelDataTypeFactory typeFactory, FieldType fieldType, String name) {
         return switch (fieldType) {
             case INT8 -> typeFactory.createSqlType(SqlTypeName.TINYINT);
             case INT16 -> typeFactory.createSqlType(SqlTypeName.SMALLINT);
@@ -691,15 +716,15 @@ public final class Planner {
         };
     }
 
-    static final class SourceTable extends AbstractTable {
+    public static final class SourceTable extends AbstractTable {
         private final Source source;
         private final Set<String> eventTimeFields;
 
-        String name() {
+        public String name() {
             return source.getName();
         }
 
-        List<nes.calcite.proto.PhysicalSource> physicalSources() {
+        public List<nes.calcite.proto.PhysicalSource> physicalSources() {
             return source.getPhysicalSourcesList();
         }
 

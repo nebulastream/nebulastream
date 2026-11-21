@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.logical;
 
 import com.google.protobuf.TextFormat;
 import java.util.List;
@@ -23,11 +23,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * first, is only seen by our later steps (the placement and the physical operators).
  */
 public final class NesWindowJoin extends BiRel {
-    final WindowJoin spec;
-    final @Nullable RexNode condition;
-    final List<RexNode> residual;
+    public final WindowJoin spec;
+    public final @Nullable RexNode condition;
+    public final List<RexNode> residual;
 
-    NesWindowJoin(
+    public NesWindowJoin(
         RelOptCluster cluster,
         RelTraitSet traits,
         RelNode left,
@@ -48,7 +48,7 @@ public final class NesWindowJoin extends BiRel {
     }
 
     /** The plan with every window join as a nested-loop join: it checks the keys with the rest of the condition. */
-    static RelNode nestedLoop(RelNode plan) {
+    public static RelNode nestedLoop(RelNode plan) {
         return plan.accept(new org.apache.calcite.rel.RelHomogeneousShuttle() {
             @Override
             public RelNode visit(RelNode other) {

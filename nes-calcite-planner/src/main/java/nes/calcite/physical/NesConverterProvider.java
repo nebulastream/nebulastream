@@ -1,5 +1,7 @@
-package nes.calcite;
+package nes.calcite.physical;
 
+import nes.calcite.sql.NesFunctions;
+import nes.calcite.sql.Unsigned;
 import com.google.protobuf.Any;
 import io.substrait.isthmus.ConverterProvider;
 import io.substrait.isthmus.SubstraitRelVisitor;
@@ -24,11 +26,11 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 
 /** Isthmus converter that additionally emits {@link NesWindowAggregate} and {@link NesWindowJoin} as Substrait extension relations. */
-final class NesConverterProvider extends ConverterProvider {
+public final class NesConverterProvider extends ConverterProvider {
     private final List<nes.calcite.proto.Function> functions;
 
     /** functions: the engine's functions (PlanRequest.functions). */
-    NesConverterProvider(List<nes.calcite.proto.Function> functions) {
+    public NesConverterProvider(List<nes.calcite.proto.Function> functions) {
         this(functions, Unsigned.EXTENSIONS.merge(NesFunctions.extension(functions)));
     }
 
@@ -89,7 +91,7 @@ final class NesConverterProvider extends ConverterProvider {
         return org.apache.calcite.sql.util.SqlOperatorTables.chain(NesFunctions.table(functions), super.getSqlOperatorTable());
     }
 
-    RelDataTypeFactory typeFactory() {
+    public RelDataTypeFactory typeFactory() {
         return typeFactory;
     }
 
@@ -97,7 +99,7 @@ final class NesConverterProvider extends ConverterProvider {
      * A placed physical plan: one root per part that runs on one worker (Placement.Fragment). Pipeline and origin ids
      * are unique across all parts, as a worker may run several of them as one plan. host: null if not placed.
      */
-    List<io.substrait.plan.Plan.Root> convertPhysical(List<Placement.Fragment> fragments) {
+    public List<io.substrait.plan.Plan.Root> convertPhysical(List<Placement.Fragment> fragments) {
         Ids ids = new Ids();
         return upstreamFirst(fragments).stream().map(fragment -> {
             Visitor visitor = new Visitor(this, fragment.host(), ids);

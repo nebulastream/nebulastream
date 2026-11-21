@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.sql;
 
 import java.util.List;
 import java.util.Map;
@@ -13,8 +13,8 @@ import org.apache.calcite.rex.RexNode;
  * it with Janino at runtime, which a native image cannot load; there, folding silently did nothing. Expressions the
  * interpreter cannot evaluate stay as they are.
  */
-final class InterpretingRexExecutor implements RexExecutor {
-    static final InterpretingRexExecutor INSTANCE = new InterpretingRexExecutor();
+public final class InterpretingRexExecutor implements RexExecutor {
+    public static final InterpretingRexExecutor INSTANCE = new InterpretingRexExecutor();
 
     private InterpretingRexExecutor() {}
 

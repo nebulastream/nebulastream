@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.sql;
 
 import java.math.BigDecimal;
 import org.apache.calcite.sql.SqlLiteral;
@@ -11,12 +11,12 @@ import org.apache.calcite.sql.util.SqlShuttle;
  * UNSIGNED, which the engine cannot receive as a literal yet: it is rejected with that reason (instead of as a DECIMAL).
  * Fractional literals stay DECIMAL, which we reject on purpose (no exact decimal type): write 1.5E0 for a DOUBLE.
  */
-final class NumericLiterals {
+public final class NumericLiterals {
     private NumericLiterals() {}
 
     private static final BigDecimal MAX_UNSIGNED = BigDecimal.valueOf(2).pow(64).subtract(BigDecimal.ONE);
 
-    static SqlNode check(SqlNode query) {
+    public static SqlNode check(SqlNode query) {
         return query.accept(new SqlShuttle() {
             @Override
             public SqlNode visit(SqlLiteral literal) {

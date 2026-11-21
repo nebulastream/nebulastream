@@ -1,5 +1,10 @@
-package nes.calcite;
+package nes.calcite.physical;
 
+import nes.calcite.logical.AnonymousSources;
+import nes.calcite.logical.NesLogical;
+import nes.calcite.logical.NesModelInference;
+import nes.calcite.logical.NesWindowJoin;
+import nes.calcite.steps.PlanGraph;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -26,14 +31,14 @@ import org.apache.calcite.sql.SqlKind;
  * Calcite's VolcanoPlanner reports each rule firing; our rules (NesPhysical.RULES) convert each logical operator in one
  * way, so the reason is what the rule produced (e.g. a hash join for keys), not a choice between costed alternatives.
  */
-final class Conversions implements RelOptListener {
+public final class Conversions implements RelOptListener {
     private record Conversion(String rule, RelNode physical) {}
 
     private final VolcanoPlanner volcano;
     /// Registered logical operator -> its first conversion.
     private final Map<RelNode, Conversion> conversions = new IdentityHashMap<>();
 
-    Conversions(VolcanoPlanner volcano) {
+    public Conversions(VolcanoPlanner volcano) {
         this.volcano = volcano;
     }
 
@@ -61,7 +66,7 @@ final class Conversions implements RelOptListener {
      * The conversions one by one, from the sources up: after each, the parts (one per planned part, in order) with the
      * operators converted so far, the latest highlighted.
      */
-    List<RuleApplication> replay(List<String> workers, List<PlanGraph.Output> outputs) {
+    public List<RuleApplication> replay(List<String> workers, List<PlanGraph.Output> outputs) {
         RelNode holder = logical((RelSubset) volcano.getRoot());
         List<RelNode> order = new ArrayList<>();
         holder.getInputs().forEach(part -> postorder(logical(part), order));

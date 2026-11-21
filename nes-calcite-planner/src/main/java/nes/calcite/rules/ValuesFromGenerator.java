@@ -1,5 +1,6 @@
-package nes.calcite;
+package nes.calcite.rules;
 
+import nes.calcite.logical.AnonymousSources;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +26,10 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
  * indexes 0 .. n-1 and ends; a projection picks each row's constants by its index. For no rows, the generator emits one
  * row, which a filter on FALSE drops. The generator runs on `host`.
  */
-final class ValuesFromGenerator {
+public final class ValuesFromGenerator {
     private ValuesFromGenerator() {}
 
-    static RelNode apply(RelNode plan, String host) {
+    public static RelNode apply(RelNode plan, String host) {
         return plan.accept(new RelHomogeneousShuttle() {
             @Override
             public RelNode visit(RelNode other) {

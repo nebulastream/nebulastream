@@ -1,5 +1,8 @@
-package nes.calcite;
+package nes.calcite.physical;
 
+import nes.calcite.logical.AnonymousSources;
+import nes.calcite.logical.NesLogical;
+import nes.calcite.PlacementFailure;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +35,7 @@ import org.ojalgo.optimisation.Variable;
  * ends at a cut where the plan needs one. Operators that the engine builds together (a window's build and probe, a
  * source and its parser) are one logical operator here.
  */
-final class Placement {
+public final class Placement {
     private Placement() {}
 
     /** The fixed cost of a cut (writing and reading the rows again, the network operators), in bytes. */
@@ -42,12 +45,12 @@ final class Placement {
      * A part of the placed plan, on one worker: the logical plan whose rows go to the sink (channel null) or over the
      * channel to the downstream worker. A part that only forwards a channel is a NesLogical.NetworkSource.
      */
-    record Part(String host, RelNode plan, String channel, String downstreamHost) {}
+    public record Part(String host, RelNode plan, String channel, String downstreamHost) {}
 
     /** A part of the physical plan, on one worker: its root is the Sink or a NetworkSink. */
-    record Fragment(String host, RelNode root) {}
+    public record Fragment(String host, RelNode root) {}
 
-    static List<Part> place(RelNode root, List<Worker> topology, String sinkHost) {
+    public static List<Part> place(RelNode root, List<Worker> topology, String sinkHost) {
         List<String> hosts = topology.stream().map(Worker::getHost).toList();
         int[][] hops = hops(topology, hosts);
 

@@ -1,5 +1,9 @@
-package nes.calcite;
+package nes.calcite.physical;
 
+import nes.calcite.logical.AnonymousSources;
+import nes.calcite.logical.NesLogical;
+import nes.calcite.logical.NesModelInference;
+import nes.calcite.logical.NesWindowJoin;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,11 +43,11 @@ import nes.calcite.proto.WindowJoin;
  * starts at a Scan (or is a SourceScan or the Sink) and ends at an Emit. The field names of each node's row type are the engine's physical field names. NesConverterProvider writes each
  * node as a Substrait extension relation with a PhysicalOperator payload, which the engine instantiates as it is.
  */
-final class NesPhysical {
-    static final Convention NES = new Convention.Impl("NES", NesRel.class);
+public final class NesPhysical {
+    public static final Convention NES = new Convention.Impl("NES", NesRel.class);
 
     /** The converter rules from Calcite's logical operators. */
-    static final List<RelOptRule> RULES = List.of(
+    public static final List<RelOptRule> RULES = List.of(
         SourceScanRule.CONFIG.toRule(),
         AnonymousSourceRule.CONFIG.toRule(),
         InferModelRule.CONFIG.toRule(),
@@ -69,7 +73,7 @@ final class NesPhysical {
      * whose watermarks are the ends of its windows; its rows' event times are not in order, so an assigner would raise the
      * watermark too early. Otherwise (e.g. a GLOBAL window, which reads a computed time) the assigner is added here.
      */
-    static RelNode watermarked(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
+    public static RelNode watermarked(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
         RelNode converted = ConverterRule.convert(input, traits.replace(NES));
         return watermarked(input) ? converted : new WatermarkAssigner(cluster, traits, converted, timeField);
     }
@@ -78,7 +82,7 @@ final class NesPhysical {
      * Whether the rows carry watermarks: from an assigner, a window operator, or (on another worker) over a network channel,
      * through filters, projections and unions whose inputs all carry them.
      */
-    static boolean watermarked(RelNode node) {
+    public static boolean watermarked(RelNode node) {
         if (node instanceof org.apache.calcite.plan.volcano.RelSubset subset) {
             /// Equivalent alternatives: one of them carries watermarks, all do.
             return subset.getRelList().stream().anyMatch(alternative -> !(alternative instanceof org.apache.calcite.plan.volcano.RelSubset)
@@ -97,7 +101,7 @@ final class NesPhysical {
     }
 
     /** A node of the plan that no rule of RULES converts, or null. */
-    static RelNode unsupported(RelNode plan) {
+    public static RelNode unsupported(RelNode plan) {
         for (RelNode input : plan.getInputs()) {
             RelNode found = unsupported(Pipelines.strip(input));
             if (found != null) {
@@ -115,7 +119,7 @@ final class NesPhysical {
     }
 
     /** What a node that no rule converts is, for the error. */
-    static String describeUnsupported(RelNode node) {
+    public static String describeUnsupported(RelNode node) {
         String what = node instanceof org.apache.calcite.rel.core.Values ? "constant rows (VALUES)"
             : node instanceof LogicalUnion ? "UNION without ALL"
             : node.getRelTypeName();
@@ -128,7 +132,7 @@ final class NesPhysical {
 
     private NesPhysical() {}
 
-    static void resetFreshNames() {
+    public static void resetFreshNames() {
         FRESH_NAMES.get().clear();
     }
 
@@ -154,7 +158,7 @@ final class NesPhysical {
     }
 
     /** A physical operator of the NES convention. */
-    interface NesRel extends RelNode {}
+    public interface NesRel extends RelNode {}
 
     /** Reads one physical source; its buffers hold the source's raw data (e.g. CSV text), see Scan. */
     static final class SourceScan extends AbstractRelNode implements NesRel {
@@ -199,7 +203,7 @@ final class NesPhysical {
      * each ending in an Emit of the same layout, would be merged; we only read an Emit's buffers again where a result is
      * shared.
      */
-    static final class Scan extends AbstractRelNode implements NesRel {
+    public static final class Scan extends AbstractRelNode implements NesRel {
         private List<RelNode> inputs;
         /// Set by the memory layout phase (Layouts), after pipelining.
         nes.calcite.proto.Layout layout;
@@ -407,7 +411,7 @@ final class NesPhysical {
     static final class JoinBuild extends SingleRel implements NesRel {
         final JoinState join;
         final boolean right;
-        final int timeField;
+        public final int timeField;
         final List<Integer> storedFields;
 
         JoinBuild(RelOptCluster cluster, RelTraitSet traits, RelNode input, JoinState join, boolean right, int timeField,
@@ -437,7 +441,7 @@ final class NesPhysical {
      * window start, window end, the left side's columns, the right side's. The condition and residual read [left stored
      * row..., right stored row...]; for a hash join the condition compares the keys.
      */
-    static final class JoinProbe extends AbstractRelNode implements NesRel {
+    public static final class JoinProbe extends AbstractRelNode implements NesRel {
         final JoinState join;
         final RexNode condition;
         final List<RexNode> residual;
@@ -618,12 +622,12 @@ final class NesPhysical {
      * Ends a pipeline: writes the given fields of its input, in this order, into buffers in its layout. Before a sink,
      * the layout is the sink's format.
      */
-    static final class Emit extends SingleRel implements NesRel {
+    public static final class Emit extends SingleRel implements NesRel {
         final List<Integer> fields;
         /// Set by the memory layout phase (Layouts), after pipelining.
         nes.calcite.proto.Layout layout;
 
-        Emit(RelOptCluster cluster, RelTraitSet traits, RelNode input, List<Integer> fields) {
+        public Emit(RelOptCluster cluster, RelTraitSet traits, RelNode input, List<Integer> fields) {
             super(cluster, traits, input);
             this.fields = List.copyOf(fields);
         }
@@ -649,11 +653,11 @@ final class NesPhysical {
     }
 
     /** The query's sink, under the query's output names: each input (an Emit for the sink) is a pipeline writing into it. */
-    static final class Sink extends AbstractRelNode implements NesRel {
+    public static final class Sink extends AbstractRelNode implements NesRel {
         private List<RelNode> inputs;
         final List<String> names;
 
-        Sink(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, List<String> names) {
+        public Sink(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, List<String> names) {
             super(cluster, traits);
             this.inputs = new ArrayList<>(inputs);
             this.names = names;
@@ -688,14 +692,14 @@ final class NesPhysical {
      * Sends the buffers of its inputs over a network channel to another worker; see Placement. Like the Sink, each input
      * (an Emit, or a NetworkSource whose buffers it forwards) is a pipeline that writes into it.
      */
-    static final class NetworkSink extends AbstractRelNode implements NesRel {
+    public static final class NetworkSink extends AbstractRelNode implements NesRel {
         private List<RelNode> inputs;
-        final String channel;
+        public final String channel;
         final String downstreamHost;
         /// Set by the memory layout phase (Layouts), after pipelining.
         nes.calcite.proto.Layout layout;
 
-        NetworkSink(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, String channel, String downstreamHost) {
+        public NetworkSink(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs, String channel, String downstreamHost) {
             super(cluster, traits);
             this.inputs = new ArrayList<>(inputs);
             this.channel = channel;
@@ -728,10 +732,10 @@ final class NesPhysical {
     }
 
     /** Holds the physical parts of a placed plan; Planner takes them apart again. Not an engine operator. */
-    static final class Parts extends AbstractRelNode implements NesRel {
+    public static final class Parts extends AbstractRelNode implements NesRel {
         private List<RelNode> inputs;
 
-        Parts(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs) {
+        public Parts(RelOptCluster cluster, RelTraitSet traits, List<RelNode> inputs) {
             super(cluster, traits);
             this.inputs = new ArrayList<>(inputs);
             this.rowType = cluster.getTypeFactory().builder().build();
@@ -754,11 +758,11 @@ final class NesPhysical {
     }
 
     /** Receives the buffers of a network channel from another worker, as rows in the native format; see Placement. */
-    static final class NetworkSource extends AbstractRelNode implements NesRel {
-        final String channel;
-        final String upstreamHost;
+    public static final class NetworkSource extends AbstractRelNode implements NesRel {
+        public final String channel;
+        public final String upstreamHost;
 
-        NetworkSource(RelOptCluster cluster, RelTraitSet traits, RelDataType rowType, String channel, String upstreamHost) {
+        public NetworkSource(RelOptCluster cluster, RelTraitSet traits, RelDataType rowType, String channel, String upstreamHost) {
             super(cluster, traits);
             this.rowType = rowType;
             this.channel = channel;
@@ -789,10 +793,10 @@ final class NesPhysical {
     }
 
     /** Sets the watermark of each buffer from the event time in the given field. */
-    static final class WatermarkAssigner extends SingleRel implements NesRel {
-        final int timeField;
+    public static final class WatermarkAssigner extends SingleRel implements NesRel {
+        public final int timeField;
 
-        WatermarkAssigner(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
+        public WatermarkAssigner(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
             super(cluster, traits, input);
             this.timeField = timeField;
         }
@@ -814,7 +818,7 @@ final class NesPhysical {
      */
     static final class WindowBuild extends SingleRel implements NesRel {
         final WindowState window;
-        final int timeField;
+        public final int timeField;
         final List<Integer> keyFields;
         final List<Integer> aggregationFields;
         final RelDataType probeRowType;
@@ -848,7 +852,7 @@ final class NesPhysical {
      * Starts a pipeline: emits a row per closed window and key, from the state its WindowBuilds (its inputs) filled:
      * window start, window end, keys, aggregation results, in the engine's result types.
      */
-    static final class WindowProbe extends AbstractRelNode implements NesRel {
+    public static final class WindowProbe extends AbstractRelNode implements NesRel {
         final WindowState window;
         private List<RelNode> inputs;
 

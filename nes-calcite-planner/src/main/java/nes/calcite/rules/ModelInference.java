@@ -1,5 +1,7 @@
-package nes.calcite;
+package nes.calcite.rules;
 
+import nes.calcite.logical.NesModelInference;
+import nes.calcite.Planner;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,14 +30,14 @@ import org.apache.calcite.sql.type.SqlTypeFamily;
  * (a table or a subquery). Its rows are the input's columns followed by the model's outputs. The model reads its inputs
  * from the columns with the names of its input fields.
  */
-final class ModelInference {
+public final class ModelInference {
     private ModelInference() {}
 
     /** The table function, for the models of one request. */
-    static final class Function extends SqlFunction implements SqlTableFunction {
+    public static final class Function extends SqlFunction implements SqlTableFunction {
         private final Map<String, Model> models;
 
-        Function(List<Model> models) {
+        public Function(List<Model> models) {
             super("MODEL_INFERENCE", SqlKind.OTHER_FUNCTION, ReturnTypes.CURSOR, null,
                 OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.CHARACTER), SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION);
             this.models = models.stream().collect(Collectors.toMap(m -> m.getName().toUpperCase(Locale.ROOT), m -> m, (a, b) -> a));
@@ -73,7 +75,7 @@ final class ModelInference {
     }
 
     /** Turns the table function into the inference operator. */
-    static final RelOptRule RULE = new RelOptRule(RelOptRule.operand(TableFunctionScan.class, RelOptRule.any()), "NesModelInferenceRule") {
+    public static final RelOptRule RULE = new RelOptRule(RelOptRule.operand(TableFunctionScan.class, RelOptRule.any()), "NesModelInferenceRule") {
         @Override
         public void onMatch(RelOptRuleCall call) {
             TableFunctionScan scan = call.rel(0);

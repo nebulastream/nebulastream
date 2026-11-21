@@ -1,5 +1,7 @@
-package nes.calcite;
+package nes.calcite.rules;
 
+import nes.calcite.logical.NesWindowJoin;
+import nes.calcite.logical.NesWindowAggregate;
 import java.util.ArrayList;
 import java.util.List;
 import nes.calcite.proto.WindowAggregate;
@@ -32,10 +34,10 @@ import org.apache.calcite.tools.RelBuilder;
  * GLOBAL window, one window over the whole input that fires at the end of the stream. AGGREGATE runs after
  * WindowAggregateRule and JOIN after WindowJoinRule, so every plain Aggregate or Join they see has no window.
  */
-final class GlobalWindowRules {
-    static final RelOptRule AGGREGATE = new AggregateRule();
-    static final RelOptRule JOIN = new JoinRule();
-    static final RelOptRule SINGLE_ROW_OUTER_JOIN = new SingleRowOuterJoinRule();
+public final class GlobalWindowRules {
+    public static final RelOptRule AGGREGATE = new AggregateRule();
+    public static final RelOptRule JOIN = new JoinRule();
+    public static final RelOptRule SINGLE_ROW_OUTER_JOIN = new SingleRowOuterJoinRule();
 
     private GlobalWindowRules() {}
 

@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.rules;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -26,10 +26,10 @@ import org.apache.calcite.util.ImmutableBitSet;
  * </ul>
  * Neither changes the result.
  */
-final class OrFactors {
+public final class OrFactors {
     private OrFactors() {}
 
-    static final RelOptRule RULE = new RelOptRule(
+    public static final RelOptRule RULE = new RelOptRule(
         RelOptRule.operand(Filter.class, RelOptRule.operand(Join.class, RelOptRule.any())), "NesOrFactorsRule") {
         @Override
         public void onMatch(RelOptRuleCall call) {

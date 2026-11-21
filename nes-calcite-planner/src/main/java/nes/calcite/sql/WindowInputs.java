@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.sql;
 
 import java.util.Locale;
 import java.util.Set;
@@ -17,12 +17,12 @@ import org.apache.calcite.sql.util.SqlShuttle;
  * the subquery's own columns: e.g. TUMBLE((SELECT a, ts FROM t ...), DESCRIPTOR(ts)) points at ts's position in t. The
  * subquery becomes {@code SELECT * FROM (subquery) AS window_input}, whose FROM item has exactly its columns.
  */
-final class WindowInputs {
+public final class WindowInputs {
     private WindowInputs() {}
 
     private static final Set<String> WINDOWS = Set.of("TUMBLE", "HOP", "SESSION");
 
-    static SqlNode wrapSubqueries(SqlNode query) {
+    public static SqlNode wrapSubqueries(SqlNode query) {
         return query.accept(new SqlShuttle() {
             @Override
             public SqlNode visit(SqlCall call) {

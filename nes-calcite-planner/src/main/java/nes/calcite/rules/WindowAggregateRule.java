@@ -1,5 +1,7 @@
-package nes.calcite;
+package nes.calcite.rules;
 
+import nes.calcite.sql.NesFunctions;
+import nes.calcite.logical.NesWindowAggregate;
 import java.util.ArrayList;
 import java.util.List;
 import nes.calcite.proto.WindowAggregate;
@@ -31,8 +33,8 @@ import org.apache.calcite.util.ImmutableBitSet;
  * Aggregate's column order and names. Anything the rule
  * does not recognize is left untouched and later fails the Substrait conversion with "Unable to handle node".
  */
-final class WindowAggregateRule extends RelOptRule {
-    static final WindowAggregateRule INSTANCE = new WindowAggregateRule();
+public final class WindowAggregateRule extends RelOptRule {
+    public static final WindowAggregateRule INSTANCE = new WindowAggregateRule();
 
     /** Markers in the column mapping for the two window columns; all other values index the lower Project. */
     private static final int WINDOW_START = -1;
@@ -174,12 +176,12 @@ final class WindowAggregateRule extends RelOptRule {
     }
 
     /** Records Calcite's result type, to which the converter casts the aggregation's result. */
-    static WindowAggregate.Aggregate.Builder withType(WindowAggregate.Aggregate.Builder aggregate, RelDataType type) {
+    public static WindowAggregate.Aggregate.Builder withType(WindowAggregate.Aggregate.Builder aggregate, RelDataType type) {
         return aggregate.setType(type.getSqlTypeName().getName()).setNullable(type.isNullable());
     }
 
     /** TUMBLE(DESCRIPTOR(ts), size) or HOP(DESCRIPTOR(ts), slide, size); offsets are not supported. */
-    static boolean parseWindow(RexCall invocation, WindowAggregate.Builder spec) {
+    public static boolean parseWindow(RexCall invocation, WindowAggregate.Builder spec) {
         List<RexNode> operands = invocation.getOperands();
         /// The table functions have kind OTHER_FUNCTION; SqlKind.TUMBLE/HOP are the old GROUP BY window functions.
         String name = invocation.getOperator().getName();
@@ -229,7 +231,7 @@ final class WindowAggregateRule extends RelOptRule {
     }
 
     /** The name of our aggregation, or null if the engine has none for the call. */
-    static String toFunction(AggregateCall call) {
+    public static String toFunction(AggregateCall call) {
         if (call.isDistinct() || call.isApproximate() || call.hasFilter() || call.getArgList().size() > 1
             || !call.getCollation().getFieldCollations().isEmpty()) {
             return null;

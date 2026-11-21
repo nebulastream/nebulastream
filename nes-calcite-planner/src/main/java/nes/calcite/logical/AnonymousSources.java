@@ -1,5 +1,6 @@
-package nes.calcite;
+package nes.calcite.logical;
 
+import nes.calcite.Planner;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -49,7 +50,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
  * </ul>
  * Calcite checks the argument names; the engine checks the values.
  */
-final class AnonymousSources {
+public final class AnonymousSources {
     private AnonymousSources() {}
 
     /// Parameter names are upper case, as the parser turns unquoted names (schema => ...) into.
@@ -59,16 +60,16 @@ final class AnonymousSources {
     private static final String FORMAT_PREFIX = "FORMAT_";
 
     /** The table functions of the request's source types. */
-    static List<SqlOperator> functions(List<SourceType> types, List<String> formatOptions) {
+    public static List<SqlOperator> functions(List<SourceType> types, List<String> formatOptions) {
         return types.stream().map(type -> (SqlOperator) new Function(type, formatOptions)).toList();
     }
 
     /** The table function of one source type. */
-    static final class Function extends SqlFunction implements SqlTableFunction {
+    public static final class Function extends SqlFunction implements SqlTableFunction {
         final String type;
         final List<String> parameters;
 
-        Function(SourceType type, List<String> formatOptions) {
+        public Function(SourceType type, List<String> formatOptions) {
             this(type.getName(), parameters(type, formatOptions));
         }
 
@@ -179,7 +180,7 @@ final class AnonymousSources {
         return parts;
     }
 
-    static RelDataType rowType(RelDataTypeFactory types, List<Field> fields) {
+    public static RelDataType rowType(RelDataTypeFactory types, List<Field> fields) {
         RelDataTypeFactory.Builder row = types.builder();
         for (Field field : fields) {
             row.add(field.getName(),
@@ -192,10 +193,10 @@ final class AnonymousSources {
      * Reads an anonymous source; see AnonymousSource. A TableScan of a table of its own (named after the source type, with
      * its row type), so that Calcite's rules and metadata handle it as a table, as NesLogical.PhysicalSourceScan.
      */
-    static final class NesAnonymousSource extends TableScan {
-        final AnonymousSource spec;
+    public static final class NesAnonymousSource extends TableScan {
+        public final AnonymousSource spec;
 
-        NesAnonymousSource(RelOptCluster cluster, RelTraitSet traits, AnonymousSource spec, RelDataType rowType) {
+        public NesAnonymousSource(RelOptCluster cluster, RelTraitSet traits, AnonymousSource spec, RelDataType rowType) {
             this(cluster, traits, spec, RelOptTableImpl.create(null, rowType, List.of("anonymous " + spec.getType()), (Expression) null));
         }
 
@@ -210,7 +211,7 @@ final class AnonymousSources {
         }
 
         /** The worker that runs the source (the HOST argument). */
-        String host() {
+        public String host() {
             String host = spec.getSourceOptionsMap().get(HOST);
             if (host == null || host.isEmpty()) {
                 throw new IllegalArgumentException("the anonymous " + spec.getType() + " source has no host => '...' argument");
@@ -226,7 +227,7 @@ final class AnonymousSources {
     }
 
     /** Turns the table function into the anonymous source. */
-    static final RelOptRule RULE = new RelOptRule(RelOptRule.operand(TableFunctionScan.class, RelOptRule.none()), "NesAnonymousSourceRule") {
+    public static final RelOptRule RULE = new RelOptRule(RelOptRule.operand(TableFunctionScan.class, RelOptRule.none()), "NesAnonymousSourceRule") {
         @Override
         public void onMatch(RelOptRuleCall call) {
             TableFunctionScan scan = call.rel(0);

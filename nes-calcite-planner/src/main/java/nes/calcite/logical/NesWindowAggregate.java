@@ -1,5 +1,6 @@
-package nes.calcite;
+package nes.calcite.logical;
 
+import nes.calcite.rules.WindowAggregateRule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -38,9 +39,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * output is: the group keys, the aggregates (an aggregation without group keys returns one row, as in SQL).
  */
 public final class NesWindowAggregate extends Aggregate {
-    final boolean global;
+    public final boolean global;
 
-    NesWindowAggregate(RelOptCluster cluster, RelTraitSet traits, RelNode input, ImmutableBitSet groupSet,
+    public NesWindowAggregate(RelOptCluster cluster, RelTraitSet traits, RelNode input, ImmutableBitSet groupSet,
                        List<AggregateCall> aggCalls, boolean global) {
         super(cluster, traits, List.of(), input, groupSet, null, aggCalls);
         this.global = global;
@@ -61,7 +62,7 @@ public final class NesWindowAggregate extends Aggregate {
     }
 
     /** The window table function (TUMBLE or HOP) below; null for a GLOBAL window. */
-    @Nullable TableFunctionScan windowFunction() {
+    public @Nullable TableFunctionScan windowFunction() {
         if (global) {
             return null;
         }
@@ -72,31 +73,31 @@ public final class NesWindowAggregate extends Aggregate {
     }
 
     /** The rows that the window aggregates: the input of TUMBLE/HOP, or the input of a GLOBAL window. */
-    RelNode rows() {
+    public RelNode rows() {
         TableFunctionScan function = windowFunction();
         return function == null ? getInput() : strip(function.getInputs().get(0));
     }
 
     /** The same aggregation over other rows (with the same columns). */
-    NesWindowAggregate withRows(RelNode rows) {
+    public NesWindowAggregate withRows(RelNode rows) {
         TableFunctionScan function = windowFunction();
         RelNode input = function == null ? rows : function.copy(function.getTraitSet(), List.of(rows));
         return (NesWindowAggregate) copy(getTraitSet(), List.of(input));
     }
 
     /** The group keys that are columns of the rows, in output order (without window_start and window_end). */
-    List<Integer> keys() {
+    public List<Integer> keys() {
         int width = rows().getRowType().getFieldCount();
         return groupSet.asList().stream().filter(key -> key < width).toList();
     }
 
     /** The output column of window_start (window_end is the next); -1 for a GLOBAL window. */
-    int startColumn() {
+    public int startColumn() {
         return global ? -1 : keys().size();
     }
 
     /** NebulaStream's description of the window, its group keys and aggregations; its fields are columns of rows(). */
-    WindowAggregate spec() {
+    public WindowAggregate spec() {
         WindowAggregate.Builder spec = WindowAggregate.newBuilder();
         TableFunctionScan function = windowFunction();
         if (function == null) {
@@ -138,7 +139,7 @@ public final class NesWindowAggregate extends Aggregate {
      * in column timeField of the rows, and these names of window_start and window_end. It passes every column of the rows
      * on (Calcite's column origins see that).
      */
-    static TableFunctionScan windowFunction(TableFunctionScan template, RelNode rows, int timeField, String startName, String endName) {
+    public static TableFunctionScan windowFunction(TableFunctionScan template, RelNode rows, int timeField, String startName, String endName) {
         RexCall call = (RexCall) template.getCall();
         RexCall descriptor = (RexCall) call.getOperands().get(0);
         List<RexNode> operands = new ArrayList<>(call.getOperands());

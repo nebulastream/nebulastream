@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.logical;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +18,17 @@ import org.apache.calcite.rel.type.RelDataTypeField;
  * model's outputs. Made from MODEL_INFERENCE by ModelInference.RULE.
  */
 public final class NesModelInference extends SingleRel {
-    final Model model;
+    public final Model model;
 
     /// rowType: the input's columns, then the model's outputs.
-    NesModelInference(RelOptCluster cluster, RelTraitSet traits, RelNode input, Model model, RelDataType rowType) {
+    public NesModelInference(RelOptCluster cluster, RelTraitSet traits, RelNode input, Model model, RelDataType rowType) {
         super(cluster, traits, input);
         this.model = model;
         this.rowType = rowType;
     }
 
     /** The input column of each model input, in the model's order: the column of that name. */
-    List<Integer> inputColumns() {
+    public List<Integer> inputColumns() {
         List<RelDataTypeField> columns = getInput().getRowType().getFieldList();
         List<Integer> indexes = new ArrayList<>();
         for (Field field : model.getInputsList()) {

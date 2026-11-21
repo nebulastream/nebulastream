@@ -1,4 +1,4 @@
-package nes.calcite;
+package nes.calcite.steps;
 
 import java.util.ArrayList;
 import java.util.HashMap;

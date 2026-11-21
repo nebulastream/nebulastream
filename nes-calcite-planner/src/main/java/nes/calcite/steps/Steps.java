@@ -1,5 +1,6 @@
-package nes.calcite;
+package nes.calcite.steps;
 
+import nes.calcite.sql.InterpretingRexExecutor;
 import java.util.ArrayList;
 import java.util.List;
 import nes.calcite.proto.PlanStep;
@@ -14,7 +15,7 @@ import org.apache.calcite.rel.RelNode;
  * The plan after each step of the planner, for inspection (PlanResponse.steps; on stderr with -Dnes.calcite.trace=true).
  * detailed: also a graph per step, and the plan after each rule of the rule-based steps.
  */
-final class Steps {
+public final class Steps {
     private static final boolean TRACE = Boolean.getBoolean("nes.calcite.trace");
 
     private final boolean detailed;
@@ -22,33 +23,33 @@ final class Steps {
     /// The plan after the last step, to mark what a step changed (see changes).
     private RelNode previous;
 
-    Steps(boolean detailed) {
+    public Steps(boolean detailed) {
         this.detailed = detailed;
     }
 
-    List<PlanStep> list() {
+    public List<PlanStep> list() {
         return steps;
     }
 
     /** A step that rebuilds the plan (no rules): its result shares identical subtrees again (see Sharing). */
-    RelNode add(String name, String origin, RelNode plan) {
+    public RelNode add(String name, String origin, RelNode plan) {
         RelNode sharedPlan = Sharing.share(plan);
         add(name, origin, RelOptUtil.toString(sharedPlan), detailed ? PlanGraph.of(sharedPlan, changes()) : "", List.of());
         previous = sharedPlan;
         return sharedPlan;
     }
 
-    boolean detailed() {
+    public boolean detailed() {
         return detailed;
     }
 
     /** A step whose result is in parts, e.g. one per worker. */
-    void add(String name, String origin, List<PlanGraph.Part> parts, boolean pipelines) {
+    public void add(String name, String origin, List<PlanGraph.Part> parts, boolean pipelines) {
         add(name, origin, parts, pipelines, List.of());
     }
 
     /** A step whose result is in parts, with the plan after each rule (see rules). */
-    void add(String name, String origin, List<PlanGraph.Part> parts, boolean pipelines, List<RuleApplication> rules) {
+    public void add(String name, String origin, List<PlanGraph.Part> parts, boolean pipelines, List<RuleApplication> rules) {
         StringBuilder text = new StringBuilder();
         for (PlanGraph.Part part : parts) {
             text.append(part.worker() == null ? "" : "on " + part.worker() + (part.output() == null ? "" : part.output().channel() == null
@@ -58,7 +59,7 @@ final class Steps {
     }
 
     /** Runs the rules of the program; with detailed, records the plan after each rule that changes it. */
-    RelNode rules(String name, String origin, HepProgram program, RelNode plan) {
+    public RelNode rules(String name, String origin, HepProgram program, RelNode plan) {
         HepPlanner planner = new HepPlanner(program);
         /// Rules fold constants with their planner's executor, and without one with Calcite's compiling RexUtil.EXECUTOR.
         planner.setExecutor(InterpretingRexExecutor.INSTANCE);

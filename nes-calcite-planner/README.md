@@ -10,6 +10,19 @@ mvn package                                    # runs the tests, builds target/n
 java -jar target/nes-calcite-planner.jar <request.pb>...   # plans saved requests (NativePlanner)
 ```
 
+## Source layout
+
+`src/main/java/nes/calcite/`, in the order a query passes through:
+
+| Package | What it does |
+|---|---|
+| `nes.calcite` | `NativeEntryPoints` and `NativePlanner` (the entry points), `Planner` (the steps of planning a query) |
+| `nes.calcite.sql` | parsing and validation: our functions and types (`NesFunctions`, `Unsigned`), checks of the SQL text |
+| `nes.calcite.logical` | our logical operators: sources, window aggregation and join, model inference |
+| `nes.calcite.rules` | our rules, e.g. the window rewrites (`WindowAggregateRule`, `WindowJoinRule`) and `OrFactors` |
+| `nes.calcite.physical` | placement, physical operators, pipelines, memory layouts and the Substrait output |
+| `nes.calcite.steps` | the record of each planning step and its graph (`Steps`, `PlanGraph`), for EXPLAIN and the step reports |
+
 ## Contract
 
 - The request carries the SQL, the schemas of all sources it may reference with their physical sources, the workers

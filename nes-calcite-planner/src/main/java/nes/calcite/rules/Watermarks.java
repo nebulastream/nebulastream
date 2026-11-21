@@ -1,5 +1,8 @@
-package nes.calcite;
+package nes.calcite.rules;
 
+import nes.calcite.logical.AnonymousSources;
+import nes.calcite.logical.NesLogical;
+import nes.calcite.logical.NesWindowJoin;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +18,10 @@ import org.apache.calcite.rex.RexInputRef;
  * first operator after the source (on the source's worker), and every row of the source, also one that a later filter
  * drops, advances the watermark. As our own optimizer places it.
  */
-final class Watermarks {
+public final class Watermarks {
     private Watermarks() {}
 
-    static RelNode assign(RelNode plan) {
+    public static RelNode assign(RelNode plan) {
         Map<RelNode, Integer> timeFields = new IdentityHashMap<>();
         collect(plan, timeFields);
         if (timeFields.isEmpty()) {

@@ -1,5 +1,7 @@
-package nes.calcite;
+package nes.calcite.rules;
 
+import nes.calcite.logical.NesWindowAggregate;
+import nes.calcite.logical.NesWindowJoin;
 import java.util.ArrayList;
 import java.util.List;
 import nes.calcite.proto.WindowAggregate;
@@ -38,8 +40,8 @@ import org.apache.calcite.tools.RelBuilder;
  * is already made): a hash join on the leftField = rightField keys of the condition, with the rest as residual, if
  * there is at least one key; a nested-loop join otherwise.
  */
-final class WindowJoinRule extends RelOptRule {
-    static final WindowJoinRule INSTANCE = new WindowJoinRule();
+public final class WindowJoinRule extends RelOptRule {
+    public static final WindowJoinRule INSTANCE = new WindowJoinRule();
 
     @SuppressWarnings("deprecation")
     private WindowJoinRule() {
@@ -223,7 +225,7 @@ final class WindowJoinRule extends RelOptRule {
      * (e.g. it joins two windowed streams without left.window_start = right.window_start). Neither a GLOBAL join nor
      * the engine can read the window columns of a stream.
      */
-    static void rejectUnjoinedWindows(RelNode plan) {
+    public static void rejectUnjoinedWindows(RelNode plan) {
         RelNode rel = strip(plan);
         if (rel instanceof Join join && (describeStream(strip(join.getLeft())) != null || describeStream(strip(join.getRight())) != null)) {
             throw new UnsupportedOperationException("a join of windowed inputs (TUMBLE/HOP) needs the same window on both sides and"
