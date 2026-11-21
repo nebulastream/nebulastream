@@ -19,7 +19,8 @@ best_ns_per_all_rows all rows of the file (as the runner of E78/E79 does). The s
 running the unchanged UDF and appends one JSON line per UDF to results/<experiment>.jsonl.
 
 Needs clean working trees here and in Babelfish, so that the recorded commits say what was measured.
-Usage: run.py --experiment E81-babelfish --babelfish DIR --java GRAALVM/bin/java --scratch DIR
+With --graal-plugins, Babelfish's Graal compiler plugins are loaded (E82).
+Usage: run.py --experiment E81-babelfish --babelfish DIR --java GRAALVM/bin/java --scratch DIR [--graal-plugins]
 """
 
 import argparse
@@ -40,6 +41,17 @@ import udfs  # noqa: E402
 JVM_OPTIONS = ["--sun-misc-unsafe-memory-access=allow", "--add-opens=java.base/java.nio=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"]
 # addnoise draws random numbers, so its results are not compared.
 RANDOM = {"addnoise"}
+
+
+def graal_plugin_options(babelfish):
+    """JVM options that load graal-plugins: an automatic module on the module path (Graal loads its services from the
+    boot layer only), the packages of graal-exports.txt exported to it, the Java-based Graal compiler (libgraal cannot
+    load plugins) and the compiler configuration luth."""
+    exports = [line.strip().replace("=ALL-UNNAMED", "=babelfish.graal.plugins")
+               for line in (babelfish / "graal-exports.txt").read_text().splitlines() if line.strip()]
+    return [f"--module-path={babelfish / 'graal-plugins/target/graal-plugins-1.0-SNAPSHOT.jar'}", "--add-modules=babelfish.graal.plugins",
+            "-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI", "-XX:-UseJVMCINativeLibrary",
+            "-Djdk.graal.CompilerConfiguration=luth", *sorted(set(exports))]
 
 
 def git(directory, *arguments):
@@ -78,6 +90,8 @@ def main():
     parser.add_argument("--warmup-seconds", type=float, default=20)
     parser.add_argument("--timeout", type=float, default=900, help="seconds per UDF")
     parser.add_argument("--scratch", required=True, help="directory for results and the importer's working files")
+    parser.add_argument("--graal-plugins", action="store_true",
+                        help="load Babelfish's Graal compiler plugins (module graal-plugins, Java-based Graal compiler)")
     arguments = parser.parse_args()
     babelfish = pathlib.Path(arguments.babelfish)
     for directory in (REPOSITORY, babelfish):
@@ -88,13 +102,16 @@ def main():
     version = subprocess.run([arguments.java, "-version"], capture_output=True, text=True).stderr.splitlines()[1]
     jars = [line for line in (babelfish / "benchmark/target/classpath.txt").read_text().split(":") if line.endswith(".jar")]
     classpath = ":".join([str(babelfish / "benchmark/target/classes"), *jars])
+    jvm_options = list(JVM_OPTIONS)
+    if arguments.graal_plugins:
+        jvm_options += graal_plugin_options(babelfish)
     scratch = pathlib.Path(arguments.scratch)
     scratch.mkdir(parents=True, exist_ok=True)
     results = HERE.parent / "results" / (arguments.experiment + ".jsonl")
     names = arguments.udfs.split(",") if arguments.udfs else sorted(udfs.UDFS)
     for name in names:
         output = scratch / f"{name}.out"
-        command = [arguments.java, *JVM_OPTIONS, "-cp", classpath, "de.tub.dima.babelfish.port.UdfBenchRunner", str(udfs.DATA),
+        command = [arguments.java, *jvm_options, "-cp", classpath, "de.tub.dima.babelfish.port.UdfBenchRunner", str(udfs.DATA),
                    str(REPOSITORY / "nes-systests/udf/pyudfs"), name, str(output), str(arguments.rounds), str(arguments.warmup_seconds)]
         started = time.monotonic()
         try:
@@ -106,7 +123,8 @@ def main():
             stderr = stderr.decode() if isinstance(stderr, bytes) else stderr
         lines = [line for line in stdout.splitlines() if line.startswith('{"udf"')]
         record = {"experiment": arguments.experiment, "commit": commit, "babelfish_commit": babelfish_commit, "udf": name,
-                  "source": udfs.UDFS[name][0], "compiler": "Babelfish", "java": version, "return_code": return_code,
+                  "source": udfs.UDFS[name][0], "compiler": "Babelfish", "graal_plugins": arguments.graal_plugins, "java": version,
+                  "return_code": return_code,
                   "wall_s": round(time.monotonic() - started, 1), "command": command}
         if lines:
             record |= json.loads(lines[-1])
