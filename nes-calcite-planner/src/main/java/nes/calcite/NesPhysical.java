@@ -123,17 +123,34 @@ final class NesPhysical {
         return what + ": " + (terms.length() <= 300 ? terms : terms.substring(0, 300) + "...");
     }
 
-    /** Fresh names of computed fields, unique within one plan (see Planner, which resets them per plan). */
-    private static final ThreadLocal<int[]> FRESH_NAMES = ThreadLocal.withInitial(() -> new int[1]);
+    /** The names given to computed fields in one plan (see Planner, which resets them per plan). */
+    private static final ThreadLocal<Set<String>> FRESH_NAMES = ThreadLocal.withInitial(HashSet::new);
 
     private NesPhysical() {}
 
     static void resetFreshNames() {
-        FRESH_NAMES.get()[0] = 0;
+        FRESH_NAMES.get().clear();
     }
 
-    static String freshName() {
-        return "CALCITE_F" + FRESH_NAMES.get()[0]++;
+    /**
+     * The name of a computed field: its logical name, without the $ of Calcite's generated names (e.g. $f1, EXPR$0),
+     * as NebulaStream qualifies names with $. A suffix (_2, _3, ...) makes it unique among the fields of its row and the
+     * names given to computed fields in this plan (both compared without case).
+     */
+    static String freshName(String wanted, java.util.Collection<String> row) {
+        String base = wanted.replace('$', '_').replaceAll("^_+", "");
+        if (base.isEmpty()) {
+            base = "EXPR";
+        }
+        Set<String> given = FRESH_NAMES.get();
+        java.util.function.Predicate<String> taken = name -> given.contains(name.toUpperCase(java.util.Locale.ROOT))
+            || row.stream().anyMatch(name::equalsIgnoreCase);
+        String name = base;
+        for (int i = 2; taken.test(name); i++) {
+            name = base + "_" + i;
+        }
+        given.add(name.toUpperCase(java.util.Locale.ROOT));
+        return name;
     }
 
     /** A physical operator of the NES convention. */
@@ -350,10 +367,12 @@ final class NesPhysical {
             List<String> outputFields = new ArrayList<>();
             List<RelDataType> outputTypes = new ArrayList<>();
             for (RelDataTypeField output : fields.subList(inputWidth, fields.size())) {
-                outputFields.add(freshName());
+                List<String> row = new ArrayList<>(input.getRowType().getFieldNames());
+                row.addAll(outputFields);
+                outputFields.add(freshName(output.getName(), row));
                 outputTypes.add(output.getType());
             }
-            /// The next operator reads the outputs by position: their fresh names do not matter.
+            /// The next operator reads the outputs by position: their names only need to be unique.
             return new InferModel(inference.getCluster(), traits, input, inference.model, inference.inputColumns(), outputFields,
                 outputTypes);
         }
@@ -505,16 +524,18 @@ final class NesPhysical {
                         throw new UnsupportedOperationException("cannot join keys of types " + l.getType() + " and " + r.getType());
                     }
                     leftKeys.add(l.getType().equals(common) ? l.getIndex()
-                        : leftCasts.add(rexBuilder.makeAbstractCast(common, new RexInputRef(l.getIndex(), l.getType()), false)));
+                        : leftCasts.add(rexBuilder.makeAbstractCast(common, new RexInputRef(l.getIndex(), l.getType()), false),
+                            left.getRowType().getFieldNames().get(l.getIndex()) + "_KEY"));
                     RexInputRef rightRef = new RexInputRef(r.getIndex() - leftWidth, r.getType());
                     rightKeys.add(r.getType().equals(common) ? rightRef.getIndex()
-                        : rightCasts.add(rexBuilder.makeAbstractCast(common, rightRef, false)));
+                        : rightCasts.add(rexBuilder.makeAbstractCast(common, rightRef, false),
+                            right.getRowType().getFieldNames().get(rightRef.getIndex()) + "_KEY"));
                 }
             }
             left = leftCasts.map(cluster, traits);
             right = rightCasts.map(cluster, traits);
 
-            /// The stored rows: the join's names for its input columns, fresh names for the cast keys.
+            /// The stored rows: the join's names for its input columns, then the cast keys.
             List<String> names = join.getRowType().getFieldNames();
             RelDataType leftStored = stored(types, left, names.subList(2, 2 + leftWidth));
             RelDataType rightStored = stored(types, right, names.subList(2 + leftWidth, names.size()));
@@ -557,11 +578,13 @@ final class NesPhysical {
             return new JoinProbe(cluster, traits, List.of(leftBuild, rightBuild), state, condition, residual, join.getRowType());
         }
 
-        /// The row type of the input with the given names for its first columns and fresh ones for the rest (cast keys).
+        /// The row type of the input with the given names for its first columns, and for the rest (cast keys) their names
+        /// in the input, unless another stored column has that name.
         private static RelDataType stored(RelDataTypeFactory types, RelNode input, List<String> names) {
             List<String> all = new ArrayList<>(names);
             while (all.size() < input.getRowType().getFieldCount()) {
-                all.add(freshName());
+                String name = input.getRowType().getFieldNames().get(all.size());
+                all.add(all.stream().anyMatch(name::equalsIgnoreCase) ? freshName(name, all) : name);
             }
             return types.createStructType(input.getRowType().getFieldList().stream().map(RelDataTypeField::getType).toList(), all);
         }
@@ -577,9 +600,11 @@ final class NesPhysical {
             this.input = input;
         }
 
-        /// The position of the value's field in the Map's row.
-        int add(RexNode expression) {
-            fields.add(freshName());
+        /// The position of the value's field in the Map's row; the field gets the name (see freshName).
+        int add(RexNode expression, String name) {
+            List<String> row = new ArrayList<>(input.getRowType().getFieldNames());
+            row.addAll(fields);
+            fields.add(freshName(name, row));
             expressions.add(expression);
             return input.getRowType().getFieldCount() + fields.size() - 1;
         }
@@ -1071,12 +1096,13 @@ final class NesPhysical {
             Assignments assignments = new Assignments(convert(project.getInput(), NES));
             List<Integer> projected = new ArrayList<>();
             Set<Integer> passedOn = new HashSet<>();
-            for (RexNode expression : project.getProjects()) {
+            for (int i = 0; i < project.getProjects().size(); i++) {
+                RexNode expression = project.getProjects().get(i);
                 if (expression instanceof RexInputRef ref && passedOn.add(ref.getIndex())) {
                     projected.add(ref.getIndex());
                 } else {
                     /// Computed (or a field projected twice, which needs a field of its own): all in one Map.
-                    projected.add(assignments.add(expression));
+                    projected.add(assignments.add(expression, project.getRowType().getFieldNames().get(i)));
                 }
             }
             return new Retain(cluster, traits, assignments.map(cluster, traits), projected);
@@ -1115,7 +1141,8 @@ final class NesPhysical {
                         fields.add(i);
                     } else {
                         fields.add(casts.add(
-                            cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, inputFields.get(i).getType()), false)));
+                            cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(i, inputFields.get(i).getType()), false),
+                            unionFields.get(i).getName()));
                     }
                 }
                 RelNode current = casts.map(cluster, traits);
@@ -1200,7 +1227,8 @@ final class NesPhysical {
                     fields.add(probe);
                 } else {
                     fields.add(casts.add(
-                        cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(probe, probeFields.get(probe).getType()), false)));
+                        cluster.getRexBuilder().makeAbstractCast(target, new RexInputRef(probe, probeFields.get(probe).getType()), false),
+                        outputFields.get(i).getName()));
                 }
             }
             RelNode current = casts.map(cluster, traits);

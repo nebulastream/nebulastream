@@ -85,12 +85,12 @@ INTO File();
 == Placed Pipelines ==
 on sink-node:8080:
 Sink(names=[[ID]])
-  Emit(fields=[[CALCITE_F0]], layout=[CSV])
-    Map(CALCITE_F0=[*($0, CAST(2):BIGINT UNSIGNED NOT NULL)])
+  Emit(fields=[[ID_2]], layout=[CSV])
+    Map(ID_2=[*($0, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Scan(fields=[[ID, VALUE, TIMESTAMP]], layout=[ROW(ID, VALUE, TIMESTAMP)])
         NetworkSource(from=[source-node:8080], channel=[channel-1])
-  Emit(fields=[[CALCITE_F1]], layout=[CSV])
-    Map(CALCITE_F1=[*($0, CAST(2):BIGINT UNSIGNED NOT NULL)])
+  Emit(fields=[[ID]], layout=[CSV])
+    Map(ID=[*($0, CAST(2):BIGINT UNSIGNED NOT NULL)])
       Scan(fields=[[ID2, VALUE2, TIMESTAMP2]], layout=[ROW(ID2, VALUE2, TIMESTAMP2)])
         NetworkSource(from=[source-node:8080], channel=[channel-2])
 on source-node:8080:
@@ -115,8 +115,8 @@ INTO File();
 == Placed Pipelines ==
 on sink-node:8080:
 Sink(names=[[P1, P2, P3, P4, SETOSA, VERSICOLOR, VIRGINICA]])
-  Emit(fields=[[P1, P2, P3, P4, CALCITE_F0, CALCITE_F1, CALCITE_F2]], layout=[CSV])
-    InferModel(model=[IRIS], reads=[[0, 1, 2, 3]], appends=[[CALCITE_F0, CALCITE_F1, CALCITE_F2]])
+  Emit(fields=[[P1, P2, P3, P4, SETOSA, VERSICOLOR, VIRGINICA]], layout=[CSV])
+    InferModel(model=[IRIS], reads=[[0, 1, 2, 3]], appends=[[SETOSA, VERSICOLOR, VIRGINICA]])
       Scan(fields=[[P1, P2, P3, P4]], layout=[ROW(P1, P2, P3, P4)])
         NetworkSource(from=[source-node:8080], channel=[channel-1])
 on source-node:8080:

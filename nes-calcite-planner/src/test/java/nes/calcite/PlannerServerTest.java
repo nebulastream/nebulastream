@@ -871,7 +871,7 @@ class PlannerServerTest {
         Rel input = windowRel.getExtensionSingle().getInput();
         assertTrue(isProjection(input), "the time column is computed by a projection below the window");
         List<String> names = input.getExtensionSingle().getCommon().getHint().getOutputNamesList();
-        assertEquals("$f_time", names.get(aggregate.getTimeField()));
+        assertEquals("global_window_time", names.get(aggregate.getTimeField()));
         /// The key, the aggregate (a GLOBAL window has no window columns).
         assertEquals(List.of("id", "S"), windowRel.getExtensionSingle().getCommon().getHint().getOutputNamesList());
     }

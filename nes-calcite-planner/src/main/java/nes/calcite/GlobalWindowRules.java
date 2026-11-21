@@ -59,7 +59,7 @@ final class GlobalWindowRules {
         }
         projects.add(rexBuilder.makeAbstractCast(rexBuilder.getTypeFactory().createSqlType(SqlTypeName.UBIGINT),
             rexBuilder.makeExactLiteral(java.math.BigDecimal.ZERO), false));
-        names.add("$f_time");
+        names.add("global_window_time");
         return LogicalProject.create(input, List.of(), projects, SqlValidatorUtil.uniquify(names, true), java.util.Set.of());
     }
 
@@ -197,9 +197,9 @@ final class GlobalWindowRules {
             RelDataType time = typeFactory.createSqlType(SqlTypeName.UBIGINT);
             RelDataType rowType = windowColumns(typeFactory)
                 .addAll(fields.subList(0, leftWidth))
-                .add("$f_time", typeFactory.createTypeWithNullability(time, type == WindowJoin.Type.RIGHT || type == WindowJoin.Type.FULL))
+                .add("global_window_time", typeFactory.createTypeWithNullability(time, type == WindowJoin.Type.RIGHT || type == WindowJoin.Type.FULL))
                 .addAll(fields.subList(leftWidth, fields.size()))
-                .add("$f_time", typeFactory.createTypeWithNullability(time, type == WindowJoin.Type.LEFT || type == WindowJoin.Type.FULL))
+                .add("global_window_time", typeFactory.createTypeWithNullability(time, type == WindowJoin.Type.LEFT || type == WindowJoin.Type.FULL))
                 .uniquify()
                 .build();
             RelNode windowJoin = new NesWindowJoin(
