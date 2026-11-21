@@ -13,23 +13,14 @@
 */
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 
-#include <algorithm>
-#include <ranges>
 #include <set>
-#include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_set>
 #include <vector>
 
-#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
-#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
-#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Windows/JoinFunctionSplit.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
@@ -47,43 +38,12 @@ namespace NES
 
 namespace
 {
-/// We set the join type to be a Hash-Join if the join function consists of solely functions that are FieldAccessLogicalFunction.
-/// To be more specific, we currently support only
-/// Otherwise, we use a NLJ.
-bool shallUseHashJoin(const LogicalFunction& joinFunction)
+/// We use a hash join if at least one top-level conjunct of the join function is an equi-join key `left.field = right.field`.
+/// The hash join hashes on these keys and evaluates the remaining conjuncts (the residual) on every candidate pair.
+/// A join function without such a conjunct (pure theta join, top-level OR) needs a NLJ.
+bool shallUseHashJoin(const JoinLogicalOperator& joinOperator)
 {
-    /// Checks if the logical function is allowed to be in our join function for a hash join
-    auto allowedLogicalFunction = [](const LogicalFunction& logicalFunction)
-    {
-        return logicalFunction.tryGetAs<AndLogicalFunction>().has_value() or logicalFunction.tryGetAs<EqualsLogicalFunction>().has_value()
-            or logicalFunction.tryGetAs<OrLogicalFunction>().has_value()
-            or logicalFunction.tryGetAs<FieldAccessLogicalFunction>().has_value();
-    };
-
-    std::unordered_set<LogicalFunction> parentsOfJoinComparisons;
-    for (auto logicalFunction : BFSRange<LogicalFunction>(joinFunction))
-    {
-        if (not allowedLogicalFunction(logicalFunction))
-        {
-            return false;
-        }
-
-        const auto anyChildIsLeaf
-            = std::ranges::any_of(logicalFunction.getChildren(), [](const LogicalFunction& child) { return child.getChildren().empty(); });
-        if (anyChildIsLeaf)
-        {
-            for (const auto& child : logicalFunction.getChildren())
-            {
-                if (not child.tryGetAs<FieldAccessLogicalFunction>().has_value())
-                {
-                    /// If the leaf is not a FieldAccessLogicalFunction, we need to use a NLJ
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
+    return not splitJoinFunction(joinOperator).equiKeys.empty();
 }
 
 LogicalOperator
@@ -96,7 +56,7 @@ decideJoinTypes(const LogicalOperator& logicalOperator, const std::vector<Logica
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }
-        else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
+        else if (shallUseHashJoin(*joinOperator.value()))
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
         }

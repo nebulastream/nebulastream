@@ -1,0 +1,137 @@
+# name: join/HashJoinResidualPredicate.test
+# description: Joins on equi-keys AND-ed with range conditions. The hash join hashes on the equi-keys and evaluates the rest (the residual) per
+#              candidate pair; outer joins must null-fill tuples whose key has partners that all fail the residual.
+# groups: [WindowOperators, Join, OuterJoin, NullHandling]
+
+# Join condition of most queries: lid = rid AND rv >= lo AND rv <= lhi
+# leftStream                          | partners in rightStream (rid, rv)    | residual
+#   (1, lo 10, lhi 20,   t 100)       | (1, 5), (1, 15), (1, 25)             | only rv 15 passes; rv 15 arrives in a later slice (t 650)
+#   (2, lo 10, lhi 20,   t 200)       | (2, 30)                              | fails: key matches, but the left tuple must be null-filled
+#   (2, lo 0,  lhi 100,  t 300)       | (2, 30)                              | passes: same key as the tuple above, decided per tuple
+#   (3, lo 10, lhi NULL, t 400)       | (3, 15)                              | NULL: no match, both sides null-filled in outer joins
+#   (4, lo 0,  lhi 100,  t 500)       | none                                 | no key partner
+# rightStream (5, 20, t 700) has no key partner.
+CREATE LOGICAL SOURCE leftStream(lid UINT64 NOT NULL, lo UINT64 NOT NULL, lhi UINT64, lts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH INLINE
+1,10,20,100
+2,10,20,200
+2,0,100,300
+3,10,,400
+4,0,100,500
+
+CREATE LOGICAL SOURCE rightStream(rid UINT64 NOT NULL, rv UINT64 NOT NULL, rts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH INLINE
+1,5,150
+1,15,650
+1,25,350
+2,30,450
+3,15,550
+5,20,700
+
+CREATE SINK sinkInner(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64 NOT NULL, lo UINT64 NOT NULL, lhi UINT64, lts UINT64 NOT NULL, rid UINT64 NOT NULL, rv UINT64 NOT NULL, rts UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkLeft(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64 NOT NULL, lo UINT64 NOT NULL, lhi UINT64, lts UINT64 NOT NULL, rid UINT64, rv UINT64, rts UINT64) TYPE File;
+CREATE SINK sinkRight(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64, lo UINT64, lhi UINT64, lts UINT64, rid UINT64 NOT NULL, rv UINT64 NOT NULL, rts UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkFull(start UINT64 NOT NULL, end UINT64 NOT NULL, lid UINT64, lo UINT64, lhi UINT64, lts UINT64, rid UINT64, rv UINT64, rts UINT64) TYPE File;
+
+# Query 1 - inner join: only pairs that match on the key and pass the range
+SELECT *
+FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream)
+ON (lid = rid AND rv >= lo AND rv <= lhi)
+WINDOW TUMBLING (lts, rts, size 1 sec)
+INTO sinkInner;
+----
+0,1000,1,10,20,100,1,15,650
+0,1000,2,0,100,300,2,30,450
+
+# Query 2 - the same condition with the key reversed and the residual conjuncts around it
+SELECT *
+FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream)
+ON (rv <= lhi AND rid = lid AND lo <= rv)
+WINDOW TUMBLING (lts, rts, size 1 sec)
+INTO sinkInner;
+----
+0,1000,1,10,20,100,1,15,650
+0,1000,2,0,100,300,2,30,450
+
+# Query 3 - left outer join: (2, t 200) matches key 2 but fails the range, (3, t 400) has a NULL range bound
+SELECT *
+FROM (SELECT * FROM leftStream) LEFT OUTER JOIN (SELECT * FROM rightStream)
+ON (lid = rid AND rv >= lo AND rv <= lhi)
+WINDOW TUMBLING (lts, rts, size 1 sec)
+INTO sinkLeft;
+----
+0,1000,1,10,20,100,1,15,650
+0,1000,2,0,100,300,2,30,450
+0,1000,2,10,20,200,NULL,NULL,NULL
+0,1000,3,10,NULL,400,NULL,NULL,NULL
+0,1000,4,0,100,500,NULL,NULL,NULL
+
+# Query 4 - right outer join: (1, 5) and (1, 25) match key 1 but fail the range
+SELECT *
+FROM (SELECT * FROM leftStream) RIGHT OUTER JOIN (SELECT * FROM rightStream)
+ON (lid = rid AND rv >= lo AND rv <= lhi)
+WINDOW TUMBLING (lts, rts, size 1 sec)
+INTO sinkRight;
+----
+0,1000,1,10,20,100,1,15,650
+0,1000,2,0,100,300,2,30,450
+0,1000,NULL,NULL,NULL,NULL,1,5,150
+0,1000,NULL,NULL,NULL,NULL,1,25,350
+0,1000,NULL,NULL,NULL,NULL,3,15,550
+0,1000,NULL,NULL,NULL,NULL,5,20,700
+
+# Query 5 - full outer join
+SELECT *
+FROM (SELECT * FROM leftStream) FULL OUTER JOIN (SELECT * FROM rightStream)
+ON (lid = rid AND rv >= lo AND rv <= lhi)
+WINDOW TUMBLING (lts, rts, size 1 sec)
+INTO sinkFull;
+----
+0,1000,1,10,20,100,1,15,650
+0,1000,2,0,100,300,2,30,450
+0,1000,2,10,20,200,NULL,NULL,NULL
+0,1000,3,10,NULL,400,NULL,NULL,NULL
+0,1000,4,0,100,500,NULL,NULL,NULL
+0,1000,NULL,NULL,NULL,NULL,1,5,150
+0,1000,NULL,NULL,NULL,NULL,1,25,350
+0,1000,NULL,NULL,NULL,NULL,3,15,550
+0,1000,NULL,NULL,NULL,NULL,5,20,700
+
+# Query 6 - full outer join over sliding windows: each window spans two slices, so each side has several hash maps to probe
+SELECT *
+FROM (SELECT * FROM leftStream) FULL OUTER JOIN (SELECT * FROM rightStream)
+ON (lid = rid AND rv >= lo AND rv <= lhi)
+WINDOW SLIDING (lts, rts, size 1 sec, advance by 500 ms)
+INTO sinkFull;
+----
+0,1000,1,10,20,100,1,15,650
+0,1000,2,0,100,300,2,30,450
+0,1000,2,10,20,200,NULL,NULL,NULL
+0,1000,3,10,NULL,400,NULL,NULL,NULL
+0,1000,4,0,100,500,NULL,NULL,NULL
+0,1000,NULL,NULL,NULL,NULL,1,5,150
+0,1000,NULL,NULL,NULL,NULL,1,25,350
+0,1000,NULL,NULL,NULL,NULL,3,15,550
+0,1000,NULL,NULL,NULL,NULL,5,20,700
+500,1500,4,0,100,500,NULL,NULL,NULL
+500,1500,NULL,NULL,NULL,NULL,1,15,650
+500,1500,NULL,NULL,NULL,NULL,3,15,550
+500,1500,NULL,NULL,NULL,NULL,5,20,700
+
+# Query 7 - a top-level OR has no common equi-key and must not be hashed on lid = rid alone (or treated as an AND)
+SELECT *
+FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream)
+ON (lid = rid OR rv = lhi)
+WINDOW TUMBLING (lts, rts, size 1 sec)
+INTO sinkInner;
+----
+0,1000,1,10,20,100,1,5,150
+0,1000,1,10,20,100,1,15,650
+0,1000,1,10,20,100,1,25,350
+0,1000,1,10,20,100,5,20,700
+0,1000,2,0,100,300,2,30,450
+0,1000,2,10,20,200,2,30,450
+0,1000,2,10,20,200,5,20,700
+0,1000,3,10,NULL,400,3,15,550
