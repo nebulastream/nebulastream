@@ -7,11 +7,8 @@ option java_multiple_files = true;
 
 import "substrait/algebra.proto";
 
-// Plans a single SELECT query with Calcite and returns it as a Substrait plan.
-// Invalid or unsupported queries fail with status INVALID_ARGUMENT and a readable message.
-service CalcitePlanner {
-  rpc Plan(PlanRequest) returns (PlanResponse);
-}
+// The request and response of the planner (NativePlanner.plan, called through the native library): a SELECT query
+// planned with Calcite down to placed physical pipelines, as a Substrait plan.
 
 enum FieldType {
   FIELD_TYPE_UNSPECIFIED = 0;
@@ -44,7 +41,7 @@ message Field {
 message Source {
   string name = 1;
   repeated Field fields = 2;
-  // For physical plans (PlanRequest.physical): the physical sources of this logical source.
+  // The physical sources of this logical source.
   repeated PhysicalSource physical_sources = 3;
 }
 
@@ -73,9 +70,9 @@ message PlanRequest {
   // All sources are finite (e.g. test tables). Joins and aggregations without a window then get a GLOBAL window that
   // spans the whole input and fires at the end of the stream. Without it, they are rejected.
   bool finite_inputs = 3;
-  // Plan down to physical operators (PhysicalOperator payloads), which the engine instantiates without optimizing.
-  bool physical = 4;
-  // Physical plans: place the pipelines on these workers (see Placement). Without a topology, the plan is not placed and
+  // Was: physical (a logical plan without it); every plan is physical now.
+  reserved 4;
+  // Place the pipelines on these workers (see Placement). Without a topology, the plan is not placed and
   // runs on one worker.
   repeated Worker topology = 5;
   // The worker the sink runs on. Required with topology.
@@ -156,7 +153,7 @@ message SourceType {
   repeated string options = 2;
 }
 
-// Payload (google.protobuf.Any) of the Substrait ExtensionLeafRel emitted for an anonymous source in FROM, e.g.
+// An anonymous source in FROM (PhysicalOperator.SourceScan.anonymous), e.g.
 // TABLE(FILE(schema => 'id UINT64 NOT NULL', file_path => 'data.csv', format => 'CSV')): reads a source that is not
 // in the catalog. Option values are config literals: strings in single quotes, except the host and the format type.
 message AnonymousSource {
@@ -173,21 +170,6 @@ message Model {
   string name = 1;
   repeated Field inputs = 2;
   repeated Field outputs = 3;
-}
-
-// Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for MODEL_INFERENCE: runs the model on each
-// row of its input. Output columns: the input's columns, then the model's outputs (Model.outputs).
-message InferModel {
-  string model = 1;
-  // The names of the model's outputs, i.e. of the last output columns.
-  repeated string outputs = 2;
-  reserved 3;
-}
-
-// Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for a projection (NesProjection): our
-// projection, whose columns are the assignments' fields, in this order. Each expression reads the input row.
-message Projection {
-  repeated PhysicalOperator.Map.Assignment assignments = 1;
 }
 
 message PlanResponse {
@@ -227,8 +209,8 @@ message RuleApplication {
   bool ours = 4;
 }
 
-// Payload (google.protobuf.Any) of the Substrait ExtensionSingleRel emitted for a windowed aggregation,
-// i.e. Aggregate(GROUP BY window_start/window_end, ...) over TUMBLE/HOP.
+// The planner's description of a windowed aggregation (NesLogical.WindowAggregation), i.e. Aggregate(GROUP BY
+// window_start/window_end, ...) over TUMBLE/HOP. The physical operators (Window, WindowBuild, WindowProbe) take its parts.
 //
 // Field indices refer to the input relation. Output columns are, in order (as Calcite's Aggregate, grouped by the keys,
 // window_start and window_end):
@@ -268,8 +250,8 @@ message WindowAggregate {
   bool emit_on_empty_input = 7;
 }
 
-// Payload (google.protobuf.Any) of the Substrait ExtensionMultiRel emitted for a windowed join of two streams, i.e.
-// Join(TUMBLE|HOP(left), TUMBLE|HOP(right)) ON left.window_start = right.window_start AND ... .
+// The planner's description of a windowed join of two streams (NesWindowJoin), i.e. Join(TUMBLE|HOP(left),
+// TUMBLE|HOP(right)) ON left.window_start = right.window_start AND ... . The physical Join operator takes its parts.
 //
 // Inputs: [left, right]. Output columns are, in order: window_start, window_end, left columns..., right columns...
 message WindowJoin {
@@ -294,12 +276,8 @@ message WindowJoin {
   uint32 right_time_field = 5;
   Type type = 6;
   Implementation implementation = 7;
-  // Over the concatenated inputs [left columns..., right columns...]; the window equalities are already removed.
-  // For HASH_JOIN only the leftField = rightField keys, for NESTED_LOOP_JOIN the whole condition.
-  // Unset if the streams are joined on the window alone.
-  substrait.Expression condition = 8;
-  // HASH_JOIN only: the rest of the condition, evaluated on every pair whose keys match.
-  repeated substrait.Expression residual = 9;
+  // Was: the condition and residual of the logical plan's join; the physical JoinProbe has them.
+  reserved 8, 9;
 }
 
 // One physical operator of a physical plan (PlanRequest.physical), the detail of a Substrait extension relation. The

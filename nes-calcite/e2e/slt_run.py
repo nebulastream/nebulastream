@@ -6,12 +6,10 @@ registered as a new version of File sources (tab0_v2, ...); each query runs agai
 position, as `CALCITE <query> INTO File(...);` in one embedded REPL session with --optimizer.finite_inputs=true. Results are
 compared with SQLite's as sorted multisets of rows, with floats rounded to 3 decimals (the sqllogictest convention).
 
-Usage: slt_run.py <slt file> <nes-repl-embedded> <nes-calcite-planner.jar> <java>
-                  [--subqueries-only] [--limit N] [--workdir DIR] [--compiler]
+Usage: slt_run.py <slt file> <nes-repl-embedded> [--subqueries-only] [--limit N] [--workdir DIR] [--compiler]
 """
 import argparse
 import re
-import socket
 import sqlite3
 import subprocess
 import time
@@ -70,24 +68,16 @@ def normalize(value) -> str:
     return str(value)
 
 
-def free_port() -> int:
-    with socket.socket() as s:
-        s.bind(('localhost', 0))
-        return s.getsockname()[1]
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('slt', type=Path)
     parser.add_argument('repl', type=Path)
-    parser.add_argument('jar', type=Path)
-    parser.add_argument('java')
     parser.add_argument('--subqueries-only', action='store_true')
     parser.add_argument('--limit', type=int, default=1_000_000)
     parser.add_argument('--workdir', type=Path, default=Path('slt-run'))
     parser.add_argument('--compiler', action='store_true', help='compile queries instead of interpreting them')
     args = parser.parse_args()
-    args.repl, args.jar = args.repl.resolve(), args.jar.resolve()
+    args.repl = args.repl.resolve()
     workdir = args.workdir.resolve()
     workdir.mkdir(parents=True, exist_ok=True)
 
@@ -138,26 +128,19 @@ def main():
                       f"'CSV' AS \"SINK\".OUTPUT_FORMAT, 'localhost:8080' AS \"SINK\".HOST);")
     (workdir / 'queries.sql').write_text('\n'.join(script) + '\n')
 
-    port = free_port()
-    planner = subprocess.Popen([args.java, '-jar', str(args.jar), str(port)], stdout=subprocess.PIPE,
-                               stderr=open(workdir / 'planner.log', 'w'), text=True)
     started = time.time()
-    try:
-        planner.stdout.readline()  # "listening on port ..."
-        env = {'NES_CALCITE_PLANNER': f'localhost:{port}', 'PATH': '/usr/bin:/bin'}
-        mode = 'COMPILER' if args.compiler else 'INTERPRETER'
-        with open(workdir / 'queries.sql') as stdin, open(workdir / 'repl.log', 'w') as log:
-            subprocess.run([str(args.repl), '-e', 'RECOVER', '--on-exit', 'WAIT_FOR_QUERY_TERMINATION',
-                            '--', f'--worker.default_query_execution.execution_mode={mode}',
-                            # The tables of the tests end: joins and aggregations without a window run over them.
-                            '--optimizer.finite_inputs=true',
-                            # Joins of dozens of tables produce rows wider than the default 1 KiB pages.
-                            '--worker.default_query_execution.page_size=16384',
-                            # Thousands of concurrent queries, some holding 10^6-row windows: 256 MiB is not enough.
-                            '--worker.total_memory_in_bytes=8589934592'],
-                           stdin=stdin, stdout=log, stderr=subprocess.STDOUT, cwd=workdir, env=env, timeout=7000)
-    finally:
-        planner.terminate()
+    env = {'PATH': '/usr/bin:/bin'}
+    mode = 'COMPILER' if args.compiler else 'INTERPRETER'
+    with open(workdir / 'queries.sql') as stdin, open(workdir / 'repl.log', 'w') as log:
+        subprocess.run([str(args.repl), '-e', 'RECOVER', '--on-exit', 'WAIT_FOR_QUERY_TERMINATION',
+                        '--', f'--worker.default_query_execution.execution_mode={mode}',
+                        # The tables of the tests end: joins and aggregations without a window run over them.
+                        '--optimizer.finite_inputs=true',
+                        # Joins of dozens of tables produce rows wider than the default 1 KiB pages.
+                        '--worker.default_query_execution.page_size=16384',
+                        # Thousands of concurrent queries, some holding 10^6-row windows: 256 MiB is not enough.
+                        '--worker.total_memory_in_bytes=8589934592'],
+                       stdin=stdin, stdout=log, stderr=subprocess.STDOUT, cwd=workdir, env=env, timeout=7000)
 
     errors = re.findall(r'Error encountered: (.*)', (workdir / 'repl.log').read_text(errors='replace'))
     # A query that fails while running is only logged here; it shows up as a missing or partial result.

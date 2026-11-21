@@ -14,8 +14,8 @@ import nes.calcite.proto.Worker;
  * for render_steps.py. Topology: worker localhost:8181 -> worker localhost:8282 (workers are named by their gRPC address),
  * the sink on localhost:8282. events has one physical source (on localhost:8181), events2 two (one on each worker).
  *
- * A query prefixed with "logical: " is planned as a logical plan with finite inputs (for what physical plans cannot run
- * yet, e.g. joins).
+ * A query prefixed with "finite: " is planned with finite inputs (joins and aggregations without a window get a GLOBAL
+ * window).
  *
  * java -cp target/nes-calcite-planner.jar docs/tools/DumpSteps.java <out.json> <sql>...
  *
@@ -68,34 +68,8 @@ public class DumpSteps {
 
     static String entry(String label, PlanRequest request, Planner planner) {
         Planned planned = steps(request, planner, 0);
-        return "{\"label\":" + q(label) + ",\"sql\":" + q(request.getSql()) + ",\"logical\":" + !request.getPhysical()
+        return "{\"label\":" + q(label) + ",\"sql\":" + q(request.getSql())
             + ",\"error\":" + (planned.error() == null ? "null" : q(planned.error())) + ",\"steps\":[" + String.join(",", planned.steps()) + "]";
-    }
-
-    /**
-     * The request planned down to placed pipelines, as far as the physical path supports the query: one worker per host of
-     * a physical source, all sending to the first one, which also runs the sink. Null without physical sources.
-     */
-    static String physical(PlanRequest request, Planner planner) {
-        java.util.TreeSet<String> hosts = new java.util.TreeSet<>();
-        request.getSourcesList().forEach(source -> source.getPhysicalSourcesList().forEach(p -> hosts.add(p.getHost())));
-        if (hosts.isEmpty()) {
-            return null;
-        }
-        String sink = hosts.first();
-        PlanRequest.Builder builder = request.toBuilder().setPhysical(true).setSinkHost(sink).clearTopology();
-        for (String host : hosts) {
-            Worker.Builder worker = Worker.newBuilder().setHost(host);
-            if (!host.equals(sink)) {
-                worker.addDownstream(sink);
-            }
-            builder.addTopology(worker);
-        }
-        /// All steps: physical plans differ from logical ones from the start (the sources are expanded first).
-        Planned planned = steps(builder.build(), planner, 0);
-        List<String> after = planned.steps();
-        return "{\"hosts\":" + q(String.join(", ", hosts)) + ",\"error\":" + (planned.error() == null ? "null" : q(planned.error()))
-            + ",\"steps\":[" + String.join(",", after) + "]}";
     }
 
     public static void main(String[] args) throws Exception {
@@ -106,10 +80,7 @@ public class DumpSteps {
                 for (Path file : files.filter(f -> f.toString().endsWith(".pb")).sorted().toList()) {
                     String label = file.getFileName().toString().replaceFirst("\\.pb$", "");
                     PlanRequest request = PlanRequest.parseFrom(Files.readAllBytes(file)).toBuilder().setDetailedSteps(true).build();
-                    String physical = physical(request, planner);
-                    /// The upper part is the logical path, whichever path the request was saved from.
-                    queries.add(entry(label, request.toBuilder().setPhysical(false).build(), planner) + ",\"physical\":"
-                        + (physical == null ? "null" : physical) + "}");
+                    queries.add(entry(label, request, planner) + "}");
                 }
             }
             Files.writeString(Path.of(args[0]), "[" + String.join(",", queries) + "]");
@@ -120,14 +91,14 @@ public class DumpSteps {
             .addSources(source("events2", List.of(2L, 3L), List.of("localhost:8181", "localhost:8282")))
             .addTopology(Worker.newBuilder().setHost("localhost:8181").addDownstream("localhost:8282"))
             .addTopology(Worker.newBuilder().setHost("localhost:8282"))
-            .setSinkHost("localhost:8282").setPhysical(true).setDetailedSteps(true);
+            .setSinkHost("localhost:8282").setDetailedSteps(true);
         var planner = new Planner();
         List<String> queries = new ArrayList<>();
         for (int i = 1; i < args.length; i++) {
             String sql = args[i];
-            boolean logical = sql.startsWith("logical: ");
-            sql = logical ? sql.substring("logical: ".length()) : sql;
-            queries.add(entry(sql, request.setSql(sql).setPhysical(!logical).setFiniteInputs(logical).build(), planner) + "}");
+            boolean finite = sql.startsWith("finite: ");
+            sql = finite ? sql.substring("finite: ".length()) : sql;
+            queries.add(entry(sql, request.setSql(sql).setFiniteInputs(finite).build(), planner) + "}");
         }
         Files.writeString(Path.of(args[0]), "[" + String.join(",", queries) + "]");
     }

@@ -29,7 +29,7 @@ add_custom_target(package-docker-runtime-base
 add_dependencies(package-docker-images-all package-docker-runtime-base)
 
 # PLANNER: the image plans queries, so it needs the Calcite planner: the native library, copied next to the binary and
-# installed into /usr/lib (there is no planner service in the images).
+# installed into /usr/lib.
 function(nes_add_docker_image IMAGE TARGET)
     cmake_parse_arguments(ARG "PLANNER" "" "" ${ARGN})
     if (IMAGE STREQUAL "nes-cli")
@@ -43,16 +43,10 @@ function(nes_add_docker_image IMAGE TARGET)
     set(PLANNER_IGNORE "")
     set(PLANNER_COPY "")
     if (ARG_PLANNER)
-        if (NES_CALCITE_NATIVE_LIBRARY)
-            get_filename_component(PLANNER_LIBRARY "${NES_CALCITE_NATIVE_LIBRARY}" NAME)
-            set(PLANNER "COPY ${PLANNER_LIBRARY} /usr/lib/${PLANNER_LIBRARY}\n")
-            set(PLANNER_IGNORE "!${PLANNER_LIBRARY}\n")
-            set(PLANNER_COPY COMMAND ${CMAKE_COMMAND} -E copy_if_different "${NES_CALCITE_NATIVE_LIBRARY}" "$<TARGET_FILE_DIR:${TARGET}>")
-        else ()
-            set(PLANNER_COPY COMMAND ${CMAKE_COMMAND} -E echo
-                "nebulastream/${IMAGE} needs the native Calcite planner: configure with GraalVM (GRAALVM_HOME)"
-                COMMAND ${CMAKE_COMMAND} -E false)
-        endif ()
+        get_filename_component(PLANNER_LIBRARY "${NES_CALCITE_NATIVE_LIBRARY}" NAME)
+        set(PLANNER "COPY ${PLANNER_LIBRARY} /usr/lib/${PLANNER_LIBRARY}\n")
+        set(PLANNER_IGNORE "!${PLANNER_LIBRARY}\n")
+        set(PLANNER_COPY COMMAND ${CMAKE_COMMAND} -E copy_if_different "${NES_CALCITE_NATIVE_LIBRARY}" "$<TARGET_FILE_DIR:${TARGET}>")
     endif ()
 
     set(DOCKERFILE "$<TARGET_FILE_DIR:${TARGET}>/${TARGET}.dockerfile")

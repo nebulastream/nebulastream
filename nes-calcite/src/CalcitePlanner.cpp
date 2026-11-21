@@ -39,23 +39,18 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <google/protobuf/io/coded_stream.h>
-#include <grpcpp/grpcpp.h>
 #include <substrait/plan.pb.h>
 #include <FunctionSignatureRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <nes_calcite_planner.grpc.pb.h>
-
-#ifdef NES_CALCITE_NATIVE
-    #include <libnes-calcite-planner.h>
-#endif
+#include <libnes-calcite-planner.h>
+#include <nes_calcite_planner.pb.h>
 
 namespace NES::Calcite
 {
 namespace
 {
-#ifdef NES_CALCITE_NATIVE
-/// The planner compiled into this process with GraalVM (see nes-calcite/CMakeLists.txt); `address` is not used.
-nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request, const std::string& /*address*/)
+/// The planner compiled into this process with GraalVM (see nes-calcite/CMakeLists.txt).
+nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request)
 {
     /// One isolate (the native image's heap and runtime) for the whole process. Each thread that plans attaches to it once
     /// and stays attached.
@@ -103,38 +98,6 @@ nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request,
     }
     return response;
 }
-#else
-/// The planner service (nes-calcite-planner, `java -jar nes-calcite-planner.jar`) at `address`.
-nes::calcite::PlanResponse callPlanner(const nes::calcite::PlanRequest& request, const std::string& address)
-{
-    /// Plans of queries joining dozens of tables exceed gRPC's default 4 MB message size.
-    grpc::ChannelArguments channelArguments;
-    channelArguments.SetMaxReceiveMessageSize(-1);
-    const auto stub = nes::calcite::CalcitePlanner::NewStub(
-        grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), channelArguments));
-    grpc::ClientContext context;
-    context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(30));
-    nes::calcite::PlanResponse response;
-    const auto status = stub->Plan(&context, request, &response);
-    if (status.error_code() == grpc::StatusCode::INVALID_ARGUMENT)
-    {
-        throw InvalidQuerySyntax("Calcite rejected the query: {}", status.error_message());
-    }
-    if (status.error_code() == grpc::StatusCode::FAILED_PRECONDITION)
-    {
-        throw PlacementFailure("Calcite: {}", status.error_message());
-    }
-    if (status.error_code() == grpc::StatusCode::UNIMPLEMENTED)
-    {
-        throw UnsupportedQuery("Calcite: {}", status.error_message());
-    }
-    if (not status.ok())
-    {
-        throw UnsupportedQuery("Calcite planner at {} failed: {}", address, status.error_message());
-    }
-    return response;
-}
-#endif
 
 nes::calcite::FieldType toFieldType(const DataType::Type type)
 {
@@ -196,12 +159,6 @@ void setRequestLabel(std::string label)
     requestLabel = std::move(label);
 }
 
-std::string plannerAddress()
-{
-    const char* address = std::getenv("NES_CALCITE_PLANNER"); /// NOLINT(concurrency-mt-unsafe)
-    return address != nullptr ? address : "localhost:50061";
-}
-
 std::pair<std::string, std::string> splitSink(std::string_view statement)
 {
     /// The last INTO starts the sink: a name or a sink type with options in parentheses.
@@ -229,7 +186,6 @@ Request makeRequest(
     const SourceCatalog& catalog,
     const bool finiteInputs,
     const std::unordered_map<std::string, std::string>& sourceNames,
-    const bool physical,
     const ModelCatalog* models)
 {
     Request result;
@@ -300,7 +256,6 @@ Request makeRequest(
     }
     result.request.set_sql(std::string{sql});
     result.request.set_finite_inputs(finiteInputs);
-    result.request.set_physical(physical);
     for (const auto& source : catalog.getAllLogicalSources())
     {
         const auto catalogName = fmt::format("{}", source.getLogicalSourceName());
@@ -390,13 +345,12 @@ PlannedPhysicalQuery planPhysical(
     const SourceCatalog& sourceCatalog,
     const SinkCatalog& sinkCatalog,
     const WorkerCatalog& workerCatalog,
-    const std::string& address,
     const std::unordered_map<std::string, std::string>& sourceNames,
     const ModelCatalog* models,
     const QueryOptimizerConfiguration& optimizer,
     const bool detailedSteps)
 {
-    auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, optimizer.finiteInputs, sourceNames, /*physical=*/true, models);
+    auto [request, catalogNames, caseSensitive] = makeRequest(sql, sourceCatalog, optimizer.finiteInputs, sourceNames, models);
     request.set_nested_loop_joins(optimizer.joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN);
     request.set_detailed_steps(detailedSteps);
     request.set_layout_policy(
@@ -470,7 +424,7 @@ PlannedPhysicalQuery planPhysical(
         request.set_sink_format("NATIVE");
     }
     dumpRequest(request);
-    const auto response = callPlanner(request, address);
+    const auto response = callPlanner(request);
     const auto substraitPlan = substraitPlanOf(response, sql);
 
     BindSink bindSink = [namedSink, anonymousConfig, sink, sinkHost, &sinkCatalog](
@@ -569,7 +523,7 @@ PlannedPhysicalQuery planStatement(
 {
     const auto [query, sinkClause] = splitSink(statement);
     return planPhysical(
-        query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, plannerAddress(), {}, models, optimizer, detailedSteps);
+        query, sinkClause, sourceCatalog, sinkCatalog, workerCatalog, {}, models, optimizer, detailedSteps);
 }
 
 }

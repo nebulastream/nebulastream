@@ -6,17 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.grpc.ManagedChannel;
-import io.grpc.Server;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.inprocess.InProcessServerBuilder;
 import io.substrait.proto.Plan;
 import io.substrait.proto.Rel;
 import java.util.List;
 import nes.calcite.proto.AnonymousSource;
-import nes.calcite.proto.CalcitePlannerGrpc;
 import nes.calcite.proto.Field;
 import nes.calcite.proto.FieldType;
 import nes.calcite.proto.PhysicalOperator;
@@ -24,89 +17,158 @@ import nes.calcite.proto.PlanRequest;
 import nes.calcite.proto.PlanResponse;
 import nes.calcite.proto.Source;
 import nes.calcite.proto.WindowAggregate;
-import nes.calcite.proto.WindowJoin;
 import nes.calcite.proto.WindowAggregate.Kind;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import nes.calcite.proto.WindowJoin;
 import org.junit.jupiter.api.Test;
 
-class PlannerServerTest {
-    private static final List<Source> SOURCES = List.of(stream("s1"), stream("s2"));
+/** The planner through its native entry point (NativePlanner): a PlanRequest in, a PlanResponse out. */
+class PlannerTest {
+    /// Every source has a physical source (s1: 11, s2: 21), as plans read physical sources.
+    private static final List<Source> SOURCES = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21));
 
-    private static Server server;
-    private static ManagedChannel channel;
-    private static CalcitePlannerGrpc.CalcitePlannerBlockingStub stub;
+    /** A request the planner rejected: the response's error, and whether the query is unsupported (or invalid). */
+    static final class PlanningFailed extends RuntimeException {
+        final PlanResponse response;
 
-    @BeforeAll
-    static void start() throws Exception {
-        String name = InProcessServerBuilder.generateName();
-        server = InProcessServerBuilder.forName(name).directExecutor().addService(new PlannerServer()).build().start();
-        channel = InProcessChannelBuilder.forName(name).directExecutor().build();
-        stub = CalcitePlannerGrpc.newBlockingStub(channel);
+        PlanningFailed(PlanResponse response) {
+            super(response.getError());
+            this.response = response;
+        }
     }
 
-    @AfterAll
-    static void stop() {
-        channel.shutdownNow();
-        server.shutdownNow();
+    /** The planner's response to the request; a source without a physical source gets one. Fails as PlanningFailed. */
+    private static PlanResponse respond(PlanRequest request) {
+        PlanRequest.Builder builder = request.toBuilder();
+        long id = 1000;
+        for (int i = 0; i < builder.getSourcesCount(); i++) {
+            if (builder.getSources(i).getPhysicalSourcesCount() == 0) {
+                builder.setSources(i, withPhysicalSources(builder.getSources(i), id++));
+            }
+        }
+        try {
+            PlanResponse response = PlanResponse.parseFrom(NativePlanner.plan(builder.build().toByteArray()));
+            if (!response.getError().isEmpty()) {
+                throw new PlanningFailed(response);
+            }
+            return response;
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /** A planned query: the response, its Substrait plan and its physical operators (each part's sink first). */
+    private record Planned(PlanResponse response, Plan plan, List<PhysicalOperator> operators) {
+        String explain() {
+            return response.getExplain();
+        }
+
+        /// The optimized plan, before the placement and the physical operators.
+        String optimized() {
+            return response.getStepsList().stream().filter(step -> step.getName().equals("watermark assigners after the sources"))
+                .findFirst().orElseThrow().getPlan();
+        }
+
+        List<PhysicalOperator> all(java.util.function.Predicate<PhysicalOperator> predicate) {
+            return operators.stream().filter(predicate).toList();
+        }
+
+        PhysicalOperator one(java.util.function.Predicate<PhysicalOperator> predicate) {
+            List<PhysicalOperator> found = all(predicate);
+            assertEquals(1, found.size(), explain());
+            return found.get(0);
+        }
+
+        /// The output names of the query (the sink's).
+        List<String> names() {
+            return one(PhysicalOperator::hasSink).getOutputSchemaList().stream().map(PhysicalOperator.Field::getName).toList();
+        }
+    }
+
+    private static Planned planned(PlanRequest request) throws Exception {
+        PlanResponse response = respond(request);
+        Plan plan = Plan.parseFrom(response.getSubstraitPlan());
+        List<PhysicalOperator> operators = new java.util.ArrayList<>();
+        for (var relation : plan.getRelationsList()) {
+            collectPhysical(relation.getRoot().getInput(), operators);
+        }
+        return new Planned(response, plan, operators);
+    }
+
+    private static Planned plan(String sql) throws Exception {
+        return planned(request(sql, SOURCES));
+    }
+
+    private static Planned planFinite(String sql) throws Exception {
+        return planned(request(sql, SOURCES).toBuilder().setFiniteInputs(true).build());
+    }
+
+    private static PlanRequest request(String sql, List<Source> sources) {
+        return PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources).build();
     }
 
     @Test
     void selectionAndProjection() throws Exception {
-        Rel rel = root(plan("SELECT id, val * 2 AS v2 FROM s1 WHERE val > 10"));
-        assertTrue(isProjection(rel));
-        assertTrue(projectionInput(rel).hasFilter());
-        assertTrue(projectionInput(rel).getFilter().getInput().hasRead());
+        Planned planned = plan("SELECT id, val * 2 AS v2 FROM s1 WHERE val > 10");
+        planned.one(PhysicalOperator::hasSelection);
+        assertEquals(1, planned.one(PhysicalOperator::hasMap).getMap().getAssignmentsCount());
     }
 
     @Test
     void outputNamesFollowSqlCasing() throws Exception {
         /// As in standard SQL (and our identifiers): unquoted names are upper case, quoted ones keep their case.
-        Plan plan = plan("SELECT id, val * 2 AS v2, val AS \"Quoted\" FROM s1");
         /// A column passed on keeps its own name if the query spells it in another case (the source's column is "id").
-        assertEquals(List.of("id", "V2", "Quoted"), plan.getRelations(0).getRoot().getNamesList());
+        assertEquals(List.of("id", "V2", "Quoted"), plan("SELECT id, val * 2 AS v2, val AS \"Quoted\" FROM s1").names());
     }
 
     @Test
     void union() throws Exception {
-        assertTrue(root(plan("SELECT id FROM s1 UNION ALL SELECT id FROM s2")).hasSet());
+        /// Each input is a pipeline of its own, into the one sink.
+        Planned planned = plan("SELECT id FROM s1 UNION ALL SELECT id FROM s2");
+        assertEquals(2, planned.all(PhysicalOperator::hasSourceScan).size());
+        planned.one(PhysicalOperator::hasSink);
     }
 
     @Test
     void unsignedFieldsAreSubstraitUnsignedIntegers() throws Exception {
         Source source = Source.newBuilder().setName("u").addFields(field("x", FieldType.UINT64)).build();
         /// Above 2^63 - 1: compared as a signed value, every x >= 2^63 would be smaller.
-        Plan plan = Plan.parseFrom(stub.plan(request("SELECT x + 1 FROM u WHERE x > 9223372036854775807", List.of(source)))
-            .getSubstraitPlan());
+        Plan plan = planned(request("SELECT x + 1 FROM u WHERE x > 9223372036854775807", List.of(source))).plan();
         assertTrue(plan.getExtensionUrnsList().stream().anyMatch(u -> u.getUrn().equals("extension:io.substrait:unsigned_integers")),
             plan::toString);
         assertTrue(plan.getExtensionsList().stream().anyMatch(e -> e.hasExtensionType() && e.getExtensionType().getName().equals("u64")),
             plan::toString);
-        assertTrue(plan.toString().contains("CAST") || plan.toString().contains("cast"), "the literal is cast to u64: " + plan);
+        assertTrue(plan.getExtensionsList().stream().anyMatch(e -> e.getExtensionFunction().getName().equals("gt:u!u64_u!u64")),
+            "the filter compares as u64: " + plan);
     }
 
     @Test
     void mixingSignedAndUnsignedFollowsCalcite() throws Exception {
         Source source = Source.newBuilder().setName("u").addFields(field("x", FieldType.UINT64)).addFields(field("i", FieldType.INT64))
             .addFields(field("s", FieldType.INT32)).build();
+        java.util.function.Function<String, String> optimized = sql -> {
+            try {
+                return planned(request(sql, List.of(source))).optimized();
+            } catch (Exception e) {
+                throw new AssertionError(e);
+            }
+        };
         /// Arithmetic computes in Calcite's result type (at equal width the unsigned one): the signed operand is cast.
-        assertTrue(stub.plan(request("SELECT x + i AS a FROM u", List.of(source))).getExplain().contains("+($0, CAST($1):BIGINT UNSIGNED"));
+        assertTrue(optimized.apply("SELECT x + i AS a FROM u").contains("+($0, CAST($1):BIGINT UNSIGNED"));
         /// Comparisons compare in the type Calcite casts to: U = I is CAST(U AS BIGINT) = I.
-        assertTrue(stub.plan(request("SELECT x FROM u WHERE x < i", List.of(source))).getExplain().contains("<(CAST($0):BIGINT"));
+        assertTrue(optimized.apply("SELECT x FROM u WHERE x < i").contains("<(CAST($0):BIGINT"));
         /// ... but against non-negative literals the unsigned value is compared exactly.
-        assertTrue(stub.plan(request("SELECT x FROM u WHERE x > 5", List.of(source))).getExplain().contains(">($0, CAST(5):BIGINT UNSIGNED"));
+        assertTrue(optimized.apply("SELECT x FROM u WHERE x > 5").contains(">($0, CAST(5):BIGINT UNSIGNED"));
         /// Casts between signed and unsigned are allowed (they wrap).
-        assertDoesNotThrow(() -> stub.plan(request("SELECT CAST(x AS BIGINT) AS a, CAST(s AS INTEGER UNSIGNED) AS b FROM u", List.of(source))));
+        assertDoesNotThrow(() -> respond(request("SELECT CAST(x AS BIGINT) AS a, CAST(s AS INTEGER UNSIGNED) AS b FROM u", List.of(source))));
     }
-
     @Test
     void physicalPlan() throws Exception {
         /// s2 has two physical sources: its scan becomes a union of both.
         List<Source> sources = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21, 22));
         PlanRequest request = PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT id, val * 2 AS v2 FROM s1 WHERE val > 20 UNION ALL SELECT id, val FROM s2")
-            .addAllSources(sources).setPhysical(true).setSinkFormat("JSON").build();
-        PlanResponse response = stub.plan(request);
+            .addAllSources(sources).setSinkFormat("JSON").build();
+        PlanResponse response = respond(request);
         Rel root = Plan.parseFrom(response.getSubstraitPlan()).getRelations(0).getRoot().getInput();
 
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
@@ -145,9 +207,9 @@ class PlannerServerTest {
     void unusedColumnsAreTrimmedAtTheSources() throws Exception {
         /// Only id of each source is used: neither the join state nor its result carries val (physical and anonymous sources).
         List<Source> sources = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21));
-        String explain = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+        String explain = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT a.id FROM s1 a, s2 b WHERE a.id = b.id")
-            .addAllSources(sources).setPhysical(true).setFiniteInputs(true).build()).getExplain();
+            .addAllSources(sources).setFiniteInputs(true).build()).getExplain();
         java.util.regex.Matcher stored = java.util.regex.Pattern.compile("JoinBuild\\(.*?stored=\\[\\[(.*?)\\]\\]").matcher(explain);
         int builds = 0;
         while (stored.find()) {
@@ -157,14 +219,14 @@ class PlannerServerTest {
         assertEquals(2, builds, explain);
 
         /// The same with an anonymous source as the right side.
-        String anonymous = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+        String anonymous = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT a.id FROM s1 a, TABLE(FILE(schema => 'id UINT64 NOT NULL, val UINT64 NOT NULL', file_path => 'b.csv',"
                 + " format => 'CSV', host => 'w1')) b WHERE a.id = b.id")
             .addSourceTypes(nes.calcite.proto.SourceType.newBuilder().setName("File").addOptions("FILE_PATH"))
             .addFormatOptions("TYPE")
             .addSources(onHosts(withPhysicalSources(stream("s1"), 11), "w1"))
             .addTopology(nes.calcite.proto.Worker.newBuilder().setHost("w1")).setSinkHost("w1")
-            .setPhysical(true).setFiniteInputs(true).build()).getExplain();
+            .setFiniteInputs(true).build()).getExplain();
         stored = java.util.regex.Pattern.compile("JoinBuild\\(.*?stored=\\[\\[(.*?)\\]\\]").matcher(anonymous);
         builds = 0;
         while (stored.find()) {
@@ -179,10 +241,10 @@ class PlannerServerTest {
         /// As TPC-H Q19: the join key and a filter are in each OR branch. They become conditions of their own, so the join has
         /// a key (a hash join, not a nested-loop join over all pairs) and the filter goes below it.
         List<Source> sources = List.of(withPhysicalSources(stream("s1"), 11), withPhysicalSources(stream("s2"), 21));
-        String explain = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+        String explain = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT SUM(a.val) AS s FROM s1 a, s2 b WHERE (a.id = b.id AND a.val > 1 AND b.val < 5 AND a.ts > 0)"
                 + " OR (a.id = b.id AND a.val > 3 AND b.val < 9 AND a.ts > 0)")
-            .addAllSources(sources).setPhysical(true).setFiniteInputs(true).build()).getExplain();
+            .addAllSources(sources).setFiniteInputs(true).build()).getExplain();
         assertTrue(explain.contains("implementation=[HASH_JOIN]"), explain);
         /// The filters implied for each side: b.val < 5 OR b.val < 9, and a.ts > 0 AND (a.val > 1 OR a.val > 3).
         assertTrue(explain.contains("Selection(condition=[<($1, 9)])"), explain);
@@ -196,8 +258,8 @@ class PlannerServerTest {
         Source s1 = withPhysicalSources(stream("s1"), 11);
         List<Source> sources = List.of(s1.toBuilder().setPhysicalSources(0, s1.getPhysicalSources(0).toBuilder().setHost("w1")).build());
         for (var policy : List.of(nes.calcite.proto.LayoutPolicy.ROWS, nes.calcite.proto.LayoutPolicy.COLUMNS)) {
-            PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
-                .setSql("SELECT id + 1 AS i FROM s1 WHERE val > 20").addAllSources(sources).setPhysical(true)
+            PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+                .setSql("SELECT id + 1 AS i FROM s1 WHERE val > 20").addAllSources(sources)
                 .addTopology(nes.calcite.proto.Worker.newBuilder().setHost("w1").addDownstream("w2"))
                 .addTopology(nes.calcite.proto.Worker.newBuilder().setHost("w2")).setSinkHost("w2")
                 .setSinkFormat("NATIVE").setLayoutPolicy(policy).build());
@@ -222,6 +284,7 @@ class PlannerServerTest {
         return layout.hasFormat() ? layout.getFormat().getType() : layout.getNative().getGroups(0).getKind().name();
     }
 
+
     @Test
     void modelInference() throws Exception {
         Source flowers = Source.newBuilder().setName("flowers").addFields(field("p1", FieldType.FLOAT32)).addFields(field("p2", FieldType.FLOAT32))
@@ -238,24 +301,23 @@ class PlannerServerTest {
             "SELECT p1, setosa FROM TABLE(MODEL_INFERENCE(TABLE flowers, 'iris')) WHERE setosa > 0.9",
             "SELECT * FROM TABLE(MODEL_INFERENCE((SELECT p1 * 2 AS p1, p2 FROM flowers), 'iris'))",
             "SELECT * FROM TABLE(MODEL_INFERENCE((SELECT * FROM TABLE(MODEL_INFERENCE(TABLE flowers, 'iris'))), 'scale'))")) {
-            PlanResponse response = stub.plan(request.apply(sql));
-            String plan = response.getExplain();
+            String plan = planned(request.apply(sql)).optimized();
             assertTrue(plan.contains("model=[iris]"), sql + "\n" + plan);
             assertTrue(!plan.contains("TableFunctionScan"), plan);
         }
-        assertTrue(stub.plan(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE((SELECT * FROM TABLE(MODEL_INFERENCE(TABLE flowers, 'iris'))), 'scale'))"))
-            .getExplain().contains("model=[scale]"));
-        StatusRuntimeException unknown = assertThrows(StatusRuntimeException.class,
-            () -> stub.plan(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE(TABLE flowers, 'nope'))")));
+        assertTrue(planned(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE((SELECT * FROM TABLE(MODEL_INFERENCE(TABLE flowers, 'iris'))), 'scale'))"))
+            .optimized().contains("model=[scale]"));
+        PlanningFailed unknown = assertThrows(PlanningFailed.class,
+            () -> respond(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE(TABLE flowers, 'nope'))")));
         assertTrue(unknown.getMessage().contains("unknown model"), unknown.getMessage());
 
         /// The node shows the input columns that the model reads (by name) and the columns it appends.
-        String plan = stub.plan(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE((SELECT ts, p2, p1 FROM flowers), 'iris'))")).getExplain();
+        String plan = planned(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE((SELECT ts, p2, p1 FROM flowers), 'iris'))")).optimized();
         assertTrue(plan.contains("NesModelInference(model=[iris], reads P1=[$2], reads P2=[$1], appends setosa=[$3 REAL],"
             + " appends virginica=[$4 REAL])"), plan);
         /// An input without a column that the model reads.
-        StatusRuntimeException missing = assertThrows(StatusRuntimeException.class,
-            () -> stub.plan(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE((SELECT p1 FROM flowers), 'iris'))")));
+        PlanningFailed missing = assertThrows(PlanningFailed.class,
+            () -> respond(request.apply("SELECT * FROM TABLE(MODEL_INFERENCE((SELECT p1 FROM flowers), 'iris'))")));
         assertTrue(missing.getMessage().contains("model iris reads the column p2, which its input does not have"), missing.getMessage());
     }
 
@@ -263,11 +325,11 @@ class PlannerServerTest {
     void windowOverSubquery() throws Exception {
         /// Calcite resolves DESCRIPTOR(ts) over a subquery against the subquery's FROM item (WindowInputs works around it):
         /// here ts is column 1 of the subquery, but column 2 of s1.
-        String plan = stub.plan(request("SELECT window_start, SUM(val) AS s FROM TABLE(TUMBLE((SELECT val, ts FROM s1 WHERE id > 1),"
-            + " DESCRIPTOR(ts), INTERVAL '1' SECOND)) GROUP BY window_start, window_end", SOURCES)).getExplain();
+        String plan = planned(request("SELECT window_start, SUM(val) AS s FROM TABLE(TUMBLE((SELECT val, ts FROM s1 WHERE id > 1),"
+            + " DESCRIPTOR(ts), INTERVAL '1' SECOND)) GROUP BY window_start, window_end", SOURCES)).optimized();
         /// The window's input: the time field (spec.time_field) is ts, i.e. s1's column 2.
         /// time_field is 0 (the default, not printed): TS, which is s1's column 2.
-        assertTrue(plan.contains("NesProjection(TS=[$2], VAL=[$1])") && !plan.contains("time_field"), plan);
+        assertTrue(plan.contains("LogicalProject(TS=[$2], VAL=[$1])") && !plan.contains("time_field"), plan);
         /// A time column renamed in the subquery is still the source's time column.
         assertDoesNotThrow(() -> plan("SELECT window_start, COUNT(*) AS n FROM TABLE(TUMBLE((SELECT val, ts AS t2 FROM s1),"
             + " DESCRIPTOR(t2), INTERVAL '1' SECOND)) GROUP BY window_start, window_end"));
@@ -276,8 +338,8 @@ class PlannerServerTest {
     @Test
     void numericLiterals() throws Exception {
         /// An integer above BIGINT is a BIGINT UNSIGNED; above 2^63 - 1 it cannot cross into the engine (yet).
-        StatusRuntimeException big = assertThrows(StatusRuntimeException.class,
-            () -> stub.plan(request("SELECT id FROM s1 WHERE ts = 18446744073709551615", SOURCES)));
+        PlanningFailed big = assertThrows(PlanningFailed.class,
+            () -> respond(request("SELECT id FROM s1 WHERE ts = 18446744073709551615", SOURCES)));
         assertTrue(big.getMessage().contains("unsigned literals above 2^63 - 1"), big.getMessage());
     }
 
@@ -286,17 +348,17 @@ class PlannerServerTest {
         /// Calcite casts one join key in a projection above the window function; ProjectWindowTransposeRule moves it below.
         Source left = Source.newBuilder().setName("l").addFields(field("f", FieldType.FLOAT32)).addFields(field("ts", FieldType.UINT64)).build();
         Source right = Source.newBuilder().setName("r").addFields(field("k", FieldType.INT8)).addFields(field("ts", FieldType.UINT64)).build();
-        PlanResponse response = stub.plan(request("SELECT a.window_start, a.f, b.k FROM TABLE(TUMBLE(TABLE l, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS a"
+        Planned response = planned(request("SELECT a.window_start, a.f, b.k FROM TABLE(TUMBLE(TABLE l, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS a"
             + " JOIN TABLE(TUMBLE(TABLE r, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS b ON a.window_start = b.window_start AND a.f = b.k",
             List.of(left, right)));
-        assertTrue(response.getExplain().contains("NesWindowJoin") && !response.getExplain().contains("TableFunctionScan"), response.getExplain());
+        assertTrue(response.optimized().contains("NesWindowJoin") && !response.optimized().contains("TableFunctionScan"), response.optimized());
     }
 
     @Test
     void timestampFunctions() throws Exception {
         /// SQL's timestamp functions go to the engine as they are (a timestamp is unix milliseconds there).
-        String plan = stub.plan(request("SELECT EXTRACT(DAY FROM TIMESTAMP_MILLIS(CAST(ts AS BIGINT))) AS d,"
-            + " FORMAT_DATETIME('%Y-%m-%dT%H:%M:%E3SZ', TIMESTAMP_MILLIS(CAST(ts AS BIGINT))) AS f FROM s1", SOURCES)).getExplain();
+        String plan = planned(request("SELECT EXTRACT(DAY FROM TIMESTAMP_MILLIS(CAST(ts AS BIGINT))) AS d,"
+            + " FORMAT_DATETIME('%Y-%m-%dT%H:%M:%E3SZ', TIMESTAMP_MILLIS(CAST(ts AS BIGINT))) AS f FROM s1", SOURCES)).optimized();
         assertTrue(plan.contains("EXTRACT(FLAG(DAY)") && plan.contains("FORMAT_DATETIME"), plan);
     }
 
@@ -306,39 +368,31 @@ class PlannerServerTest {
             .addSourceTypes(nes.calcite.proto.SourceType.newBuilder().setName("File").addOptions("FILE_PATH"))
             .addSourceTypes(nes.calcite.proto.SourceType.newBuilder().setName("Generator").addOptions("GENERATOR_SCHEMA").addOptions("SEED"))
             .addFormatOptions("TYPE").addFormatOptions("FIELD_DELIMITER").build();
-        PlanResponse response = stub.plan(request.apply("SELECT id, \"name\" FROM TABLE(FILE(schema => 'id UINT64 NOT NULL, \"name\" VARSIZED',"
+        Planned response = planned(request.apply("SELECT id, \"name\" FROM TABLE(FILE(schema => 'id UINT64 NOT NULL, \"name\" VARSIZED',"
             + " file_path => 'data.csv', format => 'CSV', format_field_delimiter => ';')) WHERE id > 1"));
-        AnonymousSource source = anonymousSource(Plan.parseFrom(response.getSubstraitPlan()).getRelations(0).getRoot().getInput());
+        AnonymousSource source = response.one(PhysicalOperator::hasSourceScan).getSourceScan().getAnonymous();
         assertEquals("File", source.getType());
         assertEquals(List.of("ID", "name"), source.getSchemaList().stream().map(Field::getName).toList());
         assertEquals(java.util.Map.of("FILE_PATH", "'data.csv'"), source.getSourceOptionsMap());
         assertEquals(java.util.Map.of("TYPE", "CSV", "FIELD_DELIMITER", "';'"), source.getFormatOptionsMap());
-        assertDoesNotThrow(() -> stub.plan(request.apply("SELECT * FROM TABLE(GENERATOR(schema => 'a UINT64 NOT NULL', seed => 1,"
+        assertDoesNotThrow(() -> respond(request.apply("SELECT * FROM TABLE(GENERATOR(schema => 'a UINT64 NOT NULL', seed => 1,"
             + " generator_schema => 'SEQUENCE UINT64 0 10 1', format => 'CSV'))")));
         /// Calcite checks the argument names; the schema is required.
-        assertThrows(StatusRuntimeException.class, () -> stub.plan(request.apply("SELECT * FROM TABLE(FILE(schema => 'a UINT64', nope => 1))")));
-        assertThrows(StatusRuntimeException.class, () -> stub.plan(request.apply("SELECT * FROM TABLE(FILE(file_path => 'x'))")));
+        assertThrows(PlanningFailed.class, () -> respond(request.apply("SELECT * FROM TABLE(FILE(schema => 'a UINT64', nope => 1))")));
+        assertThrows(PlanningFailed.class, () -> respond(request.apply("SELECT * FROM TABLE(FILE(file_path => 'x'))")));
         /// Also in a (correlated) subquery, which rules only see once it is a join.
         String file = "TABLE(FILE(schema => 'id UINT64 NOT NULL, val UINT64 NOT NULL', file_path => 'data.csv', format => 'CSV'))";
-        PlanResponse correlated = stub.plan(request.apply("SELECT r.id FROM " + file + " AS r WHERE r.val > (SELECT AVG(i.val) FROM "
-            + file + " AS i WHERE i.id = r.id)").toBuilder().setFiniteInputs(true).setPhysical(true).build());
+        PlanResponse correlated = respond(request.apply("SELECT r.id FROM " + file + " AS r WHERE r.val > (SELECT AVG(i.val) FROM "
+            + file + " AS i WHERE i.id = r.id)").toBuilder().setFiniteInputs(true).build());
         assertFalse(correlated.getExplain().contains("TableFunctionScan"), correlated.getExplain());
-    }
-
-    private static AnonymousSource anonymousSource(Rel rel) throws Exception {
-        if (rel.hasExtensionLeaf() && rel.getExtensionLeaf().getDetail().is(AnonymousSource.class)) {
-            return rel.getExtensionLeaf().getDetail().unpack(AnonymousSource.class);
-        }
-        Rel input = isProjection(rel) ? projectionInput(rel) : rel.hasFilter() ? rel.getFilter().getInput() : null;
-        return input == null ? null : anonymousSource(input);
     }
 
     @Test
     void oneMapPerProjection() throws Exception {
         /// A projection computes all its values in one Map, however many there are: here three, one of them a copy.
-        PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+        PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT id + 1 AS a, val * 2 AS b, id AS c, id AS d FROM s1").addAllSources(List.of(withPhysicalSources(stream("s1"), 11)))
-            .setPhysical(true).build());
+            .build());
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
         collectPhysical(Plan.parseFrom(response.getSubstraitPlan()).getRelations(0).getRoot().getInput(), operators);
         List<PhysicalOperator> maps = operators.stream().filter(PhysicalOperator::hasMap).toList();
@@ -348,10 +402,9 @@ class PlannerServerTest {
 
     @Test
     void median() throws Exception {
-        /// Calcite has no MEDIAN; ours (NesFunctions) becomes the window's MEDIAN aggregation, a DOUBLE.
-        WindowAggregate spec = window(plan("SELECT window_start, MEDIAN(val) AS m FROM " + T1 + " GROUP BY window_start, window_end"));
-        assertEquals("MEDIAN", spec.getAggregates(0).getFunction());
-        assertEquals("DOUBLE", spec.getAggregates(0).getType());
+        /// Calcite has no MEDIAN; ours (NesFunctions) becomes the window's MEDIAN aggregation.
+        Planned planned = plan("SELECT window_start, MEDIAN(val) AS m FROM " + T1 + " GROUP BY window_start, window_end");
+        assertEquals("MEDIAN", windowBuild(planned).getAggregations(0).getFunction());
     }
 
     @Test
@@ -361,8 +414,8 @@ class PlannerServerTest {
         PlanRequest request = PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT window_start, id, COUNT(*) AS n, SUM(val) AS total FROM " + T2.replace("s2", "s2")
                 + " WHERE val > 1 GROUP BY window_start, window_end, id")
-            .addAllSources(sources).setPhysical(true).build();
-        PlanResponse response = stub.plan(request);
+            .addAllSources(sources).build();
+        PlanResponse response = respond(request);
         System.out.println(response.getExplain());
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
         collectPhysical(Plan.parseFrom(response.getSubstraitPlan()).getRelations(0).getRoot().getInput(), operators);
@@ -393,8 +446,8 @@ class PlannerServerTest {
             worker("edge", 0, "mid"), worker("mid", 0, "cloud"), worker("cloud", 0));
         PlanRequest request = PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT id, val * 2 AS v2 FROM s1 WHERE val > 20 UNION ALL SELECT id, val FROM s2")
-            .addAllSources(sources).setPhysical(true).addAllTopology(topology).setSinkHost("cloud").build();
-        PlanResponse response = stub.plan(request);
+            .addAllSources(sources).addAllTopology(topology).setSinkHost("cloud").build();
+        PlanResponse response = respond(request);
         System.out.println(response.getExplain());
         Plan plan = Plan.parseFrom(response.getSubstraitPlan());
 
@@ -438,9 +491,9 @@ class PlannerServerTest {
         /// s2's physical sources run on edge and on cloud; the window is one operator for the placement: it runs on one
         /// worker, and the rows of the other source come over the network into its build there.
         List<Source> sources = List.of(onHosts(withPhysicalSources(stream("s2"), 21, 22), "edge", "cloud"));
-        PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
+        PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS)
             .setSql("SELECT window_start, COUNT(*) AS n FROM " + T2 + " GROUP BY window_start, window_end")
-            .addAllSources(sources).setPhysical(true).addAllTopology(List.of(worker("edge", 0, "cloud"), worker("cloud", 0)))
+            .addAllSources(sources).addAllTopology(List.of(worker("edge", 0, "cloud"), worker("cloud", 0)))
             .setSinkHost("cloud").build());
         System.out.println(response.getExplain());
         java.util.Map<String, List<PhysicalOperator>> byHost = new java.util.HashMap<>();
@@ -465,12 +518,12 @@ class PlannerServerTest {
         List<Source> sources = List.of(onHosts(withPhysicalSources(stream("s1"), 11), "edge"));
         String sql = "SELECT id FROM s1 WHERE val > 20";
         /// The sink is not downstream of the source.
-        assertThrows(io.grpc.StatusRuntimeException.class, () -> stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
-            .setPhysical(true).addAllTopology(List.of(worker("edge", 0), worker("cloud", 0, "edge"))).setSinkHost("cloud").build()));
+        assertThrows(PlanningFailed.class, () -> respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
+            .addAllTopology(List.of(worker("edge", 0), worker("cloud", 0, "edge"))).setSinkHost("cloud").build()));
         /// As in our own placement, the source and the sink cost no capacity: the filter and the projection are the 2 operators.
         /// With room for one on each worker, the projection runs on cloud: edge sends the filtered rows.
-        PlanResponse placed = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
-            .setPhysical(true).addAllTopology(List.of(worker("edge", 1, "cloud"), worker("cloud", 1))).setSinkHost("cloud").build());
+        PlanResponse placed = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
+            .addAllTopology(List.of(worker("edge", 1, "cloud"), worker("cloud", 1))).setSinkHost("cloud").build());
         String placement = placed.getStepsList().stream().filter(step -> step.getName().startsWith("placed")).findFirst().orElseThrow().getPlan();
         assertTrue(placement.matches("(?s)on cloud, into the sink:\nLogicalProject.*on edge, to cloud:\nLogicalFilter.*"), placement);
     }
@@ -487,7 +540,7 @@ class PlannerServerTest {
             + " ON a.window_start = b.window_start AND a.id = b.id), DESCRIPTOR(ts), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS c"
             + " JOIN TABLE(HOP(TABLE s3, DESCRIPTOR(ts), INTERVAL '0.5' SECOND, INTERVAL '1' SECOND)) AS d"
             + " ON c.window_start = d.window_start AND c.id = d.id";
-        PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources).setPhysical(true)
+        PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
             .addAllTopology(List.of(worker("edge", 1, "cloud"), worker("cloud", 10))).setSinkHost("cloud").build());
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
         for (var relation : Plan.parseFrom(response.getSubstraitPlan()).getRelationsList()) {
@@ -509,8 +562,8 @@ class PlannerServerTest {
         };
         String sql = "SELECT a.window_start, a.ts, b.ts AS ts2 FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS a"
             + " JOIN TABLE(TUMBLE(TABLE s2, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS b ON a.window_start = b.window_start AND a.id = b.id";
-        PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addSources(signedTime.apply("s1"))
-            .addSources(signedTime.apply("s2")).setPhysical(true).addTopology(worker("edge", 10)).setSinkHost("edge").build());
+        PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addSources(signedTime.apply("s1"))
+            .addSources(signedTime.apply("s2")).addTopology(worker("edge", 10)).setSinkHost("edge").build());
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
         for (var relation : Plan.parseFrom(response.getSubstraitPlan()).getRelationsList()) {
             collectPhysical(relation.getRoot().getInput(), operators);
@@ -526,7 +579,7 @@ class PlannerServerTest {
         List<Source> sources = List.of(onHosts(withPhysicalSources(stream("s1"), 11), "edge"));
         String sql = "SELECT window_start, SUM(val) AS s FROM TABLE(TUMBLE((SELECT val, ts FROM s1 WHERE id > 1),"
             + " DESCRIPTOR(ts), INTERVAL '1' SECOND)) GROUP BY window_start, window_end";
-        PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources).setPhysical(true)
+        PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
             .addAllTopology(List.of(worker("edge", 1, "cloud"), worker("cloud", 10))).setSinkHost("cloud").build());
         List<PhysicalOperator> operators = new java.util.ArrayList<>();
         for (var relation : Plan.parseFrom(response.getSubstraitPlan()).getRelationsList()) {
@@ -548,7 +601,7 @@ class PlannerServerTest {
         String sql = "SELECT a.id, b.val FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS a"
             + " JOIN TABLE(TUMBLE(TABLE s2, DESCRIPTOR(ts), INTERVAL '1' SECOND)) AS b ON a.window_start = b.window_start AND a.id = b.id";
         for (boolean nestedLoop : List.of(false, true)) {
-            PlanResponse response = stub.plan(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources).setPhysical(true)
+            PlanResponse response = respond(PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources)
                 .addTopology(worker("edge", 10)).setSinkHost("edge").setNestedLoopJoins(nestedLoop).build());
             List<PhysicalOperator> operators = new java.util.ArrayList<>();
             for (var relation : Plan.parseFrom(response.getSubstraitPlan()).getRelationsList()) {
@@ -606,119 +659,124 @@ class PlannerServerTest {
             collectPhysical(input, operators);
         }
     }
+    private static PhysicalOperator.WindowBuild windowBuild(Planned planned) {
+        return planned.one(PhysicalOperator::hasWindowBuild).getWindowBuild();
+    }
+
+    private static PhysicalOperator.Join join(Planned planned) {
+        return planned.one(PhysicalOperator::hasJoinProbe).getJoinProbe().getJoin();
+    }
+
+    /** The pipeline of the only operator that matches. */
+    private static int pipelineOf(Planned planned, java.util.function.Predicate<PhysicalOperator> predicate) {
+        return planned.one(predicate).getPipeline();
+    }
 
     @Test
     void tumblingWindow() throws Exception {
-        WindowAggregate window = window(plan(
+        PhysicalOperator.WindowBuild build = windowBuild(plan(
             "SELECT window_start, window_end, id, SUM(val) AS s "
                 + "FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' MINUTE)) "
                 + "GROUP BY window_start, window_end, id"));
-        assertEquals(Kind.TUMBLING, window.getKind());
-        assertEquals(60_000, window.getSizeMs());
-        assertEquals(60_000, window.getSlideMs());
-        assertEquals(1, window.getGroupKeysCount());
-        assertEquals("SUM", window.getAggregates(0).getFunction());
+        assertEquals(Kind.TUMBLING, build.getWindow().getKind());
+        assertEquals(60_000, build.getWindow().getSizeMs());
+        assertEquals(60_000, build.getWindow().getSlideMs());
+        assertEquals(1, build.getKeyFieldsCount());
+        assertEquals("SUM", build.getAggregations(0).getFunction());
     }
 
     @Test
     void slidingWindowWithCountStar() throws Exception {
-        Plan plan = plan(
+        Planned planned = plan(
             "SELECT window_start, window_end, COUNT(*) AS c "
                 + "FROM TABLE(HOP(TABLE s1, DESCRIPTOR(ts), INTERVAL '10' SECOND, INTERVAL '1' MINUTE)) "
                 + "GROUP BY window_start, window_end");
-        WindowAggregate window = window(plan);
-        assertEquals(Kind.SLIDING, window.getKind());
-        assertEquals(60_000, window.getSizeMs());
-        assertEquals(10_000, window.getSlideMs());
-        assertEquals(0, window.getGroupKeysCount());
-        assertEquals("COUNT", window.getAggregates(0).getFunction());
-        assertTrue(!window.getAggregates(0).hasField());
+        PhysicalOperator.WindowBuild build = windowBuild(planned);
+        assertEquals(Kind.SLIDING, build.getWindow().getKind());
+        assertEquals(60_000, build.getWindow().getSizeMs());
+        assertEquals(10_000, build.getWindow().getSlideMs());
+        assertEquals(0, build.getKeyFieldsCount());
+        assertEquals("COUNT", build.getAggregations(0).getFunction());
+        /// COUNT(*) counts the time field, NULLs included.
+        assertTrue(build.getAggregations(0).getIncludeNulls());
+        assertEquals(build.getTimeField(), build.getAggregations(0).getField());
         /// The window columns keep their names, which differ from the query's only in case (Planner.outputNames).
-        assertEquals(List.of("window_start", "window_end", "C"), plan.getRelations(0).getRoot().getNamesList());
+        assertEquals(List.of("window_start", "window_end", "C"), planned.names());
     }
 
     @Test
     void windowOverExpressionsAndFilter() throws Exception {
-        Plan plan = plan(
+        Planned planned = plan(
             "SELECT window_start, MAX(val * 2) AS m, AVG(val) AS a "
                 + "FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '5' SECOND)) "
                 + "WHERE id > 3 "
                 + "GROUP BY window_start");
-        WindowAggregate window = window(plan);
-        assertEquals(5_000, window.getSizeMs());
-        assertEquals("MAX", window.getAggregates(0).getFunction());
-        assertEquals("AVG", window.getAggregates(1).getFunction());
-        /// The window aggregation reads from Project(Filter(Read)): the project computes val * 2 as a plain field.
-        Rel input = windowRel(root(plan)).getExtensionSingle().getInput();
-        assertTrue(isProjection(input), input::toString);
-        assertTrue(projectionInput(input).hasFilter(), input::toString);
+        PhysicalOperator.WindowBuild build = windowBuild(planned);
+        assertEquals(5_000, build.getWindow().getSizeMs());
+        assertEquals("MAX", build.getAggregations(0).getFunction());
+        assertEquals("AVG", build.getAggregations(1).getFunction());
+        /// The build's pipeline filters, and a Map computes val * 2 as a plain field.
+        int pipeline = pipelineOf(planned, PhysicalOperator::hasWindowBuild);
+        assertEquals(pipeline, pipelineOf(planned, PhysicalOperator::hasSelection), planned.explain());
+        assertTrue(planned.all(PhysicalOperator::hasMap).stream().anyMatch(map -> map.getPipeline() == pipeline), planned.explain());
     }
 
     @Test
     void windowOffsetIsRejected() {
-        StatusRuntimeException error = assertThrows(StatusRuntimeException.class, () -> plan(
+        PlanningFailed error = assertThrows(PlanningFailed.class, () -> plan(
             "SELECT window_start, COUNT(*) FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' MINUTE, INTERVAL '5' SECOND)) "
                 + "GROUP BY window_start"));
-        assertEquals(Status.Code.UNIMPLEMENTED, error.getStatus().getCode());
+        assertTrue(error.response.getUnsupported(), error.getMessage());
     }
 
     @Test
     void orderByAndLimitAreRejected() {
         for (String sql : List.of("SELECT id FROM s1 ORDER BY id", "SELECT id FROM s1 LIMIT 3")) {
-            StatusRuntimeException error = assertThrows(StatusRuntimeException.class, () -> plan(sql));
-            assertEquals(Status.Code.UNIMPLEMENTED, error.getStatus().getCode(), sql);
-            assertTrue(error.getStatus().getDescription().contains("ORDER BY, LIMIT and OFFSET"), error.getStatus().getDescription());
+            PlanningFailed error = assertThrows(PlanningFailed.class, () -> plan(sql));
+            assertTrue(error.response.getUnsupported(), sql);
+            assertTrue(error.getMessage().contains("ORDER BY, LIMIT and OFFSET"), error.getMessage());
         }
     }
 
     @Test
     void unknownSourceIsReported() {
-        StatusRuntimeException error = assertThrows(StatusRuntimeException.class, () -> plan("SELECT * FROM nope"));
-        assertEquals(Status.Code.INVALID_ARGUMENT, error.getStatus().getCode());
-        assertTrue(error.getStatus().getDescription().contains("NOPE"), error.getStatus().getDescription());
+        PlanningFailed error = assertThrows(PlanningFailed.class, () -> plan("SELECT * FROM nope"));
+        assertFalse(error.response.getUnsupported(), "an invalid query");
+        assertTrue(error.getMessage().contains("NOPE"), error.getMessage());
     }
 
     @Test
     void ddlIsRejected() {
-        assertThrows(StatusRuntimeException.class, () -> plan("INSERT INTO s1 SELECT * FROM s2"));
+        assertThrows(PlanningFailed.class, () -> plan("INSERT INTO s1 SELECT * FROM s2"));
     }
 
     @Test
     void filterOnGroupKeyMovesBelowWindow() throws Exception {
-        Plan plan = plan(
+        Planned planned = plan(
             "SELECT * FROM (SELECT window_start, id, SUM(val) AS s "
                 + "FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND)) GROUP BY window_start, window_end, id) "
                 + "WHERE id > 3 AND s > 10");
-        Rel window = windowRel(root(plan));
-        assertTrue(root(plan).hasFilter() || projectionInput(root(plan)).hasFilter(), "filter on s stays above");
-        assertTrue(containsFilter(window.getExtensionSingle().getInput()), "filter on id moves below the window");
+        List<Integer> filtering = planned.all(PhysicalOperator::hasSelection).stream().map(PhysicalOperator::getPipeline).toList();
+        /// The filter on id runs in the build's pipeline, the one on s after the probe.
+        assertTrue(filtering.contains(pipelineOf(planned, PhysicalOperator::hasWindowBuild)), planned.explain());
+        assertTrue(filtering.contains(pipelineOf(planned, PhysicalOperator::hasWindowProbe)), planned.explain());
     }
 
     @Test
     void unusedAggregatesAreDropped() throws Exception {
-        WindowAggregate window = window(plan(
+        PhysicalOperator.WindowBuild build = windowBuild(plan(
             "SELECT window_start, s FROM (SELECT window_start, window_end, SUM(val) AS s, COUNT(*) AS c "
                 + "FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND)) GROUP BY window_start, window_end)"));
-        assertEquals(1, window.getAggregatesCount());
-        assertEquals("SUM", window.getAggregates(0).getFunction());
+        assertEquals(1, build.getAggregationsCount());
+        assertEquals("SUM", build.getAggregations(0).getFunction());
     }
 
     @Test
     void filterOverUnionReachesBothBranches() throws Exception {
-        Rel set = root(plan("SELECT * FROM (SELECT id FROM s1 UNION ALL SELECT id FROM s2) WHERE id > 1"));
-        while (!set.hasSet()) {
-            set = isProjection(set) ? projectionInput(set) : set.getFilter().getInput();
-        }
-        for (Rel branch : set.getSet().getInputsList()) {
-            assertTrue(containsFilter(branch), branch::toString);
-        }
-    }
-
-    private static boolean containsFilter(Rel rel) {
-        if (rel.hasFilter()) {
-            return true;
-        }
-        return isProjection(rel) && containsFilter(projectionInput(rel));
+        Planned planned = plan("SELECT * FROM (SELECT id FROM s1 UNION ALL SELECT id FROM s2) WHERE id > 1");
+        /// Each source's pipeline filters its rows.
+        assertEquals(2, planned.all(PhysicalOperator::hasSelection).stream().map(PhysicalOperator::getPipeline).distinct().count(),
+            planned.explain());
     }
 
     private static final String JOIN = "SELECT l.window_start, l.window_end, l.id, l.val, r.val AS rval "
@@ -727,27 +785,29 @@ class PlannerServerTest {
 
     @Test
     void equiJoinUsesHashJoin() throws Exception {
-        WindowJoin join = join(plan(String.format(JOIN, "", "l.id = r.id")));
+        Planned planned = plan(String.format(JOIN, "", "l.id = r.id"));
+        PhysicalOperator.Join join = join(planned);
         assertEquals(WindowJoin.Implementation.HASH_JOIN, join.getImplementation());
         assertEquals(WindowJoin.Type.INNER, join.getType());
         assertEquals(1_000, join.getSizeMs());
-        assertEquals(2, join.getLeftTimeField());
-        assertTrue(join.hasCondition());
+        assertEquals(1, join.getLeftKeyFieldsCount());
+        assertTrue(planned.one(PhysicalOperator::hasJoinProbe).getJoinProbe().hasCondition());
     }
 
     @Test
     void thetaJoinUsesNestedLoopJoin() throws Exception {
-        WindowJoin join = join(plan(String.format(JOIN, "", "l.id < r.id")));
-        assertEquals(WindowJoin.Implementation.NESTED_LOOP_JOIN, join.getImplementation());
-        assertTrue(join.hasCondition());
-        assertEquals(0, join.getResidualCount());
+        Planned planned = plan(String.format(JOIN, "", "l.id < r.id"));
+        assertEquals(WindowJoin.Implementation.NESTED_LOOP_JOIN, join(planned).getImplementation());
+        PhysicalOperator.JoinProbe probe = planned.one(PhysicalOperator::hasJoinProbe).getJoinProbe();
+        assertTrue(probe.hasCondition());
+        assertEquals(0, probe.getResidualCount());
     }
 
     @Test
     void equiJoinWithResidualUsesHashJoin() throws Exception {
-        WindowJoin join = join(plan(String.format(JOIN, "", "l.id = r.id AND l.val < r.val")));
-        assertEquals(WindowJoin.Implementation.HASH_JOIN, join.getImplementation());
-        assertEquals(1, join.getResidualCount(), "l.val < r.val");
+        Planned planned = plan(String.format(JOIN, "", "l.id = r.id AND l.val < r.val"));
+        assertEquals(WindowJoin.Implementation.HASH_JOIN, join(planned).getImplementation());
+        assertEquals(1, planned.one(PhysicalOperator::hasJoinProbe).getJoinProbe().getResidualCount(), "l.val < r.val");
         assertEquals(WindowJoin.Implementation.HASH_JOIN, join(plan(String.format(JOIN, "LEFT", "l.id = r.id AND l.val < r.val"))).getImplementation());
     }
 
@@ -758,15 +818,16 @@ class PlannerServerTest {
 
     @Test
     void sideFiltersMoveBelowTheJoin() throws Exception {
-        Rel rel = joinRel(root(plan(String.format(JOIN, "", "l.id = r.id") + " WHERE l.val > 3")));
-        /// Join reordering may swap the inputs.
-        assertTrue(containsFilter(rel.getExtensionMulti().getInputs(0)) || containsFilter(rel.getExtensionMulti().getInputs(1)), rel::toString);
+        Planned planned = plan(String.format(JOIN, "", "l.id = r.id") + " WHERE l.val > 3");
+        /// The filter runs in the pipeline of a join build (join reordering may swap the inputs).
+        List<Integer> builds = planned.all(PhysicalOperator::hasJoinBuild).stream().map(PhysicalOperator::getPipeline).toList();
+        assertTrue(builds.contains(pipelineOf(planned, PhysicalOperator::hasSelection)), planned.explain());
     }
 
     @Test
     void differentWindowsAreRejected() {
         String sql = String.format(JOIN, "", "l.id = r.id").replaceFirst("INTERVAL '1' SECOND\\)\\) r", "INTERVAL '2' SECOND)) r");
-        assertThrows(StatusRuntimeException.class, () -> plan(sql));
+        assertThrows(PlanningFailed.class, () -> plan(sql));
     }
 
     @Test
@@ -775,27 +836,10 @@ class PlannerServerTest {
         /// inputs) a GLOBAL join can read the window columns of a stream.
         String sql = "SELECT l.id FROM TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND)) l"
             + " JOIN TABLE(TUMBLE(TABLE s2, DESCRIPTOR(ts), INTERVAL '1' SECOND)) r ON l.id = r.id";
-        for (java.util.concurrent.Callable<Plan> request : List.<java.util.concurrent.Callable<Plan>>of(() -> plan(sql), () -> planFinite(sql))) {
-            StatusRuntimeException error = assertThrows(StatusRuntimeException.class, request::call);
-            assertTrue(error.getStatus().getDescription().contains("left.window_start = right.window_start"), error.getStatus().getDescription());
+        for (java.util.concurrent.Callable<Planned> request : List.<java.util.concurrent.Callable<Planned>>of(() -> plan(sql), () -> planFinite(sql))) {
+            PlanningFailed error = assertThrows(PlanningFailed.class, request::call);
+            assertTrue(error.getMessage().contains("left.window_start = right.window_start"), error.getMessage());
         }
-    }
-
-    private static WindowJoin join(Plan plan) throws Exception {
-        return joinRel(root(plan)).getExtensionMulti().getDetail().unpack(WindowJoin.class);
-    }
-
-    private static Rel joinRel(Rel rel) {
-        if (rel.hasExtensionMulti()) {
-            return rel;
-        }
-        if (isProjection(rel)) {
-            return joinRel(projectionInput(rel));
-        }
-        if (rel.hasFilter()) {
-            return joinRel(rel.getFilter().getInput());
-        }
-        throw new AssertionError("no window join in " + rel);
     }
 
     private static final String T1 = "TABLE(TUMBLE(TABLE s1, DESCRIPTOR(ts), INTERVAL '1' SECOND))";
@@ -806,13 +850,12 @@ class PlannerServerTest {
         for (String sql : List.of(
             "SELECT l.id FROM " + T1 + " l WHERE l.id IN (SELECT r.id FROM " + T2 + " r WHERE r.window_start = l.window_start)",
             "SELECT l.id FROM " + T1 + " l WHERE EXISTS (SELECT 1 FROM " + T2 + " r WHERE r.window_start = l.window_start AND r.id = l.id)")) {
-            Rel join = joinRel(root(plan(sql)));
-            WindowJoin spec = join.getExtensionMulti().getDetail().unpack(WindowJoin.class);
-            assertEquals(WindowJoin.Type.INNER, spec.getType());
-            /// The deduplicating aggregation has no aggregates of its own: Calcite gives it a COUNT, which no one reads.
-            WindowAggregate deduplication = window(join.getExtensionMulti().getInputs(1));
-            assertEquals(1, deduplication.getAggregatesCount(), "deduplicating aggregation");
-            assertEquals("COUNT", deduplication.getAggregates(0).getFunction());
+            Planned planned = plan(sql);
+            assertEquals(WindowJoin.Type.INNER, join(planned).getType());
+            /// The deduplicating aggregation has no aggregates of its own: it gets a COUNT, which no one reads.
+            PhysicalOperator.WindowBuild deduplication = windowBuild(planned);
+            assertEquals(1, deduplication.getAggregationsCount(), "deduplicating aggregation");
+            assertEquals("COUNT", deduplication.getAggregations(0).getFunction());
         }
     }
 
@@ -833,146 +876,45 @@ class PlannerServerTest {
 
     @Test
     void joinOfWindowedAggregations() throws Exception {
-        Rel join = joinRel(root(plan("SELECT a.id, a.s, b.s FROM (SELECT window_start, window_end, id, SUM(val) s FROM " + T1
+        Planned planned = plan("SELECT a.id, a.s, b.s FROM (SELECT window_start, window_end, id, SUM(val) s FROM " + T1
             + " GROUP BY window_start, window_end, id) a JOIN (SELECT window_start, window_end, id, SUM(val) s FROM " + T2
-            + " GROUP BY window_start, window_end, id) b ON a.window_start = b.window_start AND a.id = b.id")));
-        assertTrue(join.getExtensionMulti().getInputs(0).hasExtensionSingle());
-        assertTrue(join.getExtensionMulti().getInputs(1).hasExtensionSingle());
+            + " GROUP BY window_start, window_end, id) b ON a.window_start = b.window_start AND a.id = b.id");
+        /// Both join builds read the rows of a window probe.
+        assertEquals(2, planned.all(PhysicalOperator::hasWindowProbe).size(), planned.explain());
+        List<Integer> probes = planned.all(PhysicalOperator::hasWindowProbe).stream().map(PhysicalOperator::getPipeline).toList();
+        assertTrue(planned.all(PhysicalOperator::hasJoinBuild).stream().allMatch(build -> probes.contains(build.getPipeline())),
+            planned.explain());
     }
 
     @Test
     void cteIsInlined() throws Exception {
-        assertTrue(root(plan("WITH big AS (SELECT id FROM s1 WHERE val > 3) SELECT id FROM big UNION ALL SELECT id FROM big")).hasSet());
-    }
-
-    private static WindowAggregate window(Rel rel) throws Exception {
-        return windowRel(rel).getExtensionSingle().getDetail().unpack(WindowAggregate.class);
+        /// Each use of the CTE reads the source in a pipeline of its own.
+        Planned planned = plan("WITH big AS (SELECT id FROM s1 WHERE val > 3) SELECT id FROM big UNION ALL SELECT id FROM big");
+        assertEquals(2, planned.all(PhysicalOperator::hasSelection).size(), planned.explain());
     }
 
     @Test
     void unwindowedJoinsAndAggregationsNeedFiniteInputs() throws Exception {
         String in = "SELECT id FROM s1 WHERE val > 5 AND id IN (SELECT id FROM s2 WHERE val < 85)";
-        assertThrows(StatusRuntimeException.class, () -> plan(in));
-        WindowJoin join = join(planFinite(in));
+        assertThrows(PlanningFailed.class, () -> plan(in));
+        PhysicalOperator.Join join = join(planFinite(in));
         assertEquals(WindowAggregate.Kind.GLOBAL, join.getKind());
         assertEquals(WindowJoin.Implementation.HASH_JOIN, join.getImplementation());
 
         String groupBy = "SELECT id, COUNT(*) AS c, SUM(val) AS s FROM s1 GROUP BY id";
-        assertThrows(StatusRuntimeException.class, () -> plan(groupBy));
-        WindowAggregate aggregate = window(planFinite(groupBy));
-        assertEquals(WindowAggregate.Kind.GLOBAL, aggregate.getKind());
-        assertEquals(2, aggregate.getAggregatesCount());
+        assertThrows(PlanningFailed.class, () -> plan(groupBy));
+        PhysicalOperator.WindowBuild build = windowBuild(planFinite(groupBy));
+        assertEquals(WindowAggregate.Kind.GLOBAL, build.getWindow().getKind());
+        assertEquals(2, build.getAggregationsCount());
     }
 
     @Test
-    void globalWindowsReadAConstantTimeColumnOfCalcite() throws Exception {
-        Rel windowRel = windowRel(root(planFinite("SELECT id, SUM(val) AS s FROM s1 GROUP BY id")));
-        WindowAggregate aggregate = windowRel.getExtensionSingle().getDetail().unpack(WindowAggregate.class);
-        Rel input = windowRel.getExtensionSingle().getInput();
-        assertTrue(isProjection(input), "the time column is computed by a projection below the window");
-        List<String> names = input.getExtensionSingle().getCommon().getHint().getOutputNamesList();
-        assertEquals("global_window_time", names.get(aggregate.getTimeField()));
+    void globalWindowsReadAConstantTimeColumn() throws Exception {
+        Planned planned = planFinite("SELECT id, SUM(val) AS s FROM s1 GROUP BY id");
+        /// A Map computes the constant time column, which the build reads as its event time.
+        assertTrue(planned.explain().contains("time=[global_window_time]"), planned.explain());
         /// The key, the aggregate (a GLOBAL window has no window columns).
-        assertEquals(List.of("id", "S"), windowRel.getExtensionSingle().getCommon().getHint().getOutputNamesList());
-    }
-
-    @Test
-    void theRootHasTheOutputNamesAndEveryRelationCalcitesNames() throws Exception {
-        Plan plan = plan("SELECT id AS out_id, val + 1 AS \"next\" FROM s1 WHERE val > 3");
-        Rel root = root(plan);
-        assertEquals(plan.getRelations(0).getRoot().getNamesList(), root.getExtensionSingle().getCommon().getHint().getOutputNamesList());
-        assertEquals(List.of("id", "val", "ts"), projectionInput(root).getFilter().getCommon().getHint().getOutputNamesList());
-
-        /// A projection that only renames stays: our sink takes the output names from it.
-        Rel renamed = root(plan("SELECT id AS out_id, val AS out_val, ts AS out_ts FROM s1"));
-        assertTrue(isProjection(renamed));
-        assertEquals(List.of("OUT_ID", "OUT_VAL", "OUT_TS"), renamed.getExtensionSingle().getCommon().getHint().getOutputNamesList());
-
-        /// One that passes its input on unchanged does not.
-        assertTrue(root(plan("SELECT * FROM s1")).hasRead());
-    }
-
-    @Test
-    void calciteNamesTheColumnsAsOurOperatorsNeedThem() throws Exception {
-        /// Our union matches columns by name: both inputs get the union's names.
-        Rel union = root(plan("SELECT id AS a FROM s1 UNION ALL SELECT val AS b FROM s2"));
-        assertTrue(union.hasSet(), union::toString);
-        for (Rel input : union.getSet().getInputsList()) {
-            assertEquals(List.of("A"), names(input));
-        }
-
-        /// Our join's columns must have unique names: the right side of a self-join gets new ones.
-        Rel join = joinRel(root(planFinite("SELECT a.id, b.id FROM s1 a JOIN s1 b ON a.val = b.val")));
-        List<String> left = names(join.getExtensionMulti().getInputs(0));
-        List<String> right = names(join.getExtensionMulti().getInputs(1));
-        assertTrue(java.util.Collections.disjoint(left, right), left + " " + right);
-        List<String> expected = new java.util.ArrayList<>(List.of("START", "END"));
-        expected.addAll(left);
-        expected.addAll(right);
-        assertEquals(expected, names(join));
-    }
-
-    /** Calcite's names of the relation's columns. */
-    private static List<String> names(Rel rel) {
-        if (rel.hasExtensionSingle()) {
-            return rel.getExtensionSingle().getCommon().getHint().getOutputNamesList();
-        }
-        if (rel.hasExtensionMulti()) {
-            return rel.getExtensionMulti().getCommon().getHint().getOutputNamesList();
-        }
-        if (rel.hasFilter()) {
-            return rel.getFilter().getCommon().getHint().getOutputNamesList();
-        }
-        if (rel.hasSet()) {
-            return rel.getSet().getCommon().getHint().getOutputNamesList();
-        }
-        return rel.getRead().getCommon().getHint().getOutputNamesList();
-    }
-
-    private static Plan planFinite(String sql) throws Exception {
-        PlanRequest request = request(sql, SOURCES).toBuilder().setFiniteInputs(true).build();
-        return Plan.parseFrom(stub.plan(request).getSubstraitPlan());
-    }
-
-    private static Plan plan(String sql) throws Exception {
-        PlanResponse response = stub.plan(request(sql, SOURCES));
-        System.out.println(sql + "\n" + response.getExplain());
-        return Plan.parseFrom(response.getSubstraitPlan());
-    }
-
-    private static PlanRequest request(String sql, List<Source> sources) {
-        return PlanRequest.newBuilder().addAllFunctions(Planner.TEST_FUNCTIONS).setSql(sql).addAllSources(sources).build();
-    }
-
-    private static Rel root(Plan plan) {
-        return plan.getRelations(0).getRoot().getInput();
-    }
-
-    private static WindowAggregate window(Plan plan) throws Exception {
-        return windowRel(root(plan)).getExtensionSingle().getDetail().unpack(WindowAggregate.class);
-    }
-
-    /** Whether the relation is our projection (NesProjection). */
-    private static boolean isProjection(Rel rel) {
-        return rel.hasExtensionSingle() && rel.getExtensionSingle().getDetail().is(nes.calcite.proto.Projection.class);
-    }
-
-    private static Rel projectionInput(Rel rel) {
-        assertTrue(isProjection(rel), rel::toString);
-        return rel.getExtensionSingle().getInput();
-    }
-
-    private static Rel windowRel(Rel rel) {
-        if (rel.hasExtensionSingle() && !isProjection(rel)) {
-            return rel;
-        }
-        if (isProjection(rel)) {
-            return windowRel(projectionInput(rel));
-        }
-        if (rel.hasFilter()) {
-            return windowRel(rel.getFilter().getInput());
-        }
-        throw new AssertionError("no window aggregation in " + rel);
+        assertEquals(List.of("id", "S"), planned.names());
     }
 
     private static Source stream(String name) {

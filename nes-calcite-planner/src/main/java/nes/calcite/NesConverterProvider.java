@@ -93,11 +93,6 @@ final class NesConverterProvider extends ConverterProvider {
         return typeFactory;
     }
 
-    @Override
-    public SubstraitRelVisitor getSubstraitRelVisitor() {
-        return new Visitor(this);
-    }
-
     /**
      * A placed physical plan: one root per part that runs on one worker (Placement.Fragment). Pipeline and origin ids
      * are unique across all parts, as a worker may run several of them as one plan. host: null if not placed.
@@ -160,10 +155,6 @@ final class NesConverterProvider extends ConverterProvider {
         private final String host;
         private final Ids ids;
 
-        Visitor(ConverterProvider provider) {
-            this(provider, null, new Ids());
-        }
-
         Visitor(ConverterProvider provider, String host, Ids ids) {
             super(provider);
             this.host = host;
@@ -177,13 +168,10 @@ final class NesConverterProvider extends ConverterProvider {
         @Override
         public Rel apply(RelNode node) {
             RelNode stripped = Pipelines.strip(node);
-            if (stripped instanceof NesPhysical.NesRel) {
-                return physical(stripped);
+            if (!(stripped instanceof NesPhysical.NesRel)) {
+                throw new IllegalStateException("not a physical operator: " + stripped);
             }
-            /// Substrait names only the root's columns: every relation carries Calcite's names of its columns, so that the
-            /// converter uses them and invents none (see SubstraitToLogicalPlan.cpp).
-            return super.apply(node).withHint(java.util.Optional.of(
-                io.substrait.hint.Hint.builder().addAllOutputNames(node.getRowType().getFieldNames()).build()));
+            return physical(stripped);
         }
 
         /// A physical operator as an extension relation whose detail is its PhysicalOperator. Its inputs are written
@@ -373,81 +361,6 @@ final class NesConverterProvider extends ConverterProvider {
                 default -> throw new UnsupportedOperationException("no field type for " + type.getFullTypeString());
             };
         }
-
-        /** An anonymous source is a TableScan, but becomes our extension (see visitOther), not a named table. */
-        @Override
-        public Rel visit(org.apache.calcite.rel.core.TableScan scan) {
-            return scan instanceof AnonymousSources.NesAnonymousSource ? visitOther(scan) : super.visit(scan);
-        }
-
-        @Override
-        public Rel visitOther(RelNode node) {
-            if (node instanceof NesProjection projection) {
-                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(projection.getRowType());
-                List<Expression> expressions = projection.expressions.stream().map(this::toExpression).toList();
-                return ExtensionSingle.from(new ProjectionPayload(projection.fields(), expressions, outputType),
-                    apply(projection.getInput())).build();
-            }
-            if (node instanceof NesLogical.WindowAggregation window) {
-                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(window.getRowType());
-                return ExtensionSingle.from(new Payload(Any.pack(window.spec), outputType), apply(window.getInput())).build();
-            }
-            if (node instanceof AnonymousSources.NesAnonymousSource source) {
-                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(source.getRowType());
-                return ExtensionLeaf.from(new LeafPayload(Any.pack(source.spec), outputType)).build();
-            }
-            if (node instanceof NesModelInference inference) {
-                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(inference.getRowType());
-                return ExtensionSingle.from(new Payload(Any.pack(inference.spec()), outputType), apply(inference.getInput())).build();
-            }
-            if (node instanceof NesWindowJoin join) {
-                Type.Struct outputType = (Type.Struct) typeConverter.toSubstrait(join.getRowType());
-                Expression condition = join.condition == null ? null : toExpression(join.condition);
-                List<Expression> residual = join.residual.stream().map(this::toExpression).toList();
-                return ExtensionMulti.from(
-                        new JoinPayload(join.spec, condition, residual, outputType), apply(join.getLeft()), apply(join.getRight()))
-                    .build();
-            }
-            return super.visitOther(node);
-        }
-    }
-
-    /** Named assignments; the expressions are serialized with the plan's converter, as a join's condition. */
-    private record ProjectionPayload(List<String> fields, List<Expression> expressions, Type.Struct outputType)
-        implements Extension.SingleRelDetail {
-        @Override
-        public Type.Struct deriveRecordType(Rel input) {
-            return outputType;
-        }
-
-        @Override
-        public Any toProto(RelProtoConverter converter) {
-            nes.calcite.proto.Projection.Builder builder = nes.calcite.proto.Projection.newBuilder();
-            for (int i = 0; i < fields.size(); i++) {
-                builder.addAssignments(PhysicalOperator.Map.Assignment.newBuilder().setField(fields.get(i))
-                    .setExpression(converter.getExpressionProtoConverter().toProto(expressions.get(i))));
-            }
-            return Any.pack(builder.build());
-        }
-    }
-
-    /** The condition is serialized with the plan's converter, so its functions are declared in the plan's extensions. */
-    private record JoinPayload(WindowJoin spec, Expression condition, List<Expression> residual, Type.Struct outputType)
-        implements Extension.MultiRelDetail {
-        @Override
-        public Type.Struct deriveRecordType(List<Rel> inputs) {
-            return outputType;
-        }
-
-        @Override
-        public Any toProto(RelProtoConverter converter) {
-            WindowJoin.Builder builder = spec.toBuilder();
-            if (condition != null) {
-                builder.setCondition(converter.getExpressionProtoConverter().toProto(condition));
-            }
-            residual.forEach(expression -> builder.addResidual(converter.getExpressionProtoConverter().toProto(expression)));
-            return Any.pack(builder.build());
-        }
     }
 
     /** The PhysicalOperator detail of a physical operator; it is built when the plan is written, with its expressions. */
@@ -471,30 +384,6 @@ final class NesConverterProvider extends ConverterProvider {
         @Override
         public Any toProto(RelProtoConverter converter) {
             return Any.pack(build.apply(converter));
-        }
-    }
-
-    private record LeafPayload(Any detail, Type.Struct outputType) implements Extension.LeafRelDetail {
-        @Override
-        public Type.Struct deriveRecordType() {
-            return outputType;
-        }
-
-        @Override
-        public Any toProto(RelProtoConverter converter) {
-            return detail;
-        }
-    }
-
-    private record Payload(Any detail, Type.Struct outputType) implements Extension.SingleRelDetail {
-        @Override
-        public Type.Struct deriveRecordType(Rel input) {
-            return outputType;
-        }
-
-        @Override
-        public Any toProto(RelProtoConverter converter) {
-            return detail;
         }
     }
 }

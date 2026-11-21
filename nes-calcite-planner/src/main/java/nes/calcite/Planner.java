@@ -322,34 +322,20 @@ public final class Planner {
         nes.calcite.proto.Function.newBuilder().setName("FROM_BASE64").addOperands("STRING").setResult("VARBINARY").build(),
         nes.calcite.proto.Function.newBuilder().setName("MEDIAN").addOperands("NUMERIC").setResult("DOUBLE").setAggregation(true).build());
 
-    public Result plan(String sql, List<Source> sources) throws Exception {
-        return plan(sql, sources, false);
-    }
-
-    /// finiteInputs: joins and aggregations without a window get a GLOBAL window (see GlobalWindowRules).
-    public Result plan(String sql, List<Source> sources, boolean finiteInputs) throws Exception {
-        return plan(sql, sources, finiteInputs, false);
-    }
-
-    /// physical: plan down to NebulaStream's physical operators (NesPhysical) instead of a logical plan.
-    public Result plan(String sql, List<Source> sources, boolean finiteInputs, boolean physical) throws Exception {
-        return plan(sql, sources, finiteInputs, physical, List.of(), "", false, List.of(), List.of(), List.of(), false, TEST_FUNCTIONS,
-            "", nes.calcite.proto.LayoutPolicy.ROWS);
-    }
-
-    /// A request of the service (PlanRequest).
+    /// A request (PlanRequest).
     public Result plan(nes.calcite.proto.PlanRequest request) throws Exception {
-        return plan(request.getSql(), request.getSourcesList(), request.getFiniteInputs(), request.getPhysical(),
+        return plan(request.getSql(), request.getSourcesList(), request.getFiniteInputs(),
             request.getTopologyList(), request.getSinkHost(), request.getDetailedSteps(), request.getModelsList(),
             request.getSourceTypesList(), request.getFormatOptionsList(), request.getNestedLoopJoins(), request.getFunctionsList(),
             request.getSinkFormat(), request.getLayoutPolicy());
     }
 
+    /// finiteInputs: joins and aggregations without a window get a GLOBAL window (see GlobalWindowRules).
     /// topology: place the physical plan on these workers, with the sink on sinkHost (see Placement).
     /// detailedSteps: a graph per step, and the plan after each rule (see Steps). models: for MODEL_INFERENCE.
     /// nestedLoopJoins: physical plans join with nested loops only (see PlanRequest.nested_loop_joins).
     /// sinkFormat, layoutPolicy: the sink's format and the policy for the buffers between pipelines (see Layouts).
-    public Result plan(String sql, List<Source> sources, boolean finiteInputs, boolean physical,
+    public Result plan(String sql, List<Source> sources, boolean finiteInputs,
                        List<nes.calcite.proto.Worker> topology, String sinkHost, boolean detailedSteps,
                        List<nes.calcite.proto.Model> models, List<nes.calcite.proto.SourceType> sourceTypes,
                        List<String> formatOptions, boolean nestedLoopJoins, List<nes.calcite.proto.Function> functions,
@@ -400,10 +386,8 @@ public final class Planner {
         RelBuilder relBuilder = RelFactories.LOGICAL_BUILDER.create(cluster, catalog);
         Steps steps = new Steps(detailedSteps);
         RelNode optimized = steps.add("converted from SQL", "Calcite: SqlToRelConverter", root.rel);
-        if (physical) {
-            /// Physical plans read physical sources: all later steps (e.g. the pushdown of filters) see each of them.
-            optimized = steps.add("sources expanded per physical source", "ours: NesLogical.expandSources", NesLogical.expandSources(optimized));
-        }
+        /// The plan reads the physical sources: all later steps (e.g. the pushdown of filters) see each of them.
+        optimized = steps.add("sources expanded per physical source", "ours: NesLogical.expandSources", NesLogical.expandSources(optimized));
         optimized = steps.rules("subqueries removed", "rules: Calcite's, selected by us", REMOVE_SUBQUERIES, optimized);
         /// After the subqueries are removed: rules do not look into subqueries, which may call table functions, too.
         optimized = steps.rules("table functions rewritten (MODEL_INFERENCE, anonymous sources)",
@@ -445,33 +429,16 @@ public final class Planner {
         optimized = NesFunctions.normalize(optimized);
         optimized = steps.add("types made explicit for NebulaStream", "ours: Planner.typeCaseResults, typeUntypedNulls, Unsigned.prepare", Unsigned.prepare(optimized));
         root = root.withRel(optimized);
-        if (physical) {
-            /// The output names as on the logical path (a name that differs only in case is its column's name).
-            root = outputNames(root, relBuilder, steps);
-            root = sourceTimeTypes(root, steps);
-            if (nestedLoopJoins) {
-                root = root.withRel(steps.add("window joins as nested-loop joins", "ours: NesWindowJoin.nestedLoop",
-                    NesWindowJoin.nestedLoop(root.rel)));
-            }
-            List<Placement.Fragment> fragments = toPhysical(volcano, root, topology, sinkHost, steps, sinkFormat, layoutPolicy);
-            String explain = describe(fragments);
-            return new Result(Plan.builder().executionBehavior(provider.getExecutionBehavior())
-                .roots(provider.convertPhysical(fragments)).build(), explain, steps.list());
-        }
-
+        /// The output names: a name that differs only in case is its column's name.
         root = outputNames(root, relBuilder, steps);
-        root = RelRoot.of(steps.add("columns named for NebulaStream", "ours: NesNames", NesNames.apply(root.rel)), root.kind);
-        optimized = root.rel;
-        Plan.Root substraitRoot;
-        try {
-            substraitRoot = SubstraitRelVisitor.convert(root, provider);
-        } catch (UnsupportedOperationException | IllegalArgumentException e) {
-            throw new UnsupportedOperationException(
-                "The optimized plan contains something NebulaStream cannot execute (" + e.getMessage() + "):\n"
-                    + RelOptUtil.toString(optimized), e);
+        root = sourceTimeTypes(root, steps);
+        if (nestedLoopJoins) {
+            root = root.withRel(steps.add("window joins as nested-loop joins", "ours: NesWindowJoin.nestedLoop",
+                NesWindowJoin.nestedLoop(root.rel)));
         }
-        return new Result(
-            Plan.builder().executionBehavior(provider.getExecutionBehavior()).addRoots(substraitRoot).build(), RelOptUtil.toString(optimized), steps.list());
+        List<Placement.Fragment> fragments = toPhysical(volcano, root, topology, sinkHost, steps, sinkFormat, layoutPolicy);
+        return new Result(Plan.builder().executionBehavior(provider.getExecutionBehavior())
+            .roots(provider.convertPhysical(fragments)).build(), describe(fragments), steps.list());
     }
 
     /**

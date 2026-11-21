@@ -226,28 +226,12 @@ def step_html(step, previous_plan, last):
 def query_html(title, query):
     section = ['<h2 id="%s">%s</h2><code class="sql">%s</code>' % (html.escape(title.replace(" ", "-")), html.escape(title),
                                                                      html.escape(query["sql"]))]
-    if query.get("logical") and not query.get("label"):
-        section.append('<p class="note">Planned as a logical plan with finite inputs: its joins do not exist as physical'
-                       ' operators yet, so it is neither placed nor pipelined.</p>')
     if query["error"]:
         section.append('<p class="error">%s</p>' % html.escape(query["error"]))
     previous = None
-    physical = query.get("physical")
     for i, step in enumerate(query["steps"]):
-        section.append(step_html(step, previous, i == len(query["steps"]) - 1 and not (physical and physical["steps"])))
+        section.append(step_html(step, previous, i == len(query["steps"]) - 1))
         previous = step["plan"]
-    if physical:
-        previous = None
-        section.append('<h3>Physical path: placement and pipelines</h3><p class="origin">The same query planned down to placed'
-                       ' pipelines (the physical path, PlanRequest.physical), all its steps: the sources are expanded first.'
-                       ' The step &ldquo;physical operators&rdquo; lists each conversion of a logical operator, with its rule and'
-                       ' the reason. Workers: one per host of a physical source (%s), all sending to the first, which runs'
-                       ' the sink.</p>' % html.escape(physical["hosts"]))
-        if physical["error"]:
-            section.append('<p class="note">The physical path cannot plan this query yet: %s</p>' % html.escape(physical["error"]))
-        for i, step in enumerate(physical["steps"]):
-            section.append(step_html(step, previous, i == len(physical["steps"]) - 1))
-            previous = step["plan"]
     return "".join(section)
 
 
@@ -326,7 +310,7 @@ def systest(steps_json, tests_root, out_dir):
         page_name = relative.replace("/", "__") + ".html"
         test_path = os.path.abspath(os.path.join(tests_root, relative + ".test"))
         intro = ('<p><a href="index.html">&larr; all test files</a></p><h1>%s</h1><p>The planner\'s steps for every query of '
-                 '<a href="file://%s">%s</a>, planned from the request that systest sent (logical plan, finite inputs).</p>'
+                 '<a href="file://%s">%s</a>, planned from the request that systest sent (its sources, workers and options).</p>'
                  % (html.escape(relative), html.escape(test_path), html.escape(test_path)))
         sections = [query_html("Query %s" % q["number"], q) for q in file_queries]
         with open(os.path.join(out_dir, page_name), "w") as out:
@@ -355,7 +339,7 @@ def systest(steps_json, tests_root, out_dir):
             html.escape(anchor), html.escape(relative), len(file_queries), ", %d planner errors" % errors if errors else "",
             "".join(sections)))
     intro = ('<h1>Planner steps of the systests</h1><p>%d queries in %d test files, each planned from the request that systest'
-             ' sent (logical plan, finite inputs). Open a test file, then a step; its graph is drawn when opened. Planner'
+             ' sent (its sources, workers and options). Open a test file, then a step; its graph is drawn when opened. Planner'
              ' errors are mostly tests that expect an error.</p><details><summary>Jump to a test file</summary><ul class="toc">%s</ul>'
              '</details>' % (len(queries), len(toc), "".join(toc)))
     with open(os.path.join(out_dir, "all.html"), "w") as out:

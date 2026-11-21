@@ -1,5 +1,5 @@
 # name: calcite/Basic.test
-# description: Queries in Calcite's SQL dialect, planned by the nes-calcite-planner service
+# description: Queries in Calcite's SQL dialect, planned by the nes-calcite-planner
 # groups: [Calcite]
 
 CREATE LOGICAL SOURCE events(id UINT64 NOT NULL, val UINT64 NOT NULL, ts UINT64 NOT NULL);

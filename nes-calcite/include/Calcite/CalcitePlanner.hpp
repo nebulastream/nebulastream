@@ -41,12 +41,9 @@ namespace substrait
 class Plan;
 }
 
-/// Plans queries with Apache Calcite through the nes-calcite-planner service (see nes-calcite-planner/README.md).
+/// Plans queries with Apache Calcite: the nes-calcite-planner, compiled into a native library (see nes-calcite-planner/README.md).
 namespace NES::Calcite
 {
-
-/// Address of the planner service: $NES_CALCITE_PLANNER, or localhost:50061.
-std::string plannerAddress();
 
 /// For inspecting the planner: with $NES_CALCITE_DUMP_REQUESTS set to a directory, the requests to the planner are written
 /// there, each as `<label>.pb` (a serialized PlanRequest), with the label this thread set last (e.g. systest's query id).
@@ -100,22 +97,20 @@ struct PlannedPhysicalQuery
 /// optimizer's join_strategy NESTED_LOOP_JOIN).
 /// sourceNames: if not empty, only these catalog sources are offered to Calcite, under the given names (catalog name ->
 /// name in the SQL); e.g. systest offers each test file's sources under their unprefixed names.
-/// Throws InvalidQuerySyntax if Calcite rejects the query, UnsupportedQuery if the service is unreachable or the query uses
-/// something we cannot run, and PlacementFailure if it cannot be placed on the workers.
+/// Throws InvalidQuerySyntax if Calcite rejects the query, UnsupportedQuery if the query uses something we cannot
+/// run, and PlacementFailure if it cannot be placed on the workers.
 PlannedPhysicalQuery planPhysical(
     std::string_view sql,
     std::string_view sinkClause,
     const SourceCatalog& sourceCatalog,
     const SinkCatalog& sinkCatalog,
     const WorkerCatalog& workerCatalog,
-    const std::string& address,
     const std::unordered_map<std::string, std::string>& sourceNames = {},
     const ModelCatalog* models = nullptr,
     const QueryOptimizerConfiguration& optimizer = defaultConfiguration<QueryOptimizerConfiguration>(),
     bool detailedSteps = false);
 
-/// Plans a query statement, "SELECT ... INTO <sink>", as planPhysical does, with the planner at plannerAddress() and
-/// the optimizer configuration (e.g. its finite_inputs).
+/// Plans a query statement, "SELECT ... INTO <sink>", as planPhysical does, with the optimizer configuration (e.g. its finite_inputs).
 PlannedPhysicalQuery planStatement(
     std::string_view statement,
     const SourceCatalog& sourceCatalog,

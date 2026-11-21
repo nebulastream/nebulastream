@@ -12,7 +12,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- protobuf-java must match what substrait-java was built against; protoc follows it. -->
     <protobuf.version>4.36.2</protobuf.version>
-    <grpc.version>1.85.1</grpc.version>
   </properties>
 
   <dependencies>
@@ -33,21 +32,6 @@
       <version>${protobuf.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-netty-shaded</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-protobuf</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-      <version>${grpc.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
       <version>2.0.17</version>
@@ -58,12 +42,6 @@
       <artifactId>nativeimage</artifactId>
       <version>25.5.5.0.3</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.grpc</groupId>
-      <artifactId>grpc-inprocess</artifactId>
-      <version>${grpc.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -81,13 +59,6 @@
         <version>5.1.12</version>
         <configuration>
           <protoc>${protobuf.version}</protoc>
-          <plugins>
-            <plugin kind="binary-maven">
-              <groupId>io.grpc</groupId>
-              <artifactId>protoc-gen-grpc-java</artifactId>
-              <version>${grpc.version}</version>
-            </plugin>
-          </plugins>
         </configuration>
         <executions>
           <execution>
@@ -100,13 +71,8 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.6.1</version>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration><mainClass>nes.calcite.PlannerServer</mainClass></configuration>
-      </plugin>
-      <!-- Self-contained jar: java -jar target/nes-calcite-planner.jar [port] -->
+      <!-- Self-contained jar, the input of native-image: java -jar target/nes-calcite-planner.jar <request.pb>... plans saved
+           requests (NativePlanner). -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -121,7 +87,7 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>nes.calcite.PlannerServer</mainClass>
+                  <mainClass>nes.calcite.NativePlanner</mainClass>
                 </transformer>
               </transformers>
               <filters>

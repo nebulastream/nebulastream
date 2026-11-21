@@ -198,7 +198,6 @@ private:
             *sourceCatalog,
             *sinkCatalog,
             *workerCatalog,
-            Calcite::plannerAddress(),
             calciteSources != nullptr ? *calciteSources : AllSources,
             modelCatalog.get(),
             optimizer);

@@ -3,7 +3,6 @@ package nes.calcite;
 import java.util.ArrayList;
 import java.util.List;
 import nes.calcite.proto.Field;
-import nes.calcite.proto.InferModel;
 import nes.calcite.proto.Model;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
@@ -14,7 +13,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 /**
- * Model inference as NebulaStream executes it (InferModel): runs the model on each row of the input. The model reads its
+ * Model inference as NebulaStream executes it (NesPhysical.InferModel): runs the model on each row of the input. The model reads its
  * inputs from the input columns with the names of its input fields; the output is the input's columns followed by the
  * model's outputs. Made from MODEL_INFERENCE by ModelInference.RULE.
  */
@@ -43,12 +42,6 @@ public final class NesModelInference extends SingleRel {
             indexes.add(index);
         }
         return indexes;
-    }
-
-    InferModel spec() {
-        List<String> names = rowType.getFieldNames();
-        int inputs = getInput().getRowType().getFieldCount();
-        return InferModel.newBuilder().setModel(model.getName()).addAllOutputs(names.subList(inputs, names.size())).build();
     }
 
     @Override

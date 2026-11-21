@@ -154,7 +154,7 @@ public final class NesWindowAggregate extends Aggregate {
         return LogicalTableFunctionScan.create(template.getCluster(), List.of(rows), call.clone(type, operands), null, type, mappings);
     }
 
-    /** Our names of the window columns (NesNames). */
+    /** Our names of the window columns of a NesWindowJoin. */
     static final List<String> WINDOW_COLUMNS = List.of("START", "END");
 
     /** The row type with these names, made unique (a later duplicate gets a suffix). */

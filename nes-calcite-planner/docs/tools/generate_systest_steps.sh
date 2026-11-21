@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Shows the planner's steps for every systest query: runs the systests with --plan-only (they plan the queries but run none,
 # about half a minute) and $NES_CALCITE_DUMP_REQUESTS (each query's request to the planner is saved), plans each saved
-# request again with detailed steps, and writes one page per test file and an index. Needs the planner service running (the
-# systests use it) and the planner jar (mvn package).
+# request again with detailed steps, and writes one page per test file and an index. Needs the planner jar (mvn package).
 #
 # Usage: docs/tools/generate_systest_steps.sh <systest binary> <out directory> [java] [viz-standalone.js]
 # With viz-standalone.js (from the npm package @viz-js/viz), the pages draw their graphs without loading it from a CDN.

@@ -1,24 +1,22 @@
 # nes-calcite-planner (prototype)
 
-Plans a NebulaStream `SELECT` query with Apache Calcite and returns it as a Substrait plan over gRPC.
-Service and messages: `src/main/proto/nes_calcite_planner.proto`.
+Plans a NebulaStream `SELECT` query with Apache Calcite down to placed physical pipelines, returned as a Substrait plan
+whose relations carry our `PhysicalOperator`s. NebulaStream calls it in-process through a native library (see "Native
+library"). Request and response: `src/main/proto/nes_calcite_planner.proto`.
 
 ```
-export JAVA_HOME=<jdk 21>
+export JAVA_HOME=<graalvm or jdk 21>
 mvn package                                    # runs the tests, builds target/nes-calcite-planner.jar
-java -jar target/nes-calcite-planner.jar 50061
+java -jar target/nes-calcite-planner.jar <request.pb>...   # plans saved requests (NativePlanner)
 ```
 
 ## Contract
 
-- The request carries the SQL and the schemas of all sources it may reference. Names resolve case-insensitively.
-- Unsigned fields are widened to the next signed type. The caller re-infers the real types from its source schemas.
+- The request carries the SQL, the schemas of all sources it may reference with their physical sources, the workers
+  and the sink's worker. Names resolve case-insensitively.
 - Columns used in `DESCRIPTOR(...)` are typed as `TIMESTAMP(3)` for that query, since TUMBLE/HOP require timestamps.
-  They appear in Substrait as `precision_timestamp<3>`.
-- Standard Substrait relations: `read` (named table), `filter`, `project` (uses `emit` to select output columns), `set` (union).
-- Windowed aggregations arrive as `extension_single` whose `detail` is a `nes.calcite.WindowAggregate`.
-  Its field indices refer to the input relation; output is `window_start, window_end, group_keys..., aggregates...`.
-- Unsupported or invalid queries fail with `INVALID_ARGUMENT`.
+- Invalid queries fail with `PlanResponse.error`; `unsupported` tells a query we cannot run (yet) from an invalid one,
+  `placement_failure` one that the workers cannot run.
 
 ## Supported windows
 
@@ -40,7 +38,7 @@ without DISTINCT or FILTER. A `WHERE` on non-window columns is allowed. Window o
 - Windowed joins: `TUMBLE`/`HOP` on both sides with the same window, joined on `l.window_start = r.window_start`
   (inner, left, right, full). The condition is split with Calcite's `JoinInfo`: with at least one `leftField = rightField`
   key it is a hash join on the keys, the rest becomes `residual` (evaluated on every key match, also for outer joins);
-  without keys it is a nested-loop join. They arrive as `extension_multi` with a `nes.calcite.WindowJoin`.
+  without keys it is a nested-loop join.
 - A join side may also be a tumbling windowed aggregation (joined on its `window_start`).
 - `IN`/`EXISTS` subqueries, `NOT IN`/`NOT EXISTS` and `LATERAL` are decorrelated by Calcite. Correlated on the window
   (`r.window_start = l.window_start`), they become a windowed join with a per-window deduplication of the subquery
@@ -50,8 +48,7 @@ without DISTINCT or FILTER. A `WHERE` on non-window columns is allowed. Window o
 ## NebulaStream side
 
 Every query is planned by Calcite: NebulaStream has no optimizer, lowering or pipelining of its own anymore. The
-frontend (REPL, CLI, systest) calls the service at `$NES_CALCITE_PLANNER` (default `localhost:50061`) and gets the placed
-pipelines back (see "Physical plans" below).
+frontend (REPL, CLI, systest) calls the planner in-process and gets the placed pipelines back (see "Physical plans" below).
 
 - A query is written in Calcite's dialect. Our SQL grammar only recognizes it (a query starts with `SELECT`, `WITH`,
   `VALUES`, `TABLE` or `(`) and keeps its text; only the sink clause after `INTO` is ours (a sink name or an anonymous
@@ -68,8 +65,8 @@ pipelines back (see "Physical plans" below).
 
 ## Native library
 
-With GraalVM, the build compiles the planner with `native-image --shared` into `libnes-calcite-planner.so` and links it
-into `nes-calcite`. The planner then runs in-process: no JVM, no gRPC, no service to start. The development image has
+The build compiles the planner with `native-image --shared` into `libnes-calcite-planner.so` and links it into
+`nes-calcite`, so it needs GraalVM. The planner runs in-process, without a JVM. The development image has
 GraalVM and Maven and sets `GRAALVM_HOME`, so CI builds and the executable images (`package-docker-images-all`, which
 copies the library to `/usr/lib`) always use the native library. Elsewhere:
 
@@ -78,7 +75,6 @@ copies the library to `/usr/lib`) always use the native library. Elsewhere:
 The build makes the jar and the library (about 3 min and 9 GB RAM; native-image has no incremental mode) whenever the
 planner's sources change. `CalcitePlanner.cpp` creates one GraalVM isolate per process and calls `nes_calcite_plan`
 (serialized `PlanRequest` in, `PlanResponse` out, see `NativeEntryPoints.java`); errors arrive in `PlanResponse.error`.
-Without GraalVM, NebulaStream calls the planner service instead (see above).
 
 Two parts of Calcite compile generated Java code at runtime (Janino), which a native image cannot do. The planner
 therefore uses `CachingMetadataHandlerProvider` for metadata (Calcite's `ProxyingMetadataHandlerProvider` plus the
@@ -87,7 +83,7 @@ per-query cache of the generated handlers; without the cache, reordering a 60-ta
 byte-identical plans to Calcite's defaults on the recorded requests. What the image may reflect on is listed under `src/main/resources/META-INF/native-image/`:
 - `nes/nes-calcite-planner/`: recorded by the tracing agent while planning those requests:
 
-      java -Dnes.calcite.dumpRequests=DIR -jar target/nes-calcite-planner.jar   # then run queries against it
+      NES_CALCITE_DUMP_REQUESTS=DIR <run queries, e.g. systest --plan-only>   # saves each request
       $GRAALVM/bin/java -agentlib:native-image-agent=config-output-dir=CONFIG -cp target/nes-calcite-planner.jar \
           nes.calcite.NativePlanner DIR/*.pb
 
@@ -130,8 +126,8 @@ non-negative integer literal is cast to the unsigned type), and a cast to or fro
 
 ## Physical plans
 
-With `PlanRequest.physical` (which the frontend always sets), Calcite plans down to our pipelines, and the engine
-neither optimizes, lowers nor pipelines the query: it only compiles the pipelines.
+Calcite plans down to our pipelines, and the engine neither optimizes, lowers nor pipelines the query: it only compiles
+the pipelines.
 
 - `NesPhysical.java`: one Calcite node per engine operator, in the convention `NES`: `SourceScan`, `Scan`, `Selection`,
   `Map`, `Emit`, `Sink`. The field names of each node's row type are the engine's physical field names.
@@ -151,15 +147,13 @@ neither optimizes, lowers nor pipelines the query: it only compiles the pipeline
   schema, its pipeline, and what the engine needs to build it (e.g. a source's origin id).
 - `nes-calcite/src/SubstraitToPhysicalPlan.cpp` builds the pipelines from the payloads, with the worker's buffer size;
   `QueryCompiler::compileQuery(PhysicalQuery)` compiles them.
-- `docs/physical-plans.html` shows example queries with their logical plan, physical plan and pipelines.
 - `docs/planner-steps.html` shows every planner step as a graph, and the plan after each rule of the rule-based steps
   (`PlanRequest.detailed_steps`, see `Steps` and `PlanGraph`). Regenerate it with `docs/tools/generate_steps.sh <java>`
   after `mvn package`. Its queries are also a systest, `nes-systests/calcite/PlannerExamples.test`.
 - `docs/tools/generate_systest_steps.sh <systest binary> <out directory> [java]` shows the same for every systest query:
   it runs the systests with `--plan-only` (each query is planned, none runs) and `NES_CALCITE_DUMP_REQUESTS` (each request
   to the planner is saved under its query id), plans
-  the saved requests again with detailed steps, and writes one page per test file and an index. The planner service must
-  run.
+  the saved requests again with detailed steps, and writes one page per test file and an index.
 
 ### Windows
 

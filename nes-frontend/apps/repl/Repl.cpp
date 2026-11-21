@@ -406,7 +406,7 @@ struct Repl::Impl
     }
 
     /// "CALCITE [EXPLAIN [VERBOSE]] <query> INTO <sink or File(...)>;": as the query (or EXPLAIN) without the prefix, which every
-    /// query is planned as with Apache Calcite (nes-calcite-planner service at $NES_CALCITE_PLANNER, default localhost:50061).
+    /// query is planned as with Apache Calcite (the native nes-calcite-planner library).
     static std::optional<std::string_view> stripKeyword(std::string_view statement, const std::string_view keyword)
     {
         const auto start = statement.find_first_not_of(" \t\r\n");

@@ -7,7 +7,7 @@ import nes.calcite.proto.PlanRequest;
 import nes.calcite.proto.PlanResponse;
 
 /**
- * The planner without gRPC: serialized PlanRequest in, serialized PlanResponse out. Errors go into PlanResponse.error.
+ * The planner's entry point: serialized PlanRequest in, serialized PlanResponse out. Errors go into PlanResponse.error.
  * Entry point of the native library (see NativeEntryPoints) and of a command line for testing the native image:
  * NativePlanner <request.pb>... prints Calcite's plan or the error for each request.
  */
@@ -27,10 +27,36 @@ public final class NativePlanner {
         } catch (Throwable e) {
             /// Throwable: e.g. Calcite's AssertionErrors, or an Error of the native image (a missing registration), which
             /// would otherwise only surface as "the native Calcite planner failed".
-            response.setError(PlannerServer.describe(e)).setUnsupported(!PlannerServer.isInvalidQuery(e))
+            response.setError(describe(e)).setUnsupported(!isInvalidQuery(e))
                 .setPlacementFailure(PlacementFailure.in(e));
         }
         return response.build().toByteArray();
+    }
+
+    /**
+     * Whether the query itself is wrong (Calcite's parser or validator rejected it), rather than one we cannot run: our
+     * own rejections, unconvertible plans, and Calcite's internal errors, e.g. its AssertionErrors.
+     */
+    static boolean isInvalidQuery(Throwable e) {
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            if (cause instanceof org.apache.calcite.sql.parser.SqlParseException
+                || cause instanceof org.apache.calcite.sql.validate.SqlValidatorException
+                || cause instanceof org.apache.calcite.runtime.CalciteContextException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Calcite wraps the useful message (with line/column) in a cause chain. */
+    static String describe(Throwable e) {
+        StringBuilder message = new StringBuilder(String.valueOf(e.getMessage()));
+        for (Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause.getMessage() != null && !message.toString().contains(cause.getMessage())) {
+                message.append(": ").append(cause.getMessage());
+            }
+        }
+        return message.toString();
     }
 
     public static void main(String[] args) throws Exception {
