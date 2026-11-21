@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import nes.calcite.logical.NesWindowJoin;
 import nes.calcite.logical.NesWindowAggregate;
 import java.util.ArrayList;
@@ -35,9 +36,9 @@ import org.apache.calcite.tools.RelBuilder;
  * WindowAggregateRule and JOIN after WindowJoinRule, so every plain Aggregate or Join they see has no window.
  */
 public final class GlobalWindowRules {
-    public static final RelOptRule AGGREGATE = new AggregateRule();
-    public static final RelOptRule JOIN = new JoinRule();
-    public static final RelOptRule SINGLE_ROW_OUTER_JOIN = new SingleRowOuterJoinRule();
+    public static final RelOptRule AGGREGATE = RuleConfig.of("NesGlobalAggregateRule", b -> b.operand(Aggregate.class).anyInputs(), AggregateRule::new).toRule();
+    public static final RelOptRule JOIN = RuleConfig.of("NesGlobalJoinRule", b -> b.operand(Join.class).anyInputs(), JoinRule::new).toRule();
+    public static final RelOptRule SINGLE_ROW_OUTER_JOIN = RuleConfig.of("NesSingleRowOuterJoinRule", b -> b.operand(Join.class).anyInputs(), SingleRowOuterJoinRule::new).toRule();
 
     private GlobalWindowRules() {}
 
@@ -65,10 +66,9 @@ public final class GlobalWindowRules {
         return LogicalProject.create(input, List.of(), projects, SqlValidatorUtil.uniquify(names, true), java.util.Set.of());
     }
 
-    private static final class AggregateRule extends RelOptRule {
-        @SuppressWarnings("deprecation")
-        AggregateRule() {
-            super(operand(Aggregate.class, any()), "NesGlobalAggregateRule");
+    private static final class AggregateRule extends RelRule<RuleConfig> {
+        AggregateRule(RuleConfig config) {
+            super(config);
         }
 
         @Override
@@ -127,10 +127,9 @@ public final class GlobalWindowRules {
      * count metadata knows the one-row sides, e.g. an aggregation without GROUP BY, which emits its row also for an
      * empty input here (emit_on_empty_input).
      */
-    private static final class SingleRowOuterJoinRule extends RelOptRule {
-        @SuppressWarnings("deprecation")
-        SingleRowOuterJoinRule() {
-            super(operand(Join.class, any()), "NesSingleRowOuterJoinRule");
+    private static final class SingleRowOuterJoinRule extends RelRule<RuleConfig> {
+        SingleRowOuterJoinRule(RuleConfig config) {
+            super(config);
         }
 
         @Override
@@ -157,10 +156,9 @@ public final class GlobalWindowRules {
         }
     }
 
-    private static final class JoinRule extends RelOptRule {
-        @SuppressWarnings("deprecation")
-        JoinRule() {
-            super(operand(Join.class, any()), "NesGlobalJoinRule");
+    private static final class JoinRule extends RelRule<RuleConfig> {
+        JoinRule(RuleConfig config) {
+            super(config);
         }
 
         @Override

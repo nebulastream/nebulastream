@@ -10,6 +10,8 @@
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Report each use of a deprecated API (e.g. of Calcite) as a warning. -->
+    <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
     <!-- protobuf-java must match what substrait-java was built against; protoc follows it. -->
     <protobuf.version>4.36.2</protobuf.version>
   </properties>

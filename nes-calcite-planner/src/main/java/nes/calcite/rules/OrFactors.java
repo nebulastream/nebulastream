@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,8 +30,14 @@ import org.apache.calcite.util.ImmutableBitSet;
 public final class OrFactors {
     private OrFactors() {}
 
-    public static final RelOptRule RULE = new RelOptRule(
-        RelOptRule.operand(Filter.class, RelOptRule.operand(Join.class, RelOptRule.any())), "NesOrFactorsRule") {
+    public static final RelOptRule RULE = RuleConfig.of("NesOrFactorsRule",
+        b -> b.operand(Filter.class).oneInput(b1 -> b1.operand(Join.class).anyInputs()), Rule::new).toRule();
+
+    private static final class Rule extends RelRule<RuleConfig> {
+        Rule(RuleConfig config) {
+            super(config);
+        }
+
         @Override
         public void onMatch(RelOptRuleCall call) {
             Filter filter = call.rel(0);
@@ -61,7 +68,7 @@ public final class OrFactors {
             }
             call.transformTo(filter.copy(filter.getTraitSet(), join, condition));
         }
-    };
+    }
 
     /** The OR over the branches of each branch's conditions on the fields of side, or null if a branch has none. */
     private static RexNode implied(RexBuilder rexBuilder, List<RexNode> branches, ImmutableBitSet side) {

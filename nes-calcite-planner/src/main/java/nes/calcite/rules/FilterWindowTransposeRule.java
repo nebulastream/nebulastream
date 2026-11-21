@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import nes.calcite.logical.NesWindowAggregate;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +18,12 @@ import org.apache.calcite.tools.RelBuilder;
  * its window table function, which Calcite's FilterAggregateTransposeRule and FilterTableFunctionTransposeRule cannot do:
  * the window function adds columns). Conjuncts on window_start/window_end or on aggregates stay above.
  */
-public final class FilterWindowTransposeRule extends RelOptRule {
-    public static final FilterWindowTransposeRule INSTANCE = new FilterWindowTransposeRule();
+public final class FilterWindowTransposeRule extends RelRule<RuleConfig> {
+    public static final RelOptRule INSTANCE = RuleConfig.of("NesFilterWindowTransposeRule",
+        b -> b.operand(Filter.class).oneInput(b1 -> b1.operand(NesWindowAggregate.class).anyInputs()), FilterWindowTransposeRule::new).toRule();
 
-    @SuppressWarnings("deprecation")
-    private FilterWindowTransposeRule() {
-        super(operand(Filter.class, operand(NesWindowAggregate.class, any())), "NesFilterWindowTransposeRule");
+    private FilterWindowTransposeRule(RuleConfig config) {
+        super(config);
     }
 
     @Override

@@ -76,7 +76,7 @@ public final class NesLogical {
 
         @Override
         public RelWriter explainTerms(RelWriter pw) {
-            return super.explainTerms(pw).item("spec", com.google.protobuf.TextFormat.shortDebugString(spec));
+            return super.explainTerms(pw).item("spec", com.google.protobuf.TextFormat.printer().emittingSingleLine(true).printToString(spec));
         }
     }
 

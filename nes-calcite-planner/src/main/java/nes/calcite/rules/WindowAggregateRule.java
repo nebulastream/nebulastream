@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import nes.calcite.sql.NesFunctions;
 import nes.calcite.logical.NesWindowAggregate;
 import java.util.ArrayList;
@@ -33,16 +34,16 @@ import org.apache.calcite.util.ImmutableBitSet;
  * Aggregate's column order and names. Anything the rule
  * does not recognize is left untouched and later fails the Substrait conversion with "Unable to handle node".
  */
-public final class WindowAggregateRule extends RelOptRule {
-    public static final WindowAggregateRule INSTANCE = new WindowAggregateRule();
+public final class WindowAggregateRule extends RelRule<RuleConfig> {
+    public static final RelOptRule INSTANCE = RuleConfig.of("NesWindowAggregateRule",
+        b -> b.operand(Aggregate.class).anyInputs(), WindowAggregateRule::new).toRule();
 
     /** Markers in the column mapping for the two window columns; all other values index the lower Project. */
     private static final int WINDOW_START = -1;
     private static final int WINDOW_END = -2;
 
-    @SuppressWarnings("deprecation")
-    private WindowAggregateRule() {
-        super(operand(Aggregate.class, any()), "NesWindowAggregateRule");
+    private WindowAggregateRule(RuleConfig config) {
+        super(config);
     }
 
     @Override

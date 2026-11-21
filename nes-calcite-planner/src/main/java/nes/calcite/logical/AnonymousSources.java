@@ -1,5 +1,7 @@
 package nes.calcite.logical;
 
+import nes.calcite.rules.RuleConfig;
+import org.apache.calcite.plan.RelRule;
 import nes.calcite.Planner;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -227,7 +229,14 @@ public final class AnonymousSources {
     }
 
     /** Turns the table function into the anonymous source. */
-    public static final RelOptRule RULE = new RelOptRule(RelOptRule.operand(TableFunctionScan.class, RelOptRule.none()), "NesAnonymousSourceRule") {
+    public static final RelOptRule RULE = RuleConfig.of("NesAnonymousSourceRule",
+        b -> b.operand(TableFunctionScan.class).noInputs(), Rule::new).toRule();
+
+    private static final class Rule extends RelRule<RuleConfig> {
+        Rule(RuleConfig config) {
+            super(config);
+        }
+
         @Override
         public void onMatch(RelOptRuleCall call) {
             TableFunctionScan scan = call.rel(0);
@@ -262,7 +271,7 @@ public final class AnonymousSources {
             spec.putAllSourceOptions(sourceOptions).putAllFormatOptions(formatOptions);
             call.transformTo(new NesAnonymousSource(scan.getCluster(), scan.getTraitSet(), spec.build(), scan.getRowType()));
         }
-    };
+    }
 
     /** A config literal: a string in single quotes (unless unquoted), a number or boolean as it is. */
     private static String text(RexLiteral literal, boolean quoteStrings) {

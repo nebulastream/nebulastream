@@ -81,7 +81,7 @@ public final class NesWindowJoin extends BiRel {
 
     @Override
     public RelWriter explainTerms(RelWriter pw) {
-        return super.explainTerms(pw).item("spec", TextFormat.shortDebugString(spec)).itemIf("condition", condition, condition != null)
+        return super.explainTerms(pw).item("spec", TextFormat.printer().emittingSingleLine(true).printToString(spec)).itemIf("condition", condition, condition != null)
             .itemIf("residual", residual, !residual.isEmpty());
     }
 }

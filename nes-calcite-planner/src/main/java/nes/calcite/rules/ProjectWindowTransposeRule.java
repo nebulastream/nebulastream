@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.calcite.plan.RelOptRule;
@@ -22,12 +23,12 @@ import org.apache.calcite.tools.RelBuilder;
  * the CAST(i8 AS REAL) that Calcite computes for a join key of another type. The window rules (WindowAggregateRule,
  * WindowJoinRule) expect the window function directly below the join or aggregation, or below plain field references.
  */
-public final class ProjectWindowTransposeRule extends RelOptRule {
-    public static final ProjectWindowTransposeRule INSTANCE = new ProjectWindowTransposeRule();
+public final class ProjectWindowTransposeRule extends RelRule<RuleConfig> {
+    public static final RelOptRule INSTANCE = RuleConfig.of("NesProjectWindowTransposeRule",
+        b -> b.operand(Project.class).oneInput(b1 -> b1.operand(TableFunctionScan.class).anyInputs()), ProjectWindowTransposeRule::new).toRule();
 
-    @SuppressWarnings("deprecation")
-    private ProjectWindowTransposeRule() {
-        super(operand(Project.class, operand(TableFunctionScan.class, any())), "NesProjectWindowTransposeRule");
+    private ProjectWindowTransposeRule(RuleConfig config) {
+        super(config);
     }
 
     @Override

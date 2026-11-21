@@ -37,7 +37,7 @@ public final class WindowInputs {
                     SqlParserPos pos = input.getParserPosition();
                     SqlNode aliased = SqlStdOperatorTable.AS.createCall(pos, input, new SqlIdentifier("window_input", pos));
                     SqlSelect wrapper = new SqlSelect(pos, null, SqlNodeList.SINGLETON_STAR, aliased,
-                        null, null, null, null, null, null, null, null);
+                        null, null, null, null, null, null, null, null, null);
                     visited.setOperand(0, wrapper);
                 }
                 return visited;

@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import nes.calcite.logical.NesModelInference;
 import nes.calcite.Planner;
 import java.util.List;
@@ -75,7 +76,14 @@ public final class ModelInference {
     }
 
     /** Turns the table function into the inference operator. */
-    public static final RelOptRule RULE = new RelOptRule(RelOptRule.operand(TableFunctionScan.class, RelOptRule.any()), "NesModelInferenceRule") {
+    public static final RelOptRule RULE = RuleConfig.of("NesModelInferenceRule",
+        b -> b.operand(TableFunctionScan.class).anyInputs(), Rule::new).toRule();
+
+    private static final class Rule extends RelRule<RuleConfig> {
+        Rule(RuleConfig config) {
+            super(config);
+        }
+
         @Override
         public void onMatch(RelOptRuleCall call) {
             TableFunctionScan scan = call.rel(0);
@@ -90,5 +98,5 @@ public final class ModelInference {
             inference.inputColumns(); /// fails here if the input lacks a column that the model reads
             call.transformTo(inference);
         }
-    };
+    }
 }

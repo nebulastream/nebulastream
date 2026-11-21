@@ -1,5 +1,6 @@
 package nes.calcite.rules;
 
+import org.apache.calcite.plan.RelRule;
 import nes.calcite.logical.NesWindowAggregate;
 import nes.calcite.logical.NesWindowJoin;
 import java.util.ArrayList;
@@ -40,12 +41,12 @@ import org.apache.calcite.tools.RelBuilder;
  * is already made): a hash join on the leftField = rightField keys of the condition, with the rest as residual, if
  * there is at least one key; a nested-loop join otherwise.
  */
-public final class WindowJoinRule extends RelOptRule {
-    public static final WindowJoinRule INSTANCE = new WindowJoinRule();
+public final class WindowJoinRule extends RelRule<RuleConfig> {
+    public static final RelOptRule INSTANCE = RuleConfig.of("NesWindowJoinRule",
+        b -> b.operand(Join.class).anyInputs(), WindowJoinRule::new).toRule();
 
-    @SuppressWarnings("deprecation")
-    private WindowJoinRule() {
-        super(operand(Join.class, any()), "NesWindowJoinRule");
+    private WindowJoinRule(RuleConfig config) {
+        super(config);
     }
 
     /**
