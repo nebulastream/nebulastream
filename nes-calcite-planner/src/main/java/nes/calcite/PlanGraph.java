@@ -123,7 +123,7 @@ final class PlanGraph {
         }
         boolean emphasized = highlighted.test(node);
         dot.append("    ").append(id).append(" [label=\"").append(escape(label(node, subqueries))).append("\", fillcolor=\"").append(color(node))
-            .append('"').append(emphasized ? ", color=\"#dc2626\", penwidth=3" : window(node) ? ", color=\"#16a34a\", penwidth=3" : ", color=\"#9ca3af\"")
+            .append('"').append(emphasized ? ", color=\"#dc2626\", penwidth=3" : ", color=\"#9ca3af\"")
             .append("];\n");
         inputs.forEach(input -> edges.add(input + " -> " + id));
         if (node instanceof NesPhysical.NetworkSink sink) {
@@ -180,13 +180,6 @@ final class PlanGraph {
 
     private static String wrap(String text) {
         return text.length() <= 70 ? text : text.substring(0, 67) + "...";
-    }
-
-    /** Window operators: aggregations and joins, logical and physical. They have a green border (and the fill of their kind). */
-    private static boolean window(RelNode node) {
-        return node instanceof NesPhysical.WindowBuild || node instanceof NesPhysical.WindowProbe || node instanceof NesWindowAggregate
-            || node instanceof NesLogical.WindowAggregation
-            || node instanceof NesPhysical.JoinBuild || node instanceof NesPhysical.JoinProbe || node instanceof NesWindowJoin;
     }
 
     private static String color(RelNode node) {
