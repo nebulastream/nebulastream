@@ -10,10 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-vcpkg_from_git( # TEMPORARY local fork
+vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
-        URL file:///tmp/claude-2545/-data-ssd-lukas-claude-worktrees-nebulastream-a028c2b88b466dcf-python-udfs-perf-eval-c8fd23/af5b8720-7207-407f-82df-37469afa0a76/scratchpad/codon-fork
+        # NebulaStream's fork of Codon: the former port patches as commits, and a token-based parser
+        # (codon/parser/tok), on the branch nebulastream.
+        REPO ls-1801/codon
         REF 94ba688752c5b7a44966836381730feed25f0434
+        SHA512 b190c085ac99b1dd1028a626ebf6819a67a601da4398d58df73c32cb49355bb441142dc4a5ba32218c26be33a8cd0d486889934a4f45bad6cac420f3bb97f080
+        HEAD_REF nebulastream
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
