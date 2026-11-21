@@ -195,7 +195,7 @@ public final class AnonymousSources {
      * Reads an anonymous source; see AnonymousSource. A TableScan of a table of its own (named after the source type, with
      * its row type), so that Calcite's rules and metadata handle it as a table, as NesLogical.PhysicalSourceScan.
      */
-    public static final class NesAnonymousSource extends TableScan {
+    public static final class NesAnonymousSource extends TableScan implements NesSource {
         public final AnonymousSource spec;
 
         public NesAnonymousSource(RelOptCluster cluster, RelTraitSet traits, AnonymousSource spec, RelDataType rowType) {
@@ -208,11 +208,17 @@ public final class AnonymousSources {
         }
 
         @Override
+        public String label() {
+            return "the anonymous " + spec.getType() + " source";
+        }
+
+        @Override
         public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
             return new NesAnonymousSource(getCluster(), traitSet, spec, table);
         }
 
         /** The worker that runs the source (the HOST argument). */
+        @Override
         public String host() {
             String host = spec.getSourceOptionsMap().get(HOST);
             if (host == null || host.isEmpty()) {

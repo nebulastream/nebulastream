@@ -1,5 +1,8 @@
 package nes.calcite.rules;
 
+import nes.calcite.logical.PassesRows;
+import nes.calcite.logical.WindowOperator;
+import nes.calcite.logical.NesSource;
 import nes.calcite.logical.AnonymousSources;
 import nes.calcite.logical.NesLogical;
 import nes.calcite.logical.NesWindowJoin;
@@ -40,11 +43,10 @@ public final class Watermarks {
     /** For each window input, the sources and the column of each that its time field passes on. */
     private static void collect(RelNode node, Map<RelNode, Integer> timeFields) {
         node.getInputs().forEach(input -> collect(input, timeFields));
-        if (node instanceof NesLogical.WindowAggregation aggregate) {
-            sources(aggregate.getInput(), aggregate.spec.getTimeField(), timeFields);
-        } else if (node instanceof NesWindowJoin join) {
-            sources(join.getLeft(), join.spec.getLeftTimeField(), timeFields);
-            sources(join.getRight(), join.spec.getRightTimeField(), timeFields);
+        if (node instanceof WindowOperator window) {
+            for (int i = 0; i < window.getInputs().size(); i++) {
+                sources(window.getInput(i), window.timeField(i), timeFields);
+            }
         }
     }
 
@@ -63,15 +65,16 @@ public final class Watermarks {
     }
 
     private static boolean trace(RelNode rel, int field, Map<RelNode, Integer> found) {
-        if (rel instanceof NesLogical.PhysicalSourceScan || rel instanceof AnonymousSources.NesAnonymousSource) {
+        if (rel instanceof NesSource) {
             found.put(rel, field);
             return true;
         }
-        if (rel instanceof NesLogical.WindowAggregation || rel instanceof NesWindowJoin) {
+        if (rel instanceof WindowOperator) {
             return true;
         }
-        if (rel instanceof Filter filter) {
-            return trace(filter.getInput(), field, found);
+        /// Passes its input's fields on at their positions (and maybe appends others, which are computed).
+        if (rel instanceof Filter || rel instanceof PassesRows) {
+            return field < rel.getInput(0).getRowType().getFieldCount() && trace(rel.getInput(0), field, found);
         }
         if (rel instanceof Project project) {
             return project.getProjects().get(field) instanceof RexInputRef ref && trace(project.getInput(), ref.getIndex(), found);

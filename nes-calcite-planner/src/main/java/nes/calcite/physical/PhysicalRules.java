@@ -1,5 +1,7 @@
 package nes.calcite.physical;
 
+import nes.calcite.logical.PassesRows;
+import nes.calcite.logical.CarriesWatermarks;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -102,14 +104,11 @@ public final class PhysicalRules {
                 && watermarked(alternative));
         }
         RelNode rel = node instanceof org.apache.calcite.plan.hep.HepRelVertex vertex ? vertex.getCurrentRel() : node;
-        if (rel instanceof NesLogical.WindowAggregation || rel instanceof NesWindowJoin || rel instanceof NesLogical.WatermarkAssigner) {
-            return true;
-        }
-        if (rel instanceof NesLogical.NetworkSource network) {
-            return network.watermarked;
+        if (rel instanceof CarriesWatermarks carrier) {
+            return carrier.watermarked();
         }
         boolean passesRows = rel instanceof org.apache.calcite.rel.core.Filter || rel instanceof org.apache.calcite.rel.core.Project
-            || rel instanceof org.apache.calcite.rel.core.Union || rel instanceof NesModelInference;
+            || rel instanceof org.apache.calcite.rel.core.Union || rel instanceof PassesRows;
         return passesRows && !rel.getInputs().isEmpty() && rel.getInputs().stream().allMatch(PhysicalRules::watermarked);
     }
 
@@ -121,13 +120,9 @@ public final class PhysicalRules {
                 return found;
             }
         }
-        boolean converted = plan instanceof NesLogical.PhysicalSourceScan || plan instanceof AnonymousSources.NesAnonymousSource
-            || plan instanceof NesModelInference
-            || plan instanceof NesWindowJoin
-            || plan instanceof NesLogical.NetworkSource || plan instanceof NesLogical.WatermarkAssigner
-            || plan instanceof NesLogical.Parts || plan instanceof LogicalFilter || plan instanceof LogicalProject
-            || (plan instanceof LogicalUnion union && union.all)
-            || plan instanceof NesLogical.WindowAggregation;
+        /// Converted: a rule of RULES takes its class (UnionRule only UNION ALL).
+        boolean converted = RULES.stream().anyMatch(rule -> rule.getOperand().getMatchedClass().isInstance(plan))
+            && !(plan instanceof LogicalUnion union && !union.all);
         return converted ? null : plan;
     }
 
@@ -169,13 +164,18 @@ public final class PhysicalRules {
     }
 
     /** Model inference (NesModelInference): its outputs get fresh fields, appended to the input row. */
-    public static final class InferModelRule extends ConverterRule {
+    public static final class InferModelRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(NesModelInference.class, Convention.NONE, NES, "NesInferModelRule")
             .withRuleFactory(InferModelRule::new);
 
         InferModelRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            return "an InferModel that reads " + ((NesModelInference) logical).inputColumns() + " and appends the model's outputs.";
         }
 
         @Override
@@ -203,13 +203,28 @@ public final class PhysicalRules {
      * A window join (NesWindowJoin): per side a watermark assigner and a JoinBuild, and a JoinProbe over both. A hash join
      * compares its keys in one type: a key whose side has another type gets a column cast to it (a Map before the build).
      */
-    public static final class JoinRule extends ConverterRule {
+    public static final class JoinRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(NesWindowJoin.class, Convention.NONE, NES, "NesJoinRule")
             .withRuleFactory(JoinRule::new);
 
         JoinRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            NesWindowJoin join = (NesWindowJoin) logical;
+            String implementation = join.spec.getImplementation() == WindowJoin.Implementation.HASH_JOIN
+                ? "HASH_JOIN, as the condition has keys: " + keys(join)
+                : keys(join).isEmpty() ? "NESTED_LOOP_JOIN, as the condition has no key (no left field = right field)"
+                : "NESTED_LOOP_JOIN, as requested (join_strategy NESTED_LOOP_JOIN), although the condition has keys: " + keys(join);
+            boolean casts = join.spec.getImplementation() == WindowJoin.Implementation.HASH_JOIN
+                && produced.stream().anyMatch(n -> n instanceof NesPhysical.Map);
+            return "a window join of type " + join.spec.getType() + " as " + implementation + ". A JoinBuild per side ends its"
+                + " pipeline and stores the rows, a JoinProbe starts a pipeline and joins the closed windows."
+                + (casts ? " A Map casts keys of different types to one type, as the hash table needs equal keys." : "")
+                + watermarks(produced);
         }
 
         @Override
@@ -341,13 +356,20 @@ public final class PhysicalRules {
     }
 
     /** A physical source (NesLogical.PhysicalSourceScan): its SourceScan, parsed by a Scan. */
-    public static final class SourceScanRule extends ConverterRule {
+    public static final class SourceScanRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(NesLogical.PhysicalSourceScan.class, Convention.NONE, NES, "NesSourceScanRule")
             .withRuleFactory(SourceScanRule::new);
 
         SourceScanRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            NesLogical.PhysicalSourceScan scan = (NesLogical.PhysicalSourceScan) logical;
+            return "reads physical source " + scan.physicalSource.getId() + " on " + scan.physicalSource.getHost()
+                + ": a SourceScan, and a Scan that parses its rows.";
         }
 
         @Override
@@ -360,13 +382,19 @@ public final class PhysicalRules {
     }
 
     /** An anonymous source (AnonymousSources.NesAnonymousSource): its SourceScan, parsed by a Scan. */
-    public static final class AnonymousSourceRule extends ConverterRule {
+    public static final class AnonymousSourceRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(AnonymousSources.NesAnonymousSource.class, Convention.NONE, NES, "NesAnonymousSourceRule")
             .withRuleFactory(AnonymousSourceRule::new);
 
         AnonymousSourceRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            AnonymousSources.NesAnonymousSource source = (AnonymousSources.NesAnonymousSource) logical;
+            return "reads the anonymous " + source.spec.getType() + " source on " + source.host() + ": a SourceScan, and a Scan that parses its rows.";
         }
 
         @Override
@@ -379,13 +407,20 @@ public final class PhysicalRules {
     }
 
     /** The assigner after a source (NesLogical.WatermarkAssigner). */
-    public static final class WatermarkAssignerRule extends ConverterRule {
+    public static final class WatermarkAssignerRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(NesLogical.WatermarkAssigner.class, Convention.NONE, NES, "NesWatermarkAssignerRule")
             .withRuleFactory(WatermarkAssignerRule::new);
 
         WatermarkAssignerRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            NesLogical.WatermarkAssigner assigner = (NesLogical.WatermarkAssigner) logical;
+            return "the first operator after the source sets the watermarks from "
+                + assigner.getRowType().getFieldNames().get(assigner.timeField) + ".";
         }
 
         @Override
@@ -397,13 +432,19 @@ public final class PhysicalRules {
     }
 
     /** The receiving end of a cut (NesLogical.NetworkSource): its rows arrive in the native format, a Scan reads them. */
-    public static final class NetworkSourceRule extends ConverterRule {
+    public static final class NetworkSourceRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(NesLogical.NetworkSource.class, Convention.NONE, NES, "NesNetworkSourceRule")
             .withRuleFactory(NetworkSourceRule::new);
 
         NetworkSourceRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            return "receives the rows of " + ((NesLogical.NetworkSource) logical).upstreamHost
+                + ": a NetworkSource, and a Scan that reads their native format.";
         }
 
         @Override
@@ -432,13 +473,18 @@ public final class PhysicalRules {
         }
     }
 
-    public static final class SelectionRule extends ConverterRule {
+    public static final class SelectionRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(LogicalFilter.class, Convention.NONE, NES, "NesSelectionRule")
             .withRuleFactory(SelectionRule::new);
 
         SelectionRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            return "a Selection with the filter's condition.";
         }
 
         @Override
@@ -453,13 +499,26 @@ public final class PhysicalRules {
      * A projection: a Map for each computed value (a field passed on is not copied), then a Retain of the projected
      * fields, which the pipeline's Emit applies (see Pipelines.finish).
      */
-    public static final class ProjectionRule extends ConverterRule {
+    public static final class ProjectionRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(LogicalProject.class, Convention.NONE, NES, "NesProjectionRule")
             .withRuleFactory(ProjectionRule::new);
 
         ProjectionRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            org.apache.calcite.rel.core.Project project = (org.apache.calcite.rel.core.Project) logical;
+            List<String> computed = new ArrayList<>();
+            List<String> passed = new ArrayList<>();
+            for (int i = 0; i < project.getProjects().size(); i++) {
+                (project.getProjects().get(i) instanceof RexInputRef ? passed : computed).add(project.getRowType().getFieldNames().get(i));
+            }
+            return (computed.isEmpty() ? "no field is computed" : "a Map computes " + computed)
+                + (passed.isEmpty() ? "" : "; " + passed + " are input fields") + "; a Retain keeps the projected fields"
+                + " (the Emit that ends the pipeline writes only them).";
         }
 
         @Override
@@ -484,13 +543,20 @@ public final class PhysicalRules {
     }
 
     /** UNION ALL: a UnionAll of its inputs, each cast to the union's types where they differ. */
-    public static final class UnionRule extends ConverterRule {
+    public static final class UnionRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(LogicalUnion.class, Convention.NONE, NES, "NesUnionRule")
             .withRuleFactory(UnionRule::new);
 
         UnionRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            return "a UnionAll: each input runs the operators above it in its own pipeline (Pipelines.finish); no operator merges"
+                + " them." + (produced.stream().anyMatch(n -> n instanceof NesPhysical.Map)
+                    ? " A Map casts the fields of an input whose types differ from the union's." : "");
         }
 
         @Override
@@ -531,13 +597,20 @@ public final class PhysicalRules {
      * pipeline, and the probe that starts the next one. The engine types some results differently from Calcite (an
      * unsigned COUNT, a 64-bit SUM, a DOUBLE AVG); those are cast to Calcite's types with a Map each.
      */
-    public static final class WindowRule extends ConverterRule {
+    public static final class WindowRule extends ConverterRule implements ExplainedRule {
         static final Config CONFIG = Config.INSTANCE
             .withConversion(NesLogical.WindowAggregation.class, Convention.NONE, NES, "NesWindowRule")
             .withRuleFactory(WindowRule::new);
 
         WindowRule(Config config) {
             super(config);
+        }
+
+        @Override
+        public String reason(RelNode logical, List<RelNode> produced) {
+            return "a " + ((NesLogical.WindowAggregation) logical).spec.getKind() + " window aggregation: a WindowBuild ends the"
+                + " input's pipeline and fills the window state, a WindowProbe starts a pipeline and emits the closed windows."
+                + watermarks(produced);
         }
 
         @Override
@@ -627,5 +700,27 @@ public final class PhysicalRules {
             };
             return types.createTypeWithNullability(type, !call.getFunction().equals("COUNT") && nullable);
         }
+    }
+
+    /** Where the watermarks of a window operator's input come from: an assigner it got (produced), or the rows have them. */
+    private static String watermarks(List<RelNode> produced) {
+        return produced.stream().anyMatch(n -> n instanceof NesPhysical.WatermarkAssigner)
+            ? " An assigner before it sets the watermarks: the time field is computed, not a source column."
+            : " Its rows have watermarks already: from the assigners after the sources, another window, or the network.";
+    }
+
+    /** The leftField = rightField conjuncts of the join's condition. */
+    private static List<String> keys(NesWindowJoin join) {
+        int leftWidth = join.getLeft().getRowType().getFieldCount();
+        List<String> names = join.getRowType().getFieldNames();
+        List<String> keys = new ArrayList<>();
+        for (RexNode conjunct : RelOptUtil.conjunctions(join.condition)) {
+            if (conjunct.getKind() == org.apache.calcite.sql.SqlKind.EQUALS && conjunct instanceof RexCall call
+                && call.getOperands().get(0) instanceof RexInputRef a && call.getOperands().get(1) instanceof RexInputRef b
+                && (a.getIndex() < leftWidth) != (b.getIndex() < leftWidth)) {
+                keys.add(names.get(2 + a.getIndex()) + " = " + names.get(2 + b.getIndex()));
+            }
+        }
+        return keys;
     }
 }

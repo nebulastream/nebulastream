@@ -17,7 +17,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
  * inputs from the input columns with the names of its input fields; the output is the input's columns followed by the
  * model's outputs. Made from MODEL_INFERENCE by ModelInference.RULE.
  */
-public final class NesModelInference extends SingleRel {
+public final class NesModelInference extends SingleRel implements PassesRows {
     public final Model model;
 
     /// rowType: the input's columns, then the model's outputs.

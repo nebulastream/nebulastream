@@ -22,7 +22,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * the window table functions), which Calcite's rules and metadata know. So its own row type, with the window columns
  * first, is only seen by our later steps (the placement and the physical operators).
  */
-public final class NesWindowJoin extends BiRel {
+public final class NesWindowJoin extends BiRel implements WindowOperator {
     public final WindowJoin spec;
     public final @Nullable RexNode condition;
     public final List<RexNode> residual;
@@ -61,6 +61,11 @@ public final class NesWindowJoin extends BiRel {
                     join.residual, join.getRowType());
             }
         });
+    }
+
+    @Override
+    public int timeField(int input) {
+        return input == 0 ? spec.getLeftTimeField() : spec.getRightTimeField();
     }
 
     @Override

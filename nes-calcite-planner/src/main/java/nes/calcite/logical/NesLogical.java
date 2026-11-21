@@ -27,12 +27,25 @@ public final class NesLogical {
      * table, so that Calcite's rules and metadata handle it as a table (e.g. RelFieldTrimmer trims its unused columns,
      * column origins find its columns).
      */
-    public static final class PhysicalSourceScan extends TableScan {
+    public static final class PhysicalSourceScan extends TableScan implements NesSource {
         public final PhysicalSource physicalSource;
 
         PhysicalSourceScan(RelOptCluster cluster, RelTraitSet traits, RelOptTable table, PhysicalSource physicalSource) {
             super(cluster, traits, List.of(), table);
             this.physicalSource = physicalSource;
+        }
+
+        @Override
+        public String host() {
+            if (physicalSource.getHost().isEmpty()) {
+                throw new nes.calcite.PlacementFailure("physical source " + physicalSource.getId() + " has no host");
+            }
+            return physicalSource.getHost();
+        }
+
+        @Override
+        public String label() {
+            return "SOURCE(" + getTable().getQualifiedName().get(getTable().getQualifiedName().size() - 1) + ")";
         }
 
         @Override
@@ -57,7 +70,7 @@ public final class NesLogical {
      * NesWindowAggregate's. The engine's probe emits window start, window end, the keys and the aggregates (spec's order,
      * maybe with an extra COUNT(*)); probeColumns is the probe column of each output column.
      */
-    public static final class WindowAggregation extends org.apache.calcite.rel.SingleRel {
+    public static final class WindowAggregation extends org.apache.calcite.rel.SingleRel implements WindowOperator {
         public final nes.calcite.proto.WindowAggregate spec;
         public final List<Integer> probeColumns;
 
@@ -67,6 +80,11 @@ public final class NesLogical {
             this.spec = spec;
             this.probeColumns = List.copyOf(probeColumns);
             this.rowType = rowType;
+        }
+
+        @Override
+        public int timeField(int input) {
+            return spec.getTimeField();
         }
 
         @Override
@@ -113,12 +131,28 @@ public final class NesLogical {
      * the source (Watermarks.assign), so it runs on the source's worker (Placement) and every row of the source, also one
      * that a later filter drops, advances the watermark.
      */
-    public static final class WatermarkAssigner extends org.apache.calcite.rel.SingleRel {
+    public static final class WatermarkAssigner extends org.apache.calcite.rel.SingleRel implements Pinned, CarriesWatermarks {
         public final int timeField;
 
         public WatermarkAssigner(RelOptCluster cluster, RelTraitSet traits, RelNode input, int timeField) {
             super(cluster, traits, input);
             this.timeField = timeField;
+        }
+
+        /** The worker of its source: it belongs to reading the source (and, as the source, costs no capacity). */
+        @Override
+        public String host() {
+            return input instanceof NesSource source ? source.host() : null;
+        }
+
+        @Override
+        public String label() {
+            return "the watermark assigner after " + (input instanceof NesSource source ? source.label() : "its input");
+        }
+
+        @Override
+        public boolean watermarked() {
+            return true;
         }
 
         @Override
@@ -133,7 +167,7 @@ public final class NesLogical {
     }
 
     /** The rows that another worker sends over a network channel: the receiving end of a cut between two workers. */
-    public static final class NetworkSource extends AbstractRelNode {
+    public static final class NetworkSource extends AbstractRelNode implements CarriesWatermarks {
         public final String channel;
         public final String upstreamHost;
         /// Whether the sent rows carry watermarks (from an assigner after their sources or from a window operator), which
@@ -147,6 +181,11 @@ public final class NesLogical {
             this.channel = channel;
             this.upstreamHost = upstreamHost;
             this.watermarked = watermarked;
+        }
+
+        @Override
+        public boolean watermarked() {
+            return watermarked;
         }
 
         @Override

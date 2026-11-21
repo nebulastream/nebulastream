@@ -1,5 +1,6 @@
 package nes.calcite.physical;
 
+import nes.calcite.logical.Pinned;
 import nes.calcite.logical.AnonymousSources;
 import nes.calcite.logical.NesLogical;
 import nes.calcite.PlacementFailure;
@@ -63,26 +64,9 @@ public final class Placement {
         Map<RelNode, Variable[]> x = new IdentityHashMap<>();
         for (RelNode operator : operators) {
             x.put(operator, onOneWorker(model, hosts.size()));
-            if (operator instanceof NesLogical.PhysicalSourceScan source) {
-                String host = source.physicalSource.getHost();
-                if (host.isEmpty()) {
-                    throw new PlacementFailure("physical source " + source.physicalSource.getId() + " has no host");
-                }
-                List<String> name = source.getTable().getQualifiedName();
-                x.get(operator)[workerOf(hosts, host, "SOURCE(" + name.get(name.size() - 1) + ")")].level(1);
-            }
-            if (operator instanceof AnonymousSources.NesAnonymousSource source) {
-                x.get(operator)[index(hosts, source.host())].level(1);
-            }
-            /// The first operator after a source runs on the source's worker. It belongs to reading the source and, as the
-            /// source, costs no capacity. (Our own placement counts it, and so may move it behind the network.)
-            if (operator instanceof NesLogical.WatermarkAssigner assigner) {
-                RelNode source = assigner.getInput();
-                String host = source instanceof NesLogical.PhysicalSourceScan scan ? scan.physicalSource.getHost()
-                    : source instanceof AnonymousSources.NesAnonymousSource anonymous ? anonymous.host() : null;
-                if (host != null && !host.isEmpty()) {
-                    x.get(operator)[index(hosts, host)].level(1);
-                }
+            /// A source, and the watermark assigner right after it, run on the source's worker.
+            if (operator instanceof Pinned pinned && pinned.host() != null) {
+                x.get(operator)[workerOf(hosts, pinned.host(), pinned.label())].level(1);
             }
         }
         Variable[] sink = onOneWorker(model, hosts.size());
@@ -91,12 +75,11 @@ public final class Placement {
         for (int w = 0; w < hosts.size(); w++) {
             long capacity = topology.get(w).getMaxOperators();
             if (capacity > 0) {
-                /// As our own placement counts (operatorCapacityDemand): sources and the sink stay where they are and cost nothing;
-                /// so do the watermark assigners after the sources.
+                /// As our own placement counts (operatorCapacityDemand): pinned operators (sources and the assigners after
+                /// them) and the sink stay where they are and cost nothing.
                 Expression load = model.addExpression().upper(capacity);
                 for (RelNode operator : operators) {
-                    if (!(operator instanceof NesLogical.PhysicalSourceScan || operator instanceof AnonymousSources.NesAnonymousSource
-                        || operator instanceof NesLogical.WatermarkAssigner)) {
+                    if (!(operator instanceof Pinned)) {
                         load.set(x.get(operator)[w], 1);
                     }
                 }

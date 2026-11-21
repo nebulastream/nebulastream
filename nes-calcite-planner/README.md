@@ -23,6 +23,20 @@ java -jar target/nes-calcite-planner.jar <request.pb>...   # plans saved request
 | `nes.calcite.physical` | placement, physical operators, pipelines, memory layouts and the Substrait output |
 | `nes.calcite.steps` | the record of each planning step and its graph (`Steps`, `PlanGraph`), for EXPLAIN and the step reports |
 
+### Adding an operator
+
+The planner's phases ask an operator what they need through interfaces, so a new operator implements those of its
+role and the phases need no change:
+
+- A logical operator (`nes.calcite.logical`): `NesSource` (a source, placed on its worker), `Pinned` (runs on a
+  given worker and costs no capacity), `WindowOperator` (windows over the event time of its inputs), `CarriesWatermarks`
+  (its rows have watermarks), `PassesRows` (passes its input's rows and fields on). Its converter rule goes into
+  `PhysicalRules.RULES` and implements `ExplainedRule` (the reason in the step "physical operators").
+- A physical operator (`NesPhysical`): `NesOperator` (whether it starts a pipeline, how it is copied over a renumbered
+  input, its `PhysicalOperator` payload), and where they apply `RowOperator` (keeps its input's fields), `LaidOut`
+  (has a layout), `LayoutSource` (dictates the layout of its buffers) and `ChannelEnd` (an end of a network channel).
+  The engine builds it from its payload in `nes-calcite/src/SubstraitToPhysicalPlan.cpp`.
+
 ## Contract
 
 - The request carries the SQL, the schemas of all sources it may reference with their physical sources, the workers

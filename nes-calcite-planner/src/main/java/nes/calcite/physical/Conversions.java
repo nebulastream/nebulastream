@@ -32,7 +32,7 @@ import org.apache.calcite.sql.SqlKind;
  * way, so the reason is what the rule produced (e.g. a hash join for keys), not a choice between costed alternatives.
  */
 public final class Conversions implements RelOptListener {
-    private record Conversion(String rule, RelNode physical) {}
+    private record Conversion(org.apache.calcite.plan.RelOptRule rule, RelNode physical) {}
 
     private final VolcanoPlanner volcano;
     /// Registered logical operator -> its first conversion.
@@ -46,7 +46,7 @@ public final class Conversions implements RelOptListener {
     public void ruleProductionSucceeded(RuleProductionEvent event) {
         RelNode logical = event.getRuleCall().rels[0];
         if (!event.isBefore() && !(logical instanceof NesLogical.Parts)) {
-            conversions.putIfAbsent(logical, new Conversion(event.getRuleCall().getRule().toString(), event.getRel()));
+            conversions.putIfAbsent(logical, new Conversion(event.getRuleCall().getRule(), event.getRel()));
         }
     }
 
@@ -84,7 +84,7 @@ public final class Conversions implements RelOptListener {
             }
             Conversion conversion = conversions.get(logical);
             applications.add(RuleApplication.newBuilder()
-                .setRule(conversion.rule() + ": " + reason(logical, conversion.physical()))
+                .setRule(conversion.rule() + ": " + reason(conversion.rule(), logical, conversion.physical()))
                 .setOurs(true)
                 .setPlan(text.toString())
                 .setDot(PlanGraph.of(parts, latest::contains, false))
@@ -145,66 +145,11 @@ public final class Conversions implements RelOptListener {
         return any;
     }
 
-    /** Why the rule produced these physical operators. */
-    static String reason(RelNode logical, RelNode physical) {
+    /** Why the rule produced these physical operators (its ExplainedRule.reason). */
+    static String reason(org.apache.calcite.plan.RelOptRule rule, RelNode logical, RelNode physical) {
         List<RelNode> produced = new ArrayList<>();
         collectProduced(physical, produced);
-        boolean assigner = produced.stream().anyMatch(n -> n instanceof NesPhysical.WatermarkAssigner);
-        String watermarks = assigner
-            ? " An assigner before it sets the watermarks: the time field is computed, not a source column."
-            : " Its rows have watermarks already: from the assigners after the sources, another window, or the network.";
-        if (logical instanceof NesLogical.PhysicalSourceScan scan) {
-            return "reads physical source " + scan.physicalSource.getId() + " on " + scan.physicalSource.getHost()
-                + ": a SourceScan, and a Scan that parses its rows.";
-        }
-        if (logical instanceof AnonymousSources.NesAnonymousSource source) {
-            return "reads the anonymous " + source.spec.getType() + " source on " + source.host() + ": a SourceScan, and a Scan that parses its rows.";
-        }
-        if (logical instanceof NesLogical.NetworkSource network) {
-            return "receives the rows of " + network.upstreamHost + ": a NetworkSource, and a Scan that reads their native format.";
-        }
-        if (logical instanceof NesLogical.WatermarkAssigner assigner1) {
-            return "the first operator after the source sets the watermarks from "
-                + assigner1.getRowType().getFieldNames().get(assigner1.timeField) + ".";
-        }
-        if (logical instanceof Filter) {
-            return "a Selection with the filter's condition.";
-        }
-        if (logical instanceof Project project) {
-            List<String> computed = new ArrayList<>();
-            List<String> passed = new ArrayList<>();
-            for (int i = 0; i < project.getProjects().size(); i++) {
-                (project.getProjects().get(i) instanceof RexInputRef ? passed : computed).add(project.getRowType().getFieldNames().get(i));
-            }
-            return (computed.isEmpty() ? "no field is computed" : "a Map computes " + computed)
-                + (passed.isEmpty() ? "" : "; " + passed + " are input fields") + "; a Retain keeps the projected fields"
-                + " (the Emit that ends the pipeline writes only them).";
-        }
-        if (logical instanceof Union) {
-            return "a UnionAll: each input runs the operators above it in its own pipeline (Pipelines.finish); no operator merges"
-                + " them." + (produced.stream().anyMatch(n -> n instanceof NesPhysical.Map)
-                    ? " A Map casts the fields of an input whose types differ from the union's." : "");
-        }
-        if (logical instanceof NesModelInference inference) {
-            return "an InferModel that reads " + inference.inputColumns() + " and appends the model's outputs.";
-        }
-        if (logical instanceof NesLogical.WindowAggregation aggregate) {
-            return "a " + aggregate.spec.getKind() + " window aggregation: a WindowBuild ends the input's pipeline and fills the"
-                + " window state, a WindowProbe starts a pipeline and emits the closed windows." + watermarks;
-        }
-        if (logical instanceof NesWindowJoin join) {
-            String implementation = join.spec.getImplementation() == WindowJoin.Implementation.HASH_JOIN
-                ? "HASH_JOIN, as the condition has keys: " + keys(join)
-                : keys(join).isEmpty() ? "NESTED_LOOP_JOIN, as the condition has no key (no left field = right field)"
-                : "NESTED_LOOP_JOIN, as requested (join_strategy NESTED_LOOP_JOIN), although the condition has keys: " + keys(join);
-            boolean casts = join.spec.getImplementation() == WindowJoin.Implementation.HASH_JOIN
-                && produced.stream().anyMatch(n -> n instanceof NesPhysical.Map);
-            return "a window join of type " + join.spec.getType() + " as " + implementation + ". A JoinBuild per side ends its pipeline and stores the"
-                + " rows, a JoinProbe starts a pipeline and joins the closed windows."
-                + (casts ? " A Map casts keys of different types to one type, as the hash table needs equal keys." : "")
-                + watermarks;
-        }
-        return "converted by our rule.";
+        return rule instanceof ExplainedRule explained ? explained.reason(logical, produced) : "converted by our rule.";
     }
 
     /** The physical operators that the rule created (not those of its inputs). */
@@ -214,20 +159,5 @@ public final class Conversions implements RelOptListener {
         }
         produced.add(node);
         node.getInputs().forEach(input -> collectProduced(input, produced));
-    }
-
-    /** The leftField = rightField conjuncts of the join's condition. */
-    private static List<String> keys(NesWindowJoin join) {
-        int leftWidth = join.getLeft().getRowType().getFieldCount();
-        List<String> names = join.getRowType().getFieldNames();
-        List<String> keys = new ArrayList<>();
-        for (RexNode conjunct : RelOptUtil.conjunctions(join.condition)) {
-            if (conjunct.getKind() == SqlKind.EQUALS && conjunct instanceof RexCall call
-                && call.getOperands().get(0) instanceof RexInputRef a && call.getOperands().get(1) instanceof RexInputRef b
-                && (a.getIndex() < leftWidth) != (b.getIndex() < leftWidth)) {
-                keys.add(names.get(2 + a.getIndex()) + " = " + names.get(2 + b.getIndex()));
-            }
-        }
-        return keys;
     }
 }
