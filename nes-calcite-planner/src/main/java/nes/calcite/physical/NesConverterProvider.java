@@ -76,14 +76,6 @@ public final class NesConverterProvider extends ConverterProvider {
         }
     }
 
-    /** The layout of a Scan or Emit, which the memory layout phase (Layouts) sets on every one. */
-    private static nes.calcite.proto.Layout laidOut(nes.calcite.proto.Layout layout, RelNode node) {
-        if (layout == null) {
-            throw new IllegalStateException("no memory layout for " + node.getRelTypeName() + " (Layouts.assign has not run)");
-        }
-        return layout;
-    }
-
     /** Calcite's operators and ours (NesFunctions). */
     @Override
     public org.apache.calcite.sql.SqlOperatorTable getSqlOperatorTable() {
@@ -122,8 +114,8 @@ public final class NesConverterProvider extends ConverterProvider {
                 .orElseThrow(() -> new IllegalStateException("the parts of the plan form a cycle"));
             pending.remove(next);
             ordered.add(next);
-            if (next.root() instanceof NesPhysical.NetworkSink sink) {
-                sent.add(sink.channel);
+            if (next.root() instanceof ChannelEnd end && end.sends()) {
+                sent.add(end.channel());
             }
         }
         return ordered;
@@ -131,8 +123,8 @@ public final class NesConverterProvider extends ConverterProvider {
 
     private static List<String> received(RelNode node) {
         RelNode stripped = Pipelines.strip(node);
-        if (stripped instanceof NesPhysical.NetworkSource source) {
-            return List.of(source.channel);
+        if (stripped instanceof ChannelEnd end && !end.sends()) {
+            return List.of(end.channel());
         }
         return stripped.getInputs().stream().flatMap(input -> received(input).stream()).toList();
     }
@@ -170,21 +162,17 @@ public final class NesConverterProvider extends ConverterProvider {
         @Override
         public Rel apply(RelNode node) {
             RelNode stripped = Pipelines.strip(node);
-            if (!(stripped instanceof NesPhysical.NesRel)) {
-                throw new IllegalStateException("not a physical operator: " + stripped);
+            if (!(stripped instanceof NesOperator operator)) {
+                throw new IllegalStateException("not an engine operator: " + stripped);
             }
-            return physical(stripped);
+            return physical(operator);
         }
 
         /// A physical operator as an extension relation whose detail is its PhysicalOperator. Its inputs are written
         /// first, so that each pipeline is known before the operators that continue it.
-        private Rel physical(RelNode node) {
+        private Rel physical(NesOperator node) {
             List<Rel> inputs = node.getInputs().stream().map(this::apply).toList();
-            boolean startsPipeline = node instanceof NesPhysical.SourceScan || node instanceof NesPhysical.Scan
-                || node instanceof NesPhysical.Sink || node instanceof NesPhysical.NetworkSource
-                || node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.WindowProbe
-                || node instanceof NesPhysical.JoinProbe;
-            int pipeline = startsPipeline ? ids.nextPipeline++ : pipelines.get(Pipelines.strip(node.getInput(0)));
+            int pipeline = node.startsPipeline() ? ids.nextPipeline++ : pipelines.get(Pipelines.strip(node.getInput(0)));
             pipelines.put(node, pipeline);
             List<Long> inputOrigins = node.getInputs().stream().flatMap(input -> origins.get(Pipelines.strip(input)).stream())
                 .distinct().toList();
@@ -194,103 +182,60 @@ public final class NesConverterProvider extends ConverterProvider {
             if (host != null) {
                 operator.setHost(host);
             }
-            for (RelDataTypeField field : node.getRowType().getFieldList()) {
-                operator.addOutputSchema(PhysicalOperator.Field.newBuilder().setName(field.getName())
-                    .setType(fieldType(field.getType())).setNullable(field.getType().isNullable()));
-            }
-            java.util.function.Function<RelProtoConverter, PhysicalOperator> build;
-            if (node instanceof NesPhysical.SourceScan scan) {
-                long origin = ids.nextOriginId++;
-                origins.put(node, List.of(origin));
-                PhysicalOperator.SourceScan.Builder sourceScan = PhysicalOperator.SourceScan.newBuilder().setOriginId(origin);
-                if (scan.anonymous != null) {
-                    sourceScan.setAnonymous(scan.anonymous);
-                } else {
-                    sourceScan.setPhysicalSourceId(scan.physicalSource.getId());
+            operator.addAllOutputSchema(fields(node.getRowType()));
+            /// The expressions are written with the plan's converter, which declares their functions in the plan.
+            List<java.util.function.Consumer<RelProtoConverter>> expressions = new java.util.ArrayList<>();
+            node.describe(operator, new NesOperator.Serialization() {
+                @Override
+                public long newOrigin() {
+                    long origin = ids.nextOriginId++;
+                    origins.put(node, List.of(origin));
+                    return origin;
                 }
-                operator.setSourceScan(sourceScan);
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.Scan scan) {
-                operator.setScan(PhysicalOperator.Scan.newBuilder().setLayout(laidOut(scan.layout, scan)));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.Selection selection) {
-                Expression predicate = toExpression(selection.condition);
-                build = converter -> operator.setSelection(PhysicalOperator.Selection.newBuilder()
-                    .setPredicate(converter.getExpressionProtoConverter().toProto(predicate))).build();
-            } else if (node instanceof NesPhysical.Map map) {
-                List<Expression> expressions = map.expressions.stream().map(this::toExpression).toList();
-                build = converter -> {
-                    PhysicalOperator.Map.Builder spec = PhysicalOperator.Map.newBuilder();
-                    for (int i = 0; i < map.fields.size(); i++) {
-                        spec.addAssignments(PhysicalOperator.Map.Assignment.newBuilder().setField(map.fields.get(i))
-                            .setExpression(converter.getExpressionProtoConverter().toProto(expressions.get(i))));
-                    }
-                    return operator.setMap(spec).build();
-                };
-            } else if (node instanceof NesPhysical.InferModel infer) {
-                operator.setInferModel(PhysicalOperator.InferModel.newBuilder().setModel(infer.model.getName())
-                    .addAllInputFields(infer.inputFields));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.Emit emit) {
-                operator.setEmit(PhysicalOperator.Emit.newBuilder().setLayout(laidOut(emit.layout, emit)));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.NetworkSource source) {
-                /// The rows keep the origins (and sequence numbers and watermarks) they had on the sending worker.
-                List<Long> sent = ids.channels.get(source.channel);
-                origins.put(node, sent);
-                operator.setNetworkSource(PhysicalOperator.NetworkSource.newBuilder().setChannel(source.channel)
-                    .setUpstreamHost(source.upstreamHost).setOriginId(sent.get(0)));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.WatermarkAssigner assigner) {
-                operator.setWatermarkAssigner(PhysicalOperator.WatermarkAssigner.newBuilder().setTimeField(assigner.timeField));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.WindowBuild window) {
-                PhysicalOperator.WindowBuild.Builder spec = PhysicalOperator.WindowBuild.newBuilder()
-                    .setWindow(window(window.window)).setTimeField(window.timeField).addAllKeyFields(window.keyFields)
-                    .addAllAggregations(buildAggregations(window))
-                    .addAllProbeSchema(fields(window.probeRowType));
-                operator.setWindowBuild(spec);
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.WindowProbe probe) {
-                long origin = ids.nextOriginId++;
-                origins.put(node, List.of(origin));
-                /// The aggregations as in its first build, whose input the engine reads the argument types from.
-                NesPhysical.WindowBuild first = (NesPhysical.WindowBuild) Pipelines.strip(probe.getInputs().get(0));
-                operator.setWindowProbe(PhysicalOperator.WindowProbe.newBuilder().setWindow(window(probe.window))
-                    .setOutputOriginId(origin).addAllInputOriginIds(inputOrigins)
-                    .addAllAggregations(buildAggregations(first)));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.JoinBuild joinBuild) {
-                operator.setJoinBuild(PhysicalOperator.JoinBuild.newBuilder().setJoin(join(joinBuild.join)).setRight(joinBuild.right)
-                    .setTimeField(joinBuild.timeField).addAllStoredFields(joinBuild.storedFields));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.JoinProbe probe) {
-                long origin = ids.nextOriginId++;
-                origins.put(node, List.of(origin));
-                Expression condition = probe.condition == null ? null : toExpression(probe.condition);
-                List<Expression> residual = probe.residual.stream().map(this::toExpression).toList();
-                PhysicalOperator.JoinProbe.Builder spec = PhysicalOperator.JoinProbe.newBuilder().setJoin(join(probe.join))
-                    .setOutputOriginId(origin).addAllInputOriginIds(inputOrigins);
-                build = converter -> {
-                    if (condition != null) {
-                        spec.setCondition(converter.getExpressionProtoConverter().toProto(condition));
-                    }
-                    residual.forEach(r -> spec.addResidual(converter.getExpressionProtoConverter().toProto(r)));
-                    return operator.setJoinProbe(spec).build();
-                };
-            } else if (node instanceof NesPhysical.NetworkSink sink) {
-                ids.channels.put(sink.channel, inputOrigins);
-                operator.setNetworkSink(PhysicalOperator.NetworkSink.newBuilder().setChannel(sink.channel).setLayout(laidOut(sink.layout, sink))
-                    .setDownstreamHost(sink.downstreamHost));
-                build = converter -> operator.build();
-            } else if (node instanceof NesPhysical.Sink) {
-                operator.setSink(PhysicalOperator.Sink.getDefaultInstance());
-                build = converter -> operator.build();
-            } else {
-                throw new UnsupportedOperationException("no physical operator for " + node.getRelTypeName());
-            }
+
+                @Override
+                public List<Long> inputOrigins() {
+                    return inputOrigins;
+                }
+
+                @Override
+                public void sends(String channel) {
+                    ids.channels.put(channel, inputOrigins);
+                }
+
+                @Override
+                public List<Long> receives(String channel) {
+                    List<Long> sent = ids.channels.get(channel);
+                    origins.put(node, sent);
+                    return sent;
+                }
+
+                @Override
+                public PhysicalOperator.Window window(NesPhysical.WindowState state) {
+                    return Visitor.this.window(state);
+                }
+
+                @Override
+                public PhysicalOperator.Join join(NesPhysical.JoinState state) {
+                    return Visitor.this.join(state);
+                }
+
+                @Override
+                public List<PhysicalOperator.Field> fields(RelDataType rowType) {
+                    return Visitor.fields(rowType);
+                }
+
+                @Override
+                public void expression(RexNode rex, java.util.function.Consumer<io.substrait.proto.Expression> set) {
+                    Expression expression = toExpression(rex);
+                    expressions.add(converter -> set.accept(converter.getExpressionProtoConverter().toProto(expression)));
+                }
+            });
             origins.putIfAbsent(node, inputOrigins);
-            PhysicalPayload payload = new PhysicalPayload(build, outputType);
+            PhysicalPayload payload = new PhysicalPayload(converter -> {
+                expressions.forEach(set -> set.accept(converter));
+                return operator.build();
+            }, outputType);
             return switch (inputs.size()) {
                 case 0 -> ExtensionLeaf.from(payload).build();
                 case 1 -> ExtensionSingle.from(payload, inputs.get(0)).build();
@@ -315,28 +260,6 @@ public final class NesConverterProvider extends ConverterProvider {
                 .setSizeMs(global ? NesPhysical.GLOBAL_WINDOW_SIZE_MS : spec.getSizeMs())
                 .setSlideMs(global ? NesPhysical.GLOBAL_WINDOW_SIZE_MS : spec.getSlideMs())
                 .setEmitOnEmptyInput(spec.getEmitOnEmptyInput()).build();
-        }
-
-        /// arguments: per aggregation, its field in the build's input (-1: COUNT(*), which counts all rows).
-        private static List<PhysicalOperator.WindowAggregation> aggregations(NesPhysical.WindowState state, List<Integer> arguments) {
-            List<PhysicalOperator.WindowAggregation> result = new java.util.ArrayList<>();
-            for (int i = 0; i < arguments.size(); i++) {
-                PhysicalOperator.WindowAggregation.Builder aggregation = PhysicalOperator.WindowAggregation.newBuilder()
-                    .setFunction(state.spec.getAggregates(i).getFunction());
-                if (arguments.get(i) >= 0) {
-                    aggregation.setField(arguments.get(i));
-                } else {
-                    aggregation.setIncludeNulls(true);
-                }
-                result.add(aggregation.build());
-            }
-            return result;
-        }
-
-        /// The aggregations of a build; COUNT(*) counts its time field, NULLs included.
-        private static List<PhysicalOperator.WindowAggregation> buildAggregations(NesPhysical.WindowBuild build) {
-            return aggregations(build.window, build.aggregationFields).stream()
-                .map(a -> a.hasField() ? a : a.toBuilder().setField(build.timeField).build()).toList();
         }
 
         private static List<PhysicalOperator.Field> fields(RelDataType rowType) {

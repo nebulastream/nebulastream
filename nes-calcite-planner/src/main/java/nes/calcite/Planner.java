@@ -11,6 +11,7 @@ import nes.calcite.physical.NesConverterProvider;
 import nes.calcite.sql.NesFunctions;
 import nes.calcite.logical.NesLogical;
 import nes.calcite.physical.NesPhysical;
+import nes.calcite.physical.PhysicalRules;
 import nes.calcite.logical.NesWindowJoin;
 import nes.calcite.sql.NumericLiterals;
 import nes.calcite.rules.OrFactors;
@@ -598,8 +599,8 @@ public final class Planner {
         java.util.function.Predicate<Placement.Part> forwards =
             part -> part.channel() != null && part.plan() instanceof NesLogical.NetworkSource;
         List<Placement.Part> planned = parts.stream().filter(forwards.negate()).toList();
-        NesPhysical.resetFreshNames();
-        NesPhysical.RULES.forEach(volcano::addRule);
+        PhysicalRules.resetFreshNames();
+        PhysicalRules.RULES.forEach(volcano::addRule);
         Conversions conversions = steps.detailed() ? new Conversions(volcano) : null;
         if (conversions != null) {
             volcano.addListener(conversions);
@@ -610,10 +611,10 @@ public final class Planner {
         try {
             best = Pipelines.strip(volcano.findBestExp());
         } catch (RelOptPlanner.CannotPlanException e) {
-            RelNode unsupported = NesPhysical.unsupported(logical);
+            RelNode unsupported = PhysicalRules.unsupported(logical);
             throw new UnsupportedOperationException("not supported in physical plans (yet): " + (unsupported == null
                 ? "\n" + RelOptUtil.toString(logical)
-                : NesPhysical.describeUnsupported(unsupported)));
+                : PhysicalRules.describeUnsupported(unsupported)));
         }
 
         List<Placement.Fragment> fragments = new ArrayList<>();

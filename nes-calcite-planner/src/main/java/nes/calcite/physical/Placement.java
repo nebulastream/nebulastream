@@ -160,7 +160,7 @@ public final class Placement {
     /** Sends the rows of the plan along the path; returns their receiving end on the last worker. */
     private static RelNode send(RelNode plan, List<String> path, List<Part> parts) {
         RelNode current = plan;
-        boolean watermarked = NesPhysical.watermarked(plan);
+        boolean watermarked = PhysicalRules.watermarked(plan);
         for (int hop = 1; hop < path.size(); hop++) {
             String channel = UUID.randomUUID().toString();
             parts.add(new Part(path.get(hop - 1), current, channel, path.get(hop)));

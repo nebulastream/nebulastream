@@ -1,6 +1,8 @@
 package nes.calcite.steps;
 
 import nes.calcite.logical.NesLogical;
+import nes.calcite.physical.ChannelEnd;
+import nes.calcite.physical.NesOperator;
 import nes.calcite.physical.NesPhysical;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -128,17 +130,14 @@ public final class PlanGraph {
             .append('"').append(emphasized ? ", color=\"#dc2626\", penwidth=3" : ", color=\"#9ca3af\"")
             .append("];\n");
         inputs.forEach(input -> edges.add(input + " -> " + id));
-        if (node instanceof NesPhysical.NetworkSink sink) {
-            senders.put(sink.channel, id);
-        } else if (node instanceof NesPhysical.NetworkSource source) {
-            receivers.put(source.channel, id);
+        if (node instanceof ChannelEnd end) {
+            (end.sends() ? senders : receivers).put(end.channel(), id);
         } else if (node instanceof NesLogical.NetworkSource source) {
             receivers.put(source.channel, id);
         }
         if (byPipeline != null && node instanceof NesPhysical.NesRel) {
             /// As Pipelines.finish: a probe starts a pipeline of its own; its builds end the pipelines below it.
-            boolean starts = node.getInputs().isEmpty() || node instanceof NesPhysical.Scan || node instanceof NesPhysical.Sink
-                || node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.WindowProbe || node instanceof NesPhysical.JoinProbe;
+            boolean starts = node.getInputs().isEmpty() || node instanceof NesOperator operator && operator.startsPipeline();
             int pipeline = starts ? nextPipeline[0]++ : pipelineOf.get(unwrap(node.getInput(0)));
             pipelineOf.put(node, pipeline);
             byPipeline.computeIfAbsent(pipeline, k -> new ArrayList<>()).add(id);
@@ -185,7 +184,7 @@ public final class PlanGraph {
     }
 
     private static String color(RelNode node) {
-        if (node instanceof NesPhysical.NetworkSink || node instanceof NesPhysical.NetworkSource || node instanceof NesLogical.NetworkSource) {
+        if (node instanceof ChannelEnd || node instanceof NesLogical.NetworkSource) {
             return "#fed7aa";
         }
         if (node instanceof NesPhysical.NesRel) {
