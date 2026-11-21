@@ -13,7 +13,7 @@
 include_directories(tests/include)
 
 # Add interface library
-add_library(nes-query-optimizer-interface interface/QueryOptimizerConfiguration.cpp)
+add_library(nes-query-optimizer-interface interface/QueryOptimizerConfiguration.cpp interface/QueryOptimizerAsyncConfiguration.cpp)
 target_include_directories(nes-query-optimizer-interface PUBLIC interface)
 target_link_libraries(nes-query-optimizer-interface PUBLIC nes-configurations nes-network-interface)
 
@@ -42,7 +42,8 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 target_sources(nes-query-optimizer PRIVATE ${NES_OPTIMIZER_SOURCE_FILES})
 
 find_package(highs CONFIG REQUIRED)
-target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
+find_package(reflectcpp CONFIG REQUIRED)
+target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs reflectcpp::reflectcpp)
 
 
 add_tests_if_enabled(tests)
