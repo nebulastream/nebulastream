@@ -26,7 +26,9 @@
 /// Usage:
 ///   nes-python-udf-runner --compiler Codon|Numba --entrypoint module.function --import-path DIR --returns TYPE
 ///       --arg column:INDEX:TYPE | --arg literal:TYPE:VALUE  (once per UDF argument, in order)
-///       --input FILE [--delimiter TAB] [--rows N] [--rounds R] [--output FILE] [--optimize 0|1]
+///       --input FILE [--delimiter TAB] [--rows N] [--rounds R] [--output FILE] [--optimize 0|1] [--escaped 0|1]
+/// With --escaped 1 (for differential tests), a field of the input is NULL only if it is \N, and an empty field is an empty
+/// string. Fields and the text results in --output use the escapes \\, \t, \n, \r and \xHH, and a NULL result is \N.
 /// Types are NES type names (VARSIZED, INT32, INT64, FLOAT64, ...). An empty field of a column is NULL. Numba needs
 /// NES_NUMBA_PYTHON, as in the worker.
 
@@ -87,6 +89,7 @@ struct Options
     size_t rounds = 3;
     std::string output;
     bool optimize = true;
+    bool escaped = false;
 };
 
 Options parseOptions(const int argc, char** argv)
@@ -140,6 +143,10 @@ Options parseOptions(const int argc, char** argv)
         {
             options.optimize = value != "0";
         }
+        else if (name == "--escaped")
+        {
+            options.escaped = value != "0";
+        }
         else if (name == "--output")
         {
             options.output = value;
@@ -170,6 +177,67 @@ std::vector<std::string> split(const std::string_view text, const char delimiter
         }
         begin = end + 1;
     }
+}
+
+/// Reverses the escapes of --escaped: \\, \t, \n, \r and \xHH.
+std::string unescape(const std::string_view text)
+{
+    std::string result;
+    for (size_t index = 0; index < text.size(); ++index)
+    {
+        if (text[index] != '\\' || index + 1 >= text.size())
+        {
+            result.push_back(text[index]);
+            continue;
+        }
+        const char next = text[++index];
+        switch (next)
+        {
+            case 't':
+                result.push_back('\t');
+                break;
+            case 'n':
+                result.push_back('\n');
+                break;
+            case 'r':
+                result.push_back('\r');
+                break;
+            case 'x':
+                if (index + 2 >= text.size())
+                {
+                    throw std::invalid_argument("incomplete \\x escape");
+                }
+                result.push_back(static_cast<char>(std::stoi(std::string{text.substr(index + 1, 2)}, nullptr, 16)));
+                index += 2;
+                break;
+            default:
+                result.push_back(next);
+        }
+    }
+    return result;
+}
+
+/// Escapes a text for --escaped output: the backslash, control bytes and DEL.
+std::string escape(const std::string_view text)
+{
+    std::string result;
+    for (const char character : text)
+    {
+        const auto byte = static_cast<unsigned char>(character);
+        if (character == '\\')
+        {
+            result += "\\\\";
+        }
+        else if (byte < 0x20 || byte == 0x7f)
+        {
+            result += fmt::format("\\x{:02x}", byte);
+        }
+        else
+        {
+            result.push_back(character);
+        }
+    }
+    return result;
 }
 
 /// One argument of the UDF for every row: the text of a column or a literal, and for a fixed-size type its value in 8 bytes.
@@ -275,10 +343,12 @@ std::vector<Argument> loadArguments(const Options& options, size_t& rowCount)
         for (const auto& [argumentIndex, column] : columns)
         {
             auto& argument = arguments[argumentIndex];
-            const auto& field = fields.at(column);
-            argument.nulls.push_back(field.empty() ? 1 : 0);
-            argument.texts.push_back(argument.type.type == DataType::Type::VARSIZED ? field : std::string{});
-            argument.scalars.push_back(field.empty() || argument.type.type == DataType::Type::VARSIZED ? 0 : scalarBits(argument.type, field));
+            const auto& raw = fields.at(column);
+            const bool isNull = options.escaped ? raw == "\\N" : raw.empty();
+            const auto field = options.escaped && !isNull ? unescape(raw) : raw;
+            argument.nulls.push_back(isNull ? 1 : 0);
+            argument.texts.push_back(argument.type.type == DataType::Type::VARSIZED && !isNull ? field : std::string{});
+            argument.scalars.push_back(isNull || argument.type.type == DataType::Type::VARSIZED ? 0 : scalarBits(argument.type, field));
         }
         ++rowCount;
     }
@@ -502,14 +572,28 @@ int run(const Options& options)
                 ++errors;
                 if (round == 0 && output.is_open())
                 {
-                    output << "ERROR " << std::string_view{reinterpret_cast<const char*>(error.errorPtr), error.errorSize} << '\n';
+                    const std::string_view message{reinterpret_cast<const char*>(error.errorPtr), error.errorSize};
+                    output << "ERROR " << (options.escaped ? escape(message) : std::string{message}) << '\n';
+                    if (options.escaped)
+                    {
+                        output.flush();
+                    }
                 }
                 continue;
             }
             checksum += result.isNull != 0 ? 0 : (returnType.type == DataType::Type::VARSIZED ? result.size : resultStorage);
             if (round == 0 && output.is_open())
             {
-                output << formatResult(returnType, result, resultStorage) << '\n';
+                if (options.escaped)
+                {
+                    output << (result.isNull != 0 ? std::string{"\\N"} : escape(formatResult(returnType, result, resultStorage))) << '\n';
+                    /// A differential test needs the results up to a crash: the crashing row is the next one.
+                    output.flush();
+                }
+                else
+                {
+                    output << formatResult(returnType, result, resultStorage) << '\n';
+                }
             }
         }
         roundSeconds.push_back(std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count());
