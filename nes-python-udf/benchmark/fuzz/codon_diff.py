@@ -132,6 +132,10 @@ def run_reference(module_path, entry, types, returns, rows_path, out_path):
     with open(rows_path, encoding="utf-8") as rows_file, open(out_path, "w", encoding="utf-8") as out:
         for line in rows_file:
             row = json.loads(line)
+            if any(value is None for value in row):
+                # The runner declares the arguments NOT NULL: a NULL argument gives NULL without a call.
+                out.write("\\N\n")
+                continue
             signal.alarm(5)
             try:
                 result = function(*row)
