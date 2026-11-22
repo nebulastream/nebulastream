@@ -270,10 +270,10 @@ uint64_t scalarBits(const DataType& type, const std::string& text)
             store(static_cast<uint64_t>(std::stoull(text)));
             break;
         case DataType::Type::FLOAT32:
-            store(std::stof(text));
+            store(std::strtof(std::string{text}.c_str(), nullptr)); /// not stof: it throws on subnormal values
             break;
         case DataType::Type::FLOAT64:
-            store(std::stod(text));
+            store(std::strtod(std::string{text}.c_str(), nullptr)); /// not stod: it throws on subnormal values
             break;
         case DataType::Type::BOOLEAN:
             store(static_cast<uint8_t>(text == "true" || text == "1" ? 1 : 0));
