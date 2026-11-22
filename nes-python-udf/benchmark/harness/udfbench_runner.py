@@ -70,6 +70,8 @@ def main():
     parser.add_argument("--compilers", default="Codon,Numba")
     parser.add_argument("--udfs", help="comma-separated UDF names (default: all)")
     parser.add_argument("--rounds", type=int, default=3, help="timed rounds after the first")
+    parser.add_argument("--codon-py-numerics", action="store_true",
+                        help="compile Codon with Python numerics (NES_CODON_PY_NUMERICS=1); recorded in each line")
     parser.add_argument("--scratch", required=True, help="directory for the results of each UDF")
     arguments = parser.parse_args()
     if git("status", "--porcelain", "--untracked-files=no"):
@@ -90,11 +92,13 @@ def main():
             output = os.path.join(arguments.scratch, f"{name}-{compiler}.out")
             command = [runner, "--compiler", compiler, "--entrypoint", entrypoint, "--import-path", UDF_PATH, "--returns", returns,
                        *udf_arguments, "--input", data, "--rounds", str(arguments.rounds), "--output", output]
-            completed = subprocess.run(command, capture_output=True, text=True)
+            environment = {**os.environ, "NES_CODON_PY_NUMERICS": "1" if arguments.codon_py_numerics else "0"}
+            completed = subprocess.run(command, capture_output=True, text=True, env=environment)
             lines = [line for line in completed.stdout.splitlines() if line.startswith("{")]
             record = json.loads(lines[-1]) if lines else {"error": completed.stderr.strip()[-500:]}
             record = {"experiment": arguments.experiment, "commit": commit, "udf": name, "source": source,
-                      "return_code": completed.returncode, "command": command, **record}
+                      "codon_py_numerics": arguments.codon_py_numerics, "return_code": completed.returncode,
+                      "command": command, **record}
             outputs[compiler] = output
             if len(outputs) == 2:
                 first, second = (open(path, "rb").read() for path in outputs.values())
