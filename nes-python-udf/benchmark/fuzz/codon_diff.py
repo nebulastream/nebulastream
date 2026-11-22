@@ -543,7 +543,7 @@ def main():
                 record = future.result()
             except Exception as error:  # noqa: BLE001 - a harness error of one case does not stop the run
                 record = {"case": futures[future], "status": "harness-error", "detail": repr(error)}
-            results.write(json.dumps(record, ensure_ascii=False) + "\n")
+            results.write(json.dumps(record) + "\n")  # ASCII: target output can hold bytes that are not UTF-8
             results.flush()
             totals[record["status"]] = totals.get(record["status"], 0) + 1
             extra = f" {record.get('kinds')}" if record.get("kinds") else ""
