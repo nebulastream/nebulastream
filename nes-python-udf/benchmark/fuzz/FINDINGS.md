@@ -60,3 +60,56 @@ the exception hierarchy, recursion, module-level state between rows, list slice 
 atan2, sinh, tanh, asinh, erf, gamma, lgamma, log1p, expm1, hypot, ldexp), `re.split` with groups, `except (A, B) as e`,
 bool arithmetic, heterogeneous lists, mutable default arguments, `tuple(list)`, user classes in sets or sorted with only
 `__lt__`, `class E(ValueError): pass`, `math.comb/perm/isqrt/dist`, json.dumps keywords and mixed-type values.
+
+## The same cases in Numba, LPython and Babelfish (E85, 2026-11-22, commit 35c1eec406)
+
+`codon_diff.py --compiler` runs a case in Numba (nes-python-udf-runner), LPython 0.22.0 (`lpython_driver.c`, the
+harness adds the types from the header) and Babelfish (`FuzzCaseRunner` in the Babelfish port, GraalPy 25 in the query
+engine). Cases: 222 builtins, 31 repros, 80 UDF programs (`programs/`). Codon uses Python numerics.
+Results: `results/E85-diff-*.jsonl`. Summary: `compare_targets.py results/E85-diff-{codon,numba,lpython,babelfish}.jsonl`.
+
+| Group | Target | ok | diff | reject | crash | timeout |
+|---|---|---|---|---|---|---|
+| builtins (222) | Codon | 158 | 34 | 27 | 0 | 3 |
+| builtins | Numba | 129 | 43 | 50 | 0 | 0 |
+| builtins | LPython | 15 | 55 | 152 | 0 | 0 |
+| builtins | Babelfish | 200 | 22 | 0 | 0 | 0 |
+| repros (31) | Codon | 0 | 28 | 0 | 2 | 1 |
+| repros | Numba | 6 | 11 | 14 | 0 | 0 |
+| repros | LPython | 0 | 0 | 31 | 0 | 0 |
+| repros | Babelfish | 30 | 1 | 0 | 0 | 0 |
+| programs (80) | Codon | 25 | 47 | 7 | 1 | 0 |
+| programs | Numba | 3 | 5 | 72 | 0 | 0 |
+| programs | LPython | 0 | 0 | 80 | 0 | 0 |
+| programs | Babelfish | 68 | 12 | 0 | 0 | 0 |
+
+The Codon repros differ by construction. A repro of Codon that another target runs equal to CPython shows that the
+difference is Codon's own.
+
+### Numba
+- Rejects 72 of 80 programs (untyped containers, str methods, json and re are not in nopython mode).
+- `str(float)` and `repr(float)` give `<object type:float64>`; a list as str gives `<object type:list(int64)...>`.
+- `s.split(None, maxsplit)` ignores maxsplit; `s.replace('', x)` and `s.replace(t, x)` with an empty `t` insert twice.
+- math functions do not raise: `math.log(0)` is -inf, `math.sqrt(-1)` is nan, `math.exp(1000)` is inf.
+- `int('٣٤')` (non-ASCII digits) raises; `chr(255)` gives an invalid character.
+- `10 ** -1` is 0, NaN identity in containers is lost, `float(n) == n` is True for 2**53+1 (as in Codon).
+- `str(-2**63)` throws std::bad_alloc out of the UDF and ends the process (repros/min_numba_str_int64_min.py).
+
+### LPython
+- Rejects all 80 programs and all repros: every local needs a type, no try/except, no re or json, i32 literals do not
+  mix with i64.
+- Strings are bytes: indexing, slicing and reversing split UTF-8 sequences; case mappings and `is*` predicates are
+  ASCII-only; `s + t` and `bool(s)` stop at a NUL byte.
+- `strip`, `split` and `join` end the process on some inputs (an empty string).
+- Integer `//` of large values goes through double (`n // 7` is off by 6); float `%` and `//` are wrong for large values.
+- `str(float)` prints `%f` (`0.000000`); math functions do not raise; `abs(-0.0)` is -0.0.
+
+### Babelfish (GraalPy 25)
+- Runs every case. Most differences are GraalPy's own; a string with a NUL byte ends at the NUL in Babelfish's Text
+  (`known-babelfish-text-ends-at-nul`).
+- Unicode: `'ǅungla'.title()` is `ǅUngla`; `swapcase` gives final sigma `ς`; `splitlines` does not split at
+  `\x1c`-`\x1e`; `json.loads` of a lone surrogate gives an empty string.
+- Floats: `repr(5e-324)` is `4.9e-324`; `x // 0.3` is off by one (-4115 for -1234.5); `divmod(inf, 1.5)` is (inf, nan);
+  `round(-45.9, -2)` is 0.0, not -0.0; `math.log(0, 3)` is -inf without an error; `math.frexp(nan)[1]` is -1.
+- math functions differ from CPython by 1 ulp (log10, sin, erf, asinh, atan2, hypot and more).
+- The recursion limit is lower (RecursionError where CPython returns).
