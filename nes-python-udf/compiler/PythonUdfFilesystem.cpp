@@ -321,6 +321,18 @@ struct CacheNodesAccess
 
 template struct CacheNodesAccess<&codon::ast::Cache::_nodes>;
 
+/// NES_CODON_PY_NUMERICS=1 compiles with Codon's Python numerics: integer // and % round toward negative infinity, and a
+/// division by zero raises ZeroDivisionError. The default is Codon's C numerics, which are faster but differ from CPython.
+bool codonPyNumerics()
+{
+    static const bool enabled = []
+    {
+        const char* value = std::getenv("NES_CODON_PY_NUMERICS"); /// NOLINT(concurrency-mt-unsafe)
+        return value != nullptr && std::string_view{value} == "1";
+    }();
+    return enabled;
+}
+
 /// The AST nodes are deleted after the compiler, as the compiler's members may still refer to them while being destroyed.
 void deleteCodonCompiler(codon::Compiler* compiler)
 {
@@ -510,7 +522,7 @@ public:
                   codon::Compiler::Mode::JIT,
                   std::vector<std::string>{},
                   false,
-                  false,
+                  codonPyNumerics(),
                   false,
                   std::make_shared<PythonUdfFilesystem>("nes-worker", "", std::vector<std::string>{})),
               &deleteCodonCompiler)
@@ -1059,7 +1071,7 @@ CodonCompilationResult compileWithCodon(
             codon::Compiler::Mode::RELEASE,
             std::vector<std::string>{},
             false,
-            false,
+            codonPyNumerics(),
             false,
             filesystem),
         &deleteCodonCompiler};
