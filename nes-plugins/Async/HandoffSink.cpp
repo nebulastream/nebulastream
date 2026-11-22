@@ -19,10 +19,15 @@
 #include <optional>
 #include <utility>
 #include <vector>
-#include <Identifiers/Identifier.hpp>
+#include <Async/HandoffChannel.hpp>
+#include <Configurations/ConfigField.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/HandoffSinkConfig.hpp>
+#include <Sinks/Sink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 

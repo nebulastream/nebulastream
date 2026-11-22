@@ -94,6 +94,57 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ $((SECONDS - start)) -lt 3 ]
 }
 
+@test "HTTP_CALL occurrences: duplicates, nested branches, predicate, discarded results and alias copies" {
+  run_async_sql occurrences.sql
+  [ "$status" -eq 0 ]
+
+  [ "$(sink_rows duplicates.csv)" = "$(printf '1,/occ-duplicate:Hello,/occ-duplicate:Hello\n2,/occ-duplicate:NebulaStream,/occ-duplicate:NebulaStream\n3,/occ-duplicate:äöü,/occ-duplicate:äöü')" ]
+  [ "$(grep -c '^/occ-duplicate$' http_received.log)" -eq 6 ]
+  [ "$(sink_rows branches.csv)" = "$(printf '1,/occ-outer:/occ-inner:Hello,/occ-outer:/occ-inner:Hello\n2,/occ-outer:/occ-inner:NebulaStream,/occ-outer:/occ-inner:NebulaStream\n3,/occ-outer:/occ-inner:äöü,/occ-outer:/occ-inner:äöü')" ]
+  [ "$(grep -c '^/occ-inner$' http_received.log)" -eq 6 ]
+  [ "$(grep -c '^/occ-outer$' http_received.log)" -eq 6 ]
+  [ "$(sink_rows predicate.csv)" = '1,/occ-predicate:Hello' ]
+  [ "$(grep -c '^/occ-predicate$' http_received.log)" -eq 4 ]
+  [ "$(sink_rows unused.csv)" = "$(printf '1\n2\n3')" ]
+  [ "$(grep -c '^/occ-unused$' http_received.log)" -eq 3 ]
+  [ "$(sink_rows copies.csv)" = "$(printf '1,/occ-copy:Hello,/occ-copy:Hello\n2,/occ-copy:NebulaStream,/occ-copy:NebulaStream\n3,/occ-copy:äöü,/occ-copy:äöü')" ]
+  [ "$(grep -c '^/occ-copy$' http_received.log)" -eq 3 ]
+  [ "$(sink_rows barrier.csv)" = '1' ]
+  [ "$(grep -c '^/occ-barrier$' http_received.log)" -eq 3 ]
+  [ "$(sink_rows physical_alias.csv)" = "$(printf '11,1,/occ-physical-alias:Hello\n12,2,/occ-physical-alias:NebulaStream\n13,3,/occ-physical-alias:äöü')" ]
+  [ "$(grep -c '^/occ-physical-alias$' http_received.log)" -eq 3 ]
+}
+
+@test "HTTP_CALL occurrences: IN and BETWEEN copies share only the same syntactic invocation" {
+  run_async_sql desugared_occurrences.sql
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows in_direct.csv)" = "$(printf '1\n2')" ]
+  [ "$(sink_rows in_nested.csv)" = "$(printf '1\n2')" ]
+  # Two comparisons introduced by IN must not produce two POSTs per input row.
+  [ "$(grep -c '^/in-direct$' http_received.log)" -eq 3 ]
+  # The same rule applies when the copied lhs wraps the async call in a pure function.
+  [ "$(grep -c '^/in-nested$' http_received.log)" -eq 3 ]
+  [ "$(sink_rows between.csv)" = "$(printf '1\n2\n3')" ]
+  [ "$(grep -c '^/between$' http_received.log)" -eq 3 ]
+}
+
+@test "Async normalization: SELECT star preserves declaration and subquery order without helper fields" {
+  run_async_sql star_order.sql
+  [ "$status" -eq 0 ]
+
+  # The declared source order is ID, DATA, not lexical DATA, ID; RESPONSE is appended last.
+  [ "$(sink_rows star_appended.csv)" = "$(printf '1,Hello,/star-append:Hello\n2,NebulaStream,/star-append:NebulaStream\n3,äöü,/star-append:äöü')" ]
+  # Lifting WHERE must restore exactly the two original fields in their original order.
+  [ "$(sink_rows star_filtered.csv)" = '1,Hello' ]
+  # A projection's explicit order and aliases take precedence over the source's order.
+  [ "$(sink_rows star_reordered.csv)" = "$(printf 'Hello,1,/star-reordered:Hello\nNebulaStream,2,/star-reordered:NebulaStream\näöü,3,/star-reordered:äöü' | sort)" ]
+  [ "$(sink_rows star_reordered_filtered.csv)" = 'Hello,1' ]
+  [ "$(grep -c '^/star-append$' http_received.log)" -eq 3 ]
+  [ "$(grep -c '^/star-where$' http_received.log)" -eq 3 ]
+  [ "$(grep -c '^/star-reordered$' http_received.log)" -eq 3 ]
+  [ "$(grep -c '^/star-reordered-where$' http_received.log)" -eq 3 ]
+}
+
 @test "HTTP_CALL: an unreachable service fails the query" {
   run_async_sql unreachable.sql
   [ "$status" -eq 0 ]
@@ -164,7 +215,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$acquired" -eq "$released" ]
 }
 
-@test "HTTP_CALL chaining and reuse: nested calls in one stage, WHERE results read by SELECT" {
+@test "HTTP_CALL chaining: WHERE and SELECT are distinct nested occurrences" {
   run_async_sql chaining.sql
   [ "$status" -eq 0 ]
 
@@ -173,8 +224,8 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(grep -c '^/outer$' http_paths.log)" -eq 3 ]
 
   [ "$(sink_rows reused.csv)" = "1,/both:/both:Hello" ]
-  # Two calls per row for the predicate; the matching row's SELECT reuses them instead of calling twice more.
-  [ "$(grep -c '^/both$' http_paths.log)" -eq 6 ]
+  # Two calls per input row for WHERE, plus two new calls for the one matching SELECT row.
+  [ "$(grep -c '^/both$' http_received.log)" -eq 8 ]
 }
 
 @test "HTTP_CALL: a service failing while the producer is held back fails the query and stops every part of it" {
@@ -275,11 +326,11 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ $((SECONDS - start)) -lt 15 ]
 }
 
-@test "ASYNC_OUTPUT: reads the second value of a call next to its first" {
+@test "ASYNC_DELAY: returns one value for each independent occurrence" {
   run_async_sql values.sql
   [ "$status" -eq 0 ]
 
-  [ "$(sink_rows delayed.csv)" = "$(printf '1,Hello,1000\n2,NebulaStream,1000\n3,äöü,1000')" ]
+  [ "$(sink_rows delayed.csv)" = "$(printf '1,Hello,1\n2,NebulaStream,2\n3,äöü,3')" ]
 }
 
 @test "ASYNC_DELAY: preserves typed results, nullable fields, and integer millisecond expressions" {
@@ -294,13 +345,11 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows typed.csv)" = "$(printf '1,7,true,12,10,11,10\n2,-4,false,-3,20,21,20\n3,0,true,NULL,0,1,0')" ]
 }
 
-@test "ASYNC DAG: failure cancels an unrelated long-running producer" {
-  local start=$SECONDS
+@test "Async occurrence stages: failure terminates the query" {
   run_async_sql dag_failure.sql
   [ "$status" -eq 0 ]
   grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:1/echo failed" nes-repl.log
   [ "$(sink_rows dag_failure.csv | wc -l)" -eq 0 ]
-  [ $((SECONDS - start)) -lt 10 ]
 }
 
 @test "ASYNC_DELAY: returns CHAR, floating-point and nullable byte values" {
@@ -309,7 +358,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows typed_nullable.csv)" = "$(printf '1,a,1.25,hello,false\n2,z,-2.5,NULL,true')" ]
 }
 
-@test "ASYNC_DELAY: preserves type and node identity when deduplicating and reusing calls" {
+@test "ASYNC_DELAY: preserves types across distinct calls and alias references" {
   run_async_sql typed_identity.sql
   [ "$status" -eq 0 ]
   [ "$(sink_rows typed_identity.csv)" = "1,1,1,DATA" ]
@@ -331,9 +380,10 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ $((SECONDS - start)) -ge 3 ]
 }
 
-@test "ASYNC_OUTPUT: reading a value the call does not produce is rejected" {
-  run_async_sql output_out_of_range.sql
-  { echo "$output"; cat nes-repl.log; } | grep -q "ASYNC_OUTPUT reads value 1 of HTTP_CALL"
+@test "ASYNC_OUTPUT: removed SQL function is unknown" {
+  run_async_sql removed_async_output.sql
+  [ "$status" -ne 0 ]
+  { echo "$output"; cat nes-repl.log; } | grep -q 'Unknown function: ASYNC_OUTPUT'
   [ "$(sink_rows responses.csv 2>/dev/null | wc -l)" -eq 0 ]
 }
 

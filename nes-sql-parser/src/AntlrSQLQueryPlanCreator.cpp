@@ -39,6 +39,7 @@
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
+#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/IsNaNLogicalFunction.hpp>
@@ -1022,6 +1023,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         /// Project onto the specified field and remove the field access from the active functions.
         helpers.top().addProjection(std::make_optional(fieldName), std::move(helpers.top().functionBuilder.back()));
         helpers.top().functionBuilder.pop_back();
+    }
+    else if (
+        context->name == nullptr and helper.functionBuilder.size() == 1 and not helper.hasUnnamedAggregation
+        and helper.functionBuilder.back().tryGetAs<AsyncCallLogicalFunction>())
+    {
+        const auto outputName = helper.functionBuilder.back().getAs<AsyncCallLogicalFunction>()->getOutputName();
+        helper.addProjection(outputName, std::move(helper.functionBuilder.back()));
+        helper.functionBuilder.pop_back();
     }
     /// The user did not specify a new name (... AS THE_NAME) for the aggregation function.
     /// The aggregation's asField is already set in exitFunctionCall. Project the expression directly,

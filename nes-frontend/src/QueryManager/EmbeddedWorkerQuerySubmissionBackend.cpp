@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>

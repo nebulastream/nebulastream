@@ -18,7 +18,9 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <AsyncOperatorRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -35,9 +37,19 @@ LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunc
 
 std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments)
 {
-    if (const auto factory = LogicalFunctionRegistry::instance().find(functionName))
+    const auto factory = LogicalFunctionRegistry::instance().find(functionName);
+    const auto async = AsyncOperatorRegistry::instance().find(functionName);
+    if (factory && async)
+    {
+        throw InvalidQuerySyntax("Function '{}' is ambiguous: registered as both scalar and async", functionName);
+    }
+    if (factory)
     {
         return (*factory)(LogicalFunctionRegistryArguments{.children = std::move(arguments)});
+    }
+    if (async)
+    {
+        return AsyncCallLogicalFunction{functionName, std::move(arguments)};
     }
     return std::nullopt;
 }

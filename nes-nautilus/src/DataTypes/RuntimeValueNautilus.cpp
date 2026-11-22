@@ -18,12 +18,14 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <DataTypes/RuntimeValue.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <nautilus/tracing/TracingUtil.hpp>
-#include <nautilus/val.hpp>
 #include <nautilus/val_details.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <val_arith.hpp>
 
 namespace NES
 {

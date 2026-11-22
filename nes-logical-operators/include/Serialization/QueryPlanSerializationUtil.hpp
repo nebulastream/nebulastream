@@ -25,9 +25,13 @@ class ReflectionContext;
 class QueryPlanSerializationUtil
 {
 public:
+    /// Use fresh pointer-serialization state for a single plan.
     static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan);
+    /// Supply SharedPointerSerializationState through the context to preserve aliases across a batch.
     static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan, const ReflectionContext& context);
+    /// Use fresh pointer-deserialization state for an independent execution.
     static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
+    /// Supply SharedPointerDeserializationState through the context to reconstruct a shared batch.
     static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan, const ReflectionContext& context);
 
     static NES::SerializableQueryId serializeQueryId(const QueryId& queryId);

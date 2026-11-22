@@ -11,6 +11,7 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 find_package(reflectcpp CONFIG REQUIRED)
 
 # Declare the library up front so create_runtime_registry can attach the WHOLE_ARCHIVE
@@ -18,12 +19,13 @@ find_package(reflectcpp CONFIG REQUIRED)
 add_library(nes-sources STATIC)
 set_target_properties(nes-sources PROPERTIES LINKER_LANGUAGE CXX)
 # PUBLIC nes-input-formatter-provider: SourceDescriptor's public API exposes InputFormatterDescriptor by value.
-target_link_libraries(nes-sources PUBLIC nes-common nes-schema nes-configurations nes-memory nes-async nes-executable nes-network-bindings nes-input-formatter-provider PRIVATE reflectcpp::reflectcpp)
+target_link_libraries(nes-sources PUBLIC nes-common nes-schema nes-data-types nes-configurations nes-memory nes-async nes-executable nes-network-bindings nes-input-formatter-provider PRIVATE reflectcpp::reflectcpp)
 target_link_rust_lib(nes-sources nes_network_bindings)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/registry/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # Runtime registries: a source plugin registers itself with add_registry_entry(<Registry> <name>).
@@ -45,10 +47,14 @@ create_runtime_registry(SourceConfig nes-sources
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
-create_runtime_registry(AsyncFunction nes-sources
-        ENTRY_TEMPLATE "&\${PLUGIN_NAME}AsyncFunction::create"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}AsyncFunction.hpp"
+create_runtime_registry(AsyncOperator nes-sources
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}AsyncOperator::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}AsyncOperator.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
+create_unreflection_registry(AsyncOperator nes-sources
+        "\${PLUGIN_NAME}AsyncOperator"
+        "\${PLUGIN_NAME}AsyncOperator.hpp")
 
 add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)

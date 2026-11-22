@@ -20,13 +20,12 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
 {
 
-struct QueryOptimizerNetworkConfiguration;
-struct QueryOptimizerAsyncConfiguration;
 using ChannelId = NESStrongUUIDType<struct ChannelId_>;
 
 class QueryDecomposer
@@ -41,10 +40,8 @@ public:
         SharedPtr<const SourceCatalog> sourceCatalog,
         SharedPtr<const SinkCatalog> sinkCatalog);
 
-    DistributedLogicalPlan decompose(
-        const LogicalPlan& placedPlan,
-        const QueryOptimizerNetworkConfiguration& networkConfiguration,
-        const QueryOptimizerAsyncConfiguration& asyncConfiguration);
+    [[nodiscard]] DistributedLogicalPlan decompose(
+        const LogicalPlan& placedFragments, const LogicalPlan& globalPlan, const QueryOptimizerNetworkConfiguration& configuration) const;
 };
 
 }

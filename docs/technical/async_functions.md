@@ -1,376 +1,325 @@
-# Asynchronous Functions
+# Asynchronous operators
 
-This document describes how NebulaStream evaluates functions that wait on something outside the query, such as an HTTP
-service, without blocking a worker thread per call. It is aimed at contributors who add such a function or work on the
-infrastructure that runs them.
+Async operators perform work such as HTTP requests without blocking one query worker per request. Each operator consumes
+one input tuple and appends its named results to that tuple. The current runtime produces exactly one output tuple per
+successful input tuple; it is not a general table-valued function with variable output cardinality.
 
-## Overview
+## SQL shorthand and invocation counts
 
-A regular function is compiled into the pipeline by Nautilus and evaluated row by row on a worker thread. A function
-whose result comes from a remote call cannot be evaluated that way: a worker thread would sit idle for the whole round
-trip, and the calls of a buffer would run one after the other.
-
-An *asynchronous function* therefore has no Nautilus implementation. Instead:
-
-1. The optimizer lifts every call of such a function out of its projection or selection into an operator of its own,
-   the *async stage* (`AsyncFunctionLiftingRule`).
-2. The decomposition replaces each async stage by a pair of operators on the same worker: a `Handoff` sink that ends the
-   pipeline before the stage, and an `Async` source that starts the pipeline after it (`QueryDecomposition`).
-3. The `Async` source runs the calls as coroutines on one Boost.Asio event loop that all async sources of a worker share,
-   with many calls in flight at once, and emits the buffers with the results filled in.
-
-All of the complexity lives in this infrastructure. A function only implements a coroutine that turns the arguments of
-one row into its result.
-
-The framework ships two functions:
-
-| Function                                   | Result                                                                                                              |
-|--------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `HTTP_CALL(body, url[, timeout_ms[, retries]])` | POSTs `body` to `url` and returns the response body. Plain `http://` only. Timeout defaults to 30 s; retries default to 0. |
-| `ASYNC_DELAY(value, millis[, concurrency])` | Returns the value with its input type after waiting `millis`; its second output is the requested delay as `UINT64`. A test and benchmark aid.          |
-
-`ASYNC_OUTPUT(call, i)` reads the i-th value of a call that produces several (`ASYNC_OUTPUT(call, 0)` is the call
-itself).
+For now, the query language exposes only scalar shorthand for operators with **one output**:
 
 ```sql
-SELECT id, HTTP_CALL(text, 'http://127.0.0.1:8080/classify') AS label FROM reviews INTO labels;
-SELECT id, text FROM reviews WHERE HTTP_CALL(text, 'http://127.0.0.1:8080/classify') = 'spam' INTO spam;
+SELECT *, HTTP_CALL(body, url) FROM requests INTO responses;
+SELECT id, HTTP_CALL(body, url) AS reply FROM requests INTO responses;
+SELECT id, ASYNC_DELAY(data, 1000) AS delayed FROM texts INTO delayed_texts;
 ```
 
-## Lifting the calls into async stages
+An unaliased direct `HTTP_CALL` expression adds the operator's named `response` output. `ASYNC_DELAY` has one named
+`value` output, preserving its input datatype and nullability. Explicit aliases work as for ordinary projections.
+If output names collide, provide distinct aliases; calls are never merged to resolve a collision.
 
-`AsyncLogicalFunction` (`nes-logical-operators/include/Functions/AsyncLogicalFunction.hpp`) marks a logical function as
-asynchronous. `AsyncFunctionLiftingRule` (`nes-query-optimizer/src/Rules/Static/AsyncFunctionLiftingRule.cpp`) finds
-every projection that calls such a function and splits it into
+The operator representation supports multiple named outputs, but the scalar shorthand rejects such operators. Table/lateral
+syntax such as `FROM HTTP_CALL(SELECT ...)` is not implemented yet.
 
-```
-pre-projection (sync)  ->  async stage  ->  post-projection (sync)
-```
+**Every written async call is a distinct invocation.** Argument structure, inferred types, and EXPLAIN text do not establish
+call identity. With retries disabled and successful execution:
 
-- The **pre-projection** evaluates every argument that is neither a field nor a constant, e.g. `CONCAT(data, '!')`, and
-  reserves an empty result slot per call. Its fields use the same canonical order as the async stage, so the reserved
-  slots can be filled without rearranging the row.
-- The **async stage** is a projection carrying the `AsyncExecutionTrait`. It forwards its input and fills each slot with
-  its call, so its input and output have the same fields.
-- The **post-projection** is the original projection, now reading the slots.
+- `SELECT HTTP_CALL(body, url) AS a, HTTP_CALL(body, url) AS b ...` makes two requests per input tuple.
+- `HTTP_CALL(CONCAT(HTTP_CALL(body, u), HTTP_CALL(body, u)), v)` makes three requests per tuple: two distinct inner calls and one outer call.
+- A call in `WHERE` and another identical call in `SELECT` are separate.
+- A subquery that computes a result once can expose that field more than once in an outer projection without another call.
+- Discarding an async result in an outer projection does not remove the invocation.
+- A filter above an async operator cannot move below it and suppress its side effects.
+- Parser-generated copies of one `IN`/`BETWEEN` left-hand expression reference the same occurrence and execute it only once.
 
-```
-SINK(CALLSINK)
-  PROJECTION(fields: [ID, CONCAT(__ASYNC_CALL_1, ?) as RESPONSE])
-    ASYNC_PROJECTION(fields: [DATA, ID, __ASYNC_ARG_0, HTTP_CALL(__ASYNC_ARG_0, http://localhost/echo) as __ASYNC_CALL_1])
-      PROJECTION(fields: [DATA, ID, CONCAT(DATA, !) as __ASYNC_ARG_0,  as __ASYNC_CALL_1])
-        SOURCE(TEXTSTREAM)
-```
+This is an invocation-count contract, **not transactional exactly-once HTTP delivery**. Explicit retries can repeat a POST
+that the server already processed. Failures or cancellation can interrupt calls.
 
-The rule also handles:
+Async calls in supported boolean predicates are evaluated before their selection. Conditional/lazy expression contexts and
+unsupported placements such as join predicates are rejected rather than eagerly evaluating effects from unselected branches.
 
-- **Selections.** A predicate that calls an async function is evaluated into a field of such a split projection, the
-  selection filters on that field, and a projection removes the helper fields again. A projection directly above reuses
-  the calls the predicate made instead of making them again.
-- **Nesting.** Directly nested calls (`f(g(x))`) run in one async stage, the inner call feeding the outer one. Sync work
-  between two calls (`f(CONCAT(g(x), y))`) needs one stage per side, with the sync work in the projection between them.
-- **Duplicates.** Structurally equivalent calls with the same inferred types are evaluated once per row. A field and
-  an equally spelled string literal are distinct, as are equally spelled constants of different types.
+## Normalization and optimizer barriers
 
-`nes-systests/explain/AsyncFunctionLifting.test` shows the resulting plans for all of these cases.
+`AsyncFunctionLiftingRule` normalizes scalar shorthand after type inference and before the semantic barrier and static
+pushdowns. Its historical rule name remains for configuration compatibility; it no longer builds trait-tagged projections.
 
-## Splitting a stage into a Handoff sink and an Async source
+The rule walks expression occurrences in order:
 
-`splitAsyncOperator` in `nes-query-optimizer/src/Placement/QueryDecomposition.cpp` replaces every async stage, on the
-worker it was placed on, by
+1. Lower nested calls first.
+2. Materialize nontrivial synchronous arguments in ordinary projections, forwarding the existing input fields.
+3. Insert one async operator for the occurrence, with fresh internal output bindings.
+4. Replace that occurrence with a field access to its sole output.
+5. Retain the original result projection or selection over those fields.
 
-- a `Handoff` sink (`nes-plugins/Async/HandoffSink.cpp`) on top of the stage's child, which becomes a local plan of its
-  own, and
-- an `Async` source (`nes-plugins/Async/AsyncSource.cpp`) in the stage's place.
+The original visible schema is captured before introducing helpers. `SELECT *` expands against that schema, and helper
+fields introduced for a predicate are removed before its result is exposed to parent operators. Generated names avoid
+input fields, user aliases, and other generated names.
 
-Both typed configurations hold the same `std::shared_ptr<HandoffChannel>`. Reflection assigns that shared object a wire ID
-and reconstructs one channel for both configurations. The ID is local to a reflection context, not a process-global registry key.
-Decomposition passes an `AsyncCallGraph` directly in the typed `AsyncSourceConfig`,
-using `PhysicalSourceBuilder` and the catalog's typed anonymous-source API rather than string configuration maps.
-The graph includes the ordered input schema, immutable call nodes, and exported outputs. The source uses that bound schema
-directly; there is no separate comma-separated input-field mapping or internal JSON round-trip. Normal descriptor reflection
-serializes the graph as an object only when the descriptor crosses a wire boundary. Async sources are planner-created;
-literal frontend configuration cannot supply a call graph.
-Each call's `functionType` is a string registry key such as `HttpCall` or `AsyncDelay`, not a call-node identity.
-Registry insertion and lookup use strings with case-insensitive matching.
+Within one expression region, occurrence IDs resolve parser-generated references to an already produced field. This does
+not compare arguments or merge separately written calls. WHERE and SELECT are independent regions; no cross-clause reuse lookup exists.
+Nested calls initially use one
+operator/stage each. Synchronous work between calls remains an ordinary projection between operators. There is no
+structural collection/substitution pass and no EXPLAIN-derived expression key.
 
-Each argument is a variant of a native `RuntimeValue`, an `InputFieldReference`, or an `AsyncResultReference`:
+Async operators are effect barriers. Predicate and watermark pushdown cannot cross them, and projection pruning must retain
+the invocation even when none of its results is selected. Initially, conservative full-schema retention is preferred to a
+more aggressive pruning optimization. Ordinary projections above the operator may discard fields normally.
 
-- Inputs retain a `QualifiedIdentifier` and their graph's immutable input scope. A builder rejects fields from a
-  different scope, even when their names and types happen to match.
-- Results own their producer and are constructed through `producer->output(i)`, which checks the selector. Their type
-  is obtained from the producer's immutable output signature, not from an independent index/type table.
-- Constants are converted to native values during decomposition, rather than reparsed strings for each call.
+## Physical handoff and row layout
 
-`AsyncCallGraphBuilder` is single-use. All dependencies refer to already-constructed immutable producers, and foreign
-producer handles are rejected. Logical rewrites must explicitly rebind into a new graph instead of accidentally retaining
-a reference into an old one. Common-subexpression sharing is decided while lowering; runtime caching uses node identity,
-not structural equality. Unreachable calls are removed when the graph is finalized.
+The optimizer runs [AsyncOperatorDecompositionRule](../../nes-query-optimizer/include/Rules/Static/AsyncOperatorDecompositionRule.hpp#L34)
+after field/layout optimization and worker placement, and before distributed network decomposition. The rule uses
+`PlanVisitor` to rebuild operators bottom-up, captures handoff sinks as additional roots, and replaces each async operator
+with an `Async` source on the same worker. Network decomposition then partitions all resulting roots without performing
+any async lowering. The original placed global plan remains available for EXPLAIN and query metadata.
 
-The graph is reflected/unreflected through NES `ReflectionContext`, using the existing `DataType` reflection and native
-`RuntimeValue` reflection. `rfl::json` only encodes/decodes the intermediate `rfl::Generic` representation. Local IDs are
-used only in the wire format: deserialization resolves them back to owning handles, preserves sharing, accepts reordered
-definitions, and rejects duplicate/dangling IDs, invalid output selectors and cycles. VARSIZED constants use a byte-array
-payload so invalid UTF-8 remains valid data; floating-point payloads preserve their exact bits, including NaNs and signed zero.
+One operator currently creates one runtime graph containing one producer. All of that producer's results are exported, including results
+that a later projection discards. This is essential because the graph executor starts work from exported outputs.
 
-`EXPLAIN (DISTRIBUTED)` shows the pair:
+The logical operator appends columns, but the current buffer-reuse runtime requires identical ordered input/output schemas.
+Decomposition therefore inserts a **physical padding projection** before the handoff. It forwards the input and reserves
+correctly typed slots for every appended output. Nullable, variable-sized, boolean, and character placeholders retain their
+actual datatypes. Field order and physical field mappings are derived for the padded layout rather than copied unchanged
+from the narrower input. The current async runtime requires row layout. The planner gives both handoff endpoints that same ordered schema directly.
+At source construction, `AsyncHandoffLayout` verifies identical ordered schemas (including field names, types, and nullability),
+checks graph output bindings, and builds the runtime copy plan. There is one schema, one row size, and one row-layout view.
+Exclusively owned input buffers are updated in place; shared buffers copy unchanged fields to the same offsets before results
+are written. Reordered handoff schemas are rejected rather than adapted.
 
-```
--- 2 plan(s) on source-node:8080 --
-0:
-SINK(HANDOFF)
-  PROJECTION(fields: [DATA, ID,  as __ASYNC_CALL_0])
-    SOURCE(TEXTSTREAM)
-1:
-SINK(NETWORK)
-  SOURCE(ASYNC)
-```
+Padding is an implementation detail: it does not turn the semantic operator back into an async-tagged projection. The
+returned source has the async operator's output schema, and the runtime fills the reserved slots. One admitted input buffer
+still corresponds to one output buffer.
 
-## Execution
+A future fusion pass may combine compatible adjacent async operators into a DAG, but must preserve every occurrence and
+must not cross filters, joins, unions, or other evaluation boundaries. Such fusion is not part of the current implementation. Multi-parent logical subplans containing a shared async occurrence
+are rejected until decomposition supports their fanout without duplicating execution. Reusing a produced field within one
+branch remains supported.
 
-### The Handoff channel
+## Channel ownership and deployment
 
-`HandoffChannel` (`nes-async/include/Async/HandoffChannel.hpp`) is a bounded in-process queue with a move-only sender and receiver.
-Buffers pass through it without a copy. The Handoff sink owns the sender; the Async source owns the receiver.
+`HandoffChannel` lives in `nes-async`, an async support library depending on `nes-memory` for tuple buffers. It exposes
+move-only sender/receiver endpoints. The sink owns the sender; the source owns the receiver.
 
-The query manager submits all local fragments for one worker as a batch. Serialization and deserialization each use one
-`ReflectionContext` across the batch to preserve shared-pointer identity. The worker reconstructs a fresh batch for each
-execution, including embedded execution, so reusing a plan cannot reuse a closed queue. It compiles and instantiates all
-fragments, validates that both endpoints were claimed, then starts execution. Capacity is specified once on the shared channel.
-There is no process-global channel registry or extra resource argument in source/sink factories. Configuration pointers retain
-unclaimed endpoints; claimed sender/receiver handles independently own the queue and signal closure even if configurations remain alive.
+The typed source and sink configurations share a `std::shared_ptr<HandoffChannel>`. Shared-pointer reflectors receive
+`std::shared_ptr<SharedPointerSerializationState>` through `ContextType`; unreflectors independently receive
+`std::shared_ptr<SharedPointerDeserializationState>`. These typed states, not `ReflectionContext` itself, own pointer identity
+bookkeeping. One serialization state spans a worker's whole plan batch. A fresh deserialization state reconstructs fresh
+objects for each execution, including embedded execution, so a reused plan does not reuse a closed queue.
 
-Closing the sender normally lets the receiver drain queued buffers and then observe end-of-stream. Destroying an unfinished
-sender cancels the channel instead, so a failed producer cannot look like successful completion. Closing or destroying the
-receiver discards queued buffers and rejects further sends. These rules do not depend on which local fragment starts first.
+The worker compiles and instantiates the whole batch, then explicitly enumerates reconstructed `HandoffChannel` objects
+through the deserialization state and calls their endpoint validation before starting any fragment. Shared-pointer reflection
+only restores identity; it does not discover or invoke arbitrary pointee `validate()` methods. Deployment validation belongs
+to the worker, not the generic reflection context. There is no process-global channel registry and no extra resource argument
+threaded through source/sink factories.
 
-When the channel is full, the `Handoff` sink applies backpressure through the sink's `BackpressureHandler`: it stashes
-the buffer, holds back the sources of the producing pipeline, and retries until the Async source caught up. The channel
-capacity is thus what absorbs bursts. Once the Async source has stopped, the sink drops what it still has and releases
-the producer.
+- Closing the sender normally lets the receiver drain queued buffers and then observe end-of-stream.
+- Destroying an unfinished sender aborts the receiver instead of pretending the producer completed successfully.
+- Closing/destroying the receiver drops queued buffers and rejects subsequent sends.
+- Configuration pointers can outlive execution; endpoint closure does not depend on the last configuration pointer disappearing.
 
-### The Async source
+A full channel applies backpressure to the producer. Once the receiver is gone, the sink drops pending buffers and releases
+that backpressure instead of retrying forever.
 
-The source thread of an `Async` source does not run calls itself. All calls run as coroutines on one event loop thread
-shared by every Async source on the worker (`SharedEventLoop` in `AsyncSource.cpp`), each source on its own strand.
-There is no dedicated thread per call. Each async stage still has an ordinary source thread waiting for results.
+## Runtime execution and ownership
 
-- **Concurrency across buffers.** The source keeps handed-off buffers in `inFlight.buffers` and starts their rows as long as a
-  slot is free, up to `max_concurrency` rows at once, regardless of which buffer they belong to. It takes the next buffer
-  from the channel only when the rows waiting to start would no longer keep every slot busy, so the channel, not the
-  source, holds what the calls cannot keep up with.
-- **Buffer ownership.** `InFlightState` stores `InFlightBuffer` values directly in a deque. Row coroutines borrow stable
-  references to its elements. A completed buffer is moved out for output only after its last row callback has finished
-  accessing it; shutdown drains rows before clearing the in-flight state. There is no separately allocated shared buffer wrapper.
-- **Order and metadata.** Buffers are emitted in the order they were handed off, each once all of its rows are done.
-  One input buffer becomes exactly one output buffer with the same sequence and chunk number, origin and watermark.
-  After every row callback has finished, the source fills the reserved result slots and reuses the input parent buffer
-  if the physical layouts match and no other parent-buffer owner remains. Other owners may read those same slots, so
-  shared parents and differing layouts retain a copy fallback; the source never waits for uniqueness. Unchanged fields
-  are copied only on that fallback, and existing child buffers are retained in their original order.
-- **Allocation and variable-sized results.** The Async source opts out of `SourceThread`'s usual empty-buffer acquisition:
-  reuse needs no spare parent buffer. A copy first tries the pool without blocking, then unpooled memory; allocation
-  failure fails the query rather than waiting while retaining buffers from an exhausted pool. Async values still own
-  their result bytes until materialization, and new variable-sized payloads are copied into child storage. The native
-  writer extends only private children (the parent plus its temporary loaded handle are the only two references);
-  shared children get a new result child instead. Result writes and child-list updates happen on the source thread,
-  not concurrently in the row coroutines. Buffer-level mutation therefore still has one writer.
-- **Function instances.** Each slot has its own instance of every function in the stage, created through the
-  `AsyncFunctionRegistry`, so an instance serves one call at a time and may keep state between calls, such as an open
-  connection.
-- **Failures.** A failed call is retried up to `max_retries` times, the n-th after 100 ms · 2ⁿ, unless the query is
-  stopping. A call that still fails fails the query: the source cancels every call in flight and rethrows the error.
-- **Stop.** On a stop request, the source cancels its calls and waits until none of them is running before it returns.
+All Async sources on a worker share an Asio event-loop thread. Each source uses a strand; its ordinary source thread waits
+for results. Up to `MAX_CONCURRENCY` rows are in flight across buffer boundaries, and buffers are emitted in input order.
 
-### Dependency-driven row execution
+The source uses each graph call's restored concrete operator configuration, without another name lookup or factory call.
+Each graph call has one operator-state group and an `AsyncExecutionContext` per admitted row slot. Contexts are reused
+sequentially across rows and remain alive through preparation, retries, and draining. Stateful plugins choose an explicit scope:
+`context.getOperatorState<State>()` shares one state across the call's slots, while `context.getSlotState<State>()` provides
+exclusive state for one slot, such as an HTTP connection. Stateless plugins need neither. Contexts and live resources are never reflected. A row admission slot
+owns the instances it needs, so a connection can be reused between sequential invocations without being shared concurrently
+by two rows.
 
-A plan graph contains no live coroutine frames. Each admitted row gets its own `AsyncGraphExecution` and one lazy
-`SharedAsyncResult` per requested producer. Multiple consumers of a producer share one invocation (including its retries)
-and receive independent waits on the same immutable value/error. An `asio::awaitable` frame itself is never shared.
+`InFlightState` owns admitted buffers in a deque. Row coroutines borrow stable entries; a completed buffer is removed only
+after its last callback publishes completion. Shutdown cancels and drains all rows before releasing their buffers.
 
-The executor starts independent dependencies and exported roots concurrently. A consumer runs as soon as its own
-inputs are ready; it does not wait for unrelated calls at the same depth. There are no dependency levels or level barriers.
-A producer's stateful plugin instance is invoked only when its inputs are available; keeping a row admission slot does
-not reserve a separate call permit, so nested graphs work with `max_concurrency=1`.
+Completed input buffers are reused only when input/output layouts match and the source has exclusive parent-buffer ownership.
+Otherwise unchanged fields are copied to another output buffer. Child buffers are retained rather than deep-copied, and shared
+children are not extended. Output allocation never blocks while retaining input from an exhausted pool: it tries the pool,
+then unpooled memory, and fails rather than deadlocking if neither is available.
 
-The existing Handoff/materialization boundaries remain for synchronous compiled work and worker/network boundaries.
-This change does not fuse synchronous expressions or filters across those boundaries; an async region is not a scheduling level.
+Origin, sequence/chunk numbers, timestamps, and watermarks are forwarded from the input buffers.
 
-### Deadlines, cancellation and ownership
+### Runtime graphs
 
-Graph execution exposes `run()` and owner cancellation; producer lookup is internal, so graph consumers cannot cancel individual shared producers.
-Internally, `SharedAsyncResult::get()` creates an independent subscription; `getUntil(steady_clock_deadline)` bounds only that wait.
-Each subscription has its own cancellation registration. Timing out or cancelling one wait does not cancel the producer,
-poison its cached result, or affect another subscriber. A result already available when subscribing is returned immediately;
-for a pending subscription, a completion published after its deadline is still a timeout even if notifications race.
+The generic runtime still supports typed multi-value DAGs. Arguments are owned `RuntimeValue` constants, graph-scoped
+`InputFieldReference`s, or `AsyncResultReference`s owning their producer. Result indices are internal graph references, not
+SQL extraction syntax. Builders reject foreign scopes and invalid selectors; wire reconstruction rejects dangling references
+and cycles.
 
-These wait deadlines are a runtime API, not new SQL syntax. `HTTP_CALL` uses one absolute deadline per attempt, covering
-DNS resolution, connection establishment, request writing, and response reading. Each explicit retry receives a fresh budget;
-retry backoff is outside that budget. A final producer failure is shared by all its consumers. A DNS timeout cancels the
-resolver and releases the row's wait promptly; an OS name-service call already running may finish later, with its callback
-owning only resolver state, not row or function resources. A row/query stop or a terminal root failure instead cancels the entire owned graph.
-On failure or caller cancellation, the owner cancels every producer and joins all started work before propagating the
-original error or releasing its input buffer. Cleanup is shielded from cancellation without disabling the caller's subsequent
-cancellation state. Successful execution does not cancel producers and asserts that every cell has finished before returning.
-A completed value/error remains available
-to existing subscribers. Result shape/type contracts are checked with invariants, not service retries.
+Runtime memoization uses explicit producer-node identity. Multiple references to one producer share its result; different
+producer nodes remain different even if their function names and argument values match. This is not structural call deduplication.
 
-### Configuration
+Graph execution exposes `run()` and owner cancellation. Producer lookup is private. Internally, `SharedAsyncResult` provides
+lazy single execution, cached results/errors, independent waiter cancellation/deadlines, and joining. Cancelling a subscriber's
+wait does not cancel the producer. On row failure or cancellation, the owner cancels and joins all producer work before releasing
+resources, preserving the initiating failure across cancellation-shielded cleanup.
 
-The decomposition passes these optimizer options to every async stage, e.g.
-`nes-repl -- --optimizer.async.max_concurrency=64`:
+## Preparation, retries, and deadlines
 
-| Option                           | Default | Meaning                                                                    |
-|----------------------------------|---------|----------------------------------------------------------------------------|
-| `optimizer.async.max_concurrency`  | 16      | Rows whose calls are in flight at once, per async stage.                   |
-| `optimizer.async.channel_capacity` | 64      | Buffers the Handoff channel holds before the producer is held back.        |
-| `optimizer.async.max_retries`      | 0       | Default further attempts of a failed call, with exponential backoff; a function may override it. |
-
-A function can lower the concurrency of its stage through `AsyncFunction::maxConcurrency`, e.g. for a service with a
-rate limit; the stage uses the smallest bound. A prepared invocation can override the retry default through its fixed
-`PreparedAsyncCall::retryOverride` metadata.
-
-`HTTP_CALL` always overrides the retry default: the fourth argument is the number of additional attempts, and omitting it
-means zero even when `optimizer.async.max_retries` is enabled. The retry count may be a non-null integer expression.
-For example, `HTTP_CALL(body, url, 30000, 2)` allows up to three attempts, each with a 30-second end-to-end timeout,
-with the source's exponential backoff between attempts. Only execution failures explicitly classified as `RetryableAsyncError`
-are retried. HTTP classifies transient transport failures and statuses 408, 429, 500, 502, 503, and 504 this way; other HTTP errors
-fail immediately. Preparation failures and cancellation are never retried.
-There is no separate automatic keep-alive reconnect retry. A failed connection is discarded; resending the POST requires
-explicitly opting into retries. A retry may repeat a request the server already processed, so the caller must ensure
-that duplicate effects are acceptable (for example, by using an idempotent service or an idempotency key).
-
-## Adding an asynchronous function
-
-An asynchronous function is a plugin with two parts, see `nes-plugins/Functions/AsyncDelay` for a complete example.
-
-**The logical function** is a regular logical function plugin (see [How to add a function](../guide/how_to_add_a_function.md))
-that derives from `AsyncLogicalFunction` instead of providing a physical function. It checks its arguments and result type
-in `withInferredDataType`, including which child positions must be constant and the domain/range of constant options.
-Invalid constant URLs, timeouts, retry counts, and delays fail before deployment, not during execution.
-It implements `getAsyncOutputTypes()` to
-declare every output type, including nullability. The output count follows from this list; `ASYNC_OUTPUT` selects one
-output. These types must follow from the expression, and the first output type must match `getDataType()`.
-
-**The async implementation** derives from `AsyncFunction` and is registered in the `AsyncFunctionRegistry` of
-`nes-sources`:
+Plugins expose one invocation protocol:
 
 ```cpp
-class MyAsyncFunction final : public AsyncFunction
-{
-public:
-    static AsyncFunctionRegistryReturnType create(AsyncFunctionRegistryArguments arguments);
-
-    /// Validates arguments and returns an owning invocation for sequential attempts.
-    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override;
+struct MyAsyncOperator {
+    // Type, output-schema and inference methods belong to this same concrete struct.
+    AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(
+        AsyncExecutionContext& context, SharedRuntimeValues arguments) const;
 };
 ```
 
-`create` receives `arguments.binding`, an `AsyncFunctionBinding` containing declared argument/result types and
-positional optional constants. There is no separate per-function configuration payload. Constant arguments remain
-visible at their original positions in `prepare`, just like dynamic arguments; factories may inspect them to initialize
-state or a concurrency limit. Logical constants become native values during decomposition and retain their exact
-scalar types through transport and binding (no floating-point roundtrip for integer literals).
+`prepare()` validates and owns per-row arguments once, before the retry loop. On success it returns a `PreparedAsyncCall` whose
+`executeAttempt()` returns `boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>`. `AsyncResult<T>` is
+`std::expected<T, AsyncError>`; operational failures are returned values, not thrown exceptions. The prepared call's constructor
+fixes its private retry override, exposed read-only through `getRetryOverride()`: `nullopt` selects the stage default and zero
+disables retries. Attempts are sequential. Prepared calls can retain actual state ownership through
+`getSharedOperatorState<T>()` and `getSharedSlotState<T>()`; the latter also keeps its operator-state dependency alive.
+These handles share the context's state storage, not a separate lifetime-tracking token. Shared ownership does not permit
+concurrent use of a slot. Borrowed state access remains available when its caller guarantees the lifetime.
+`invokeOnce(implementation, context, arguments)` uses the same result type; the convenience overload without a context owns
+a fresh context until the attempt completes. Neither is another plugin extension point.
 
-The source calls `prepare(SharedRuntimeValues)` once per producer invocation, before entering its retry loop. Preparation may
-reject invalid per-row input and returns an owning `PreparedAsyncCall`. Its `executeAttempt()` performs one attempt, while
-its constructor fixes the optional `retryOverride`. Plugins implement only this preparation/attempt protocol; there is no
-second direct-call extension point. `invokeOnce(function, arguments)` is a nonvirtual convenience function that prepares and
-executes once without retries.
+Only execution errors with `AsyncError::Type::Retryable` are eligible for retry. Preparation errors, permanent failures,
+shape/type invariant failures, and cancellation are not retried. Cancellation and waiter timeout have distinct error kinds;
+a waiter's failure does not overwrite the producer's cached outcome. Backoff starts at 100 ms and doubles up to 102.4 seconds.
 
-HTTP preparation owns the parsed URL, body, timeout, and retry options across attempts. Network failures, cancellation, and
-time-dependent deadline checks remain execution-time failures. Only `RetryableAsyncError` permits another attempt; ordinary
-exceptions fail immediately. Prepared calls may borrow their function instance, which must outlive them; the source keeps
-one instance per active row slot.
+Checked literal, integer-option, and deadline helpers also return `std::expected`. Logical inference may turn their errors into
+one query diagnostic, matching existing throwing planner interfaces. Reflection and runtime construction likewise retain their
+throwing interfaces and let errors reach submission/request handlers. Async execution does not catch these exceptions to make
+retry decisions; terminal execution errors are reported at the established source-task boundary.
 
-Graph implementation names are resolved against the worker's registry before any function instances are constructed.
-Missing implementations are deployment errors. Subsequent instance creation uses the bound factories, not another lookup.
-The planner and worker share `AsyncHandoffLayout` to establish matching field sets/types and derive copy offsets.
-Graph-builder lifecycle, ownership, and schema contracts use preconditions; malformed serialized graphs are validated
-at the unreflection boundary before those APIs are called.
+HTTP always overrides the retry default: omitting its fourth argument means zero retries, even when stage retries are enabled.
+An explicit retry count allows additional attempts after transient transport failures or statuses 408, 429, 500, 502, 503, and
+504. Other non-2xx responses fail immediately. A retryable classification is not an idempotency guarantee: callers opting into
+POST retries must tolerate duplicate server-side effects.
 
-Error categories follow their boundary: logical datatype mismatches use `DifferentFieldTypeExpected`, other inference
-failures use `CannotInferSchema`, and invalid registry-call syntax uses `InvalidQuerySyntax`. Literal parsing reports
-`InvalidLiteral`. Dynamic numeric option failures use `ArithmeticalError`, malformed URLs use `FormattingError`, and
-permanent HTTP transport/response failures use `IOError`. Transient failures use `RetryableAsyncError`; this classification
-does not itself grant permission to replay a POST. Wire validation uses `CannotDeserialize`; Asio cancellation retains its
-original error code.
+Each HTTP attempt has one deadline covering hostname resolution, connect, write, and read. A retry receives a fresh budget;
+backoff is outside that budget. A hostname lookup may complete after timeout/cancellation, so its callback retains shared
+resolver state and ignores late results without retaining row/function resources.
 
-`SharedRuntimeValues` is an immutable, cheap-to-copy owning handle, so a coroutine can keep its arguments across suspension and
-the scheduler can retain them for retries. Default construction produces a valid empty list, not a failure result.
-Indexing returns a `RuntimeValueView`, which borrows from that owner and must
-not outlive it. Use `get<int32_t>()` for exact scalar access, `get<std::string_view>()` or `bytes()` for VARSIZED, and
-`isNull()` before accessing a nullable payload. There is no implicit numeric narrowing; `getUnsignedInteger()` is an
-explicit contract-only conversion for an already validated non-negative integer of any width. At input boundaries,
-use `checkedUnsignedIntegerOption` from `DataTypes/CheckedInteger.hpp` (or `tryGetUnsignedInteger()` for non-throwing
-validation) before passing an unsigned option to execution. Use `toOwned()` when a value must escape the bundle's lifetime.
-For example, during invocation preparation:
+## Configuration
+
+| Option | Default | Meaning |
+|---|---:|---|
+| `optimizer.async.max_concurrency` | 16 | Rows in flight per async stage; implementations may lower the bound. |
+| `optimizer.async.channel_capacity` | 64 | Queued buffers before backpressure. |
+| `optimizer.async.max_retries` | 0 | Further attempts after a retryable execution error, unless the invocation overrides it. |
+
+`HTTP_CALL(body, url[, timeout_ms[, retries]])` accepts plain HTTP only. Timeout defaults to 30 seconds.
+`ASYNC_DELAY(value, millis[, max_concurrency])` is a test/benchmark operator; its only output is the delayed value.
+
+## Adding an async operator
+
+Implement one concrete configuration struct and its prepared invocation. Inference receives
+`AsyncArgumentsWithConstants`, a `std::vector<std::pair<DataType, std::optional<RuntimeValue>>>`.
+Each entry keeps the declared type beside its optional compile-time value: `std::nullopt` means a nonconstant argument,
+whereas an engaged optional containing `RuntimeValue::null(type)` is a typed null constant.
+
+For example, a stateless identity operator:
 
 ```cpp
-const auto millis = checkedUnsignedIntegerOption(arguments[1], "MY_FUNCTION delay");
-return std::make_unique<MyPreparedCall>(arguments[0].toOwned(), millis);
+class PreparedIdentity final : public PreparedAsyncCall {
+public:
+    explicit PreparedIdentity(RuntimeValue value) : value(std::move(value)) {}
+
+    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> executeAttempt() override {
+        co_return SharedRuntimeValues{value};
+    }
+
+private:
+    RuntimeValue value;
+};
+
+struct MyAsyncOperator {
+    DataType valueType;
+
+    static AsyncOperator create(AsyncOperatorRegistryArguments args) {
+        if (args.argumentTypes.size() != 1) {
+            throw InvalidQuerySyntax("MY_FUNCTION takes exactly one argument");
+        }
+        return MyAsyncOperator{args.argumentTypes.front()};
+    }
+
+    std::string_view getType() const { return "MY_FUNCTION"; }
+
+    Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const {
+        return {{Identifier::parse("value"), valueType}};
+    }
+
+    MyAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const {
+        if (binding.size() != 1) {
+            throw InvalidQuerySyntax("MY_FUNCTION takes exactly one argument");
+        }
+        auto copy = *this;
+        copy.valueType = binding.front().first;
+        return copy;
+    }
+
+    AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(
+        AsyncExecutionContext&, SharedRuntimeValues arguments) const {
+        return std::make_unique<PreparedIdentity>(arguments[0].toOwned());
+    }
+};
+
+static_assert(AsyncOperatorConcept<MyAsyncOperator>);
 ```
-
-The current source path materializes owned values; the view interface leaves room for future buffer-backed storage
-without changing the function call API. Producers must construct values with the correct native payload and exact datatype,
-including nullability. Constructors, typed accessors, and runtime adapters verify these contracts with preconditions or
-invariants; they do not repair types or report contract violations as recoverable exceptions. `toOwned()` only copies storage
-and preserves the datatype. The executor similarly requires input readers to return exactly the declared input type.
-`RuntimeValue` and `RuntimeValueView` have no tuple-buffer or Nautilus dependency.
-VARSIZED is a byte sequence, not necessarily UTF-8, and views do not promise a terminating NUL. Runtime-only free adapters
-`toVarVal(RuntimeValueView)` and `fromVarVal(const VarVal&, DataType)` in `DataTypes/RuntimeValueNautilus.hpp` provide the
-Nautilus bridge without requiring a tuple buffer. The former borrows bytes; the latter copies them into owned storage.
-Neither adapter may be used while tracing a compiled pipeline. `fromVarVal` requires the supplied datatype to match the
-source exactly, including nullability; it does not retype the value. Literal parsing and invalid option values (such as a
-negative duration) still report ordinary user-input errors. Both `HTTP_CALL` and `ASYNC_DELAY` reject millisecond values
-that cannot be converted to steady-clock ticks or added to the start time without overflow. HTTP timeouts must be positive;
-a zero delay remains valid.
-
-Return the declared number of values with datatypes matching `binding.resultTypes` exactly, including nullability.
-Functions are responsible for constructing correctly typed results; the executor does not normalize them. For example,
-a non-null value for a nullable output must carry the nullable datatype, e.g. `RuntimeValue{resultType, int64_t{42}}`.
-Null is allowed only for a nullable output. Result count and datatype mismatches violate invariants and terminate the
-process when assertions are enabled; these checks compile out under `NO_ASSERT` (Benchmark and Release builds).
-Inside the coroutine, wait only with `co_await` on Asio operations; blocking stalls every async source on the worker.
-
-Both parts are registered in the plugin's `CMakeLists.txt`, the logical function under the SQL name and the
-implementation under the same plugin name:
 
 ```cmake
-add_registry_entry(LogicalFunction MyFunction KEY MY_FUNCTION)
-add_unreflection_entry(LogicalFunction MyFunction)
-
-add_library(my_async_function_plugin_library STATIC MyAsyncFunction.cpp)
-target_link_libraries(my_async_function_plugin_library PRIVATE nes-sources)
-link_plugin_library(nes-sources my_async_function_plugin_library)
-add_registry_entry(AsyncFunction MyFunction)
+add_registry_entry(AsyncOperator My KEY MY_FUNCTION)
+add_unreflection_entry(AsyncOperator My KEY MY_FUNCTION)
 ```
 
-## Limitations
+The factory registry uses `&MyAsyncOperator::create` from `MyAsyncOperator.hpp`. The unreflection key matches `getType()`;
+the SQL factory registry may additionally provide aliases. There is no second runtime factory or registry. Concrete implementations
+validate argument counts before indexing arguments or deriving outputs, and validate types and constant options during inference.
+Output names are available before inference; the scalar shorthand requires a single stable name.
 
-- Native scalar and string values are supported, including typed nullable values where the function declares them. `HTTP_CALL` continues to require non-null `VARSIZED` body, URL, and result.
-- `HTTP_CALL` speaks plain HTTP/1.1 without TLS.
-- The shared event loop runs on one thread per worker. The per-source strands would allow more threads if completing
-  calls ever becomes the bottleneck.
+Both `AsyncLogicalOperator::create(child, name, arguments, ...)` and
+`AsyncLogicalOperator::create(child, implementation, arguments, ...)` are supported. The latter preserves custom configuration
+state. Scalar syntax and direct operator construction use the same native inference and preparation methods.
+
+Stateful plugins can define private state types in their implementation file and select the required lifetime in `prepare()`:
+
+```cpp
+auto& counter = context.getOperatorState<SharedCounter>();  // all slots of this operator instance
+auto& connection = context.getSlotState<Connection>();     // only this slot
+```
+
+Each scope holds one concrete state type; combine related fields in that struct. State is created lazily, may be move-only,
+and is not copied or reflected. Constructor arguments may be supplied, such as `context.getSlotState<Connection>(clientConfig)`.
+They are used only on first access and must be stable configuration for that scope, not values from the current row.
+
+Operator-state initialization is synchronized, but access to the returned state is the plugin's responsibility. A mutex or
+atomic may be appropriate; do not hold a blocking mutex across `co_await`. The current source runs its coroutines on a strand,
+so synchronous updates are serialized, but work spanning suspension can still interleave. Slot state remains exclusive to one
+invocation at a time.
+
+Sharing is local to one graph call in one deployed source instance. Separate call occurrences, workers, and query executions
+have independent state, even if they reuse identical configuration. This is in-memory state, not checkpointed or transactional
+state. `prepare()` runs once per invocation, whereas updates in `executeAttempt()` may repeat on an explicitly enabled retry.
+
+A default `AsyncExecutionContext` starts a fresh operator instance. For direct C++ invocation, `context.createSlotContext()`
+creates another slot sharing that operator state but owning fresh slot state. Contexts must not be reused for different operator
+configurations. `PreparedAsyncCall` may borrow either scope while its context remains alive; the source retains contexts until
+all invocations have drained. Shared state is destroyed after the last slot releases it, with slot state destroyed first.
+
+An optional `maxConcurrency()` method on the configuration can lower the stage limit; implementations without it use the stage default.
+
+Constant arguments remain present when `prepare()` receives a row. Returned values must match the declared output count,
+types, and nullability exactly; the executor does not convert them.
+
+`SharedRuntimeValues` is an immutable, cheap-to-copy owning list; default construction is a valid empty list. Its views borrow
+storage. Use exact scalar extraction and explicit option validation, such as `checkedUnsignedIntegerOption`, before suspension.
+A prepared invocation must retain or copy any bytes it needs. Do not retain borrowed views without retaining their owner.
 
 ## Tests
 
-- `nes-plugins/Async/tests/async.bats` runs end-to-end queries in the embedded REPL against
-  `tests/http_path_server.py`, once compiled and once interpreted (`async-repl-test`, `async-repl-test-interpreter`).
-  It covers typed delay values and outputs, nullable pass-through, computed/field-valued integer delays, chaining, selections, concurrency within and across buffers, backpressure, failures, retries, timeouts and dropping queries.
-- `nes-data-types/tests/UnitTests/RuntimeValueTest.cpp` covers native types, typed nulls, exact integer limits and ownership.
-- `nes-nautilus/tests/UnitTests/RuntimeValueNautilusTest.cpp` covers runtime Nautilus conversions without tuple buffers.
-- `nes-sources/tests/SharedRuntimeValuesTest.cpp` covers suspension lifetimes and constant binding.
-- `nes-sources/tests/AsyncCallGraphTest.cpp` covers producer ownership, input scopes, graph identity/serialization,
-  malformed edges/cycles, binary constants and exact floating-point payloads.
-- `nes-plugins/Async/tests/AsyncGraphExecutionTest.cpp` covers diamond sharing, dependency/root concurrency,
-  independent wait timeouts/cancellation, producer failure, row cancellation/draining and per-row memoization.
-- `nes-plugins/Async/tests/AsyncSourceValueTest.cpp` checks result arity, type and nullability invariants with death tests
-  when assertions are enabled.
-- [nes-plugins/Async/tests/AsyncSourceBufferReuseTest.cpp](nes-plugins/Async/tests/AsyncSourceBufferReuseTest.cpp)
-  checks parent identity, shared-parent/layout fallbacks, metadata and ordering, exhausted pools and rejected allocation,
-  nullable/binary/large results, failure draining, and concurrent writers retaining a shared child.
-- [nes-sources/tests/SourceThreadTest.cpp](nes-sources/tests/SourceThreadTest.cpp) checks allocation-free returning
-  sources as well as the existing preallocated-source contract, stop/EOS/error cleanup, and metadata preservation.
-- `nes-async/tests/HandoffChannelTest.cpp` covers channel ownership, endpoint closure, and shared-configuration reconstruction.
-- `nes-systests/explain/AsyncFunctionLifting.test` checks the lifted and the decomposed plans.
+Counter-based HTTP tests distinguish separate written calls from repeated references to one bound result. Coverage includes
+duplicate SELECT calls, repeated nested calls, WHERE/SELECT separation, discarded results, pure-filter barriers, and alias copies.
+Operator tests cover invocation identities, schema append behavior, multi-output programmatic construction, scalar rejection,
+normalization ordering, and reflection. EXPLAIN tests describe plan shape but do not substitute for call-count tests.
+
+Runtime tests additionally cover buffer reuse, typed values, shared producer results, cancellation, retries, channel endpoint
+ownership, pointer reconstruction, and late DNS completion. Preserve those contracts when changing logical representation.

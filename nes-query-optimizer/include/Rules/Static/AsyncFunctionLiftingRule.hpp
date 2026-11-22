@@ -24,20 +24,15 @@
 namespace NES
 {
 
-/// Splits every projection that calls an `AsyncLogicalFunction` into
-///   pre (sync) -> async stage -> post (sync)
-/// The pre-projection materializes every async argument that is neither a field nor a constant,
-/// so the async stage evaluates nothing but the async calls themselves, and reserves an empty slot
-/// per call. The async stage is a projection carrying `AsyncExecutionTrait` that forwards its input
-/// and fills each slot with its call, so its input and output have the same fields. The
-/// post-projection is the original projection reading those fields.
-///
-/// A selection whose predicate calls an async function evaluates the predicate into a field of such a
-/// projection first, filters on that field, and projects the helper fields away again. A projection directly
-/// above reads the calls the predicate already made instead of making them again.
-///
-/// Directly nested calls (`f(g(x))`) run in one async stage. Sync work between two calls (`f(CONCAT(g(x), y))`)
-/// needs a stage per side, with the sync work evaluated in the projection between them.
+/// Mandatory occurrence-based normalization after type inference and before semantic completion.
+/// Each scalar async occurrence becomes its own unary AsyncLogicalOperator, in child/source
+/// order, preserving its invocation ID. Ordinary projections materialize synchronous arguments;
+/// final projections and selection restoration hide all internal bindings (including from '*').
+/// Parser-generated IN/BETWEEN copies of one invocation ID read its produced field within
+/// one evaluation region. Distinct calls are never structurally compared or merged; sharing
+/// across regions requires an explicit bound output field.
+/// Conditional/lazy and unsupported operator expression contexts reject async calls.
+/// The historical rule name is retained for configuration compatibility.
 class AsyncFunctionLiftingRule
 {
 public:

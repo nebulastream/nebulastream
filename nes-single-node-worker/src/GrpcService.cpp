@@ -17,13 +17,16 @@
 #include <chrono>
 #include <cstddef>
 #include <exception>
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -146,7 +149,7 @@ grpc::Status GRPCServer::StartQueries(grpc::ServerContext* context, const StartQ
     return tryWithDefaultHandling(
         [&]
         {
-            const ReflectionContext reflectionContext;
+            const ReflectionContext reflectionContext{std::make_shared<SharedPointerDeserializationState>()};
             std::vector<LogicalPlan> plans;
             plans.reserve(request->queryplans_size());
             for (const auto& serialized : request->queryplans())

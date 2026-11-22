@@ -15,11 +15,13 @@
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -28,6 +30,7 @@
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h> /// Both are needed, clang-tidy complains otherwise
@@ -80,7 +83,7 @@ std::expected<std::vector<QueryId>, Exception> GRPCQuerySubmissionBackend::start
 {
     grpc::ClientContext context;
     StartQueriesRequest request;
-    const ReflectionContext reflectionContext;
+    const ReflectionContext reflectionContext{std::make_shared<SharedPointerSerializationState>()};
     for (const auto& plan : plans)
     {
         request.add_queryplans()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(plan, reflectionContext));

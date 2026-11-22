@@ -22,6 +22,7 @@
 
 #include <Sources/SourceProvider.hpp>
 #include <CompiledQueryPlan.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
 #include <QueryId.hpp>
 
@@ -50,7 +51,7 @@ public:
     void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     /// Instantiate all local fragments without starting execution.
     std::vector<std::unique_ptr<ExecutableQueryPlan>> prepareQueries(std::vector<std::unique_ptr<CompiledQueryPlan>> compiledQueryPlans);
-    void startQueries(std::vector<std::unique_ptr<ExecutableQueryPlan>> plans);
+    void startQueries(std::vector<std::unique_ptr<ExecutableQueryPlan>> plans, std::vector<QueryId>& successfullyStarted);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
     void stopQuery(QueryId queryId);

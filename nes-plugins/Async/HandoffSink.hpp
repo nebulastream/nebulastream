@@ -27,6 +27,7 @@
 #include <Sinks/HandoffSinkConfig.hpp>
 #include <Sinks/Sink.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES

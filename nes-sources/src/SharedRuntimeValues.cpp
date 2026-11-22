@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 
 #include <cstddef>
 #include <initializer_list>
@@ -24,20 +23,12 @@
 
 namespace NES
 {
-
-boost::asio::awaitable<SharedRuntimeValues> invokeOnce(AsyncFunction& function, SharedRuntimeValues arguments)
-{
-    auto prepared = function.prepare(std::move(arguments));
-    PRECONDITION(prepared != nullptr, "Async function preparation must produce a prepared call");
-    co_return co_await prepared->executeAttempt();
-}
-
 SharedRuntimeValues::SharedRuntimeValues(std::vector<RuntimeValue> values)
     : storage(std::make_shared<const std::vector<RuntimeValue>>(std::move(values)))
 {
 }
 
-SharedRuntimeValues::SharedRuntimeValues(const std::initializer_list<RuntimeValue> values)
+SharedRuntimeValues::SharedRuntimeValues(std::initializer_list<RuntimeValue> values)
     : SharedRuntimeValues(std::vector<RuntimeValue>{values})
 {
 }
@@ -55,7 +46,7 @@ bool SharedRuntimeValues::empty() const
 RuntimeValueView SharedRuntimeValues::operator[](const size_t index) const&
 {
     PRECONDITION(index < size(), "Async result index {} is out of bounds for {} values", index, size());
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) index is validated by the precondition above
     return (*storage)[index].view();
 }
-
 }

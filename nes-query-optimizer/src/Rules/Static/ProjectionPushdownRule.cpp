@@ -31,6 +31,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -452,6 +453,12 @@ Visitor::DownResult projectionPushdown(const LogicalOperator& op, const std::vec
     if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
         return pushBeyondSource(sourceOp.value(), required);
+    }
+    if (op.tryGetAs<AsyncLogicalOperator>())
+    {
+        /// Effect barrier: unused results do not make the invocation removable. Retain the
+        /// entire input schema, including argument fields, and rebuild the actual operator.
+        return pushBeyondDefault(op, required);
     }
     if (auto selectionOp = op.tryGetAs<SelectionLogicalOperator>())
     {

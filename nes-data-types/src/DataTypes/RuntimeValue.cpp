@@ -16,7 +16,10 @@
 
 #include <bit>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
+#include <expected>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -24,6 +27,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -138,11 +142,11 @@ RuntimeValue RuntimeValue::null(const DataType type)
     return RuntimeValue{type, std::monostate{}};
 }
 
-RuntimeValue RuntimeValue::fromLiteral(const DataType type, const std::string_view literal)
+std::expected<RuntimeValue, Exception> RuntimeValue::fromLiteral(const DataType type, const std::string_view literal)
 {
     return visitRuntimeType(
         type.type,
-        [type, literal]<typename T>() -> RuntimeValue
+        [type, literal]<typename T>() -> std::expected<RuntimeValue, Exception>
         {
             if constexpr (std::same_as<T, std::string_view>)
             {
@@ -154,7 +158,7 @@ RuntimeValue RuntimeValue::fromLiteral(const DataType type, const std::string_vi
                 {
                     return RuntimeValue{type, *parsed};
                 }
-                throw InvalidLiteral("'{}' is not a valid constant of type {}", literal, type);
+                return std::unexpected(InvalidLiteral("'{}' is not a valid constant of type {}", literal, type));
             }
         });
 }

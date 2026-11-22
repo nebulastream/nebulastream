@@ -218,5 +218,68 @@ TEST_F(PlanVisitorTest, SharedSubplanIsVisitedOnceAndSharingIsPreserved)
     EXPECT_EQ(newSource1, newSource2);
 }
 
+TEST_F(PlanVisitorTest, PruningSharedBranchSkipsDependentAncestorsAndKeepsIndependentRoot)
+{
+    auto sharedSource = utils.createSource("prunedShared", {"a"});
+    auto leftSelection = createSelection(sharedSource, "0");
+    auto rightSelection = createSelection(sharedSource, "1");
+    auto leftRoot = utils.createSink(leftSelection, "prunedLeft", {"a"});
+    auto rightRoot = utils.createSink(rightSelection, "prunedRight", {"a"});
+    auto independentSource = utils.createSource("independent", {"a"});
+    auto independentRoot = utils.createSink(independentSource, "independent", {"a"});
+    auto plan = utils.createPlan({leftRoot, rightRoot, independentRoot});
+
+    int dependentAncestorVisits = 0;
+    TestVisitor visitor{
+        [&sharedSource, &leftSelection, &rightSelection, &leftRoot, &rightRoot, &dependentAncestorVisits](
+            const LogicalOperator& op, std::vector<LogicalOperator> children) -> TestVisitor::UpResult
+        {
+            if (op == sharedSource)
+            {
+                return TestVisitor::UpResult{17};
+            }
+            if (op == leftSelection || op == rightSelection || op == leftRoot || op == rightRoot)
+            {
+                ++dependentAncestorVisits;
+            }
+            return op.withChildren(std::move(children));
+        }};
+
+    auto result = visitor.apply(plan);
+
+    EXPECT_EQ(dependentAncestorVisits, 0);
+    ASSERT_EQ(result.getRootOperators().size(), 1);
+    const auto survivingSink = result.getRootOperators().at(0).getAs<SinkLogicalOperator>();
+    ASSERT_TRUE(survivingSink->getSinkDescriptor().has_value());
+    EXPECT_EQ(survivingSink->getSinkDescriptor()->getSinkName(), Identifier::parse("independent"));
+}
+
+TEST_F(PlanVisitorTest, PrunedRootCanBeReplacedByCallerCapturedRoot)
+{
+    auto source = utils.createSource("replacePrunedRoot", {"a"});
+    auto root = utils.createSink(source, "replacePrunedRoot", {"a"});
+    auto plan = utils.createPlan(root);
+    std::vector<LogicalOperator> replacementRoots;
+
+    TestVisitor visitor{
+        [&replacementRoots, &root](const LogicalOperator& op, std::vector<LogicalOperator> children) -> TestVisitor::UpResult
+        {
+            if (op == root)
+            {
+                replacementRoots.emplace_back(op.withChildren(std::move(children)));
+                return TestVisitor::UpResult{23};
+            }
+            return op.withChildren(std::move(children));
+        }};
+
+    auto result = visitor.apply(plan);
+
+    EXPECT_TRUE(result.getRootOperators().empty());
+    ASSERT_EQ(replacementRoots.size(), 1);
+    auto attachedResult = result.withRootOperators(replacementRoots);
+    ASSERT_EQ(attachedResult.getRootOperators().size(), 1);
+    EXPECT_EQ(attachedResult.getRootOperators().at(0), replacementRoots.front());
+}
+
 /// NOLINTEND(bugprone-unchecked-optional-access)
 }

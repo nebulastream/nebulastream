@@ -98,6 +98,8 @@ public:
     HandoffChannel(const HandoffChannel&) = delete;
     HandoffChannel& operator=(const HandoffChannel&) = delete;
     HandoffChannel(HandoffChannel&&) noexcept = default;
+    HandoffChannel& operator=(HandoffChannel&&) = delete;
+    ~HandoffChannel() = default;
 
     /// Endpoint claims are made once, during runtime construction before execution starts.
     Sender takeSender();

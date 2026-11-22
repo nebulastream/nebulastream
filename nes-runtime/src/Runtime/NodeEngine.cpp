@@ -15,7 +15,6 @@
 #include <Runtime/NodeEngine.hpp>
 
 #include <chrono>
-#include <exception>
 #include <memory>
 #include <unordered_set>
 #include <utility>
@@ -66,7 +65,8 @@ void NodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> 
     PRECONDITION(queryId == compiledQueryPlan->queryId, "Compiled plan must have the submitted query ID");
     std::vector<std::unique_ptr<CompiledQueryPlan>> plans;
     plans.push_back(std::move(compiledQueryPlan));
-    startQueries(prepareQueries(std::move(plans)));
+    std::vector<QueryId> successfullyStarted;
+    startQueries(prepareQueries(std::move(plans)), successfullyStarted);
 }
 
 std::vector<std::unique_ptr<ExecutableQueryPlan>>
@@ -86,35 +86,16 @@ NodeEngine::prepareQueries(std::vector<std::unique_ptr<CompiledQueryPlan>> compi
     return plans;
 }
 
-void NodeEngine::startQueries(std::vector<std::unique_ptr<ExecutableQueryPlan>> plans)
+void NodeEngine::startQueries(std::vector<std::unique_ptr<ExecutableQueryPlan>> plans, std::vector<QueryId>& successfullyStarted)
 {
-    std::vector<QueryId> started;
-    started.reserve(plans.size());
-    try
+    successfullyStarted.reserve(successfullyStarted.size() + plans.size());
+    for (auto& plan : plans)
     {
-        for (auto& plan : plans)
-        {
-            const auto queryId = plan->queryId;
-            queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
-            systemEventListener->onEvent(StartQuerySystemEvent(queryId));
-            queryEngine->start(std::move(plan));
-            started.push_back(queryId);
-        }
-    }
-    catch (...) /// NOLINT(no-raw-catch-all) roll back the batch without replacing the original start failure
-    {
-        for (const auto& queryId : started)
-        {
-            CPPTRACE_TRY
-            {
-                stopQuery(queryId);
-            }
-            CPPTRACE_CATCH(const std::exception& exception)
-            {
-                NES_WARNING("Could not stop query {} during deployment rollback: {}", queryId, exception.what());
-            }
-        }
-        throw;
+        const auto queryId = plan->queryId;
+        queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
+        systemEventListener->onEvent(StartQuerySystemEvent(queryId));
+        queryEngine->start(std::move(plan));
+        successfullyStarted.push_back(queryId);
     }
 }
 

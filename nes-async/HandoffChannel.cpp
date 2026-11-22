@@ -16,9 +16,15 @@
 #include <Util/Reflection.hpp>
 
 #include <condition_variable>
+#include <cstddef>
 #include <deque>
+#include <functional>
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <stop_token>
 #include <utility>
+#include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

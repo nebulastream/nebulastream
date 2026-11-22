@@ -24,8 +24,8 @@
 namespace NES
 {
 
-/// Settings of asynchronously executed stages. The plan decomposer passes them to the Async source and the Handoff sink
-/// of every stage it splits. Every field is optional: a value that is not set leaves the default of the source and the
+/// Settings of asynchronously executed stages. The post-placement async decomposition rule passes them to the Async source
+/// and the Handoff sink of every stage it splits. Every field is optional: a value that is not set leaves the default of the source and the
 /// sink in place.
 struct QueryOptimizerAsyncConfiguration
 {
@@ -43,7 +43,7 @@ struct QueryOptimizerAsyncConfiguration
     std::optional<uint64_t> maxConcurrency;
     /// Buffers that wait between the producer half of an async stage and its calls before the producer is held back.
     std::optional<uint64_t> channelCapacity;
-    /// Further attempts after RetryableAsyncError, with exponential backoff starting at 100 ms.
+    /// Further attempts after retryable async errors, with exponential backoff starting at 100 ms.
     std::optional<uint64_t> maxRetries;
 
     static QueryOptimizerAsyncConfiguration fromConfig(const InstantiatedConfig& config);

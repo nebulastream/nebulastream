@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+        AsyncLogicalOperator.cpp
         LogicalOperatorRegistry.cpp
         LogicalOperator.cpp
         SelectionLogicalOperator.cpp
@@ -27,6 +28,7 @@ add_subdirectory(Sources)
 add_subdirectory(Windows)
 
 
+add_unreflection_entry(LogicalOperator Async)
 add_unreflection_entry(LogicalOperator Selection)
 add_unreflection_entry(LogicalOperator Projection)
 add_unreflection_entry(LogicalOperator Union)

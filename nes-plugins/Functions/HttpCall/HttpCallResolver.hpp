@@ -12,12 +12,12 @@
     limitations under the License.
 */
 #pragma once
-
 #include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
+#include <Sources/AsyncError.hpp>
 #include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/error.hpp>
@@ -27,12 +27,11 @@
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/system/error_code.hpp>
-#include <boost/system/system_error.hpp>
 #include <folly/ScopeGuard.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::detail
 {
-
 struct StartHttpResolution
 {
     template <typename Handler>
@@ -42,38 +41,35 @@ struct StartHttpResolution
     }
 };
 
-/// Must run on a strand. On timeout or cancellation, stop waiting and request
-/// resolver cancellation. The hostname lookup may finish later, so its callback
-/// retains shared state and ignores results after this coroutine has exited.
-/// Tests can replace startResolve to simulate stalled or late hostname resolution.
-template <typename StartResolve = StartHttpResolution>
-boost::asio::awaitable<boost::asio::ip::tcp::resolver::results_type>
-resolveHttpHost(std::string host, std::string port, const std::chrono::steady_clock::time_point deadline, StartResolve startResolve = {})
+/// Must run on a strand. Late resolver callbacks retain state and are ignored after timeout/cancellation.
+template <typename StartResolve>
+[[nodiscard]] boost::asio::awaitable<AsyncResult<boost::asio::ip::tcp::resolver::results_type>>
+resolveHttpHost(std::string host, std::string port, const std::chrono::steady_clock::time_point deadline, StartResolve startResolve)
 {
     using Clock = std::chrono::steady_clock;
     using Resolver = boost::asio::ip::tcp::resolver;
+    namespace asio = boost::asio;
     if (Clock::now() >= deadline)
     {
-        throw boost::system::system_error{boost::asio::error::timed_out};
+        co_return std::unexpected(AsyncError::timedOut());
     }
+    const bool previousThrowPolicy = co_await asio::this_coro::throw_if_cancelled();
+    co_await asio::this_coro::throw_if_cancelled(false);
 
     struct State
     {
-        State(const boost::asio::any_io_executor& executor, const Clock::time_point deadline)
-            : resolver(executor), completion(executor, deadline)
-        {
-        }
+        State(const asio::any_io_executor& executor, Clock::time_point deadline) : resolver(executor), completion(executor, deadline) { }
 
         Resolver resolver;
-        boost::asio::steady_timer completion;
+        asio::steady_timer completion;
         std::optional<Resolver::results_type> endpoints;
         boost::system::error_code error;
-        Clock::time_point completedAt{};
+        Clock::time_point completedAt;
         bool finished = false;
     };
 
-    const auto state = std::make_shared<State>(co_await boost::asio::this_coro::executor, deadline);
-    const auto cancelPending = folly::makeGuard(
+    const auto state = std::make_shared<State>(co_await asio::this_coro::executor, deadline);
+    auto cancelPending = folly::makeGuard(
         [state]
         {
             if (!state->finished)
@@ -101,21 +97,46 @@ resolveHttpHost(std::string host, std::string port, const std::chrono::steady_cl
     if (!state->finished)
     {
         boost::system::error_code ignored;
-        co_await state->completion.async_wait(boost::asio::redirect_error(boost::asio::use_awaitable, ignored));
+        co_await state->completion.async_wait(asio::redirect_error(asio::use_awaitable, ignored));
     }
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+    const auto cancellation = co_await asio::this_coro::cancellation_state;
+    if (cancellation.cancelled() != asio::cancellation_type::none)
     {
-        throw boost::system::system_error{boost::asio::error::operation_aborted};
+        co_await asio::this_coro::throw_if_cancelled(previousThrowPolicy);
+        co_return std::unexpected(AsyncError::cancelled());
     }
     if (!state->finished || state->completedAt > deadline)
     {
-        throw boost::system::system_error{boost::asio::error::timed_out};
+        co_await asio::this_coro::throw_if_cancelled(previousThrowPolicy);
+        co_return std::unexpected(AsyncError::timedOut());
     }
     if (state->error)
     {
-        throw boost::system::system_error{state->error};
+        auto kind = AsyncError::Type::Permanent;
+        if (state->error == asio::error::operation_aborted)
+        {
+            kind = AsyncError::Type::Cancelled;
+        }
+        else if (state->error == asio::error::timed_out)
+        {
+            kind = AsyncError::Type::TimedOut;
+        }
+        else if (state->error == asio::error::host_not_found_try_again || state->error == asio::error::try_again)
+        {
+            kind = AsyncError::Type::Retryable;
+        }
+        co_await asio::this_coro::throw_if_cancelled(previousThrowPolicy);
+        co_return std::unexpected(AsyncError{IOError("HTTP_CALL DNS resolution failed: {}", state->error.message()), kind});
     }
+    co_await asio::this_coro::throw_if_cancelled(previousThrowPolicy);
+    INVARIANT(state->endpoints.has_value(), "Successful HTTP_CALL DNS resolution has no endpoints");
     co_return std::move(*state->endpoints);
 }
 
+template <typename StartResolve = StartHttpResolution>
+[[nodiscard]] boost::asio::awaitable<AsyncResult<boost::asio::ip::tcp::resolver::results_type>>
+resolveHttpHost(std::string host, std::string port, const std::chrono::steady_clock::time_point deadline)
+{
+    return resolveHttpHost<StartResolve>(std::move(host), std::move(port), deadline, StartResolve{});
+}
 }

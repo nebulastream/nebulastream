@@ -15,62 +15,36 @@
 #include <Placement/QueryDecomposition.hpp>
 
 #include <algorithm>
-#include <any>
-#include <array>
 #include <cstddef>
-#include <iterator>
-#include <memory>
-#include <optional>
 #include <ranges>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
-#include <Async/HandoffChannel.hpp>
-#include <Functions/AsyncLogicalFunction.hpp>
-#include <Functions/AsyncOutputLogicalFunction.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/HandoffSinkConfig.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncHandoffLayout.hpp>
-#include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Traits/AsyncExecutionTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
-#include <Traits/MemoryLayoutTypeTrait.hpp>
-#include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
-#include <Util/Any.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>
-#include <QueryOptimizerAsyncConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -82,8 +56,6 @@ struct DecompositionContext
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
-    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
-    const QueryOptimizerAsyncConfiguration& asyncConfig;
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
@@ -161,8 +133,6 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
-    auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
-    auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
     const auto ts = channel.upstreamOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
     auto upstreamTs = ts;
@@ -231,126 +201,6 @@ LogicalOperator assignOperator(DecompositionContext& context, const LogicalOpera
     return createNetworkChannel(context, assignedChild, childNode, opNode);
 }
 
-/// Preserve producer identity and direct data dependencies when lowering logical async expressions.
-/// Common-subexpression sharing is explicit here; runtime memoization uses node identity, not expression equality.
-class AsyncCallGraphLowering
-{
-public:
-    explicit AsyncCallGraphLowering(Schema<QualifiedUnboundField, Ordered> inputSchema) : builder(std::move(inputSchema)) { }
-
-    void addResult(QualifiedIdentifier output, const LogicalFunction& function)
-    {
-        builder.exportOutput(resolve(function), std::move(output));
-    }
-
-    [[nodiscard]] AsyncCallGraph build() { return builder.build(); }
-
-private:
-    AsyncCallGraphBuilder builder;
-    std::vector<std::pair<LogicalFunction, AsyncCall::Ptr>> described;
-
-    AsyncResultReference resolve(const LogicalFunction& function)
-    {
-        if (const auto output = function.tryGetAs<AsyncOutputLogicalFunction>())
-        {
-            return describe(output.value()->getCall())->output(output.value()->getIndex());
-        }
-        return describe(function)->output(0);
-    }
-
-    AsyncCall::Ptr describe(const LogicalFunction& call)
-    {
-        if (const auto known = std::ranges::find(described, call, &decltype(described)::value_type::first); known != described.end())
-        {
-            return known->second;
-        }
-        const auto async = call.tryGetAs<AsyncLogicalFunction>();
-        INVARIANT(async.has_value(), "async stage computes {}, which is not an async call", call);
-        std::vector<AsyncCallArgument> arguments;
-        for (const auto& argument : call.getChildren())
-        {
-            if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
-            {
-                arguments.emplace_back(builder.input(field.value()->getField().getFullyQualifiedName()));
-            }
-            else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
-            {
-                arguments.emplace_back(RuntimeValue::fromLiteral(argument.getDataType(), constant.value()->getConstantValue()));
-            }
-            else
-            {
-                INVARIANT(
-                    argument.tryGetAs<AsyncLogicalFunction>().has_value(),
-                    "async argument {} is neither a field, constant nor async call",
-                    argument);
-                arguments.emplace_back(resolve(argument));
-            }
-        }
-        auto node = builder.call(std::string{call.getType()}, std::move(arguments), async.value()->get().getAsyncOutputTypes());
-        described.emplace_back(call, node);
-        return node;
-    }
-};
-
-/// Replaces an operator executed asynchronously by a Handoff sink / Async source pair on its own node.
-/// The sink becomes a plan of its own; the source takes the operator's place in the current plan.
-LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalOperator& asyncOp)
-{
-    const auto projection = asyncOp.tryGetAs<ProjectionLogicalOperator>();
-    INVARIANT(projection.has_value(), "only projections are executed asynchronously, got {}", asyncOp);
-    INVARIANT(asyncOp.getChildren().size() == 1, "an asynchronously executed operator has exactly one child");
-    const auto child = asyncOp.getChildren().front();
-    const auto node = getPlacementFor(asyncOp);
-    const auto channel = std::make_shared<HandoffChannel>(context.asyncConfig.channelCapacity.value_or(HandoffChannel::DEFAULT_CAPACITY));
-
-    const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    /// Field accesses only forward an input field; everything else is a producer-owned result.
-    AsyncCallGraphLowering calls{inputFields};
-    for (const auto& [field, function] : projection.value()->getProjections())
-    {
-        if (!function.tryGetAs<FieldAccessLogicalFunction>().has_value())
-        {
-            calls.addResult(field.getFullyQualifiedName(), function);
-        }
-    }
-
-    const auto graph = calls.build();
-    const AsyncHandoffLayout layout{graph, asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields()};
-    const auto unqualified = [](const auto& field) { return UnqualifiedUnboundField{field}; };
-    const Schema<UnqualifiedUnboundField, Ordered> handoffInput{layout.getInputSchema() | std::views::transform(unqualified)};
-    const Schema<UnqualifiedUnboundField, Ordered> handoffOutput{layout.getOutputSchema() | std::views::transform(unqualified)};
-
-    AsyncSourceConfig sourceConfig{.channel = channel, .calls = graph};
-    if (context.asyncConfig.maxConcurrency.has_value())
-    {
-        sourceConfig.maxConcurrency = *context.asyncConfig.maxConcurrency;
-    }
-    if (context.asyncConfig.maxRetries.has_value())
-    {
-        sourceConfig.maxRetries = *context.asyncConfig.maxRetries;
-    }
-
-    const auto handoffSinkDescriptor = context.sinkCatalog->createAnonymousSinkDescriptor(
-        std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(handoffInput),
-        GeneralSinkConfig{.host = Host(node.getRawValue())},
-        PluginSinkConfiguration{Identifier::parse("Handoff"), ExplicitAny{std::any{HandoffSinkConfig{.channel = channel}}}},
-        OutputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}});
-    context.addPlanToNode(
-        SinkLogicalOperator::create(child, handoffSinkDescriptor)->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
-
-    const auto asyncSourceDescriptor = context.sourceCatalog->getAnonymousSource(
-        PhysicalSourceBuilder{
-            GeneralSourceConfig{.host = Host(node.getRawValue()), .maxInflightBuffers = std::nullopt},
-            PluginSourceConfiguration{Identifier::parse("Async"), ExplicitAny{std::any{std::move(sourceConfig)}}},
-            InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
-        handoffOutput);
-    INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
-    const auto sourceTraits = asyncOp.getTraitSet()
-        | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(AsyncExecutionTrait); })
-        | std::ranges::to<TraitSet>();
-    return SourceDescriptorLogicalOperator::create(asyncSourceDescriptor.value())->withTraitSet(sourceTraits);
-}
-
 LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op)
 {
     std::vector<LogicalOperator> assignedChildren;
@@ -361,12 +211,7 @@ LogicalOperator decomposePlanRecursive(DecompositionContext& context, const Logi
         assignedChildren.emplace_back(assignOperator(context, op, child));
     }
 
-    auto assigned = op.withChildren({std::move(assignedChildren)});
-    if (hasTrait<AsyncExecutionTrait>(op.getTraitSet()))
-    {
-        return splitAsyncOperator(context, assigned);
-    }
-    return assigned;
+    return op.withChildren({std::move(assignedChildren)});
 }
 }
 
@@ -377,26 +222,27 @@ QueryDecomposer::QueryDecomposer(
 }
 
 DistributedLogicalPlan QueryDecomposer::decompose(
-    const LogicalPlan& placedPlan,
-    const QueryOptimizerNetworkConfiguration& configuration,
-    const QueryOptimizerAsyncConfiguration& asyncConfiguration)
+    const LogicalPlan& placedFragments, const LogicalPlan& globalPlan, const QueryOptimizerNetworkConfiguration& configuration) const
 {
-    PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(
         std::ranges::all_of(
-            BFSRange(placedPlan.getRootOperators().front()), [](const auto& op) { return hasTrait<PlacementTrait>(op.getTraitSet()); }),
+            placedFragments.getRootOperators(),
+            [](const auto& root)
+            { return std::ranges::all_of(BFSRange(root), [](const auto& op) { return hasTrait<PlacementTrait>(op.getTraitSet()); }); }),
         "BUG: query decomposition requires placement of all operators");
 
     DecompositionContext context{
         .plansByNode = {},
         .config = configuration,
-        .asyncConfig = asyncConfiguration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};
 
-    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front()).withInferredSchema();
-    context.addPlanToNode(root, getPlacementFor(root));
+    for (const auto& fragmentRoot : placedFragments.getRootOperators())
+    {
+        auto root = decomposePlanRecursive(context, fragmentRoot).withInferredSchema();
+        context.addPlanToNode(root, getPlacementFor(root));
+    }
 
     for (const auto& [node, plans] : context.plansByNode)
     {
@@ -406,7 +252,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(
         }
     }
 
-    return {std::move(context.plansByNode), placedPlan};
+    return {std::move(context.plansByNode), globalPlan};
 }
 
 }

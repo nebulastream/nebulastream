@@ -15,6 +15,7 @@
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -29,13 +30,19 @@
 #include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -55,7 +62,8 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/Strings.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <gtest/gtest.h>
 #include <yaml-cpp/node/convert.h>
 #include <yaml-cpp/node/node.h>
@@ -64,12 +72,14 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
+#include <QueryId.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <WorkerCatalog.hpp>
 
 namespace NES::Test
 {
-
+namespace
+{
 struct Sink
 {
     std::string name;
@@ -105,6 +115,7 @@ struct QueryConfig
     std::vector<PhysicalSource> physical;
     std::vector<WorkerConfig> workers;
 };
+}
 }
 
 namespace YAML
@@ -275,6 +286,8 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
 
 namespace NES
 {
+namespace
+{
 class DistributedPlanningTest : public Testing::BaseUnitTest
 {
 public:
@@ -290,8 +303,6 @@ public:
 };
 
 ///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-identifier-length)
-namespace
-{
 std::vector<LogicalPlan> optimizeAsyncDelayPlans()
 {
     auto [optimizer, boundPlan] = loadAndBind(R"(
@@ -349,8 +360,9 @@ AsyncChannels extractAsyncChannels(const std::vector<LogicalPlan>& plans)
 
 std::vector<SerializableQueryPlan> serializeAsyncPlans(const std::vector<LogicalPlan>& plans)
 {
-    ReflectionContext context;
+    const ReflectionContext context{std::make_shared<SharedPointerSerializationState>()};
     std::vector<SerializableQueryPlan> serialized;
+    serialized.reserve(plans.size());
     for (const auto& plan : plans)
     {
         serialized.push_back(QueryPlanSerializationUtil::serializeQueryPlan(plan, context));
@@ -359,16 +371,65 @@ std::vector<SerializableQueryPlan> serializeAsyncPlans(const std::vector<Logical
 }
 
 std::vector<LogicalPlan>
-deserializeAsyncPlans(const std::vector<SerializableQueryPlan>& serialized, const ReflectionContext& context, bool reverse = false)
+deserializeAsyncPlans(const std::vector<SerializableQueryPlan>& serialized, const ReflectionContext& context, bool reverse)
 {
     std::vector<LogicalPlan> plans;
     for (size_t index = 0; index < serialized.size(); ++index)
     {
         const auto position = reverse ? serialized.size() - index - 1 : index;
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) position is a bounded forward or reverse index
         plans.push_back(QueryPlanSerializationUtil::deserializeQueryPlan(serialized[position], context));
     }
     return plans;
 }
+
+std::vector<LogicalPlan> deserializeAsyncPlans(const std::vector<SerializableQueryPlan>& serialized, const ReflectionContext& context)
+{
+    return deserializeAsyncPlans(serialized, context, false);
+}
+}
+
+TEST_F(DistributedPlanningTest, AsyncDecompositionCreatesOneStagePerSyntacticOccurrence)
+{
+    const std::vector<std::pair<std::string, size_t>> cases{
+        {"SELECT ASYNC_DELAY(a, 1) + ASYNC_DELAY(a, 1) AS a FROM mock_source INTO mock_sink", 2},
+        {"SELECT ASYNC_DELAY(ASYNC_DELAY(a, 1), 1) + ASYNC_DELAY(ASYNC_DELAY(a, 1), 1) AS a FROM mock_source INTO mock_sink", 4},
+        /// Parser-generated copies of one lhs retain one occurrence, including nested pure expressions.
+        {"SELECT a FROM mock_source WHERE ASYNC_DELAY(a, 0) BETWEEN 1 AND 2 INTO mock_sink", 1},
+        {"SELECT a FROM mock_source WHERE ASYNC_DELAY(a, 0) IN (1, 2) INTO mock_sink", 1},
+        {"SELECT a FROM mock_source WHERE (ASYNC_DELAY(a, 0) + 1) IN (2, 3) INTO mock_sink", 1},
+        {"SELECT a FROM (SELECT a, ASYNC_DELAY(a, 1) AS discarded FROM mock_source) INTO mock_sink", 1},
+        {"SELECT produced + produced AS a FROM (SELECT ASYNC_DELAY(a, 1) AS produced FROM mock_source) INTO mock_sink", 1}};
+    for (const auto& [query, occurrences] : cases)
+    {
+        SCOPED_TRACE(query);
+        auto [optimizer, boundPlan] = loadAndBind("query: |\n  " + query + R"(
+sinks:
+  - name: mock_sink
+    schema: [ a ]
+    host: "localhost:8080"
+logical:
+  - name: mock_source
+    schema: [ a ]
+physical:
+  - logical: mock_source
+    host: "localhost:8080"
+workers:
+  - host: "localhost:8080"
+    max_operators: 100
+)");
+        auto distributed = optimizer->optimize(boundPlan);
+        const auto& plans = distributed[Host("localhost:8080")];
+        EXPECT_EQ(plans.size(), occurrences + 1);
+        const auto channels = extractAsyncChannels(plans);
+        ASSERT_EQ(channels.sources.size(), occurrences);
+        ASSERT_EQ(channels.sinks.size(), occurrences);
+        for (const auto& channel : channels.sources)
+        {
+            EXPECT_EQ(std::ranges::count(channels.sources, channel), 1);
+            EXPECT_EQ(std::ranges::count(channels.sinks, channel), 1);
+        }
+    }
 }
 
 TEST_F(DistributedPlanningTest, AsyncDecompositionSharesChannel)
@@ -383,6 +444,17 @@ TEST_F(DistributedPlanningTest, AsyncDecompositionSharesChannel)
     EXPECT_GT(channels.sources.front()->getCapacity(), 0);
 }
 
+namespace
+{
+void validateAsyncChannels(const std::shared_ptr<SharedPointerDeserializationState>& state)
+{
+    for (const auto& channel : state->getObjects<HandoffChannel>())
+    {
+        channel->validate();
+    }
+}
+}
+
 TEST_F(DistributedPlanningTest, AsyncSerializationPreservesAliasingInEitherPlanOrder)
 {
     const auto plans = optimizeAsyncDelayPlans();
@@ -395,7 +467,8 @@ TEST_F(DistributedPlanningTest, AsyncSerializationPreservesAliasingInEitherPlanO
     for (const bool reverse : {false, true})
     {
         SCOPED_TRACE(reverse ? "reverse deserialization" : "forward deserialization");
-        ReflectionContext context;
+        const auto state = std::make_shared<SharedPointerDeserializationState>();
+        const ReflectionContext context{state};
         const auto restored = deserializeAsyncPlans(serialized, context, reverse);
         const auto channels = extractAsyncChannels(restored);
         ASSERT_EQ(channels.sources.size(), 1);
@@ -406,7 +479,7 @@ TEST_F(DistributedPlanningTest, AsyncSerializationPreservesAliasingInEitherPlanO
         EXPECT_EQ(channels.sources.front()->getCapacity(), original.sources.front()->getCapacity());
         auto sender = channels.sinks.front()->takeSender();
         auto receiver = channels.sources.front()->takeReceiver();
-        EXPECT_NO_THROW(context.validateSharedObjects());
+        EXPECT_NO_THROW(validateAsyncChannels(state));
     }
 }
 
@@ -418,7 +491,8 @@ TEST_F(DistributedPlanningTest, AsyncSerializationFreshContextsHaveIndependentEn
     ASSERT_EQ(original.sources.size(), 1);
     const auto serialized = serializeAsyncPlans(plans);
 
-    ReflectionContext firstContext;
+    const auto firstState = std::make_shared<SharedPointerDeserializationState>();
+    const ReflectionContext firstContext{firstState};
     const auto firstPlans = deserializeAsyncPlans(serialized, firstContext);
     const auto first = extractAsyncChannels(firstPlans);
     ASSERT_EQ(first.sources.size(), 1);
@@ -427,10 +501,11 @@ TEST_F(DistributedPlanningTest, AsyncSerializationFreshContextsHaveIndependentEn
     ASSERT_EQ(first.sources.front(), first.sinks.front());
     auto firstSender = first.sinks.front()->takeSender();
     auto firstReceiver = first.sources.front()->takeReceiver();
-    EXPECT_NO_THROW(firstContext.validateSharedObjects());
+    EXPECT_NO_THROW(validateAsyncChannels(firstState));
 
-    // Reusing the wire batch must not reuse the first execution's already-claimed channel.
-    ReflectionContext secondContext;
+    /// Reusing the wire batch must not reuse the first execution's already-claimed channel.
+    const auto secondState = std::make_shared<SharedPointerDeserializationState>();
+    const ReflectionContext secondContext{secondState};
     const auto secondPlans = deserializeAsyncPlans(serialized, secondContext);
     const auto second = extractAsyncChannels(secondPlans);
     ASSERT_EQ(second.sources.size(), 1);
@@ -441,11 +516,11 @@ TEST_F(DistributedPlanningTest, AsyncSerializationFreshContextsHaveIndependentEn
     EXPECT_NE(second.sources.front(), original.sources.front());
     EXPECT_NE(second.sources.front(), first.sources.front());
     EXPECT_EQ(second.sources.front()->getCapacity(), first.sources.front()->getCapacity());
-    EXPECT_THROW(secondContext.validateSharedObjects(), Exception);
+    EXPECT_THROW(validateAsyncChannels(secondState), Exception);
     auto secondSender = second.sinks.front()->takeSender();
     auto secondReceiver = second.sources.front()->takeReceiver();
-    EXPECT_NO_THROW(secondContext.validateSharedObjects());
-    EXPECT_NO_THROW(firstContext.validateSharedObjects());
+    EXPECT_NO_THROW(validateAsyncChannels(secondState));
+    EXPECT_NO_THROW(validateAsyncChannels(firstState));
 }
 
 TEST_F(DistributedPlanningTest, AsyncSerializationValidationRejectsIncompleteEndpointClaims)
@@ -456,14 +531,15 @@ TEST_F(DistributedPlanningTest, AsyncSerializationValidationRejectsIncompleteEnd
     for (const bool senderFirst : {false, true})
     {
         SCOPED_TRACE(senderFirst ? "sender only" : "receiver only");
-        ReflectionContext context;
+        const auto state = std::make_shared<SharedPointerDeserializationState>();
+        const ReflectionContext context{state};
         const auto restored = deserializeAsyncPlans(serialized, context);
         const auto channels = extractAsyncChannels(restored);
         ASSERT_EQ(channels.sources.size(), 1);
         ASSERT_EQ(channels.sinks.size(), 1);
         ASSERT_NE(channels.sources.front(), nullptr);
         ASSERT_EQ(channels.sources.front(), channels.sinks.front());
-        EXPECT_THROW(context.validateSharedObjects(), Exception);
+        EXPECT_THROW(validateAsyncChannels(state), Exception);
 
         std::optional<HandoffChannel::Sender> sender;
         std::optional<HandoffChannel::Receiver> receiver;
@@ -475,7 +551,7 @@ TEST_F(DistributedPlanningTest, AsyncSerializationValidationRejectsIncompleteEnd
         {
             receiver.emplace(channels.sources.front()->takeReceiver());
         }
-        EXPECT_THROW(context.validateSharedObjects(), Exception);
+        EXPECT_THROW(validateAsyncChannels(state), Exception);
         if (senderFirst)
         {
             receiver.emplace(channels.sources.front()->takeReceiver());
@@ -484,8 +560,106 @@ TEST_F(DistributedPlanningTest, AsyncSerializationValidationRejectsIncompleteEnd
         {
             sender.emplace(channels.sinks.front()->takeSender());
         }
-        EXPECT_NO_THROW(context.validateSharedObjects());
+        EXPECT_NO_THROW(validateAsyncChannels(state));
     }
+}
+
+TEST_F(DistributedPlanningTest, SharedAsyncSubplanIsRejectedRatherThanExecutedTwice)
+{
+    auto [optimizer, raw] = loadAndBind(R"(
+query: |
+  SELECT a FROM mock_source INTO mock_sink
+sinks:
+  - name: mock_sink
+    schema: [ a ]
+    host: "localhost:8080"
+logical:
+  - name: mock_source
+    schema: [ a ]
+physical:
+  - logical: mock_source
+    host: "localhost:8080"
+workers:
+  - host: "localhost:8080"
+    max_operators: 30
+)");
+    const auto baseline = optimizer->optimize(raw);
+    const auto local = baseline[Host{"localhost:8080"}].front();
+    const auto sink = local.getRootOperators().front().getAs<SinkLogicalOperator>();
+    const auto source = getLeafOperators(local).front().withTraitSet(TraitSet{});
+    const LogicalOperator shared = AsyncLogicalOperator::create(
+        source,
+        "ASYNC_DELAY",
+        {FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+         ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}},
+        {Identifier::parse("unused_result")});
+    const std::vector<ProjectionLogicalOperator::UnboundProjection> fields{
+        {Identifier::parse("a"), UnboundFieldAccessLogicalFunction{Identifier::parse("a")}}};
+    const LogicalOperator left = ProjectionLogicalOperator::create(shared, fields, ProjectionLogicalOperator::Asterisk{false});
+    const LogicalOperator right = ProjectionLogicalOperator::create(shared, fields, ProjectionLogicalOperator::Asterisk{false});
+    const auto combined = UnionLogicalOperator::create({left, right});
+    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(combined, sink->getSinkDescriptor().value())}};
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(optimizer->optimize(plan)), ErrorCode::UnsupportedQuery);
+}
+
+TEST_F(DistributedPlanningTest, AsyncDecompositionPrecedesNetworkDecompositionAcrossWorkers)
+{
+    auto [optimizer, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT ASYNC_DELAY(a, 1) AS result FROM mock_source INTO mock_sink
+sinks:
+  - name: mock_sink
+    schema: [ result ]
+    host: "sink-node:8080"
+logical:
+  - name: mock_source
+    schema: [ a ]
+physical:
+  - logical: mock_source
+    host: "source-node:8080"
+workers:
+  - host: "sink-node:8080"
+    max_operators: 20
+  - host: "source-node:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+)");
+    const auto distributed = optimizer->optimize(boundPlan);
+    ASSERT_EQ(distributed.getGlobalPlan().getRootOperators().size(), 1);
+    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(distributed.getGlobalPlan()).size(), 1);
+    const auto channels = extractAsyncChannels(distributed[Host{"sink-node:8080"}]);
+    ASSERT_EQ(channels.sources.size(), 1);
+    ASSERT_EQ(channels.sinks.size(), 1);
+    EXPECT_EQ(channels.sources.front(), channels.sinks.front());
+
+    size_t networkSources = 0;
+    size_t networkSinks = 0;
+    for (const auto& [host, plans] : distributed)
+    {
+        for (const auto& plan : plans)
+        {
+            EXPECT_TRUE(getOperatorByType<AsyncLogicalOperator>(plan).empty());
+            for (const auto& source : getOperatorByType<SourceDescriptorLogicalOperator>(plan))
+            {
+                if (source->getSourceDescriptor().getSourceType() == Identifier::parse("Network"))
+                {
+                    ++networkSources;
+                    EXPECT_EQ(host, Host{"sink-node:8080"});
+                }
+            }
+            for (const auto& sink : getOperatorByType<SinkLogicalOperator>(plan))
+            {
+                if (sink->getSinkDescriptor()->getSinkType() == "NETWORK")
+                {
+                    ++networkSinks;
+                    EXPECT_EQ(host, Host{"source-node:8080"});
+                }
+            }
+        }
+    }
+    EXPECT_EQ(networkSources, 1);
+    EXPECT_EQ(networkSinks, 1);
 }
 
 TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)

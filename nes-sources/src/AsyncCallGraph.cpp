@@ -13,9 +13,10 @@
 */
 
 #include <Sources/AsyncCallGraph.hpp>
+#include <Sources/AsyncOperatorReflection.hpp>
 
 #include <algorithm>
-#include <functional>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -24,6 +25,13 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/RuntimeValue.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 
@@ -36,14 +44,16 @@ struct AsyncGraphScope
     Schema<QualifiedUnboundField, Ordered> inputSchema;
 };
 
+namespace
+{
 /// IDs are strictly a wire-format concern. They are resolved/validated before a graph can be used.
-struct WireAsyncResultReference
+struct ReflectedAsyncResultReference
 {
     std::string producer;
     size_t output;
 };
 
-using WireAsyncArgument = std::variant<RuntimeValue, QualifiedIdentifier, WireAsyncResultReference>;
+using ReflectedAsyncArgument = std::variant<RuntimeValue, QualifiedIdentifier, ReflectedAsyncResultReference>;
 
 bool hasRuntimeType(const DataType::Type type)
 {
@@ -69,31 +79,42 @@ bool hasRuntimeType(const DataType::Type type)
     return false;
 }
 
-struct WireAsyncCall
+struct ReflectedAsyncCall
 {
     std::string id;
-    std::string functionType;
-    std::vector<DataType> resultTypes;
-    std::vector<WireAsyncArgument> arguments;
+    AsyncOperator asyncOperator;
+    std::vector<ReflectedAsyncArgument> arguments;
 };
 
-struct WireAsyncOutput
+struct ReflectedAsyncOutput
 {
-    WireAsyncResultReference result;
+    ReflectedAsyncResultReference result;
     QualifiedIdentifier field;
 };
 
-struct WireAsyncGraph
+struct ReflectedAsyncGraph
 {
     Schema<QualifiedUnboundField, Ordered> inputSchema;
-    std::vector<WireAsyncCall> calls;
-    std::vector<WireAsyncOutput> outputs;
+    std::vector<ReflectedAsyncCall> calls;
+    std::vector<ReflectedAsyncOutput> outputs;
 };
+}
 }
 
 InputFieldReference::InputFieldReference(std::shared_ptr<const detail::AsyncGraphScope> scope, QualifiedIdentifier field)
     : scope(std::move(scope)), field(std::move(field))
 {
+}
+
+InputFieldReference::InputFieldReference(InputFieldReference&& other) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>)
+    : InputFieldReference(static_cast<const InputFieldReference&>(other))
+{
+}
+
+InputFieldReference&
+InputFieldReference::operator=(InputFieldReference&& other) noexcept(std::is_nothrow_copy_assignable_v<QualifiedIdentifier>)
+{
+    return *this = static_cast<const InputFieldReference&>(other);
 }
 
 QualifiedIdentifier InputFieldReference::getField() const
@@ -103,12 +124,25 @@ QualifiedIdentifier InputFieldReference::getField() const
 
 DataType InputFieldReference::getDataType() const
 {
-    return scope->inputSchema[field].value().getDataType();
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) schema lookup returns an optional
+    const auto input = scope->inputSchema[field];
+    INVARIANT(input.has_value(), "Async input field {} must belong to its graph's input schema", field);
+    return input->getDataType();
 }
 
 AsyncResultReference::AsyncResultReference(std::shared_ptr<const AsyncCall> producer, const size_t index)
     : producer(std::move(producer)), index(index)
 {
+}
+
+AsyncResultReference::AsyncResultReference(AsyncResultReference&& other) noexcept
+    : AsyncResultReference(static_cast<const AsyncResultReference&>(other))
+{
+}
+
+AsyncResultReference& AsyncResultReference::operator=(AsyncResultReference&& other) noexcept
+{
+    return *this = static_cast<const AsyncResultReference&>(other);
 }
 
 AsyncCall::Ptr AsyncResultReference::getProducer() const
@@ -127,17 +161,23 @@ DataType AsyncResultReference::getDataType() const
 }
 
 AsyncCall::AsyncCall(
-    std::shared_ptr<const detail::AsyncGraphScope> scope,
-    std::string functionType,
-    std::vector<AsyncCallArgument> arguments,
-    std::vector<DataType> resultTypes)
-    : scope(std::move(scope)), functionType(std::move(functionType)), arguments(std::move(arguments)), resultTypes(std::move(resultTypes))
+    std::shared_ptr<const detail::AsyncGraphScope> scope, AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments)
+    : scope(std::move(scope)), asyncOperator(std::move(asyncOperator)), arguments(std::move(arguments))
 {
+    for (const auto& field : this->asyncOperator.getOutputSchema())
+    {
+        resultTypes.push_back(field.getDataType());
+    }
 }
 
-const std::string& AsyncCall::getFunctionType() const
+std::string AsyncCall::getFunctionType() const
 {
-    return functionType;
+    return asyncOperator.getType();
+}
+
+const AsyncOperator& AsyncCall::getAsyncOperator() const
+{
+    return asyncOperator;
 }
 
 const std::vector<DataType>& AsyncCall::getResultTypes() const
@@ -152,7 +192,7 @@ const std::vector<AsyncCallArgument>& AsyncCall::getArguments() const
 
 AsyncResultReference AsyncCall::output(const size_t index) const
 {
-    PRECONDITION(index < resultTypes.size(), "Async call {} has no output {}", functionType, index);
+    PRECONDITION(index < resultTypes.size(), "Async call {} has no output {}", getFunctionType(), index);
     return AsyncResultReference{shared_from_this(), index};
 }
 
@@ -203,14 +243,16 @@ InputFieldReference AsyncCallGraphBuilder::input(QualifiedIdentifier field) cons
     return InputFieldReference{scope, std::move(field)};
 }
 
-AsyncCall::Ptr
-AsyncCallGraphBuilder::call(std::string functionType, std::vector<AsyncCallArgument> arguments, std::vector<DataType> resultTypes)
+AsyncCall::Ptr AsyncCallGraphBuilder::call(AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments)
 {
     requireOpen();
-    PRECONDITION(!functionType.empty() && !resultTypes.empty(), "An async call needs a function and at least one output type");
-    for (const auto type : resultTypes)
+    /// NOLINTNEXTLINE(readability-simplify-boolean-expr) state the nonempty function and output requirements directly
+    PRECONDITION(
+        !asyncOperator.getType().empty() && asyncOperator.getOutputSchema().size() != 0,
+        "An async call needs a function and at least one output type");
+    for (const auto& field : asyncOperator.getOutputSchema())
     {
-        visitRuntimeType(type.type, []<typename>() { });
+        visitRuntimeType(field.getDataType().type, []<typename>() { });
     }
     for (const auto& argument : arguments)
     {
@@ -228,7 +270,7 @@ AsyncCallGraphBuilder::call(std::string functionType, std::vector<AsyncCallArgum
             },
             argument);
     }
-    auto node = std::shared_ptr<AsyncCall>{new AsyncCall{scope, std::move(functionType), std::move(arguments), std::move(resultTypes)}};
+    auto node = std::shared_ptr<AsyncCall>{new AsyncCall{scope, std::move(asyncOperator), std::move(arguments)}};
     calls.push_back(node);
     return node;
 }
@@ -239,7 +281,7 @@ void AsyncCallGraphBuilder::exportOutput(AsyncResultReference result, QualifiedI
     PRECONDITION(result.getProducer()->scope == scope, "Cannot export an async result from another graph");
     PRECONDITION(
         std::ranges::none_of(outputs, [&](const auto& output) { return output.field == field; }), "Duplicate async output field {}", field);
-    outputs.push_back({std::move(result), std::move(field)});
+    outputs.push_back({.result = result, .field = std::move(field)});
 }
 
 AsyncCallGraph AsyncCallGraphBuilder::build()
@@ -276,18 +318,17 @@ Reflected Reflector<AsyncCallGraph>::operator()(const AsyncCallGraph& graph, con
     {
         ids.emplace(node, "node-" + std::to_string(ids.size()));
     }
-    detail::WireAsyncGraph wire{.inputSchema = graph.getInputSchema(), .calls = {}, .outputs = {}};
+    detail::ReflectedAsyncGraph wire{.inputSchema = graph.getInputSchema(), .calls = {}, .outputs = {}};
     const auto result = [&](const AsyncResultReference& value)
-    { return detail::WireAsyncResultReference{ids.at(value.getProducer()), value.getOutputIndex()}; };
+    { return detail::ReflectedAsyncResultReference{.producer = ids.at(value.getProducer()), .output = value.getOutputIndex()}; };
     for (const auto& node : graph.getCalls())
     {
-        detail::WireAsyncCall call{
-            .id = ids.at(node), .functionType = node->getFunctionType(), .resultTypes = node->getResultTypes(), .arguments = {}};
+        detail::ReflectedAsyncCall call{.id = ids.at(node), .asyncOperator = node->getAsyncOperator(), .arguments = {}};
         for (const auto& argument : node->getArguments())
         {
             call.arguments.push_back(
                 std::visit(
-                    [&]<typename T>(const T& value) -> detail::WireAsyncArgument
+                    [&]<typename T>(const T& value) -> detail::ReflectedAsyncArgument
                     {
                         if constexpr (std::is_same_v<T, RuntimeValue>)
                         {
@@ -308,14 +349,14 @@ Reflected Reflector<AsyncCallGraph>::operator()(const AsyncCallGraph& graph, con
     }
     for (const auto& output : graph.getOutputs())
     {
-        wire.outputs.push_back({result(output.result), output.field});
+        wire.outputs.push_back({.result = result(output.result), .field = output.field});
     }
     return context.reflect(wire);
 }
 
 AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, const ReflectionContext& context) const
 {
-    const auto wire = context.unreflect<detail::WireAsyncGraph>(data);
+    const auto wire = context.unreflect<detail::ReflectedAsyncGraph>(data);
     /// Wire data is untrusted: validate all builder preconditions before using its contract-only API.
     std::unordered_set<QualifiedIdentifier> inputNames;
     for (const auto& field : wire.inputSchema)
@@ -339,27 +380,27 @@ AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, co
     }
     for (const auto& call : wire.calls)
     {
-        if (call.functionType.empty() || call.resultTypes.empty())
+        if (call.asyncOperator.getType().empty() || call.asyncOperator.getOutputSchema().size() == 0)
         {
             throw CannotDeserialize("Async call needs a function and at least one output type");
         }
-        for (const auto type : call.resultTypes)
+        for (const auto& field : call.asyncOperator.getOutputSchema())
         {
-            if (!detail::hasRuntimeType(type.type))
+            if (!detail::hasRuntimeType(field.getDataType().type))
             {
                 throw CannotDeserialize("Invalid async call output type");
             }
         }
         for (const auto& argument : call.arguments)
         {
-            if (const auto* input = std::get_if<QualifiedIdentifier>(&argument); input && !inputNames.contains(*input))
+            if (const auto* input = std::get_if<QualifiedIdentifier>(&argument); (input != nullptr) && !inputNames.contains(*input))
             {
                 throw CannotDeserialize("Async input field {} is absent", *input);
             }
         }
     }
     AsyncCallGraphBuilder builder{wire.inputSchema};
-    std::unordered_map<std::string, const detail::WireAsyncCall*> definitions;
+    std::unordered_map<std::string, const detail::ReflectedAsyncCall*> definitions;
     for (const auto& call : wire.calls)
     {
         if (call.id.empty() || !definitions.emplace(call.id, &call).second)
@@ -386,6 +427,7 @@ AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, co
         }
         const auto& call = *definition->second;
         std::vector<AsyncCallArgument> arguments;
+        arguments.reserve(call.arguments.size());
         for (const auto& argument : call.arguments)
         {
             arguments.push_back(
@@ -412,7 +454,7 @@ AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, co
                     },
                     argument));
         }
-        auto node = builder.call(call.functionType, std::move(arguments), call.resultTypes);
+        auto node = builder.call(call.asyncOperator, std::move(arguments));
         resolving.erase(id);
         resolved.emplace(id, node);
         return node;

@@ -14,60 +14,50 @@
 
 #include <Sources/AsyncHandoffLayout.hpp>
 
-#include <algorithm>
-#include <cstddef>
-#include <unordered_map>
+#include <optional>
 #include <unordered_set>
-#include <utility>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncCallGraph.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-AsyncHandoffLayout::AsyncHandoffLayout(const AsyncCallGraph& graph, Schema<QualifiedUnboundField, Ordered> outputSchema)
-    : inputSchema(graph.getInputSchema()), outputSchema(std::move(outputSchema))
+AsyncHandoffLayout::AsyncHandoffLayout(const AsyncCallGraph& graph, const Schema<QualifiedUnboundField, Ordered>& outputSchema)
+    : schema(outputSchema)
 {
-    std::unordered_map<QualifiedIdentifier, std::pair<size_t, DataType>> outputFields;
-    for (const auto& field : this->outputSchema)
-    {
-        const auto inserted = outputFields.emplace(field.getFullyQualifiedName(), std::pair{outputRowSize, field.getDataType()}).second;
-        PRECONDITION(inserted, "Duplicate async output field {}", field.getFullyQualifiedName());
-        outputRowSize += field.getDataType().getSizeInBytesWithNull();
-    }
-    PRECONDITION(inputSchema.size() == outputFields.size(), "Handed-off rows must have exactly the async source's fields");
+    PRECONDITION(
+        schema == graph.getInputSchema(), "Async handoff input and output must have identical ordered schemas (field names and types)");
+    PRECONDITION(schema.getUniqueFieldNames().size() == schema.size(), "Duplicate handed-off field in async schema");
+
+    std::unordered_set<QualifiedIdentifier> producedFields;
     for (const auto& output : graph.getOutputs())
     {
-        const auto field = outputFields.find(output.field);
-        PRECONDITION(field != outputFields.end(), "Async output field {} is not in the handoff schema", output.field);
+        const auto field = schema.getFieldByName(output.field);
         PRECONDITION(
-            field->second.second == output.result.getDataType(),
+            field.has_value() && field->getFullyQualifiedName() == output.field,
+            "Async output field {} is not in the handoff schema",
+            output.field);
+        PRECONDITION(
+            field->getDataType() == output.result.getDataType(),
             "Async output field {} has type {}, expected {}",
             output.field,
-            field->second.second,
+            field->getDataType(),
             output.result.getDataType());
+        producedFields.insert(output.field);
     }
-    IF_PRECONDITION(std::unordered_set<QualifiedIdentifier> inputNames;)
-    for (const auto& field : inputSchema)
+    for (const auto& field : schema)
     {
-        const auto name = field.getFullyQualifiedName();
-        PRECONDITION(inputNames.insert(name).second, "Duplicate handed-off field {}", name);
-        const auto output = outputFields.find(name);
-        PRECONDITION(output != outputFields.end(), "Handed-off field {} is not produced by the async source", name);
-        PRECONDITION(
-            field.getDataType() == output->second.second,
-            "Async input field {} has type {}, expected {}",
-            name,
-            field.getDataType(),
-            output->second.second);
-        matchingLayouts = matchingLayouts && output->second.first == inputRowSize;
         const auto size = field.getDataType().getSizeInBytesWithNull();
-        if (std::ranges::none_of(graph.getOutputs(), [&](const auto& result) { return result.field == name; }))
+        if (!producedFields.contains(field.getFullyQualifiedName()))
         {
-            copiedFields.push_back({.inputOffset = inputRowSize, .outputOffset = output->second.first, .size = size});
+            copiedFields.push_back({.offset = rowSize, .size = size});
         }
-        inputRowSize += size;
+        rowSize += size;
     }
 }
 

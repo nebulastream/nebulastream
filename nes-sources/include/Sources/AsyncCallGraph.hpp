@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -24,6 +25,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Util/ReflectionFwd.hpp>
 
 namespace NES
@@ -44,6 +46,9 @@ public:
     /// Value handles remain bound when passed as rvalues; moving cannot leave an empty reference behind.
     InputFieldReference(const InputFieldReference&) = default;
     InputFieldReference& operator=(const InputFieldReference&) = default;
+    InputFieldReference(InputFieldReference&& other) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>);
+    InputFieldReference& operator=(InputFieldReference&& other) noexcept(std::is_nothrow_copy_assignable_v<QualifiedIdentifier>);
+    ~InputFieldReference() = default;
     [[nodiscard]] QualifiedIdentifier getField() const;
     [[nodiscard]] DataType getDataType() const;
 
@@ -61,6 +66,9 @@ class AsyncResultReference
 public:
     AsyncResultReference(const AsyncResultReference&) = default;
     AsyncResultReference& operator=(const AsyncResultReference&) = default;
+    AsyncResultReference(AsyncResultReference&& other) noexcept;
+    AsyncResultReference& operator=(AsyncResultReference&& other) noexcept;
+    ~AsyncResultReference() = default;
     [[nodiscard]] std::shared_ptr<const AsyncCall> getProducer() const;
     [[nodiscard]] size_t getOutputIndex() const;
     [[nodiscard]] DataType getDataType() const;
@@ -81,21 +89,21 @@ public:
     using Ptr = std::shared_ptr<const AsyncCall>;
     AsyncCall(const AsyncCall&) = delete;
     AsyncCall& operator=(const AsyncCall&) = delete;
+    AsyncCall(AsyncCall&&) = delete;
+    AsyncCall& operator=(AsyncCall&&) = delete;
+    ~AsyncCall() = default;
 
-    [[nodiscard]] const std::string& getFunctionType() const;
+    [[nodiscard]] std::string getFunctionType() const;
+    [[nodiscard]] const AsyncOperator& getAsyncOperator() const;
     [[nodiscard]] const std::vector<DataType>& getResultTypes() const;
     [[nodiscard]] const std::vector<AsyncCallArgument>& getArguments() const;
     [[nodiscard]] AsyncResultReference output(size_t index) const;
 
 private:
     friend class AsyncCallGraphBuilder;
-    AsyncCall(
-        std::shared_ptr<const detail::AsyncGraphScope> scope,
-        std::string functionType,
-        std::vector<AsyncCallArgument> arguments,
-        std::vector<DataType> resultTypes);
+    AsyncCall(std::shared_ptr<const detail::AsyncGraphScope> scope, AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments);
     std::shared_ptr<const detail::AsyncGraphScope> scope;
-    std::string functionType;
+    AsyncOperator asyncOperator;
     std::vector<AsyncCallArgument> arguments;
     std::vector<DataType> resultTypes;
 };
@@ -135,10 +143,10 @@ public:
     AsyncCallGraphBuilder& operator=(const AsyncCallGraphBuilder&) = delete;
     AsyncCallGraphBuilder(AsyncCallGraphBuilder&&) = delete;
     AsyncCallGraphBuilder& operator=(AsyncCallGraphBuilder&&) = delete;
+    ~AsyncCallGraphBuilder() = default;
 
     [[nodiscard]] InputFieldReference input(QualifiedIdentifier field) const;
-    [[nodiscard]] AsyncCall::Ptr
-    call(std::string functionType, std::vector<AsyncCallArgument> arguments, std::vector<DataType> resultTypes);
+    [[nodiscard]] AsyncCall::Ptr call(AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments);
     void exportOutput(AsyncResultReference result, QualifiedIdentifier field);
     [[nodiscard]] AsyncCallGraph build();
 

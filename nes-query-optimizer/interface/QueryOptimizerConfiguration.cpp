@@ -25,6 +25,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizerAsyncConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 
 namespace NES

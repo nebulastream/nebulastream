@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cstdint>
+#include <expected>
 #include <string_view>
 #include <DataTypes/RuntimeValue.hpp>
 #include <ErrorHandling.hpp>
@@ -23,12 +24,13 @@ namespace NES
 
 /// Input-boundary validation for query constants and per-row options. Logical inference establishes the integer type;
 /// preparation checks its value before passing an unsigned option to execution. Generic scalar access remains contract-only.
-[[nodiscard]] inline uint64_t checkedUnsignedIntegerOption(const RuntimeValueView value, const std::string_view option)
+[[nodiscard]] inline std::expected<uint64_t, Exception>
+checkedUnsignedIntegerOption(const RuntimeValueView value, const std::string_view option)
 {
     const auto converted = value.tryGetUnsignedInteger();
     if (!converted)
     {
-        throw ArithmeticalError("{} expects a non-negative integer", option);
+        return std::unexpected(ArithmeticalError("{} expects a non-negative integer", option));
     }
     return *converted;
 }

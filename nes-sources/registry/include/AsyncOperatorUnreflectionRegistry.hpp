@@ -11,16 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <AsyncFunctionRegistry.hpp>
+#pragma once
+#include <string>
+#include <Sources/AsyncOperator.hpp>
+#include <Util/UnreflectionRegistry.hpp>
 
 namespace NES
 {
+using AsyncOperatorUnreflectionRegistryReturnType = AsyncOperator;
 
-AsyncFunctionRegistry& AsyncFunctionRegistry::instance()
+class AsyncOperatorUnreflectionRegistry
+    : public UnreflectionRegistry<AsyncOperatorUnreflectionRegistry, std::string, AsyncOperatorUnreflectionRegistryReturnType>
 {
-    static AsyncFunctionRegistry inst;
-    return inst;
-}
-
+};
 }

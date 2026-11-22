@@ -26,25 +26,24 @@
 #include <mutex>
 #include <optional>
 #include <ostream>
-#include <ranges>
 #include <stop_token>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
+#include <AsyncGraphExecution.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; checker misses direct use
+#include <nautilus/val.hpp> /// NOLINT(misc-include-cleaner) Installed public Nautilus val provider; checker misattributes val uses
 #include <Async/HandoffChannel.hpp>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/RuntimeValueNautilus.hpp>
-#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -55,8 +54,11 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
+#include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -64,18 +66,16 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/error.hpp>
+#include <boost/asio/co_spawn.hpp> /// NOLINT(misc-include-cleaner) Public Asio co_spawn provider; checker misattributes completion overload
+#include <boost/asio/error.hpp> /// NOLINT(misc-include-cleaner) Public Asio error provider; used through operation error constants
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/redirect_error.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
-#include <boost/system/system_error.hpp>
-#include <fmt/format.h>
-#include <AsyncFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -98,7 +98,7 @@ const ConfigField<size_t> MAX_CONCURRENCY{
 
 const ConfigField<size_t> MAX_RETRIES{
     Identifier::parse("MAX_RETRIES"),
-    "Further attempts after RetryableAsyncError, with exponential backoff starting at 100 ms",
+    "Further attempts after retryable async errors, with exponential backoff starting at 100 ms",
     sizeFromLiteral,
     AsyncSourceConfig::DEFAULT_MAX_RETRIES};
 
@@ -147,7 +147,8 @@ Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig&)
 {
-    return std::unexpected{InvalidConfigParameter("Async sources require a planner-supplied AsyncCallGraph, not literal configuration")};
+    PRECONDITION(false, "Async sources require an AsyncCallGraph supplied by the optimizer and cannot be instantiated from literal configuration");
+    std::unreachable();
 }
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
@@ -158,6 +159,8 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
 {
 }
 
+/// Failure to drain is fatal: pending callbacks may still borrow this source and its buffers.
+/// NOLINTNEXTLINE(bugprone-exception-escape) cleanup scheduling may allocate; destruction must not continue on failure
 AsyncSource::~AsyncSource()
 {
     cancelAndDrain();
@@ -169,24 +172,27 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
     , maxRetries(config.maxRetries)
     , layout(config.calls, sourceDescriptor.getSchema())
     , graph(std::make_shared<const AsyncCallGraph>(config.calls))
-    , calls(bindGraph(*graph))
+    , calls(createCallStates(*graph))
+    , outputMappings(graph->getOutputs())
     , channel(std::move(receiver))
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
-    outputMappings = graph->getOutputs();
-    for (auto& [node, call] : calls)
+    for (const auto& entry : calls)
     {
-        call.instances.push_back(call.factory(AsyncFunctionRegistryArguments{.binding = call.binding}));
-        PRECONDITION(call.instances.front(), "Async function factory {} returned no implementation", node->getFunctionType());
-        maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, call.instances.front()->maxConcurrency().value_or(maxConcurrency)));
-    }
-    for (auto& [node, call] : calls)
-    {
-        while (call.instances.size() < maxConcurrency)
+        const auto& call = entry.second;
+        if (const auto operatorConcurrency = call.asyncOperator.maxConcurrency())
         {
-            auto instance = call.factory(AsyncFunctionRegistryArguments{.binding = call.binding});
-            PRECONDITION(instance, "Async function factory {} returned no implementation", node->getFunctionType());
-            call.instances.push_back(std::move(instance));
+            maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, *operatorConcurrency));
+        }
+    }
+    for (auto& entry : calls)
+    {
+        auto& contexts = entry.second.contexts;
+        contexts.reserve(maxConcurrency);
+        const AsyncExecutionContext operatorContext;
+        for (size_t slot = 0; slot < maxConcurrency; ++slot)
+        {
+            contexts.push_back(operatorContext.createSlotContext());
         }
     }
     cancelSignals = std::vector<boost::asio::cancellation_signal>(maxConcurrency);
@@ -197,33 +203,12 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
     }
 }
 
-std::unordered_map<AsyncCall::Ptr, AsyncSource::BoundCall> AsyncSource::bindGraph(const AsyncCallGraph& graph)
+std::unordered_map<AsyncCall::Ptr, AsyncSource::CallState> AsyncSource::createCallStates(const AsyncCallGraph& graph)
 {
-    std::unordered_map<AsyncCall::Ptr, BoundCall> bound;
+    std::unordered_map<AsyncCall::Ptr, CallState> bound;
     for (const auto& node : graph.getCalls())
     {
-        const auto factory = AsyncFunctionRegistry::instance().find(node->getFunctionType());
-        if (!factory)
-        {
-            throw UnknownFunctionType("No async implementation registered on this worker for {}", node->getFunctionType());
-        }
-        BoundCall call{
-            .factory = *factory,
-            .binding = {.argumentTypes = {}, .constantArguments = {}, .resultTypes = node->getResultTypes()},
-            .instances = {}};
-        for (const auto& argument : node->getArguments())
-        {
-            call.binding.argumentTypes.push_back(std::visit([](const auto& value) { return value.getDataType(); }, argument));
-            if (const auto* constant = std::get_if<RuntimeValue>(&argument))
-            {
-                call.binding.constantArguments.emplace_back(*constant);
-            }
-            else
-            {
-                call.binding.constantArguments.emplace_back(std::nullopt);
-            }
-        }
-        bound.emplace(node, std::move(call));
+        bound.emplace(node, CallState{.asyncOperator = node->getAsyncOperator(), .contexts = {}});
     }
     return bound;
 }
@@ -231,10 +216,7 @@ std::unordered_map<AsyncCall::Ptr, AsyncSource::BoundCall> AsyncSource::bindGrap
 void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     bufferProvider = std::move(provider);
-    inputBufferRef
-        = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getInputSchema(), MemoryLayoutType::ROW_LAYOUT);
-    outputBufferRef
-        = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getOutputSchema(), MemoryLayoutType::ROW_LAYOUT);
+    rowBufferRef = LowerSchemaProvider::lowerSchema(bufferProvider->getBufferSize(), layout.getSchema(), MemoryLayoutType::ROW_LAYOUT);
     channel.setListener(
         [this]
         {
@@ -255,41 +237,52 @@ void AsyncSource::close()
 
 RuntimeValue AsyncSource::readInput(const InputFieldReference& field, const TupleBuffer& input, const size_t row) const
 {
+    /// NOLINTBEGIN(misc-include-cleaner) nautilus::val is declared by public nautilus/val.hpp.
     const RecordBuffer buffer{BorrowedNautilusBuffer::from(nautilus::val<const TupleBuffer*>{std::addressof(input)})};
+    /// NOLINTEND(misc-include-cleaner)
+    /// NOLINTNEXTLINE(misc-include-cleaner) nautilus::val is declared by public nautilus/val.hpp.
     auto index = nautilus::val<uint64_t>{row};
-    const auto record = inputBufferRef->readRecord({field.getField()}, buffer, index);
+    const auto record = rowBufferRef->readRecord({field.getField()}, buffer, index);
     return fromVarVal(record.read(field.getField()), field.getDataType());
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
-boost::asio::awaitable<SharedRuntimeValues>
-AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRuntimeValues arguments) const
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRuntimeValues arguments)
 {
-    const auto& call = calls.at(node);
-    auto& function = *call.instances[slot];
-    const auto prepared = function.prepare(std::move(arguments));
-    PRECONDITION(prepared, "Async function preparation must return an invocation");
-    const auto retryLimit = prepared->retryOverride.value_or(maxRetries);
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+    {
+        co_return std::unexpected(AsyncError::cancelled());
+    }
+    auto& call = calls.at(node);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) slot comes from the bounded free-slot pool
+    auto preparedResult = call.asyncOperator.prepare(call.contexts[slot], std::move(arguments));
+    if (!preparedResult)
+    {
+        co_return std::unexpected(std::move(preparedResult.error()));
+    }
+    auto prepared = std::move(*preparedResult);
+    PRECONDITION(prepared, "Async operator preparation must return an invocation");
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+    {
+        co_return std::unexpected(AsyncError::cancelled());
+    }
+    const auto retryLimit = prepared->getRetryOverride().value_or(maxRetries);
     for (size_t attempt = 0;; ++attempt)
     {
-        std::exception_ptr failure;
-        try
+        /// Result shape/type invariants are checked by the graph, outside retries.
+        auto outcome = co_await prepared->executeAttempt();
+        if (outcome)
         {
-            /// Result shape/type invariants are checked by the graph, outside retries.
-            co_return co_await prepared->executeAttempt();
+            co_return outcome;
         }
-        catch (const Exception& error)
+        if (outcome.error().kind != AsyncError::Type::Retryable || attempt >= retryLimit)
         {
-            if (error.code() != ErrorCode::RetryableAsyncError)
-            {
-                throw;
-            }
-            failure = std::current_exception();
+            co_return outcome;
         }
-        if (attempt >= retryLimit
-            || (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+        if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
         {
-            std::rethrow_exception(failure);
+            co_return std::unexpected(AsyncError::cancelled());
         }
         const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
         NES_WARNING(
@@ -298,17 +291,30 @@ AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRunti
             attempt + 2,
             retryLimit + 1,
             backoff.count());
+        const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
+        co_await boost::asio::this_coro::throw_if_cancelled(false);
         boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
-        co_await timer.async_wait(boost::asio::use_awaitable);
+        boost::system::error_code waitError; /// NOLINT(misc-include-cleaner) error_code is declared by public boost/system/error_code.hpp.
+        co_await timer.async_wait(boost::asio::redirect_error(boost::asio::use_awaitable, waitError));
+        const bool wasCancelled = (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none;
+        co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
+        if (wasCancelled)
+        {
+            co_return std::unexpected(AsyncError::cancelled());
+        }
+        if (waitError)
+        {
+            co_return std::unexpected(AsyncError{.exception = IOError(waitError.message()), .kind = AsyncError::Type::Permanent});
+        }
     }
 }
 
 /// The in-flight state retains this deque element until finishRow marks its last row done, or shutdown drains all rows.
-boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, InFlightBuffer& buffer, const size_t row)
+boost::asio::awaitable<AsyncResult<void>> AsyncSource::processRow(const size_t slot, InFlightBuffer& buffer, const size_t row)
 {
     if (stopping)
     {
-        throw boost::system::system_error{boost::asio::error::operation_aborted};
+        co_return std::unexpected(AsyncError::cancelled());
     }
     auto execution = std::make_shared<AsyncGraphExecution>(
         strand,
@@ -316,8 +322,16 @@ boost::asio::awaitable<void> AsyncSource::processRow(const size_t slot, InFlight
         [this, &buffer, row](const InputFieldReference& field) { return readInput(field, buffer.input, row); },
         [this, slot](AsyncCall::Ptr node, SharedRuntimeValues arguments)
         { return callWithRetries(std::move(node), slot, std::move(arguments)); });
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) slot comes from the bounded free-slot pool
     executions[slot] = execution;
-    buffer.results[row] = co_await execution->run();
+    auto outcome = co_await execution->run();
+    if (!outcome)
+    {
+        co_return std::unexpected(std::move(outcome.error()));
+    }
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) row is admitted within the sized results array
+    buffer.results[row] = std::move(*outcome);
+    co_return AsyncResult<void>{};
 }
 
 void AsyncSource::startRows()
@@ -327,7 +341,7 @@ void AsyncSource::startRows()
     {
         std::unique_lock lock(inFlight.mutex);
         const auto next = std::ranges::find_if(inFlight.buffers, [](const auto& candidate) { return candidate.nextRow < candidate.rows; });
-        if (inFlight.failure || next == inFlight.buffers.end())
+        if (inFlight.failure || inFlight.infrastructureFailure || next == inFlight.buffers.end())
         {
             break;
         }
@@ -339,11 +353,41 @@ void AsyncSource::startRows()
         started = true;
         const auto slot = freeSlots.back();
         freeSlots.pop_back();
-        boost::asio::co_spawn(
+        /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) slot indexes equally sized per-slot storage
+        boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) co_spawn is declared by public boost/asio/co_spawn.hpp.
             strand,
             processRow(slot, buffer, row),
             boost::asio::bind_cancellation_slot(
-                cancelSignals[slot].slot(), [this, &buffer, slot](const std::exception_ptr& error) { finishRow(buffer, slot, error); }));
+                cancelSignals[slot].slot(),
+                [this, &buffer, slot](const std::exception_ptr& error, AsyncResult<void> result)
+                {
+                    if (!error)
+                    {
+                        finishRow(buffer, slot, error, result);
+                        return;
+                    }
+                    {
+                        const std::scoped_lock lock(inFlight.mutex);
+                        if (!stopping && !inFlight.failure && !inFlight.infrastructureFailure)
+                        {
+                            inFlight.infrastructureFailure = error;
+                        }
+                    }
+                    inFlight.changed.notify_all();
+                    const auto execution = executions[slot];
+                    if (!execution)
+                    {
+                        finishRow(buffer, slot, error, result);
+                        return;
+                    }
+                    boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) co_spawn is declared by public boost/asio/co_spawn.hpp.
+                        strand,
+                        execution->cancelAndDrain(),
+                        boost::asio::bind_cancellation_slot(
+                            boost::asio::cancellation_slot{},
+                            [this, &buffer, slot, error](std::exception_ptr) { finishRow(buffer, slot, error, AsyncResult<void>{}); }));
+                }));
+        /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     }
     if (started)
     {
@@ -352,17 +396,26 @@ void AsyncSource::startRows()
     }
 }
 
-void AsyncSource::finishRow(InFlightBuffer& buffer, const size_t slot, const std::exception_ptr& error)
+void AsyncSource::finishRow(
+    InFlightBuffer& buffer, const size_t slot, const std::exception_ptr& infrastructureError, const AsyncResult<void>& outcome)
 {
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) completion retains its admitted slot
     executions[slot].reset();
     freeSlots.push_back(slot);
     {
         const std::scoped_lock lock(inFlight.mutex);
         --inFlight.runningRows;
         /// A row cancelled because the query stops did not fail.
-        if (error && !stopping && !inFlight.failure)
+        if (!stopping && !inFlight.failure && !inFlight.infrastructureFailure)
         {
-            inFlight.failure = error;
+            if (infrastructureError)
+            {
+                inFlight.infrastructureFailure = infrastructureError;
+            }
+            else if (!outcome)
+            {
+                inFlight.failure = outcome.error();
+            }
         }
         if (--buffer.unfinishedRows == 0)
         {
@@ -408,17 +461,16 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
         [[maybe_unused]] const auto index = output.storeChildBuffer(childBuffer);
     }
 
-    const auto inputRowSize = layout.getInputRowSize();
-    const auto outputRowSize = layout.getOutputRowSize();
-    PRECONDITION(buffer.rows <= output.getBufferSize() / outputRowSize, "handed-off buffer holds more rows than the output buffer");
-    const auto in = input.getAvailableMemoryArea();
-    const auto out = output.getAvailableMemoryArea();
+    const auto rowSize = layout.getRowSize();
+    PRECONDITION(buffer.rows <= output.getBufferSize() / rowSize, "handed-off buffer holds more rows than the output buffer");
+    const auto inputBytes = input.getAvailableMemoryArea();
+    const auto outputBytes = output.getAvailableMemoryArea();
     for (size_t row = 0; row < buffer.rows; ++row)
     {
-        for (const auto& [inputOffset, outputOffset, size] : layout.getCopiedFields())
+        for (const auto& [offset, size] : layout.getCopiedFields())
         {
-            std::memcpy(
-                out.subspan((row * outputRowSize) + outputOffset).data(), in.subspan((row * inputRowSize) + inputOffset).data(), size);
+            const auto position = (row * rowSize) + offset;
+            std::memcpy(outputBytes.subspan(position).data(), inputBytes.subspan(position).data(), size);
         }
     }
     writeResults(buffer, output);
@@ -426,19 +478,22 @@ void AsyncSource::writeOutput(const InFlightBuffer& buffer, TupleBuffer& output)
 
 void AsyncSource::writeResults(const InFlightBuffer& buffer, TupleBuffer& output) const
 {
-    PRECONDITION(buffer.rows <= output.getBufferSize() / layout.getOutputRowSize(), "async output rows must fit the buffer");
+    PRECONDITION(buffer.rows <= output.getBufferSize() / layout.getRowSize(), "async output rows must fit the buffer");
     for (size_t row = 0; row < buffer.rows; ++row)
     {
-        INVARIANT(buffer.results[row].has_value(), "A completed async row must have a result");
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) results is sized to buffer.rows
+        const auto& rowResult = buffer.results[row];
+        INVARIANT(rowResult.has_value(), "A completed async row must have a result");
         Record results;
         for (size_t position = 0; position < outputMappings.size(); ++position)
         {
-            results.write(outputMappings[position].field, toVarVal((*buffer.results[row])[position]));
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) completed results match graph output shape
+            results.write(outputMappings[position].field, toVarVal((*rowResult)[position]));
         }
         const RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(nautilus::val<TupleBuffer*>{std::addressof(output)})};
         auto index = nautilus::val<uint64_t>{row};
         const auto written
-            = outputBufferRef->writeRecord(index, recordBuffer, results, nautilus::val<AbstractBufferProvider*>{bufferProvider.get()});
+            = rowBufferRef->writeRecord(index, recordBuffer, results, nautilus::val<AbstractBufferProvider*>{bufferProvider.get()});
         INVARIANT(static_cast<bool>(written.successful), "async output row must fit the output buffer");
     }
 }
@@ -479,12 +534,18 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
     std::unique_lock lock(inFlight.mutex);
     while (true)
     {
-        if (inFlight.failure)
+        if (inFlight.failure || inFlight.infrastructureFailure)
         {
-            const auto failure = inFlight.failure;
+            auto failure = inFlight.failure;
+            const auto infrastructureFailure = inFlight.infrastructureFailure;
             lock.unlock();
             cancelAndDrain();
-            std::rethrow_exception(failure);
+            if (infrastructureFailure)
+            {
+                std::rethrow_exception(infrastructureFailure);
+            }
+            INVARIANT(failure.has_value(), "A failed async source must retain its operational error");
+            throw std::move(failure->exception);
         }
         if (!inFlight.buffers.empty() && inFlight.buffers.front().done)
         {
@@ -493,7 +554,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
             lock.unlock();
             /// All row callbacks have finished before done is published. Do not wait for other owners:
             /// a fanout consumer may retain the original buffer indefinitely or read the result slots.
-            if (layout.matchesInputLayout() && buffer.input.getReferenceCounter() == 1)
+            if (buffer.input.getReferenceCounter() == 1)
             {
                 writeResults(buffer, buffer.input);
                 tupleBuffer = std::move(buffer.input);
@@ -555,7 +616,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
         }
         const auto progressed = [&]
         {
-            return inFlight.failure || (!inFlight.buffers.empty() && inFlight.buffers.front().done)
+            return inFlight.failure || inFlight.infrastructureFailure || (!inFlight.buffers.empty() && inFlight.buffers.front().done)
                 || (wantsInput && inFlight.channelChanged);
         };
         if (!inFlight.changed.wait(lock, stopToken, progressed))

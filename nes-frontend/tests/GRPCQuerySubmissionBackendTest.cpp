@@ -16,15 +16,18 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -41,6 +44,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <SingleNodeWorkerRPCService.pb.h>
 #include <WorkerConfig.hpp>
 
 namespace NES::Test
@@ -91,6 +95,11 @@ public:
         server = builder.BuildAndStart();
     }
 
+    InProcessWorker(const InProcessWorker&) = delete;
+    InProcessWorker& operator=(const InProcessWorker&) = delete;
+    InProcessWorker(InProcessWorker&&) = delete;
+    InProcessWorker& operator=(InProcessWorker&&) = delete;
+
     ~InProcessWorker()
     {
         if (server)
@@ -107,8 +116,8 @@ public:
 std::vector<LogicalPlan> batchPlans()
 {
     const Schema<UnqualifiedUnboundField, Ordered> schema{UnqualifiedUnboundField{Identifier::parse("VALUE"), DataType::Type::UINT64}};
-    SourceCatalog sources;
-    SinkCatalog sinks;
+    const SourceCatalog sources;
+    const SinkCatalog sinks;
     const Host host{"localhost:8080"};
     const auto source = sources.getAnonymousSource(
         Identifier::parse("FILE"), schema, host, {{Identifier::parse("TYPE"), "NATIVE"}}, {{Identifier::parse("FILE_PATH"), "unused.csv"}});
@@ -132,7 +141,6 @@ GRPCQuerySubmissionBackend backendFor(const std::string& host)
     return GRPCQuerySubmissionBackend{
         WorkerConfig{.host = Host{host}, .dataAddress = {}, .maxOperators = {}, .downstream = {}, .config = {}}};
 }
-}
 
 class GRPCQuerySubmissionBackendTest : public Testing::BaseUnitTest
 {
@@ -153,10 +161,12 @@ TEST_F(GRPCQuerySubmissionBackendTest, StartQueriesUsesOneBatchRPCAndPreservesDi
     EXPECT_EQ(service.plans.load(), 2);
     ASSERT_TRUE(result.has_value());
     ASSERT_EQ(result->size(), 2);
+    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) the service fixture initializes exactly two reply IDs
     EXPECT_EQ(result->at(0).getLocalQueryId(), service.replyIds[0]);
     EXPECT_EQ(result->at(0).getDistributedQueryId(), DistributedQueryId{"first"});
     EXPECT_EQ(result->at(1).getLocalQueryId(), service.replyIds[1]);
     EXPECT_EQ(result->at(1).getDistributedQueryId(), DistributedQueryId{"second"});
+    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 }
 
 TEST_F(GRPCQuerySubmissionBackendTest, StartQueriesWorkerErrorReturnsQueryStartFailed)
@@ -228,5 +238,6 @@ TEST_F(GRPCQuerySubmissionBackendTest, VersionOnUnreachableWorkerIsNotNotImpleme
 
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().code(), ErrorCode::NotImplemented);
+}
 }
 }

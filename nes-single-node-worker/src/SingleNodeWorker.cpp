@@ -14,8 +14,8 @@
 
 #include <SingleNodeWorker.hpp>
 
+#include <expected>
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -23,26 +23,28 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+#include <Async/HandoffChannel.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
-#include <Listeners/QueryLog.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT(misc-include-cleaner) Public fmt formatter specializations for the strong identifiers used by fmt::format.
+#include <Listeners/QueryLog.hpp> /// NOLINT(misc-include-cleaner) Public QueryLog declaration required by NodeEngine query-log API use.
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <Util/DumpMode.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/Logger.hpp> /// NOLINT(misc-include-cleaner) Public Logger facade declares LogContext.
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <Util/UUID.hpp>
-#include <cpptrace/from_current.hpp>
+#include <cpptrace/from_current.hpp> /// NOLINT(misc-include-cleaner) Public header declares CPPTRACE_TRY and CPPTRACE_CATCH.
 #include <fmt/format.h>
 #include <CompiledQueryPlan.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableQueryPlan.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
@@ -93,6 +95,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan) noexcept
 {
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_TRY is declared by public cpptrace/from_current.hpp.
     CPPTRACE_TRY
     {
         auto result = startQueries(std::vector<LogicalPlan>{std::move(plan)});
@@ -102,6 +105,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         }
         return result->front();
     }
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_CATCH is declared by public cpptrace/from_current.hpp.
     CPPTRACE_CATCH(...)
     {
         return std::unexpected(wrapExternalException());
@@ -111,13 +115,16 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
 
 std::expected<std::vector<QueryId>, Exception> SingleNodeWorker::startQueries(std::vector<LogicalPlan> plans) noexcept
 {
+    std::vector<QueryId> successfullyStarted;
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_TRY is declared by public cpptrace/from_current.hpp.
     CPPTRACE_TRY
     {
         /// Clone the entire batch before compiling: logical plans may share mutable runtime
         /// configuration with their callers, but every execution needs fresh pointees.
         /// Separate contexts retain cross-plan identity without reusing original objects.
-        const ReflectionContext serializationContext;
-        const ReflectionContext executionContext;
+        const ReflectionContext serializationContext{std::make_shared<SharedPointerSerializationState>()};
+        const auto sharedObjects = std::make_shared<SharedPointerDeserializationState>();
+        const ReflectionContext executionContext{sharedObjects};
         std::vector<LogicalPlan> executionPlans;
         executionPlans.reserve(plans.size());
         for (const auto& plan : plans)
@@ -147,6 +154,7 @@ std::expected<std::vector<QueryId>, Exception> SingleNodeWorker::startQueries(st
                 }
             }
 
+            /// NOLINTNEXTLINE(misc-include-cleaner) LogContext is declared by public Util/Logger/Logger.hpp.
             const LogContext context("queryId", plan.getQueryId());
 
             const auto planStr = explain(plan, ExplainVerbosity::Debug);
@@ -163,25 +171,41 @@ std::expected<std::vector<QueryId>, Exception> SingleNodeWorker::startQueries(st
         auto preparedPlans = nodeEngine->prepareQueries(std::move(compiledPlans));
         /// Preparation takes channel endpoints. Validate only after every plan has been
         /// prepared; on failure, RAII destroys the prepared plans without starting them.
-        executionContext.validateSharedObjects();
-        nodeEngine->startQueries(std::move(preparedPlans));
+        for (const auto& channel : sharedObjects->getObjects<HandoffChannel>())
+        {
+            channel->validate();
+        }
+        nodeEngine->startQueries(std::move(preparedPlans), successfullyStarted);
         return queryIds;
     }
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_CATCH is declared by public cpptrace/from_current.hpp.
     CPPTRACE_CATCH(...)
     {
-        return std::unexpected(wrapExternalException());
+        auto initiatingError = wrapExternalException();
+        /// The stop wrapper is noexcept and reports cleanup failure through its expected result.
+        for (const auto& queryId : successfullyStarted)
+        {
+            auto stopResult = stopQuery(queryId);
+            if (!stopResult)
+            {
+                NES_WARNING("Could not stop query {} during deployment rollback: {}", queryId, stopResult.error().what());
+            }
+        }
+        return std::unexpected(std::move(initiatingError));
     }
     std::unreachable();
 }
 
 std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noexcept
 {
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_TRY is declared by public cpptrace/from_current.hpp.
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId);
         return {};
     }
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_CATCH is declared by public cpptrace/from_current.hpp.
     CPPTRACE_CATCH(...)
     {
         return std::unexpected{wrapExternalException()};
@@ -191,6 +215,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noex
 
 std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
 {
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_TRY is declared by public cpptrace/from_current.hpp.
     CPPTRACE_TRY
     {
         auto status = nodeEngine->getQueryLog()->getQueryStatus(queryId);
@@ -200,6 +225,7 @@ std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQuerySta
         }
         return status.value();
     }
+    /// NOLINTNEXTLINE(misc-include-cleaner) CPPTRACE_CATCH is declared by public cpptrace/from_current.hpp.
     CPPTRACE_CATCH(...)
     {
         return std::unexpected(wrapExternalException());

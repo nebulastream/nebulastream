@@ -29,6 +29,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Reprojecter.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -114,8 +115,7 @@ std::unordered_map<Field, QualifiedIdentifier> reprojecterMapping(
     return mapping;
 }
 
-std::unordered_map<Field, QualifiedIdentifier>
-sourceDescriptorMapping(const TypedLogicalOperator<SourceDescriptorLogicalOperator>& logicalOperator)
+std::unordered_map<Field, QualifiedIdentifier> materializedMapping(const LogicalOperator& logicalOperator)
 {
     std::unordered_map<Field, QualifiedIdentifier> mapping;
     for (const auto& field : logicalOperator->getOutputSchema())
@@ -187,9 +187,10 @@ PlanVisitor<>::UpResult decideFieldMappings(const LogicalOperator& logicalOperat
         {
             return reprojecterMapping((*reprojecter.value())->getAccessedFieldsForOutput(), logicalOperator.getOutputSchema());
         }
-        if (const auto& sourceOp = logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>())
+        if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>() || logicalOperator.tryGetAs<AsyncLogicalOperator>())
         {
-            return sourceDescriptorMapping(sourceOp.value());
+            /// Async operators materialize a new row, rather than forwarding a child's physical aliases.
+            return materializedMapping(logicalOperator);
         }
         if (logicalOperator.tryGetAs<SinkLogicalOperator>())
         {

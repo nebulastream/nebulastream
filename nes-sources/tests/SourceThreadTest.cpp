@@ -13,6 +13,7 @@
 */
 
 
+/// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
 #include <algorithm>
 #include <chrono>
 #include <concepts>
@@ -28,6 +29,7 @@
 #include <ranges>
 #include <source_location>
 #include <stop_token>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -44,6 +46,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <bits/chrono.h>
 #include <fmt/chrono.h>
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
@@ -332,6 +335,8 @@ public:
 };
 }
 
+namespace
+{
 class SourceBufferCapabilityTest : public SourceThreadTest
 {
 protected:
@@ -343,10 +348,15 @@ protected:
         std::make_shared<NesDefaultMemoryAllocator>());
     /// Strict mocks reject spare data-buffer allocations; normal EOS explicitly allows a final-watermark allocation.
     std::shared_ptr<testing::StrictMock<MockBufferProvider>> provider = std::make_shared<testing::StrictMock<MockBufferProvider>>();
-    RecordingEmitFunction recorder{*bm, {}, {}};
+    RecordingEmitFunction recorder{.bm = *bm, .recordedEmits = {}, .block = {}};
     std::pair<BackpressureController, BackpressureListener> backpressure = createBackpressureChannel();
 
-    std::unique_ptr<SourceThread> start(std::unique_ptr<MockSource> source, bool addsMetadata = false)
+    std::unique_ptr<SourceThread> start(std::unique_ptr<MockSource> source)
+    {
+        return start(std::move(source), false);
+    }
+
+    std::unique_ptr<SourceThread> start(std::unique_ptr<MockSource> source, bool addsMetadata)
     {
         EXPECT_CALL(*source, open(testing::Eq(provider)));
         EXPECT_CALL(*source, addsMetadata()).WillOnce(testing::Return(addsMetadata));
@@ -361,6 +371,7 @@ protected:
         return thread;
     }
 };
+}
 
 TEST_F(SourceBufferCapabilityTest, ReturningBuffersNeedNoSpareAndPreserveSourceMetadata)
 {
@@ -848,3 +859,4 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
 
 
 }
+/// NOLINTEND(readability-magic-numbers)

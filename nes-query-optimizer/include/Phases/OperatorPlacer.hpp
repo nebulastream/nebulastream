@@ -14,12 +14,10 @@
 
 #pragma once
 
+#include <utility>
+
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -28,22 +26,11 @@ namespace NES
 class OperatorPlacer
 {
 public:
-    explicit OperatorPlacer(
-        QueryOptimizerConfiguration defaultQueryOptimization,
-        SharedPtr<const SourceCatalog> sourceCatalog,
-        SharedPtr<const SinkCatalog> sinkCatalog,
-        SharedPtr<const WorkerCatalog> workerCatalog)
-        : defaultQueryOptimization(std::move(defaultQueryOptimization))
-        , sourceCatalog(std::move(sourceCatalog))
-        , sinkCatalog(std::move(sinkCatalog))
-        , workerCatalog(std::move(workerCatalog)) { };
+    explicit OperatorPlacer(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
 
-    [[nodiscard]] DistributedLogicalPlan place(LogicalPlan plan) const;
+    [[nodiscard]] LogicalPlan place(LogicalPlan plan) const;
 
 private:
-    QueryOptimizerConfiguration defaultQueryOptimization;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
 };
 

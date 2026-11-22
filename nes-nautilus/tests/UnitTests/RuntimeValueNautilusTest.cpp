@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+/// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
 #include <array>
 #include <concepts>
 #include <cstdint>
@@ -22,7 +23,7 @@
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/RuntimeValueNautilus.hpp>
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/Logger.hpp> /// NOLINT(misc-include-cleaner) Public Logger facade; cleaner misattributes setupLogging.
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
@@ -107,10 +108,12 @@ TEST(RuntimeValueNautilusTest, MaterializedBytesDoNotBorrowInputStorage)
 }
 
 #ifndef NO_ASSERT
+namespace
+{
 class RuntimeValueNautilusDeathTest : public testing::Test
 {
 public:
-    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueNautilusDeathTest.log", LogLevel::LOG_DEBUG, false); }
+    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueNautilusDeathTest.log", LogLevel::LOG_DEBUG, false); } /// NOLINT(misc-include-cleaner) Public Logger.hpp declares this facade API.
 };
 
 TEST_F(RuntimeValueNautilusDeathTest, NumericAndNullabilityConversionsViolatePreconditions)
@@ -128,6 +131,8 @@ TEST_F(RuntimeValueNautilusDeathTest, NumericAndNullabilityConversionsViolatePre
     const VarVal nullableValue{int64_t{42}, true, false};
     EXPECT_DEATH(static_cast<void>(fromVarVal(nullableValue, nonNullable)), "Precondition violated.*does not match");
 }
+}
 #endif
 
 }
+/// NOLINTEND(readability-magic-numbers)

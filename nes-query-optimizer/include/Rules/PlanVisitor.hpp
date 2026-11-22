@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <ranges>
 #include <stack>
 #include <unordered_map>
@@ -56,7 +57,9 @@
  *   Rebuilds/rewrites op using its already-rebuilt children, the OperatorContext computed for
  *   it during the top-down pass, and the UpContext each child produced (keyed by the rebuilt
  *   child), then returns the new operator together with the UpContext to forward to its own
- *   parent(s).
+ *   parent(s). Constructing `UpResult` from only an `UpContext` prunes op: dependent parents are
+ *   not visited, but independent branches and roots continue. Pruned roots are omitted from the
+ *   result, so callers can capture replacement roots and attach them afterward.
  *
  * ## Alternative callback signatures
  * The constructors also accept reduced-arity variants for rules that do not need the full
@@ -92,9 +95,10 @@ public:
     struct UpResult
     {
         /// NOLINTNEXTLINE(google-explicit-constructor)
-        UpResult(LogicalOperator op) : op(std::move(op)), upContext({}) { };
+        UpResult(LogicalOperator op) : op(std::move(op)), upContext{} { };
         UpResult(LogicalOperator op, UpContext upContext) : op(std::move(op)), upContext(std::move(upContext)) { };
-        LogicalOperator op;
+        explicit UpResult(UpContext upContext) : op(std::nullopt), upContext(std::move(upContext)) { };
+        std::optional<LogicalOperator> op;
         UpContext upContext;
     };
 
@@ -233,22 +237,26 @@ private:
 
                 auto [newOp, newUpContext] = fnUp(op, newChildren, context, upContext);
 
-                INVARIANT(
-                    !newOperatorMap.contains(op),
-                    "each operator can only be inserted once into newOperatorMap since it is only visited once");
-                newOperatorMap.insert_or_assign(op, std::move(newOp));
-                INVARIANT(
-                    !upContextMap.contains(op), "each operator can only be inserted once into upContextMap since it is only visited once");
-                upContextMap.insert_or_assign(op, std::move(newUpContext));
-
-                if (auto it = parentMap.find(op); it != parentMap.end())
+                if (newOp)
                 {
-                    for (const auto& parent : it->second)
+                    INVARIANT(
+                        !newOperatorMap.contains(op),
+                        "each operator can only be inserted once into newOperatorMap since it is only visited once");
+                    newOperatorMap.insert_or_assign(op, std::move(*newOp));
+                    INVARIANT(
+                        !upContextMap.contains(op),
+                        "each operator can only be inserted once into upContextMap since it is only visited once");
+                    upContextMap.insert_or_assign(op, std::move(newUpContext));
+
+                    if (auto it = parentMap.find(op); it != parentMap.end())
                     {
-                        childCounter[parent]--;
-                        if (childCounter[parent] == 0)
+                        for (const auto& parent : it->second)
                         {
-                            toVisit.push(parent);
+                            childCounter[parent]--;
+                            if (childCounter[parent] == 0)
+                            {
+                                toVisit.push(parent);
+                            }
                         }
                     }
                 }
@@ -260,7 +268,10 @@ private:
             std::vector<LogicalOperator> newRoots;
             for (const auto& root : plan.getRootOperators())
             {
-                newRoots.emplace_back(newOperatorMap.at(root));
+                if (auto it = newOperatorMap.find(root); it != newOperatorMap.end())
+                {
+                    newRoots.emplace_back(it->second);
+                }
             }
 
             return newRoots;

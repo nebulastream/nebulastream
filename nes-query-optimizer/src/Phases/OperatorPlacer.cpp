@@ -15,18 +15,14 @@
 #include <Phases/OperatorPlacer.hpp>
 
 #include <Placement/BottomUpPlacement.hpp>
-#include <Placement/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
-DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
+LogicalPlan OperatorPlacer::place(LogicalPlan plan) const
 {
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
-
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
-        .decompose(plan, defaultQueryOptimization.network, defaultQueryOptimization.async);
+    return plan;
 }
 }

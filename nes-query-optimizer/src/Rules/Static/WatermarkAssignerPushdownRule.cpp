@@ -16,9 +16,8 @@
 #include <cstddef>
 #include <ranges>
 #include <set>
-#include <string_view>
 #include <typeindex>
-#include <typeinfo>
+#include <typeinfo> /// NOLINT(misc-include-cleaner) RTTI is used through typeid expressions.
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -26,6 +25,7 @@
 
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -268,6 +268,14 @@ Visitor::DownResult watermarkAssignerPushdown(const LogicalOperator& op, const s
     {
         downResult = pushBeyondIngestionTimeWatermarkAssigner(ingestionTimeWatermarkAssigner.value(), std::move(context));
     }
+    /// NOLINTBEGIN(bugprone-branch-clone) retain the explicit conservative async-operator case
+    else if (op.tryGetAs<AsyncLogicalOperator>())
+    {
+        /// For now we treat AsyncOperators explicitly as a blackbox, where we don't know if its safe to push down,
+        /// Even though it might be possible for some simpler ones
+        downResult = pushBeyondDefault(op, std::move(context));
+    }
+    /// NOLINTEND(bugprone-branch-clone)
     else if (op.tryGetAs<SelectionLogicalOperator>().has_value() || op.tryGetAs<UnionLogicalOperator>().has_value())
     {
         downResult = pushBeyondTransparentOperator(op, context);

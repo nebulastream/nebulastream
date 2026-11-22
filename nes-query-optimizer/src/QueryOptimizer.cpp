@@ -14,6 +14,8 @@
 
 #include <QueryOptimizer.hpp>
 
+#include <utility>
+
 #include <Plans/LogicalPlan.hpp>
 #include <DistributedLogicalPlan.hpp>
 
@@ -22,8 +24,10 @@ namespace NES
 
 DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
 {
-    plan = ruleBasedOptimization.optimize(plan);
-    return operatorPlacement.place(plan);
+    auto ruleOptimizedPlan = ruleBasedOptimization.optimize(std::move(plan));
+    auto placedPlan = operatorPlacement.place(std::move(ruleOptimizedPlan));
+    auto decomposedPlan = asyncOperatorDecomposition.apply(placedPlan);
+    return queryDecomposer.decompose(decomposedPlan, placedPlan, networkConfiguration);
 }
 
 }

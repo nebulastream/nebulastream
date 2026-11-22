@@ -16,8 +16,10 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <DataTypes/RuntimeValue.hpp>
 #include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <SharedAsyncResult.hpp>
 
@@ -29,21 +31,26 @@ namespace NES
 class AsyncGraphExecution final : public std::enable_shared_from_this<AsyncGraphExecution>
 {
 public:
-    using Invoke = std::function<boost::asio::awaitable<SharedRuntimeValues>(AsyncCall::Ptr, SharedRuntimeValues)>;
+    using Invoke = std::function<boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>(AsyncCall::Ptr, SharedRuntimeValues)>;
     using ReadInput = std::function<RuntimeValue(const InputFieldReference&)>;
     AsyncGraphExecution(
         SharedAsyncResult::Strand executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke);
     AsyncGraphExecution(const AsyncGraphExecution&) = delete;
     AsyncGraphExecution& operator=(const AsyncGraphExecution&) = delete;
-    [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> run();
+    AsyncGraphExecution(AsyncGraphExecution&&) = delete;
+    AsyncGraphExecution& operator=(AsyncGraphExecution&&) = delete;
+    ~AsyncGraphExecution() = default;
+    [[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> run();
     void cancel();
 
 private:
     friend struct AsyncGraphExecutionTestAccess;
+    friend class AsyncSource;
     /// Producer subscriptions are internal; external callers own only the row execution.
     [[nodiscard]] std::shared_ptr<SharedAsyncResult> evaluate(const AsyncCall::Ptr& node);
-    static boost::asio::awaitable<SharedRuntimeValues> runImpl(std::shared_ptr<AsyncGraphExecution> self);
-    static boost::asio::awaitable<SharedRuntimeValues> invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node);
+    static boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> runImpl(std::shared_ptr<AsyncGraphExecution> self);
+    static boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+    invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node);
     boost::asio::awaitable<void> cancelAndDrain();
     SharedAsyncResult::Strand executor;
     std::shared_ptr<const AsyncCallGraph> graph;

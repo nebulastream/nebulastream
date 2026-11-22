@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <array>
 #include <concepts>
 #include <cstdint>
@@ -23,7 +24,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/Logger.hpp> /// NOLINT(misc-include-cleaner) Public Logger facade; cleaner misattributes setupLogging.
 #include <Util/Reflection.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
@@ -92,10 +93,12 @@ TEST(RuntimeValueTest, NullableNonNullRetainsItsType)
 }
 
 #ifndef NO_ASSERT
+namespace
+{
 class RuntimeValueDeathTest : public testing::Test
 {
 public:
-    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueDeathTest.log", LogLevel::LOG_DEBUG, false); }
+    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueDeathTest.log", LogLevel::LOG_DEBUG, false); } /// NOLINT(misc-include-cleaner) Public Logger.hpp declares this facade API.
 };
 
 TEST_F(RuntimeValueDeathTest, MismatchedPayloadUndefinedAndNonNullableNullViolatePreconditions)
@@ -129,6 +132,7 @@ TEST_F(RuntimeValueDeathTest, ReadingNullPayloadViolatesPrecondition)
             });
     }
 }
+}
 #endif
 
 TEST(RuntimeValueTest, ByteOwnershipSurvivesSmallAndLargeStringMoves)
@@ -151,6 +155,7 @@ TEST(RuntimeValueTest, BorrowedViewCanMaterializeIndependentStorage)
     std::string original{"borrowed"};
     const RuntimeValueView view{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, std::string_view{original}};
     const auto owned = view.toOwned();
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) original is the nonempty borrowed fixture string
     original[0] = 'B';
     EXPECT_EQ(view.get<std::string_view>(), "Borrowed");
     EXPECT_EQ(owned.view().get<std::string_view>(), "borrowed");
@@ -172,14 +177,19 @@ TEST(RuntimeValueTest, ParsesConstantsOnceWithoutNumericPrecisionLoss)
 {
     const auto unsignedValue
         = RuntimeValue::fromLiteral(DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "18446744073709551615");
-    EXPECT_EQ(unsignedValue.view().get<uint64_t>(), std::numeric_limits<uint64_t>::max());
+    ASSERT_TRUE(unsignedValue);
+    EXPECT_EQ(unsignedValue->view().get<uint64_t>(), std::numeric_limits<uint64_t>::max());
     const auto signedValue
         = RuntimeValue::fromLiteral(DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}, "-9223372036854775808");
-    EXPECT_EQ(signedValue.view().get<int64_t>(), std::numeric_limits<int64_t>::min());
+    ASSERT_TRUE(signedValue);
+    EXPECT_EQ(signedValue->view().get<int64_t>(), std::numeric_limits<int64_t>::min());
     const DataType tiny{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE};
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(RuntimeValue::fromLiteral(tiny, "256")), ErrorCode::InvalidLiteral);
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(RuntimeValue::fromLiteral(tiny, "-1")), ErrorCode::InvalidLiteral);
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(RuntimeValue::fromLiteral(tiny, "12oops")), ErrorCode::InvalidLiteral);
+    for (const auto* const literal : {"256", "-1", "12oops"})
+    {
+        const auto result = RuntimeValue::fromLiteral(tiny, literal);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error().code(), ErrorCode::InvalidLiteral);
+    }
 }
 
 TEST(RuntimeValueTest, CheckedIntegerConversionAcceptsWidthsButNotNegativeValues)
@@ -192,7 +202,11 @@ TEST(RuntimeValueTest, CheckedIntegerConversionAcceptsWidthsButNotNegativeValues
     EXPECT_EQ(positive.view().getUnsignedInteger(), 17);
     EXPECT_EQ(large.view().getUnsignedInteger(), std::numeric_limits<uint64_t>::max());
     EXPECT_FALSE(negative.view().tryGetUnsignedInteger());
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(checkedUnsignedIntegerOption(negative.view(), "timeout")), ErrorCode::ArithmeticalError);
+    const auto result = checkedUnsignedIntegerOption(negative.view(), "timeout");
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), ErrorCode::ArithmeticalError);
+    EXPECT_EQ(checkedUnsignedIntegerOption(positive.view(), "timeout"), 17);
+    EXPECT_EQ(checkedUnsignedIntegerOption(large.view(), "timeout"), std::numeric_limits<uint64_t>::max());
 }
 
 #ifndef NO_ASSERT

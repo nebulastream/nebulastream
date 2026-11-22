@@ -23,40 +23,30 @@
 namespace NES
 {
 
-/// One layout contract for both halves of a planner-created async handoff.
-/// Construction requires identical field sets/types; order may differ. Only fields not produced by the graph are copied.
-/// The planner constructs this before creating either descriptor; the worker reconstructs the same offsets locally.
+/// Runtime copy plan for an async handoff, checked when the source is constructed.
+/// Input and output must have identical ordered schemas, including field names, types, and nullability.
+/// Unchanged fields are copied at the same offsets; exclusively owned buffers are updated in place.
 class AsyncHandoffLayout
 {
 public:
     struct CopiedField
     {
-        size_t inputOffset;
-        size_t outputOffset;
+        size_t offset;
         size_t size;
     };
 
-    AsyncHandoffLayout(const AsyncCallGraph& graph, Schema<QualifiedUnboundField, Ordered> outputSchema);
+    AsyncHandoffLayout(const AsyncCallGraph& graph, const Schema<QualifiedUnboundField, Ordered>& outputSchema);
 
-    [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getInputSchema() const { return inputSchema; }
-
-    [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getOutputSchema() const { return outputSchema; }
+    [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getSchema() const { return schema; }
 
     [[nodiscard]] const std::vector<CopiedField>& getCopiedFields() const { return copiedFields; }
 
-    [[nodiscard]] size_t getInputRowSize() const { return inputRowSize; }
-
-    [[nodiscard]] size_t getOutputRowSize() const { return outputRowSize; }
-
-    [[nodiscard]] bool matchesInputLayout() const { return matchingLayouts; }
+    [[nodiscard]] size_t getRowSize() const { return rowSize; }
 
 private:
-    Schema<QualifiedUnboundField, Ordered> inputSchema;
-    Schema<QualifiedUnboundField, Ordered> outputSchema;
+    Schema<QualifiedUnboundField, Ordered> schema;
     std::vector<CopiedField> copiedFields;
-    size_t inputRowSize = 0;
-    size_t outputRowSize = 0;
-    bool matchingLayouts = true;
+    size_t rowSize = 0;
 };
 
 }

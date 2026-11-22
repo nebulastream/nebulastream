@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <string_view>
 #include <utility>
 #include <ErrorHandling.hpp>
@@ -24,10 +25,8 @@ namespace NES
 
 /// Validate before narrowing milliseconds, converting to clock ticks, or adding to the current time.
 /// Zero is allowed; functions whose options must be positive should reject it themselves.
-[[nodiscard]] inline std::chrono::steady_clock::time_point checkedSteadyDeadline(
-    const uint64_t millis,
-    const std::string_view operation,
-    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now())
+[[nodiscard]] inline std::expected<std::chrono::steady_clock::time_point, Exception>
+checkedSteadyDeadline(const uint64_t millis, const std::string_view operation, const std::chrono::steady_clock::time_point now)
 {
     using Clock = std::chrono::steady_clock;
     using Milliseconds = std::chrono::milliseconds;
@@ -37,11 +36,17 @@ namespace NES
         available -= now.time_since_epoch();
     }
     const auto maxMillis = std::chrono::duration_cast<Milliseconds>(available).count();
-    if (!std::in_range<Milliseconds::rep>(millis) || millis > static_cast<uint64_t>(maxMillis))
+    if (!std::in_range<Milliseconds::rep>(millis) || std::cmp_greater(millis, maxMillis))
     {
-        throw ArithmeticalError("{} duration {} ms exceeds the representable steady-clock deadline", operation, millis);
+        return std::unexpected(ArithmeticalError("{} duration {} ms exceeds the representable steady-clock deadline", operation, millis));
     }
     return now + std::chrono::duration_cast<Clock::duration>(Milliseconds{static_cast<Milliseconds::rep>(millis)});
+}
+
+[[nodiscard]] inline std::expected<std::chrono::steady_clock::time_point, Exception>
+checkedSteadyDeadline(const uint64_t millis, const std::string_view operation)
+{
+    return checkedSteadyDeadline(millis, operation, std::chrono::steady_clock::now());
 }
 
 }

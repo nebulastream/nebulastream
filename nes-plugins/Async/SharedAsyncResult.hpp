@@ -14,12 +14,12 @@
 #pragma once
 
 #include <chrono>
-#include <exception>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
@@ -36,33 +36,34 @@ class SharedAsyncResult final : public std::enable_shared_from_this<SharedAsyncR
 {
 public:
     using Strand = boost::asio::strand<boost::asio::io_context::executor_type>;
-    using Factory = std::function<boost::asio::awaitable<SharedRuntimeValues>()>;
+    using Factory = std::function<boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>()>;
 
     SharedAsyncResult(Strand executor, Factory factory);
-    [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> get();
-    [[nodiscard]] boost::asio::awaitable<SharedRuntimeValues> getUntil(std::chrono::steady_clock::time_point deadline);
+    [[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> get();
+    [[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> getUntil(std::chrono::steady_clock::time_point deadline);
     /// Join started work without starting a lazy producer, ignoring its outcome. Use a non-cancelled cleanup scope.
     [[nodiscard]] boost::asio::awaitable<void> join();
     void cancel();
     [[nodiscard]] bool finished() const;
 
 private:
-    static boost::asio::awaitable<SharedRuntimeValues>
-    wait(std::shared_ptr<SharedAsyncResult> self, std::optional<std::chrono::steady_clock::time_point> deadline);
+    [[nodiscard]] static boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> wait(
+        std::shared_ptr<SharedAsyncResult> self, std::optional<std::chrono::steady_clock::time_point> deadline, bool cleanup);
+    [[nodiscard]] static boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> wait(
+        std::shared_ptr<SharedAsyncResult> self, std::optional<std::chrono::steady_clock::time_point> deadline);
     static boost::asio::awaitable<void> joinImpl(std::shared_ptr<SharedAsyncResult> self);
     void start();
     void cancelImpl();
-    void complete(std::exception_ptr error, SharedRuntimeValues result);
-    [[nodiscard]] SharedRuntimeValues read() const;
+    void complete(AsyncResult<SharedRuntimeValues> outcome);
+    [[nodiscard]] AsyncResult<SharedRuntimeValues> read() const;
 
     Strand executor;
     Factory factory;
     boost::asio::cancellation_signal producerCancellation;
     bool started = false;
     bool done = false;
-    std::chrono::steady_clock::time_point completedAt{};
-    std::optional<SharedRuntimeValues> result;
-    std::exception_ptr failure;
+    std::chrono::steady_clock::time_point completedAt;
+    std::optional<AsyncResult<SharedRuntimeValues>> outcome;
     std::vector<std::shared_ptr<boost::asio::steady_timer>> waiters;
 };
 

@@ -13,46 +13,137 @@
 */
 #include <AsyncGraphExecution.hpp>
 
+#include <chrono>
+#include <cstddef>
+#include <expected>
+#include <variant>
 #include <algorithm>
 #include <exception>
+#include <memory>
 #include <optional>
-#include <type_traits>
-#include <unordered_set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/RuntimeValue.hpp>
+#include <SharedAsyncResult.hpp>
+#include <Sources/AsyncCallGraph.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; diagnostics misattribute error_code.
+#include <Util/Logger/Logger.hpp>
+#include <boost/asio/as_tuple.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/deferred.hpp>
-#include <boost/asio/error.hpp>
-#include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/co_spawn.hpp> /// NOLINT(misc-include-cleaner) Public Asio provider; diagnostics misattribute co_spawn overloads.
+#include <boost/asio/redirect_error.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
-#include <boost/system/system_error.hpp>
 #include <ErrorHandling.hpp>
+#include <Sources/AsyncError.hpp>
 
 namespace NES
 {
 namespace
 {
-using Operation = decltype(boost::asio::co_spawn(
-    std::declval<SharedAsyncResult::Strand>(), std::declval<boost::asio::awaitable<SharedRuntimeValues>>(), boost::asio::deferred));
+using Cell = std::shared_ptr<SharedAsyncResult>;
 
-boost::asio::awaitable<void> waitAll(std::vector<Operation> operations)
+struct WaitState
 {
-    if (operations.empty())
+    explicit WaitState(SharedAsyncResult::Strand strand, size_t size) : changed(std::move(strand)), remaining(size), values(size)
     {
-        co_return;
+        changed.expires_at(std::chrono::steady_clock::time_point::max());
     }
-    auto [order, failures, values] = co_await boost::asio::experimental::make_parallel_group(std::move(operations))
-                                         .async_wait(boost::asio::experimental::wait_for_one_error(), boost::asio::use_awaitable);
-    /// Completion order preserves the initiating error instead of replacing it with a cancelled sibling's error.
-    for (const auto index : order)
+
+    boost::asio::steady_timer changed;
+    size_t remaining;
+    std::vector<std::optional<SharedRuntimeValues>> values;
+    std::optional<AsyncError> failure;
+};
+
+boost::asio::awaitable<AsyncResult<std::vector<SharedRuntimeValues>>> waitCells(SharedAsyncResult::Strand executor, std::vector<Cell> cells)
+{
+    if (cells.empty())
     {
-        if (failures[index])
+        co_return std::vector<SharedRuntimeValues>{};
+    }
+    const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
+    co_await boost::asio::this_coro::throw_if_cancelled(false);
+    auto state = std::make_shared<WaitState>(executor, cells.size());
+    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) callbacks retain equally sized cells and values
+    for (size_t i = 0; i < cells.size(); ++i)
+    {
+        boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) Declared by the public boost/asio/co_spawn.hpp provider.
+            executor,
+            cells[i]->get(),
+            [state, cells, i](std::exception_ptr exception, AsyncResult<SharedRuntimeValues> result)
+            {
+                if (exception)
+                {
+                    /// Exceptional completion is only a terminal infrastructure fallback; operational failures are returned as values.
+                    if (!state->failure)
+                    {
+                        state->failure = AsyncError{
+                            .exception = IOError("Unexpected async producer task failure"), .kind = AsyncError::Type::Permanent};
+                        for (size_t sibling = 0; sibling < cells.size(); ++sibling)
+                        {
+                            if (sibling != i)
+                            {
+                                cells[sibling]->cancel();
+                            }
+                        }
+                    }
+                }
+                else if (!result && !state->failure)
+                {
+                    state->failure = result.error();
+                    for (size_t sibling = 0; sibling < cells.size(); ++sibling)
+                    {
+                        if (sibling != i)
+                        {
+                            cells[sibling]->cancel();
+                        }
+                    }
+                }
+                else if (result)
+                {
+                    state->values[i] = std::move(*result);
+                }
+                --state->remaining;
+                state->changed.cancel();
+            });
+    }
+    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    while (state->remaining != 0U)
+    {
+        state->changed.expires_at(std::chrono::steady_clock::time_point::max());
+        boost::system::error_code error; /// NOLINT(misc-include-cleaner) Declared by the public boost/system/error_code.hpp provider.
+        co_await state->changed.async_wait(boost::asio::redirect_error(boost::asio::use_awaitable, error));
+        if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
         {
-            std::rethrow_exception(failures[index]);
+            if (!state->failure)
+            {
+                state->failure = AsyncError::cancelled();
+            }
+            for (const auto& cell : cells)
+            {
+                cell->cancel();
+            }
         }
     }
+    co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
+    if (state->failure)
+    {
+        co_return std::unexpected(std::move(*state->failure));
+    }
+    std::vector<SharedRuntimeValues> values;
+    values.reserve(state->values.size());
+    for (auto& value : state->values)
+    {
+        INVARIANT(value.has_value(), "A successfully completed async cell must have a value");
+        values.push_back(std::move(*value));
+    }
+    co_return values;
 }
 }
 
@@ -62,7 +153,7 @@ AsyncGraphExecution::AsyncGraphExecution(
 {
 }
 
-boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::run()
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> AsyncGraphExecution::run()
 {
     return runImpl(shared_from_this());
 }
@@ -79,7 +170,9 @@ std::shared_ptr<SharedAsyncResult> AsyncGraphExecution::evaluate(const AsyncCall
         "Producer is not part of this async graph's reachable definitions");
     if (cancelled)
     {
-        throw boost::system::system_error{boost::asio::error::operation_aborted};
+        return std::make_shared<SharedAsyncResult>(
+            executor,
+            []() -> boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> { co_return std::unexpected(AsyncError::cancelled()); });
     }
     auto cell = std::make_shared<SharedAsyncResult>(executor, [self = weak_from_this(), node] { return invokeNode(self.lock(), node); });
     cells.emplace(node, cell);
@@ -92,37 +185,42 @@ void AsyncGraphExecution::cancel()
     cancelled = true;
     for (const auto& [node, cell] : cells)
     {
+        static_cast<void>(node);
         cell->cancel();
     }
 }
 
-boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node)
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node)
 {
     if (!self || self->cancelled)
     {
-        throw boost::system::system_error{boost::asio::error::operation_aborted};
+        co_return std::unexpected(AsyncError::cancelled());
     }
-    std::vector<Operation> dependencies;
-    std::unordered_map<AsyncCall::Ptr, std::shared_ptr<SharedAsyncResult>> producers;
+    std::vector<Cell> dependencies;
+    std::unordered_map<AsyncCall::Ptr, size_t> producerIndices;
     for (const auto& argument : node->getArguments())
     {
         if (const auto* reference = std::get_if<AsyncResultReference>(&argument))
         {
-            const auto& producer = reference->getProducer();
-            if (!producers.contains(producer))
+            auto producer = reference->getProducer();
+            if (!producerIndices.contains(producer))
             {
-                auto cell = self->evaluate(producer);
-                producers.emplace(producer, cell);
-                dependencies.push_back(boost::asio::co_spawn(self->executor, cell->get(), boost::asio::deferred));
+                producerIndices.emplace(producer, dependencies.size());
+                dependencies.push_back(self->evaluate(producer));
             }
         }
     }
-    /// Start all lazy dependencies together so independent calls can overlap.
-    co_await waitAll(std::move(dependencies));
+    auto dependencyResults = co_await waitCells(self->executor, dependencies);
+    if (!dependencyResults)
+    {
+        co_return std::unexpected(std::move(dependencyResults.error()));
+    }
     if (self->cancelled)
     {
-        throw boost::system::system_error{boost::asio::error::operation_aborted};
+        co_return std::unexpected(AsyncError::cancelled());
     }
+
     std::vector<RuntimeValue> arguments;
     for (const auto& argument : node->getArguments())
     {
@@ -144,20 +242,26 @@ boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::invokeNode(std:
         else
         {
             const auto& reference = std::get<AsyncResultReference>(argument);
-            /// waitAll has completed these producers; get() reads their cached results.
-            const auto values = co_await producers.at(reference.getProducer())->get();
-            arguments.push_back(values[reference.getOutputIndex()].toOwned());
+            /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) dependency map and output handles are validated
+            const auto& producerValues = (*dependencyResults)[producerIndices.at(reference.getProducer())];
+            arguments.push_back(producerValues[reference.getOutputIndex()].toOwned());
+            /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
         }
     }
-    auto returnValues = co_await self->invoke(node, SharedRuntimeValues{std::move(arguments)});
+    auto result = co_await self->invoke(node, SharedRuntimeValues{std::move(arguments)});
+    if (!result)
+    {
+        co_return std::unexpected(std::move(result.error()));
+    }
     INVARIANT(
-        returnValues.size() == node->getResultTypes().size(),
+        result->size() == node->getResultTypes().size(),
         "async function {} produced {} values, but declares {}",
         node->getFunctionType(),
-        returnValues.size(),
+        result->size(),
         node->getResultTypes().size());
-    IF_INVARIANT(for (size_t index = 0; index < returnValues.size(); ++index) {
-        const auto value = returnValues[index];
+    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-simplify-boolean-expr) checked bounds; explicit type/nullability contract
+    IF_INVARIANT(for (size_t index = 0; index < result->size(); ++index) {
+        const auto value = (*result)[index];
         const auto expected = node->getResultTypes()[index];
         INVARIANT(
             value.getDataType() == expected && (!value.isNull() || expected.nullable),
@@ -168,7 +272,8 @@ boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::invokeNode(std:
             value.isNull(),
             expected);
     })
-    co_return returnValues;
+    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-simplify-boolean-expr)
+    co_return std::move(*result);
 }
 
 boost::asio::awaitable<void> AsyncGraphExecution::cancelAndDrain()
@@ -176,72 +281,74 @@ boost::asio::awaitable<void> AsyncGraphExecution::cancelAndDrain()
     cancel();
     for (const auto& [node, cell] : cells)
     {
+        static_cast<void>(node);
         co_await cell->join();
     }
 }
 
-boost::asio::awaitable<SharedRuntimeValues> AsyncGraphExecution::runImpl(std::shared_ptr<AsyncGraphExecution> self)
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> AsyncGraphExecution::runImpl(std::shared_ptr<AsyncGraphExecution> self)
 {
     PRECONDITION(self->executor.running_in_this_thread(), "Run async graph execution on its strand");
     PRECONDITION(!self->runStarted, "A row's async graph execution can only be run once");
     self->runStarted = true;
-    std::optional<SharedRuntimeValues> result;
-    std::exception_ptr failure;
-    try
+    const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
+    co_await boost::asio::this_coro::throw_if_cancelled(false);
+    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     {
-        std::vector<Operation> roots;
-        std::unordered_map<AsyncCall::Ptr, std::shared_ptr<SharedAsyncResult>> producers;
-        for (const auto& output : self->graph->getOutputs())
+        co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
+        co_return std::unexpected(AsyncError::cancelled());
+    }
+
+    std::vector<Cell> roots;
+    std::unordered_map<AsyncCall::Ptr, size_t> indices;
+    for (const auto& output : self->graph->getOutputs())
+    {
+        const auto& producer = output.result.getProducer();
+        if (!indices.contains(producer))
         {
-            const auto& producer = output.result.getProducer();
-            if (!producers.contains(producer))
-            {
-                auto cell = self->evaluate(producer);
-                producers.emplace(producer, cell);
-                roots.push_back(boost::asio::co_spawn(self->executor, cell->get(), boost::asio::deferred));
-            }
+            indices.emplace(producer, roots.size());
+            roots.push_back(self->evaluate(producer));
         }
-        co_await waitAll(std::move(roots));
+    }
+    auto rootResults = co_await waitCells(self->executor, roots);
+    AsyncResult<SharedRuntimeValues> result;
+    if (!rootResults)
+    {
+        result = std::unexpected(std::move(rootResults.error()));
+    }
+    else if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
+    {
+        result = std::unexpected(AsyncError::cancelled());
+    }
+    else
+    {
         std::vector<RuntimeValue> values;
         for (const auto& output : self->graph->getOutputs())
         {
-            /// waitAll has completed these producers; get() reads their cached results.
-            const auto outputs = co_await producers.at(output.result.getProducer())->get();
-            values.push_back(outputs[output.result.getOutputIndex()].toOwned());
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) root map and output handles are validated
+            values.push_back((*rootResults)[indices.at(output.result.getProducer())][output.result.getOutputIndex()].toOwned());
         }
         result = SharedRuntimeValues{std::move(values)};
     }
-    catch (...) /// NOLINT(no-raw-catch-all) preserve the initiating error across shielded cleanup
+    if (!result)
     {
-        failure = std::current_exception();
-    }
-    if (!failure && (co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    {
-        failure = std::make_exception_ptr(boost::system::system_error{boost::asio::error::operation_aborted});
-    }
-    if (failure)
-    {
-        /// Shield only cleanup, not the caller's subsequent work. Preserve its cancellation state/filters.
-        const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
-        co_await boost::asio::this_coro::throw_if_cancelled(false);
-        try
+        /// Cancel and join every started producer before releasing row state; keep the initiating error.
+        const auto& failure = result.error();
+        const auto [cleanupFailure] = co_await boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) Public co_spawn.hpp provider.
+            self->executor,
+            self->cancelAndDrain(),
+            boost::asio::bind_cancellation_slot(boost::asio::cancellation_slot{}, boost::asio::as_tuple(boost::asio::use_awaitable)));
+        if (cleanupFailure)
         {
-            co_await boost::asio::co_spawn(
-                self->executor,
-                self->cancelAndDrain(),
-                boost::asio::bind_cancellation_slot(boost::asio::cancellation_slot{}, boost::asio::use_awaitable));
-        }
-        catch (...) /// NOLINT(no-raw-catch-all) preserve the initiating error and restore caller policy even if cleanup initiation fails
-        {
+            NES_WARNING("Async cleanup failed unexpectedly; preserving the initiating error");
         }
         co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
-        std::rethrow_exception(failure);
+        co_return std::unexpected(failure);
     }
-    INVARIANT(result.has_value(), "Successful async graph execution must produce a result");
     IF_INVARIANT(for (const auto& [node, cell] : self->cells) {
         INVARIANT(cell->finished(), "Successful async graph execution left function {} unfinished", node->getFunctionType());
     })
-    co_return std::move(*result);
+    co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
+    co_return result;
 }
-
 }

@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+/// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
 #include <any>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -35,28 +37,40 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
+#include <Sources/PreparedAsyncCall.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Any.hpp>
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/Logger.hpp> /// NOLINT(misc-include-cleaner) Public Logger facade; cleaner misattributes setupLogging.
 #include <Util/UUID.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/redirect_error.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; checker misses direct type use
 #include <gtest/gtest.h>
-#include <AsyncFunctionRegistry.hpp>
+#include <nautilus/val.hpp> /// NOLINT(misc-include-cleaner) Installed public Nautilus val provider; checker misattributes val uses
 #include <AsyncSource.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -64,14 +78,121 @@
 
 namespace NES
 {
-namespace
-{
 using RowSchema = Schema<UnqualifiedUnboundField, Ordered>;
 using Evaluate = std::function<SharedRuntimeValues(int64_t)>;
+
+namespace
+{
+struct RowInstrumentation
+{
+    std::atomic<size_t> preparations{0};
+    std::atomic<size_t> attempts{0};
+    std::atomic<size_t> maximumPreparationsPerContext{0};
+};
+
+struct RowOperatorState
+{
+    size_t preparations = 0;
+    size_t attempts = 0;
+};
+
+class PreparedRowCall final : public PreparedAsyncCall
+{
+public:
+    PreparedRowCall(
+        Evaluate evaluate,
+        bool suspend,
+        int64_t id,
+        std::shared_ptr<RowOperatorState> state,
+        std::shared_ptr<RowInstrumentation> instrumentation)
+        : evaluate(std::move(evaluate)), suspend(suspend), id(id), state(std::move(state)), instrumentation(std::move(instrumentation))
+    {
+    }
+
+    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> executeAttempt() override
+    {
+        if (suspend)
+        {
+            boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
+            timer.expires_after(std::chrono::milliseconds{4 - (id % 5)});
+            boost::system::error_code error; /// NOLINT(misc-include-cleaner) error_code is declared by public boost/system/error_code.hpp.
+            co_await timer.async_wait(boost::asio::redirect_error(boost::asio::use_awaitable, error));
+            if (error == boost::asio::error::operation_aborted)
+            {
+                co_return std::unexpected(AsyncError::cancelled());
+            }
+            if (error)
+            {
+                co_return std::unexpected(
+                    AsyncError{
+                        .exception = IOError("Buffer-reuse test timer failed: {}", error.message()), .kind = AsyncError::Type::Permanent});
+            }
+        }
+        ++state->attempts;
+        ++instrumentation->attempts;
+        co_return evaluate(id);
+    }
+
+private:
+    Evaluate evaluate;
+    bool suspend;
+    int64_t id;
+    std::shared_ptr<RowOperatorState> state;
+    std::shared_ptr<RowInstrumentation> instrumentation;
+};
+
+/// In-process source fixture. The callback is deliberately not a wire format.
+struct RowOperatorConfig
+{
+    std::string type;
+    DataType resultType;
+    Evaluate evaluate;
+    bool suspend = false;
+    std::shared_ptr<RowInstrumentation> instrumentation = std::make_shared<RowInstrumentation>();
+
+    [[nodiscard]] std::string_view getType() const { return type; }
+
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return {{Identifier::parse("OUT0"), resultType}}; }
+
+    [[nodiscard]] RowOperatorConfig withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>>
+    prepare(AsyncExecutionContext& context, SharedRuntimeValues arguments) const
+    {
+        PRECONDITION(arguments.size() == 1, "Buffer-reuse operator expects one row ID");
+        auto state = context.getSharedSlotState<RowOperatorState>();
+        ++state->preparations;
+        ++instrumentation->preparations;
+        auto maximum = instrumentation->maximumPreparationsPerContext.load();
+        while (maximum < state->preparations
+               && !instrumentation->maximumPreparationsPerContext.compare_exchange_weak(maximum, state->preparations))
+        {
+        }
+        /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) argument count is checked at this helper's entry
+        return std::unique_ptr<PreparedAsyncCall>{
+            std::make_unique<PreparedRowCall>(evaluate, suspend, arguments[0].get<int64_t>(), std::move(state), instrumentation)};
+        /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    }
+};
+}
+
+template <>
+struct Reflector<RowOperatorConfig>
+{
+    Reflected operator()(const RowOperatorConfig&, const ReflectionContext&) const
+    {
+        throw CannotSerialize("The in-process buffer-reuse test operator is not a wire format");
+    }
+};
+
+static_assert(AsyncOperatorConcept<RowOperatorConfig>);
+
+namespace
+{
 const DataType INT64{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
 const DataType BYTES{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
 
-RowSchema schema(const DataType result, bool text = false)
+RowSchema schema(const DataType result, bool text)
 {
     std::vector<UnqualifiedUnboundField> fields{
         UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
@@ -84,55 +205,23 @@ RowSchema schema(const DataType result, bool text = false)
     return RowSchema{std::move(fields)};
 }
 
-class PreparedRowCall final : public PreparedAsyncCall
+RowSchema schema(const DataType result)
 {
-public:
-    PreparedRowCall(Evaluate evaluate, bool suspend, int64_t id) : evaluate(std::move(evaluate)), suspend(suspend), id(id) { }
-
-    boost::asio::awaitable<SharedRuntimeValues> executeAttempt() override
-    {
-        if (suspend)
-        {
-            boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
-            timer.expires_after(std::chrono::milliseconds{4 - id % 5});
-            co_await timer.async_wait(boost::asio::use_awaitable);
-        }
-        co_return evaluate(id);
-    }
-
-private:
-    Evaluate evaluate;
-    bool suspend;
-    int64_t id;
-};
-
-class RowFunction final : public AsyncFunction
-{
-public:
-    RowFunction(Evaluate evaluate, bool suspend) : evaluate(std::move(evaluate)), suspend(suspend) { }
-
-    std::unique_ptr<PreparedAsyncCall> prepare(SharedRuntimeValues arguments) override
-    {
-        return std::make_unique<PreparedRowCall>(evaluate, suspend, arguments[0].get<int64_t>());
-    }
-
-private:
-    Evaluate evaluate;
-    bool suspend;
-};
+    return schema(result, false);
+}
 
 class RejectingOutputProvider final : public AbstractBufferProvider
 {
 public:
     explicit RejectingOutputProvider(std::shared_ptr<AbstractBufferProvider> provider) : provider(std::move(provider)) { }
 
-    BufferManagerType getBufferManagerType() const override { return provider->getBufferManagerType(); }
+    [[nodiscard]] BufferManagerType getBufferManagerType() const override { return provider->getBufferManagerType(); }
 
-    size_t getBufferSize() const override { return provider->getBufferSize(); }
+    [[nodiscard]] size_t getBufferSize() const override { return provider->getBufferSize(); }
 
-    size_t getNumOfPooledBuffers() const override { return provider->getNumOfPooledBuffers(); }
+    [[nodiscard]] size_t getNumOfPooledBuffers() const override { return provider->getNumOfPooledBuffers(); }
 
-    size_t getNumOfUnpooledBuffers() const override { return provider->getNumOfUnpooledBuffers(); }
+    [[nodiscard]] size_t getNumOfUnpooledBuffers() const override { return provider->getNumOfUnpooledBuffers(); }
 
     TupleBuffer getBufferBlocking() override
     {
@@ -168,12 +257,17 @@ private:
 class AsyncSourceBufferReuseTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestSuite() { Logger::setupLogging("AsyncSourceBufferReuseTest.log", LogLevel::LOG_DEBUG, false); }
+    static void SetUpTestSuite()
+    {
+        /// NOLINTNEXTLINE(misc-include-cleaner) Public Logger.hpp declares this facade API.
+        Logger::setupLogging("AsyncSourceBufferReuseTest.log", LogLevel::LOG_DEBUG, false);
+    }
 
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        provider = BufferManager::create(1024 * 1024, 0.1, BufferAlignment{64}, 4096, std::make_shared<NesDefaultMemoryAllocator>());
+        provider = BufferManager::create(
+            size_t{1024} * size_t{1024}, 0.1, BufferAlignment{64}, 4096, std::make_shared<NesDefaultMemoryAllocator>());
     }
 
     void TearDown() override
@@ -188,25 +282,37 @@ public:
         Testing::BaseUnitTest::TearDown();
     }
 
+    void start(RowSchema input, RowSchema output, DataType resultType, Evaluate evaluate)
+    {
+        start(std::move(input), std::move(output), resultType, std::move(evaluate), false, {});
+    }
+
+    void start(RowSchema input, RowSchema output, DataType resultType, Evaluate evaluate, bool suspend)
+    {
+        start(std::move(input), std::move(output), resultType, std::move(evaluate), suspend, {});
+    }
+
     void start(
         RowSchema input,
         RowSchema output,
         DataType resultType,
         Evaluate evaluate,
-        bool suspend = false,
-        std::shared_ptr<AbstractBufferProvider> outputProvider = {})
+        bool suspend,
+        std::shared_ptr<AbstractBufferProvider> outputProvider)
     {
         inputSchema = std::move(input);
         outputSchema = std::move(output);
         const auto channel = std::make_shared<HandoffChannel>(4);
         const auto functionType = "BufferReuse_" + UUIDToString(generateUUID());
-        ASSERT_TRUE(
-            AsyncFunctionRegistry::instance().addEntry(
-                functionType,
-                [evaluate = std::move(evaluate), suspend](AsyncFunctionRegistryArguments)
-                { return std::make_unique<RowFunction>(evaluate, suspend); }));
+        instrumentation = std::make_shared<RowInstrumentation>();
+        AsyncOperator asyncOperator = RowOperatorConfig{
+            .type = functionType,
+            .resultType = resultType,
+            .evaluate = std::move(evaluate),
+            .suspend = suspend,
+            .instrumentation = instrumentation};
         AsyncCallGraphBuilder builder{inputSchema};
-        const auto call = builder.call(functionType, {builder.input(QualifiedIdentifier::parse("ID"))}, {resultType});
+        const auto call = builder.call(std::move(asyncOperator), {builder.input(QualifiedIdentifier::parse("ID"))});
         builder.exportOutput(call->output(0), QualifiedIdentifier::parse("RESULT"));
         const AsyncSourceConfig config{.channel = channel, .calls = builder.build(), .maxConcurrency = 8, .maxRetries = 0};
         const auto descriptor = catalog.getAnonymousSource(
@@ -231,13 +337,19 @@ public:
         {
             record.write(QualifiedIdentifier::parse(name), toVarVal(value.view()));
         }
-        const RecordBuffer target{BorrowedNautilusBuffer::from(nautilus::val<TupleBuffer*>{&buffer})};
-        auto index = nautilus::val<uint64_t>{row};
+        const RecordBuffer target{BorrowedNautilusBuffer::from(
+            nautilus::val<TupleBuffer*>{&buffer})}; /// NOLINT(misc-include-cleaner) nautilus::val is declared by public nautilus/val.hpp.
+        auto index = nautilus::val<uint64_t>{row}; /// NOLINT(misc-include-cleaner) nautilus::val is declared by public nautilus/val.hpp.
         const auto result = ref->writeRecord(index, target, record, nautilus::val<AbstractBufferProvider*>{provider.get()});
         ASSERT_TRUE(static_cast<bool>(result.successful));
     }
 
-    RuntimeValue read(const TupleBuffer& buffer, size_t row, const std::string& name, DataType type, bool original = false)
+    RuntimeValue read(const TupleBuffer& buffer, size_t row, const std::string& name, DataType type)
+    {
+        return read(buffer, row, name, type, false);
+    }
+
+    RuntimeValue read(const TupleBuffer& buffer, size_t row, const std::string& name, DataType type, bool original)
     {
         const auto ref = LowerSchemaProvider::lowerSchema(
             provider->getBufferSize(), original ? inputSchema : outputSchema, MemoryLayoutType::ROW_LAYOUT);
@@ -247,7 +359,9 @@ public:
         return fromVarVal(ref->readRecord({field}, target, index).read(field), type);
     }
 
-    TupleBuffer input(size_t rows, bool text = false)
+    TupleBuffer input(size_t rows) { return input(rows, false); }
+
+    TupleBuffer input(size_t rows, bool text)
     {
         auto buffer = provider->getBufferBlocking();
         for (size_t row = 0; row < rows; ++row)
@@ -269,9 +383,9 @@ public:
         return buffer;
     }
 
-    void push(TupleBuffer buffer) { ASSERT_EQ(sink->tryPush(buffer), HandoffChannel::PushResult::PUSHED); }
+    void push(const TupleBuffer buffer) const { ASSERT_EQ(sink->tryPush(buffer), HandoffChannel::PushResult::PUSHED); }
 
-    TupleBuffer next()
+    TupleBuffer next() const
     {
         TupleBuffer output;
         const auto result = source->fillTupleBuffer(output, {});
@@ -292,6 +406,7 @@ public:
     std::shared_ptr<BufferManager> provider;
     std::unique_ptr<HandoffChannel::Sender> sink;
     std::unique_ptr<AsyncSource> source;
+    std::shared_ptr<RowInstrumentation> instrumentation;
 };
 
 TEST_F(AsyncSourceBufferReuseTest, ReusesExclusiveParentWithoutAllocatingAndPreservesMetadata)
@@ -344,28 +459,20 @@ TEST_F(AsyncSourceBufferReuseTest, SharedParentIsCopiedWithoutChangingTheOtherCo
     }
 }
 
-TEST_F(AsyncSourceBufferReuseTest, DifferentFieldOrderUsesTheCopyPath)
+#ifndef NO_ASSERT
+TEST_F(AsyncSourceBufferReuseTest, RejectsDifferentFieldOrder)
 {
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     const RowSchema reordered{
         UnqualifiedUnboundField{Identifier::parse("RESULT"), INT64},
         UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
         UnqualifiedUnboundField{Identifier::parse("KEEP"), INT64}};
-    start(schema(INT64), reordered, INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 10); });
-    auto buffer = input(8);
-    const auto* address = buffer.getAvailableMemoryArea().data();
-    push(std::move(buffer));
-    const auto output = next();
-    EXPECT_NE(output.getAvailableMemoryArea().data(), address);
-    for (size_t row = 0; row < 8; ++row)
-    {
-        const auto id = read(output, row, "ID", INT64);
-        const auto keep = read(output, row, "KEEP", INT64);
-        const auto result = read(output, row, "RESULT", INT64);
-        EXPECT_EQ(id.view().get<int64_t>(), row);
-        EXPECT_EQ(keep.view().get<int64_t>(), 12345);
-        EXPECT_EQ(result.view().get<int64_t>(), row + 10);
-    }
+    EXPECT_DEATH(
+        start(schema(INT64), reordered, INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 10); }),
+        "Precondition violated.*identical ordered");
 }
+#endif
 
 TEST_F(AsyncSourceBufferReuseTest, ReusesParentAndPreservesExistingVariablePayloadsForLargeBinaryResults)
 {
@@ -576,6 +683,9 @@ TEST_F(AsyncSourceBufferReuseTest, ConcurrentRowsAndBuffersAreReusedInHandoffOrd
             EXPECT_EQ(value.view().get<int64_t>(), row * 7);
         }
     }
+    EXPECT_EQ(instrumentation->preparations.load(), 12);
+    EXPECT_EQ(instrumentation->attempts.load(), 12);
+    EXPECT_GT(instrumentation->maximumPreparationsPerContext.load(), 1);
 }
 
 TEST_F(AsyncSourceBufferReuseTest, FixedSizeNullableResultsOverwriteOnlyTheirOwnSlots)
@@ -647,6 +757,7 @@ TEST_F(AsyncSourceBufferReuseTest, ConcurrentParentsNeverAppendToTheirSharedChil
     }
     {
         std::vector<std::jthread> writers;
+        writers.reserve(parents.size());
         for (auto& parent : parents)
         {
             writers.emplace_back(
@@ -672,3 +783,5 @@ TEST_F(AsyncSourceBufferReuseTest, ConcurrentParentsNeverAppendToTheirSharedChil
 }
 }
 }
+
+/// NOLINTEND(readability-magic-numbers)

@@ -21,32 +21,33 @@
 #include <string>
 #include <string_view>
 #include <typeindex>
-#include <typeinfo>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include <DataTypes/DataType.hpp>
-#include <Functions/AsyncLogicalFunction.hpp>
+#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/AsyncLogicalOperator.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/Reorderer.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
-#include <Rules/Static/PredicatePushdownRule.hpp>
-#include <Rules/Static/ProjectionPushdownRule.hpp>
-#include <Rules/Static/RedundantProjectionRemovalRule.hpp>
+#include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Schema/Field.hpp>
-#include <Traits/AsyncExecutionTrait.hpp>
-#include <Traits/TraitSet.hpp>
-#include <Util/PlanRenderer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -57,369 +58,382 @@ namespace NES
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> AsyncFunctionLiftingRule::needs() const
 {
-    return {typeid(SemanticAnalysisBarrier)};
+    return {typeid(TypeInferenceRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> AsyncFunctionLiftingRule::neededBy() const
 {
-    return {typeid(FixedPlanStructureBarrier)};
+    return {typeid(SemanticAnalysisBarrier)};
 }
 
-/// The pushdown rules rebuild projections from scratch and would drop the AsyncExecutionTrait.
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> AsyncFunctionLiftingRule::wants() const
 {
-    return {typeid(PredicatePushdownRule), typeid(ProjectionPushdownRule), typeid(RedundantProjectionRemovalRule)};
+    /// In particular, never depend on a pushdown: those require SemanticAnalysisBarrier.
+    return {};
 }
 
 namespace
 {
 using UnboundProjection = ProjectionLogicalOperator::UnboundProjection;
-using ExpressionSubstitutions = std::vector<std::pair<LogicalFunction, LogicalFunction>>;
-using NamedExpressions = std::vector<std::pair<LogicalFunction, Identifier>>;
-
-bool isAsync(const LogicalFunction& function)
-{
-    return function.tryGetAs<AsyncLogicalFunction>().has_value();
-}
+/// Parser expansion of IN/BETWEEN copies one written occurrence into several expression nodes.
+/// Resolve those copies to one produced field only within their evaluation region, never by
+/// expression structure, arguments, types or text, and never across clauses/operators.
+using RegionOutputs = std::unordered_map<AsyncInvocationId, Identifier>;
 
 bool containsAsync(const LogicalFunction& function)
 {
-    return std::ranges::any_of(BFSRange(function), isAsync);
+    return std::ranges::any_of(
+        BFSRange(function), [](const LogicalFunction& node) { return node.tryGetAs<AsyncCallLogicalFunction>().has_value(); });
 }
 
-/// What the async stage can read without evaluating anything.
+bool subtreeHasAsyncWork(const LogicalOperator& root)
+{
+    std::vector<LogicalOperator> pending{root};
+    std::unordered_set<LogicalOperator> visited;
+    while (!pending.empty())
+    {
+        auto op = std::move(pending.back());
+        pending.pop_back();
+        if (!visited.insert(op).second)
+        {
+            continue;
+        }
+        if (op.tryGetAs<AsyncLogicalOperator>())
+        {
+            return true;
+        }
+        if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
+        {
+            if (std::ranges::any_of(projection.value()->getProjections(), [](const auto& entry) { return containsAsync(entry.second); }))
+            {
+                return true;
+            }
+        }
+        if (const auto selection = op.tryGetAs<SelectionLogicalOperator>(); selection && containsAsync(selection.value()->getPredicate()))
+        {
+            return true;
+        }
+        const auto children = op.getChildren();
+        pending.insert(pending.end(), children.begin(), children.end());
+    }
+    return false;
+}
+
+void rejectSharedAsyncSubplans(const LogicalPlan& plan)
+{
+    auto pending = plan.getRootOperators();
+    std::unordered_set<LogicalOperator> visited;
+    std::unordered_map<LogicalOperator, size_t> consumers;
+    while (!pending.empty())
+    {
+        auto op = std::move(pending.back());
+        pending.pop_back();
+        if (!visited.insert(op).second)
+        {
+            continue;
+        }
+        for (const auto& child : op.getChildren())
+        {
+            ++consumers[child];
+            pending.push_back(child);
+        }
+    }
+    for (const auto& [op, count] : consumers)
+    {
+        if (count > 1 && subtreeHasAsyncWork(op))
+        {
+            throw UnsupportedQuery(
+                "Shared async subplans with multiple consumers are not supported; reuse output fields within one branch");
+        }
+    }
+}
+
 bool isPlainArgument(const LogicalFunction& function)
 {
     return function.tryGetAs<FieldAccessLogicalFunction>().has_value() || function.tryGetAs<ConstantValueLogicalFunction>().has_value();
 }
 
-/// A call whose arguments are each either free of async calls, or a ready call themselves. A ready call
-/// and the calls it reads run in one async stage; sync work between two calls ends the chain, because the
-/// async stage cannot evaluate it.
-bool isReady(const LogicalFunction& function)
+/// Resolve logical column order before traits exist, using CalcTargetOrderRule's exact
+/// Reorderer/default mapping. Cache by operator identity, including shared DAG children.
+class OrderedSchemas
 {
-    return isAsync(function)
-        && std::ranges::all_of(
-               function.getChildren(), [](const LogicalFunction& argument) { return !containsAsync(argument) || isReady(argument); });
-}
-
-/// The outermost ready calls. Structurally equal calls are collected once and therefore evaluated once.
-void collectReadyCalls(const LogicalFunction& function, std::vector<LogicalFunction>& out)
-{
-    if (isReady(function))
+public:
+    Schema<Field, Ordered> get(const LogicalOperator& op)
     {
-        if (std::ranges::find(out, function) == out.end())
+        if (const auto cached = schemas.find(op); cached != schemas.end())
         {
-            out.push_back(function);
+            return cached->second;
         }
-        return;
-    }
-    for (const auto& child : function.getChildren())
-    {
-        collectReadyCalls(child, out);
-    }
-}
-
-/// The arguments of a call chain that the pre-projection has to compute: sync work that is neither a field nor a constant.
-void collectComputedArguments(const LogicalFunction& call, std::vector<LogicalFunction>& out)
-{
-    for (const auto& argument : call.getChildren())
-    {
-        if (isAsync(argument))
+        if (const auto reorderer = op.tryGetAs<Reorderer>())
         {
-            collectComputedArguments(argument, out);
+            auto schema = reorderer.value()->get().getOrderedOutputSchema([this](const LogicalOperator& child) { return get(child); });
+            schemas.emplace(op, schema);
+            return schema;
         }
-        else if (!isPlainArgument(argument) && std::ranges::find(out, argument) == out.end())
+
+        /// Preserve child order, not unordered-map iteration order.
+        const auto children = op.getChildren();
+        const auto inputSchema = children | std::views::transform([this](const LogicalOperator& child) { return get(child); })
+            | std::views::join | std::ranges::to<Schema<Field, Ordered>>();
+        const auto outputSchema = op.getOutputSchema();
+        std::vector<Field> outputOrder;
+        std::vector<Field> rest;
+        for (const auto& inputField : inputSchema)
         {
-            out.push_back(argument);
+            if (const auto outputField = outputSchema[inputField.getFullyQualifiedName()])
+            {
+                outputOrder.push_back(outputField.value());
+            }
         }
+        for (const auto& outputField : outputSchema)
+        {
+            if (!inputSchema.contains(outputField.getFullyQualifiedName()))
+            {
+                rest.push_back(outputField);
+            }
+        }
+        std::ranges::sort(
+            rest,
+            [](const Field& lhs, const Field& rhs)
+            { return fmt::format("{}", lhs.getFullyQualifiedName()) < fmt::format("{}", rhs.getFullyQualifiedName()); });
+        outputOrder.insert(outputOrder.end(), rest.begin(), rest.end());
+        auto schema = std::move(outputOrder) | std::ranges::to<Schema<Field, Ordered>>();
+        schemas.emplace(op, schema);
+        return schema;
     }
-}
 
-/// Identify expressions over forwarded field names without losing node kinds or inferred types. Short EXPLAIN
-/// alone conflates a field DATA with the literal 'DATA', and numeric literals with identically spelled strings.
-/// Length-prefix every component so literal bytes cannot collide with the key's structure. Keep the explanation
-/// as well as children to account for function-specific properties such as ASYNC_OUTPUT's index.
-std::string callKey(const LogicalFunction& call)
-{
-    std::string key;
-    const auto append = [&](const std::string_view component)
-    {
-        key += std::to_string(component.size());
-        key += ':';
-        key += component;
-    };
-    append(call.getType());
-    append(fmt::format("{}", call.getDataType()));
-    append(call.explain(ExplainVerbosity::Short));
-    for (const auto& child : call.getChildren())
-    {
-        append(callKey(child));
-    }
-    return key;
-}
-
-/// Field accesses that survive are rebound by name when the projection infers its schema.
-LogicalFunction substitute(const LogicalFunction& function, const ExpressionSubstitutions& substitution)
-{
-    if (const auto it = std::ranges::find(substitution, function, &ExpressionSubstitutions::value_type::first); it != substitution.end())
-    {
-        return it->second;
-    }
-    return function.withChildren(
-        function.getChildren() | std::views::transform([&](const LogicalFunction& child) { return substitute(child, substitution); })
-        | std::ranges::to<std::vector>());
-}
+private:
+    std::unordered_map<LogicalOperator, Schema<Field, Ordered>> schemas;
+};
 
 FieldAccessLogicalFunction accessOutput(const LogicalOperator& op, const Identifier& name)
 {
     const auto field = op.getOutputSchema()[name];
-    INVARIANT(field.has_value(), "lifted operator must produce field {}", name);
+    INVARIANT(field.has_value(), "normalized async input must produce field {}", name);
     return FieldAccessLogicalFunction{field.value()};
 }
 
-/// Sorted by name: the schema is unordered, and the rewritten plan has to be deterministic.
-std::vector<Field> sortedFields(const LogicalOperator& op)
+std::vector<UnboundProjection> forwardAll(const LogicalOperator& op, OrderedSchemas& orderedSchemas)
 {
-    auto fields = op.getOutputSchema() | std::ranges::to<std::vector>();
-    std::ranges::sort(fields, {}, [](const Field& field) { return field.getLastName().asCanonicalString(); });
-    return fields;
+    std::vector<UnboundProjection> result;
+    for (const auto& field : orderedSchemas.get(op))
+    {
+        result.emplace_back(field.getLastName(), FieldAccessLogicalFunction{field});
+    }
+    return result;
 }
 
-std::vector<UnboundProjection> forwardAll(const LogicalOperator& op)
-{
-    return sortedFields(op)
-        | std::views::transform([](const Field& field)
-                                { return UnboundProjection{field.getLastName(), FieldAccessLogicalFunction{field}}; })
-        | std::ranges::to<std::vector>();
-}
-
-class AsyncCallLifter
+class AsyncNormalizer
 {
 public:
-    /// One stage per chain of directly nested calls: each pass lifts the outermost ready calls.
-    LogicalOperator liftAll(LogicalOperator current)
+    void reserve(const LogicalOperator& op)
     {
-        if (const auto selection = current.tryGetAs<SelectionLogicalOperator>();
-            selection.has_value() && containsAsync(selection.value()->getPredicate()))
+        if (op.tryGetAs<SinkLogicalOperator>())
         {
-            return liftSelection(selection.value());
+            return;
         }
+        /// Scan the entire original plan before allocating anything, including aliases above calls.
+        for (const auto& field : op.getOutputSchema())
+        {
+            names.insert(field.getLastName().asCanonicalString());
+        }
+    }
+
+    LogicalOperator normalize(const LogicalOperator& original, const std::vector<LogicalOperator>& children)
+    {
+        auto current = original.withChildren(children);
         if (const auto projection = current.tryGetAs<ProjectionLogicalOperator>())
         {
-            if (const auto filter = filters.find(projection.value()->getChild()); filter != filters.end())
+            const auto entries = projection.value()->getProjections();
+            if (std::ranges::none_of(entries, [](const auto& entry) { return containsAsync(entry.second); }))
             {
-                current = reuseFilterCalls(projection.value(), filter->second);
+                return current;
             }
+            /// Snapshot before appending helpers, not after rewriting any expression.
+            const auto visible = orderedSchemas.get(original.getAs<ProjectionLogicalOperator>()->getChild());
+            auto input = projection.value()->getChild();
+            RegionOutputs regionOutputs;
+            std::vector<UnboundProjection> rewritten;
+            if (projection.value()->hasAsterisk())
+            {
+                for (const auto& field : visible)
+                {
+                    rewritten.emplace_back(field.getLastName(), accessOutput(input, field.getLastName()));
+                }
+            }
+            for (const auto& [field, expression] : entries)
+            {
+                rewritten.emplace_back(field.getLastName(), rewrite(expression, input, regionOutputs));
+            }
+            return ProjectionLogicalOperator::create(input, rewritten, ProjectionLogicalOperator::Asterisk{false})
+                .withTraitSet(current.getTraitSet());
         }
-        while (const auto projection = current.tryGetAs<ProjectionLogicalOperator>())
+        if (const auto selection = current.tryGetAs<SelectionLogicalOperator>();
+            selection && containsAsync(selection.value()->getPredicate()))
         {
-            if (hasTrait<AsyncExecutionTrait>(projection.value()->getTraitSet())
-                || std::ranges::none_of(
-                    projection.value()->getProjections(), [](const auto& entry) { return containsAsync(entry.second); }))
+            const auto visible = orderedSchemas.get(original.getAs<SelectionLogicalOperator>()->getChild());
+            auto input = selection.value()->getChild();
+            RegionOutputs regionOutputs;
+            const auto predicate = rewrite(selection.value()->getPredicate(), input, regionOutputs);
+            const LogicalOperator filtered = SelectionLogicalOperator::create(input, predicate).withTraitSet(current.getTraitSet());
+            std::vector<UnboundProjection> restored;
+            for (const auto& field : visible)
             {
-                break;
+                restored.emplace_back(field.getLastName(), accessOutput(filtered, field.getLastName()));
             }
-            current = liftReadyCalls(projection.value());
+            return ProjectionLogicalOperator::create(filtered, restored, ProjectionLogicalOperator::Asterisk{false});
+        }
+        if (const auto async = current.tryGetAs<AsyncLogicalOperator>())
+        {
+            /// PlanVisitor visits each original DAG node once, even with multiple parents.
+            /// Newly emitted operators are not revisited during this pass.
+            claim(async.value()->getOccurrenceId());
+            auto input = async.value()->getChild();
+            const auto visible = orderedSchemas.get(original);
+            RegionOutputs regionOutputs;
+            std::vector<LogicalFunction> arguments;
+            bool changed = false;
+            for (const auto& argument : async.value()->getArguments())
+            {
+                changed |= containsAsync(argument) || !isPlainArgument(argument);
+                arguments.push_back(materialize(rewrite(argument, input, regionOutputs), input));
+            }
+            if (!changed)
+            {
+                /// Already normalized: do not add another restoring projection on later passes.
+                return current;
+            }
+            /// withArguments/withChildren preserve both the occurrence and all multioutput bindings.
+            const LogicalOperator normalized = async.value()->withChildrenUnsafe({input}).withArguments(arguments);
+            std::vector<UnboundProjection> restored;
+            for (const auto& field : visible)
+            {
+                restored.emplace_back(field.getLastName(), accessOutput(normalized, field.getLastName()));
+            }
+            return ProjectionLogicalOperator::create(normalized, restored, ProjectionLogicalOperator::Asterisk{false});
+        }
+        /// These are the other operator APIs exposing arbitrary scalar expressions. Window
+        /// grouping, aggregation inputs and time characteristics are field-only APIs.
+        if (const auto join = current.tryGetAs<JoinLogicalOperator>())
+        {
+            rejectUnsupported(join.value()->getJoinFunction(), "join predicate");
+        }
+        if (const auto watermark = current.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
+        {
+            rejectUnsupported(watermark.value()->getOnField(), "watermark expression");
         }
         return current;
     }
 
 private:
-    /// A lifted selection whose call results a projection directly above it can read instead of calling again.
-    struct LiftedFilter
-    {
-        LogicalOperator filtered;
-        std::vector<std::pair<std::string, Identifier>> resultFields;
-    };
-
+    OrderedSchemas orderedSchemas;
     size_t counter = 0;
-    /// Set while a predicate is lifted: the result fields of its calls are kept for the operators above.
-    bool keepResultFields = false;
-    std::vector<std::pair<std::string, Identifier>> liftedCalls;
-    /// Keyed by the projection that restores a lifted selection's output.
-    std::unordered_map<LogicalOperator, LiftedFilter> filters;
+    std::set<std::string> names;
+    /// Compare only strong occurrence tokens, never expressions or arguments.
+    std::vector<AsyncInvocationId> occurrences;
 
-    /// Unique per plan, and never one of the names the stage forwards.
-    Identifier freshName(std::string_view kind, const LogicalOperator& input)
+    void claim(const AsyncInvocationId& id)
+    {
+        if (std::ranges::find(occurrences, id) != occurrences.end())
+        {
+            throw InvalidQuerySyntax(
+                "Async normalization: reused occurrence token across independent evaluation regions; share a bound output field instead");
+        }
+        occurrences.push_back(id);
+    }
+
+    static void rejectUnsupported(const LogicalFunction& expression, std::string_view context)
+    {
+        if (containsAsync(expression))
+        {
+            throw InvalidQuerySyntax("Async normalization: async calls are unsupported in {}", context);
+        }
+    }
+
+    Identifier freshName(std::string_view kind)
     {
         while (true)
         {
             auto name = Identifier::parse(fmt::format("__async_{}_{}", kind, counter++));
-            if (!input.getOutputSchema()[name].has_value())
+            if (names.insert(name.asCanonicalString()).second)
             {
                 return name;
             }
         }
     }
 
-    /// The predicate becomes a field of a projection, which is lifted like any other:
-    ///   child -> projection [child fields, predicate] (lifted) -> selection on the field -> projection [child fields]
-    /// The selection still carries the call results; the last projection drops them so the output is the
-    /// selection's, unless a projection above reads them instead (`reuseFilterCalls`).
-    LogicalOperator liftSelection(const TypedLogicalOperator<SelectionLogicalOperator>& selection)
+    LogicalFunction materialize(const LogicalFunction& argument, LogicalOperator& input)
     {
-        const auto child = selection->getChild();
-        const auto predicateName = freshName("pred", child);
-        auto evaluation = forwardAll(child);
-        evaluation.emplace_back(predicateName, selection->getPredicate());
-
-        liftedCalls.clear();
-        keepResultFields = true;
-        const auto evaluated = liftAll(ProjectionLogicalOperator::create(child, evaluation, ProjectionLogicalOperator::Asterisk{false}));
-        keepResultFields = false;
-
-        const LogicalOperator filtered
-            = SelectionLogicalOperator::create(evaluated, accessOutput(evaluated, predicateName)).withTraitSet(selection->getTraitSet());
-        std::vector<UnboundProjection> restored;
-        for (const auto& field : sortedFields(child))
+        if (isPlainArgument(argument))
         {
-            restored.emplace_back(field.getLastName(), accessOutput(filtered, field.getLastName()));
+            return argument;
         }
-        const LogicalOperator restoring = ProjectionLogicalOperator::create(filtered, restored, ProjectionLogicalOperator::Asterisk{false});
-        filters.emplace(restoring, LiftedFilter{.filtered = filtered, .resultFields = std::exchange(liftedCalls, {})});
-        return restoring;
+        const auto name = freshName("arg");
+        auto projections = forwardAll(input, orderedSchemas);
+        projections.emplace_back(name, argument);
+        input = ProjectionLogicalOperator::create(input, projections, ProjectionLogicalOperator::Asterisk{false});
+        return accessOutput(input, name);
     }
 
-    /// Rebases a projection from the restoring projection of a lifted selection onto the selection itself,
-    /// and reads the calls the predicate already made instead of making them again.
-    LogicalOperator reuseFilterCalls(const TypedLogicalOperator<ProjectionLogicalOperator>& projection, const LiftedFilter& filter)
+    LogicalFunction rewrite(const LogicalFunction& expression, LogicalOperator& input, RegionOutputs& regionOutputs)
     {
-        const auto reuse = [&](this const auto& self, const LogicalFunction& function) -> LogicalFunction
+        /// CASE is lazy: hoisting any of its descendants would introduce eager effects.
+        if (expression.getType() == "Conditional")
         {
-            if (isAsync(function))
+            rejectUnsupported(expression, "conditional/lazy expressions");
+            return expression;
+        }
+        const auto call = expression.tryGetAs<AsyncCallLogicalFunction>();
+        if (call)
+        {
+            const auto occurrence = call.value()->getOccurrenceId();
+            if (const auto produced = regionOutputs.find(occurrence); produced != regionOutputs.end())
             {
-                if (const auto result
-                    = std::ranges::find(filter.resultFields, callKey(function), &std::pair<std::string, Identifier>::first);
-                    result != filter.resultFields.end())
-                {
-                    return accessOutput(filter.filtered, result->second);
-                }
+                /// Resolve parser-generated copies before visiting their children: a copied
+                /// outer call must not execute or claim any nested occurrences again.
+                return accessOutput(input, produced->second);
             }
-            return function.withChildren(function.getChildren() | std::views::transform(self) | std::ranges::to<std::vector>());
-        };
-        std::vector<UnboundProjection> rebased;
-        if (projection->hasAsterisk())
-        {
-            for (const auto& field : sortedFields(projection->getChild()))
-            {
-                rebased.emplace_back(field.getLastName(), accessOutput(filter.filtered, field.getLastName()));
-            }
+            /// First encounter in this region must still be unique across the whole plan.
+            claim(occurrence);
         }
-        for (const auto& [field, function] : projection->getProjections())
+        std::vector<LogicalFunction> arguments;
+        for (const auto& child : expression.getChildren())
         {
-            rebased.emplace_back(field.getLastName(), reuse(function));
+            auto rewritten = rewrite(child, input, regionOutputs);
+            /// NOLINTNEXTLINE(clang-analyzer-cplusplus.Move) each iteration constructs a fresh wrapper; only the non-call arm moves it
+            arguments.push_back(call ? materialize(rewritten, input) : std::move(rewritten));
         }
-        return ProjectionLogicalOperator::create(filter.filtered, rebased, ProjectionLogicalOperator::Asterisk{false})
-            .withTraitSet(projection->getTraitSet());
-    }
-
-    /// child -> pre (sync) -> async stage -> post (sync).
-    LogicalOperator liftReadyCalls(const TypedLogicalOperator<ProjectionLogicalOperator>& projection)
-    {
-        const auto child = projection->getChild();
-        std::vector<LogicalFunction> calls;
-        for (const auto& [field, function] : projection->getProjections())
+        if (!call)
         {
-            collectReadyCalls(function, calls);
+            return expression.withChildren(arguments);
         }
-
-        /// pre: every argument the async stage cannot read directly becomes a field, and every call gets an
-        /// empty slot of its result type. Handed-off rows then already have the async stage's output shape,
-        /// so the stage only fills in the slots and one input buffer always fits one output buffer. Calls
-        /// nested in a chain need no slot: their results only feed the call around them.
-        auto preProjections = forwardAll(child);
-        std::vector<LogicalFunction> computedArguments;
-        for (const auto& call : calls)
-        {
-            collectComputedArguments(call, computedArguments);
-        }
-        NamedExpressions liftedArguments;
-        for (const auto& argument : computedArguments)
-        {
-            auto name = freshName("arg", child);
-            preProjections.emplace_back(name, argument);
-            liftedArguments.emplace_back(argument, std::move(name));
-        }
-        NamedExpressions callNames;
-        for (const auto& call : calls)
-        {
-            auto name = freshName("call", child);
-            /// Empty placeholders must match the eventual async result type.
-            const auto type = call.getDataType();
-            const std::string emptySlot = type.isType(DataType::Type::VARSIZED) ? std::string{}
-                : type.isType(DataType::Type::BOOLEAN)                          ? "false"
-                : type.isType(DataType::Type::CHAR)                             ? std::string(1, '\0')
-                                                                                : "0";
-            preProjections.emplace_back(name, ConstantValueLogicalFunction{call.getDataType(), emptySlot});
-            liftedCalls.emplace_back(callKey(call), name);
-            callNames.emplace_back(call, std::move(name));
-        }
-        /// Match sortedFields(pre) below: appending helpers alone can leave earlier call slots before new arguments.
-        /// Both projections must use the same canonical field order, not merely the same fields and row size.
-        std::ranges::sort(preProjections, {}, [](const UnboundProjection& entry) { return entry.first.asCanonicalString(); });
-        const LogicalOperator pre = ProjectionLogicalOperator::create(child, preProjections, ProjectionLogicalOperator::Asterisk{false});
-
-        /// async stage: forwards pre and fills each slot with its call.
-        ExpressionSubstitutions argumentSubstitution;
-        for (const auto& [argument, name] : liftedArguments)
-        {
-            argumentSubstitution.emplace_back(argument, accessOutput(pre, name));
-        }
-        std::vector<UnboundProjection> asyncProjections;
-        for (const auto& field : sortedFields(pre))
-        {
-            const auto call = std::ranges::find(callNames, field.getLastName(), &NamedExpressions::value_type::second);
-            asyncProjections.emplace_back(
-                field.getLastName(),
-                call == callNames.end() ? LogicalFunction{FieldAccessLogicalFunction{field}}
-                                        : substitute(call->first, argumentSubstitution));
-        }
-        const auto asyncStage = ProjectionLogicalOperator::create(pre, asyncProjections, ProjectionLogicalOperator::Asterisk{false});
-        auto traitSet = asyncStage->getTraitSet();
-        tryInsert(traitSet, AsyncExecutionTrait{});
-        const LogicalOperator async = asyncStage.withTraitSet(std::move(traitSet));
-
-        /// post: the original projection on top of the async stage. An asterisk is expanded against
-        /// the original child, so the helper fields do not leak into the output.
-        ExpressionSubstitutions callSubstitution;
-        for (const auto& [call, name] : callNames)
-        {
-            callSubstitution.emplace_back(call, accessOutput(async, name));
-        }
-        std::vector<UnboundProjection> postProjections;
-        if (projection->hasAsterisk())
-        {
-            for (const auto& field : sortedFields(child))
-            {
-                postProjections.emplace_back(field.getLastName(), accessOutput(async, field.getLastName()));
-            }
-        }
-        for (const auto& [field, function] : projection->getProjections())
-        {
-            postProjections.emplace_back(field.getLastName(), substitute(function, callSubstitution));
-        }
-        if (keepResultFields)
-        {
-            for (const auto& [call, name] : callNames)
-            {
-                postProjections.emplace_back(name, accessOutput(async, name));
-            }
-        }
-        auto post = ProjectionLogicalOperator::create(async, postProjections, ProjectionLogicalOperator::Asterisk{false});
-        return post.withTraitSet(projection->getTraitSet());
+        const auto binding = freshName("call");
+        input = AsyncLogicalOperator::create(
+            input, call.value()->getAsyncOperator(), std::move(arguments), {binding}, call.value()->getOccurrenceId());
+        regionOutputs.emplace(call.value()->getOccurrenceId(), binding);
+        return accessOutput(input, binding);
     }
 };
 }
 
-LogicalPlan AsyncFunctionLiftingRule::apply(LogicalPlan queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan AsyncFunctionLiftingRule::apply(LogicalPlan queryPlan) const
 {
-    AsyncCallLifter lifter;
+    /// Occurrence tracking is pass-local: repeated normalization preserves existing invocations.
+    rejectSharedAsyncSubplans(queryPlan);
+    AsyncNormalizer normalizer;
+    PlanVisitor<> reserveNames{
+        [&normalizer](const LogicalOperator& op, const std::vector<LogicalOperator>&) -> PlanVisitor<>::UpResult
+        {
+            normalizer.reserve(op);
+            return op;
+        }};
+    queryPlan = reserveNames.apply(std::move(queryPlan));
     PlanVisitor<> visitor{
-        [&lifter](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
-        { return lifter.liftAll(op.withChildren(children)); }};
+        [&normalizer](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
+        { return normalizer.normalize(op, children); }};
     return visitor.apply(std::move(queryPlan));
 }
 

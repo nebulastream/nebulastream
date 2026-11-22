@@ -14,31 +14,14 @@ include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 
 find_package(reflectcpp CONFIG REQUIRED)
 
-# Logical function: ASYNC_DELAY is asynchronous and has no physical (Nautilus) implementation.
-add_library(async_delay_logical_function_plugin_library STATIC AsyncDelayLogicalFunction.cpp)
-target_link_libraries(async_delay_logical_function_plugin_library PRIVATE nes-logical-operators reflectcpp::reflectcpp)
-target_include_directories(async_delay_logical_function_plugin_library PUBLIC include PRIVATE .)
-link_plugin_library(nes-logical-operators async_delay_logical_function_plugin_library)
-add_registry_entry(LogicalFunction AsyncDelay KEY ASYNC_DELAY)
-add_unreflection_entry(LogicalFunction AsyncDelay)
-
-# Async implementation: run by the Async source, registered in the registry owned by nes-sources.
-add_library(async_delay_async_function_plugin_library STATIC AsyncDelayAsyncFunction.cpp)
-target_link_libraries(async_delay_async_function_plugin_library PRIVATE nes-sources)
-target_include_directories(async_delay_async_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-link_plugin_library(nes-sources async_delay_async_function_plugin_library)
-add_registry_entry(AsyncFunction AsyncDelay)
-
-# Each generated glue translation unit includes the plugin header by basename, and the headers of
-# this plugin sit one directory deeper than the plugin root that the glue picks up by itself.
-foreach (registry IN ITEMS LogicalFunction LogicalFunctionUnreflection)
-    get_property(glue_lib GLOBAL PROPERTY "${registry}_RUNTIME_REGISTRY_GLUE_LIB")
-    target_include_directories(${glue_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Functions)
-endforeach ()
+add_library(async_delay_plugin_library STATIC AsyncDelayAsyncOperator.cpp)
+target_link_libraries(async_delay_plugin_library PRIVATE nes-sources reflectcpp::reflectcpp)
+target_include_directories(async_delay_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+link_plugin_library(nes-sources async_delay_plugin_library)
+add_registry_entry(AsyncOperator AsyncDelay KEY ASYNC_DELAY)
+add_unreflection_entry(AsyncOperator AsyncDelay KEY ASYNC_DELAY)
 
 if (NES_ENABLES_TESTS)
     add_nes_unit_test(async-delay-function-test AsyncDelayFunctionTest.cpp)
-    target_link_libraries(async-delay-function-test
-            async_delay_logical_function_plugin_library async_delay_async_function_plugin_library
-            nes-logical-operators nes-sources reflectcpp::reflectcpp)
+    target_link_libraries(async-delay-function-test async_delay_plugin_library nes-sources nes-logical-operators reflectcpp::reflectcpp)
 endif ()

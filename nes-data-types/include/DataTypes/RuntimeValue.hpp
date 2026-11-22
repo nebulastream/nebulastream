@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <optional>
 #include <span>
 #include <string>
@@ -34,6 +35,7 @@ namespace NES
 template <typename T>
 struct RuntimeTypeTraits;
 
+/// NOLINTNEXTLINE(cppcoreguidelines-macro-usage) generates the finite runtime type-trait specializations and is undefined below
 #define NES_RUNTIME_TYPE(CPP_TYPE, SQL_TYPE) \
     template <> \
     struct RuntimeTypeTraits<CPP_TYPE> \
@@ -187,12 +189,12 @@ public:
 
     [[nodiscard]] static RuntimeValue null(DataType type);
     /// Parses a logical constant once at binding time. Strings are already unquoted logical values.
-    [[nodiscard]] static RuntimeValue fromLiteral(DataType type, std::string_view literal);
+    [[nodiscard]] static std::expected<RuntimeValue, Exception> fromLiteral(DataType type, std::string_view literal);
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] bool isNull() const;
     [[nodiscard]] RuntimeValueView view() const&;
-    RuntimeValueView view() const&& = delete;
+    [[nodiscard]] RuntimeValueView view() const&& = delete;
 
 private:
     template <RuntimeScalar T>

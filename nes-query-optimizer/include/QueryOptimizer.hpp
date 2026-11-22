@@ -16,12 +16,17 @@
 
 #include <memory>
 
+#include <Placement/QueryDecomposition.hpp>
 #include <Phases/OperatorPlacer.hpp>
 #include <Phases/RuleBasedOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <QueryOptimizerNetworkConfiguration.hpp>
+#include <Rules/Static/AsyncOperatorDecompositionRule.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -42,13 +47,19 @@ public:
         const std::shared_ptr<const WorkerCatalog>& workerCatalog,
         const std::shared_ptr<const ModelCatalog>& modelCatalog)
         : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog)
-        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
+        , operatorPlacement(workerCatalog)
+        , asyncOperatorDecomposition(defaultQueryOptimization.async, sourceCatalog, sinkCatalog)
+        , queryDecomposer(workerCatalog, sourceCatalog, sinkCatalog)
+        , networkConfiguration(defaultQueryOptimization.network) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
 
 private:
     RuleBasedOptimizer ruleBasedOptimization;
     OperatorPlacer operatorPlacement;
+    AsyncOperatorDecompositionRule asyncOperatorDecomposition;
+    QueryDecomposer queryDecomposer;
+    QueryOptimizerNetworkConfiguration networkConfiguration;
 };
 
 }

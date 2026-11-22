@@ -29,6 +29,8 @@
 #include <Serialization/ReflectedOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <cpptrace/from_current.hpp>
 #include <rfl/Generic.hpp>
 #include <rfl/json/read.hpp>
@@ -44,7 +46,7 @@ namespace NES
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
-    return serializeQueryPlan(queryPlan, ReflectionContext{});
+    return serializeQueryPlan(queryPlan, ReflectionContext{std::make_shared<SharedPointerSerializationState>()});
 }
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan, const ReflectionContext& context)
@@ -90,7 +92,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
 
 LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan)
 {
-    return deserializeQueryPlan(serializedQueryPlan, ReflectionContext{});
+    return deserializeQueryPlan(serializedQueryPlan, ReflectionContext{std::make_shared<SharedPointerDeserializationState>()});
 }
 
 LogicalPlan

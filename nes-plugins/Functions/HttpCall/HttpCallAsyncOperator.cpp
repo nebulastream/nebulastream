@@ -1,0 +1,467 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <HttpCallAsyncOperator.hpp>
+
+#include <cerrno> /// NOLINT(misc-include-cleaner) EHOSTDOWN is provided by the platform errno declarations.
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <expected>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <DataTypes/CheckedInteger.hpp>
+#include <DataTypes/RuntimeValue.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncOperator.hpp>
+#include <Sources/PreparedAsyncCall.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
+#include <Util/CheckedDeadline.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/ip/tcp.hpp> /// NOLINT(misc-include-cleaner) Public Asio TCP provider; cleaner misses its use through the alias.
+#include <boost/asio/redirect_error.hpp>
+#include <boost/asio/this_coro.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/error.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for request/response types.
+#include <boost/beast/http/read.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for async_read.
+#include <boost/beast/http/string_body.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for string_body.
+#include <boost/beast/http/verb.hpp>
+#include <boost/beast/http/write.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for async_write.
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; checker misattributes its error_code/category APIs.
+#include <boost/url/parse.hpp>
+#include <AsyncOperatorRegistry.hpp>
+#include <ErrorHandling.hpp>
+#include <HttpCallResolver.hpp>
+
+namespace NES
+{
+namespace
+{
+namespace http = boost::beast::http;
+constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::seconds(30);
+
+AsyncError permanent(const Exception& error)
+{
+    return {.exception = error, .kind = AsyncError::Type::Permanent};
+}
+}
+
+AsyncOperator HttpCallAsyncOperator::create(AsyncOperatorRegistryArguments arguments)
+{
+    if (arguments.argumentTypes.size() < 2 || arguments.argumentTypes.size() > 4)
+    {
+        throw InvalidQuerySyntax("HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
+    }
+    for (const auto& type : std::span{arguments.argumentTypes}.first(2))
+    {
+        if (!type.isType(DataType::Type::UNDEFINED) && (!type.isType(DataType::Type::VARSIZED) || type.nullable))
+        {
+            throw DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL");
+        }
+    }
+    for (const auto& type : std::span{arguments.argumentTypes}.subspan(2))
+    {
+        if (!type.isType(DataType::Type::UNDEFINED) && (!type.isInteger() || type.nullable))
+        {
+            throw DifferentFieldTypeExpected("HTTP_CALL options must be non-nullable integers");
+        }
+    }
+    return HttpCallAsyncOperator{};
+}
+
+/// NOLINTBEGIN(readability-magic-numbers) HTTP status codes are protocol-defined values.
+AsyncResult<void> detail::checkHttpStatus(unsigned status, std::string_view endpoint, std::string_view body)
+{
+    if (status >= 200 && status < 300)
+    {
+        return {};
+    }
+    const bool retryable = status == 408 || status == 429 || status == 500 || status == 502 || status == 503 || status == 504;
+    const auto error = IOError(
+        "HTTP_CALL to {} got status {}: {}{}",
+        endpoint,
+        status,
+        body,
+        retryable ? ". Retrying this POST may duplicate server-side effects" : "");
+    return std::unexpected(AsyncError{.exception = error, .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent});
+}
+
+/// NOLINTEND(readability-magic-numbers)
+
+/// NOLINTNEXTLINE(misc-include-cleaner) error_code is declared by public boost/system/error_code.hpp.
+AsyncError detail::classifyHttpTransportError(const boost::system::error_code& error, std::string_view url)
+{
+    namespace asioError = boost::asio::error;
+    if (error == asioError::operation_aborted)
+    {
+        return AsyncError::cancelled();
+    }
+    if (error == asioError::timed_out || error == boost::beast::error::timeout)
+    {
+        return {
+            .exception
+            = IOError("HTTP_CALL to {} timed out: {}. Retrying this POST may duplicate server-side effects", url, error.message()),
+            .kind = AsyncError::Type::Retryable};
+    }
+    /// NOLINTBEGIN(misc-include-cleaner) generic_category is declared by public boost/system/error_code.hpp.
+    const bool retryable = error == asioError::connection_refused || error == asioError::connection_reset
+        || error == asioError::connection_aborted || error == asioError::network_unreachable || error == asioError::network_down
+        || error == asioError::host_unreachable
+#ifdef EHOSTDOWN
+        || error == boost::system::error_condition{EHOSTDOWN, boost::system::generic_category()}
+#endif
+        || error == asioError::try_again || error == asioError::eof || error == asioError::host_not_found_try_again
+        || error == http::error::end_of_stream;
+    /// NOLINTEND(misc-include-cleaner)
+    const auto* const warning = retryable ? ". Retrying this POST may duplicate server-side effects" : "";
+    return {
+        .exception = IOError("HTTP_CALL to {} failed {}: {}{}", url, retryable ? "transiently" : "permanently", error.message(), warning),
+        .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent};
+}
+
+struct HttpCallAsyncOperator::State
+{
+    std::optional<boost::beast::tcp_stream> stream;
+    boost::beast::flat_buffer buffer;
+    std::string connectedTo;
+    class Prepared;
+    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+    execute(std::string body, std::string url, std::string host, std::string port, std::string target, uint64_t millis);
+    boost::asio::awaitable<AsyncResult<std::string>> exchange(
+        std::string host,
+        std::string port,
+        std::string target,
+        std::string body,
+        std::string url,
+        std::chrono::steady_clock::time_point deadline);
+};
+
+class HttpCallAsyncOperator::State::Prepared final : public PreparedAsyncCall
+{
+public:
+    Prepared(
+        std::shared_ptr<State> owner,
+        std::string body,
+        std::string url,
+        std::string host,
+        std::string port,
+        std::string target,
+        uint64_t millis,
+        size_t retries)
+        : PreparedAsyncCall(retries)
+        , owner(std::move(owner))
+        , body(std::move(body))
+        , url(std::move(url))
+        , host(std::move(host))
+        , port(std::move(port))
+        , target(std::move(target))
+        , millis(millis)
+    {
+    }
+
+    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> executeAttempt() override
+    {
+        co_return co_await owner->execute(body, url, host, port, target, millis);
+    }
+
+private:
+    std::shared_ptr<State> owner;
+    std::string body, url, host, port, target;
+    uint64_t millis;
+};
+
+AsyncResult<std::unique_ptr<PreparedAsyncCall>> /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, SharedRuntimeValues arguments) const
+{
+    if (arguments.size() < 2 || arguments.size() > 4)
+    {
+        return std::unexpected(permanent(InvalidQuerySyntax("HTTP_CALL takes (body, url[, timeout_ms[, retries]])")));
+    }
+    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) validated arity bounds every argument index
+    for (size_t index = 0; index < 2; ++index)
+    {
+        const auto type = arguments[index].getDataType();
+        if (!type.isType(DataType::Type::VARSIZED) || type.nullable)
+        {
+            return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL")));
+        }
+    }
+    for (size_t index = 2; index < arguments.size(); ++index)
+    {
+        const auto type = arguments[index].getDataType();
+        if (!type.isInteger() || type.nullable)
+        {
+            return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL options must be non-nullable integers")));
+        }
+    }
+    std::string body{arguments[0].get<std::string_view>()};
+    std::string url{arguments[1].get<std::string_view>()};
+    auto millis = static_cast<uint64_t>(DEFAULT_TIMEOUT.count());
+    if (arguments.size() >= 3)
+    {
+        auto checked = checkedUnsignedIntegerOption(arguments[2], "HTTP_CALL timeout");
+        if (!checked)
+        {
+            return std::unexpected(permanent(checked.error()));
+        }
+        millis = *checked;
+    }
+    if (millis == 0)
+    {
+        return std::unexpected(permanent(ArithmeticalError("HTTP_CALL expects a positive timeout in milliseconds, got {}", millis)));
+    }
+    auto deadline = checkedSteadyDeadline(millis, "HTTP_CALL");
+    if (!deadline)
+    {
+        return std::unexpected(permanent(deadline.error()));
+    }
+    const auto parsed = boost::urls::parse_uri(url);
+    if (!parsed || parsed->scheme() != "http" || parsed->host().empty())
+    {
+        return std::unexpected(permanent(FormattingError("HTTP_CALL needs an http:// url with a host, got {}", url)));
+    }
+    size_t retries = 0;
+    if (arguments.size() == 4)
+    {
+        auto checked = checkedUnsignedIntegerOption(arguments[3], "HTTP_CALL retries");
+        if (!checked)
+        {
+            return std::unexpected(permanent(checked.error()));
+        }
+        if (!std::in_range<size_t>(*checked) || *checked == std::numeric_limits<size_t>::max())
+        {
+            return std::unexpected(permanent(ArithmeticalError("HTTP_CALL expects a representable retry count, got {}", *checked)));
+        }
+        retries = static_cast<size_t>(*checked);
+    }
+    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    std::string host{parsed->host()};
+    std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
+    std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
+    auto state = context.getSharedSlotState<State>();
+    return std::unique_ptr<PreparedAsyncCall>{std::make_unique<State::Prepared>(
+        std::move(state), std::move(body), std::move(url), std::move(host), std::move(port), std::move(target), millis, retries)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::string_view HttpCallAsyncOperator::getType() const
+{
+    return "HTTP_CALL";
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+Schema<UnqualifiedUnboundField, Ordered> HttpCallAsyncOperator::getOutputSchema() const
+{
+    return {{Identifier::parse("response"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}};
+}
+
+HttpCallAsyncOperator HttpCallAsyncOperator::withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+{
+    if (binding.size() < 2 || binding.size() > 4)
+    {
+        throw CannotInferSchema("HTTP_CALL binding has invalid argument arity");
+    }
+    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) validated binding arity bounds every argument index
+    for (const auto& argument : std::span{binding}.first(2))
+    {
+        const auto& type = argument.first;
+        if (!type.isType(DataType::Type::VARSIZED) || type.nullable)
+        {
+            throw DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL");
+        }
+    }
+    if (binding[1].first.isType(DataType::Type::UNDEFINED))
+    {
+        throw CannotInferSchema("HTTP_CALL URL type is unresolved");
+    }
+    const auto& urlConstant = binding[1].second;
+    if (urlConstant)
+    {
+        const auto value = urlConstant->view().get<std::string_view>();
+        const auto parsed = boost::urls::parse_uri(value);
+        if (!parsed || parsed->scheme() != "http" || parsed->host().empty())
+        {
+            throw CannotInferSchema("HTTP_CALL constant URL must be an http:// URL with a host");
+        }
+    }
+    for (size_t index = 2; index < binding.size(); ++index)
+    {
+        const auto& [type, constant] = binding[index];
+        if (!type.isInteger() || type.nullable)
+        {
+            throw DifferentFieldTypeExpected("HTTP_CALL options must be non-nullable integers");
+        }
+        if (!constant)
+        {
+            continue;
+        }
+        const auto value = checkedUnsignedIntegerOption(constant->view(), index == 2 ? "HTTP_CALL timeout" : "HTTP_CALL retries");
+        if (!value || (index == 2 && (*value == 0 || !checkedSteadyDeadline(*value, "HTTP_CALL")))
+            || (index == 3 && (!std::in_range<size_t>(*value) || *value == std::numeric_limits<size_t>::max())))
+        {
+            throw CannotInferSchema("HTTP_CALL constant option is outside its representable range");
+        }
+    }
+    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    return *this;
+}
+
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> HttpCallAsyncOperator::State::execute(
+    std::string body, std::string url, std::string host, std::string port, std::string target, uint64_t millis)
+{
+    auto deadline = checkedSteadyDeadline(millis, "HTTP_CALL");
+    if (!deadline)
+    {
+        co_return std::unexpected(permanent(deadline.error()));
+    }
+    const bool previousThrowPolicy = co_await boost::asio::this_coro::throw_if_cancelled();
+    co_await boost::asio::this_coro::throw_if_cancelled(false);
+    auto response = co_await exchange(std::move(host), std::move(port), std::move(target), std::move(body), url, *deadline);
+    co_await boost::asio::this_coro::throw_if_cancelled(previousThrowPolicy);
+    if (!response)
+    {
+        stream.reset();
+        co_return std::unexpected(response.error());
+    }
+    co_return SharedRuntimeValues::make(std::move(*response));
+}
+
+boost::asio::awaitable<AsyncResult<std::string>> HttpCallAsyncOperator::State::exchange(
+    std::string host,
+    std::string port,
+    std::string target,
+    std::string body,
+    std::string url,
+    std::chrono::steady_clock::time_point deadline)
+{
+    namespace asio = boost::asio;
+    auto fail = [&url](const boost::system::error_code& error) -> AsyncResult<std::string>
+    { return std::unexpected(detail::classifyHttpTransportError(error, url)); };
+    const auto cancellation = co_await asio::this_coro::cancellation_state;
+    const auto checkDeadlineAndCancellation = [&]() -> std::optional<AsyncError>
+    {
+        if (cancellation.cancelled() != asio::cancellation_type::none)
+        {
+            return AsyncError::cancelled();
+        }
+        if (std::chrono::steady_clock::now() >= deadline)
+        {
+            return detail::classifyHttpTransportError(asio::error::timed_out, url);
+        }
+        return std::nullopt;
+    };
+    if (const auto failure = checkDeadlineAndCancellation())
+    {
+        co_return std::unexpected(*failure);
+    }
+    const auto executor = co_await asio::this_coro::executor;
+    if (!stream || connectedTo != host + ":" + port)
+    {
+        auto endpoints = co_await detail::resolveHttpHost(host, port, deadline);
+        if (!endpoints)
+        {
+            if (endpoints.error().kind == AsyncError::Type::TimedOut)
+            {
+                co_return std::unexpected(detail::classifyHttpTransportError(asio::error::timed_out, url));
+            }
+            co_return std::unexpected(endpoints.error());
+        }
+        if (const auto failure = checkDeadlineAndCancellation())
+        {
+            co_return std::unexpected(*failure);
+        }
+        stream.emplace(executor);
+        buffer.clear();
+        stream->expires_at(deadline);
+        boost::system::error_code error;
+        co_await stream->async_connect(*endpoints, asio::redirect_error(asio::use_awaitable, error));
+        if (error)
+        {
+            co_return fail(error);
+        }
+        if (const auto failure = checkDeadlineAndCancellation())
+        {
+            co_return std::unexpected(*failure);
+        }
+        connectedTo = host + ":" + port;
+    }
+    if (const auto failure = checkDeadlineAndCancellation())
+    {
+        co_return std::unexpected(*failure);
+    }
+    /// NOLINTBEGIN(misc-include-cleaner, readability-magic-numbers) request/string_body come from public Beast headers; 11 denotes HTTP/1.1.
+    http::request<http::string_body> request{http::verb::post, target, 11, std::move(body)};
+    /// NOLINTEND(misc-include-cleaner, readability-magic-numbers)
+    request.set(http::field::host, host + ":" + port);
+    request.set(http::field::content_type, "text/plain");
+    request.keep_alive(true);
+    request.prepare_payload();
+    stream->expires_at(deadline);
+    boost::system::error_code error;
+    /// NOLINTBEGIN(misc-include-cleaner) async_write is declared by public boost/beast/http/write.hpp.
+    co_await http::async_write(*stream, request, asio::redirect_error(asio::use_awaitable, error));
+    /// NOLINTEND(misc-include-cleaner)
+    if (error)
+    {
+        co_return fail(error);
+    }
+    if (const auto failure = checkDeadlineAndCancellation())
+    {
+        co_return std::unexpected(*failure);
+    }
+    /// NOLINTBEGIN(misc-include-cleaner) response is declared by public Beast message.hpp.
+    http::response<http::string_body> response;
+    /// NOLINTEND(misc-include-cleaner)
+    stream->expires_at(deadline);
+    /// NOLINTBEGIN(misc-include-cleaner) async_read is declared by public boost/beast/http/read.hpp.
+    co_await http::async_read(*stream, buffer, response, asio::redirect_error(asio::use_awaitable, error));
+    /// NOLINTEND(misc-include-cleaner)
+    if (error)
+    {
+        co_return fail(error);
+    }
+    if (const auto failure = checkDeadlineAndCancellation())
+    {
+        co_return std::unexpected(*failure);
+    }
+    if (!response.keep_alive())
+    {
+        stream.reset();
+    }
+    auto status = detail::checkHttpStatus(response.result_int(), url, response.body());
+    if (!status)
+    {
+        co_return std::unexpected(status.error());
+    }
+    co_return std::move(response.body());
+}
+}

@@ -20,7 +20,10 @@ add_source_files(nes-query-optimizer
         DecideFieldMappings.cpp
         DecideFieldOrder.cpp
         OriginIdInferenceRule.cpp
-        AsyncFunctionLiftingRule.cpp)
+        AsyncFunctionLiftingRule.cpp
+        AsyncOperatorDecompositionRule.cpp)
+
+# Async decomposition is explicitly staged after placement: it requires final field layout and placement traits.
 
 add_registry_entry(PlanRule DecideJoinTypesRule KEY DecideJoinTypes)
 add_registry_entry(PlanRule DecideMemoryLayoutRule KEY DecideMemoryLayout)

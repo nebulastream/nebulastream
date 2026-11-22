@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <memory>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>

@@ -11,34 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
-
 #include <functional>
-#include <memory>
 #include <string>
-#include <Sources/AsyncFunction.hpp>
+#include <vector>
+#include <DataTypes/DataType.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
-
-using AsyncFunctionRegistryReturnType = std::unique_ptr<AsyncFunction>;
-
-struct AsyncFunctionRegistryArguments
+struct AsyncOperatorRegistryArguments
 {
-    /// Typed signature and constant children, bound once while constructing each function instance.
-    AsyncFunctionBinding binding;
+    std::vector<DataType> argumentTypes;
 };
 
-using AsyncFunctionFactory = std::function<AsyncFunctionRegistryReturnType(AsyncFunctionRegistryArguments)>;
+using AsyncOperatorRegistryReturnType = AsyncOperator;
+using AsyncOperatorFactory = std::function<AsyncOperator(AsyncOperatorRegistryArguments)>;
 
-/// Keyed by the implementation name, e.g. "HttpCall".
-class AsyncFunctionRegistry final
-    : public RuntimeRegistry<AsyncFunctionRegistry, std::string, AsyncFunctionFactory, /*CaseSensitive*/ false>
+class AsyncOperatorRegistry final : public RuntimeRegistry<AsyncOperatorRegistry, std::string, AsyncOperatorFactory, false>
 {
 public:
-    static AsyncFunctionRegistry& instance();
+    static AsyncOperatorRegistry& instance();
 };
 
+AsyncOperator createAsyncOperator(const std::string& name, std::vector<DataType> argumentTypes);
 }

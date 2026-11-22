@@ -17,4 +17,8 @@ add_nes_test(async-source-buffer-reuse-test AsyncSourceBufferReuseTest.cpp)
 target_link_libraries(async-source-buffer-reuse-test async_source_plugin_library nes-sources nes-nautilus)
 
 add_nes_test(async-graph-execution-test AsyncGraphExecutionTest.cpp)
+target_include_directories(async-graph-execution-test PRIVATE ${PROJECT_SOURCE_DIR}/nes-sources/tests)
 target_link_libraries(async-graph-execution-test async_graph_execution)
+
+add_nes_test(async-occurrence-test AsyncOccurrenceTest.cpp)
+target_link_libraries(async-occurrence-test nes-logical-operators nes-sources nes-query-optimizer async_graph_execution)

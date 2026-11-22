@@ -24,33 +24,30 @@
 #include <optional>
 #include <ostream>
 #include <stop_token>
-#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <Async/HandoffChannel.hpp>
 #include <Configurations/ConfigField.hpp>
-#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/RuntimeValue.hpp>
-#include <DataTypes/UnboundField.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/AsyncExecutionContext.hpp>
 #include <Sources/AsyncHandoffLayout.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
-#include <AsyncFunctionRegistry.hpp>
 #include <AsyncGraphExecution.hpp>
 
 namespace NES
@@ -63,7 +60,7 @@ namespace NES
 /// They run across buffer boundaries: up to `MAX_CONCURRENCY` rows are in flight at once, whichever handed-off
 /// buffers they belong to, and the buffers are emitted in the order they were handed off.
 ///
-/// The lifting rule reserves a slot per call in the handed-off rows, so input and output rows have
+/// The memory layout of the buffers reserves an output slot per call, so input and output rows have
 /// the same fields and one input buffer becomes exactly one output buffer. Completed buffers with
 /// identical input/output layouts are reused when no other parent-buffer owner remains. Otherwise,
 /// unchanged fields are copied to a new output buffer. Child buffers are retained, not deep-copied;
@@ -88,21 +85,21 @@ public:
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
+    // TODO remove and replace with normal operator<<
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor, HandoffChannel::Receiver receiver);
 
-    struct BoundCall
+    struct CallState
     {
-        /// Resolved once on the worker, before constructing any function instances.
-        AsyncFunctionFactory factory;
-        AsyncFunctionBinding binding;
-        /// A distinct stateful instance per admitted row slot, invoked only after its dependencies are ready.
-        std::vector<std::unique_ptr<AsyncFunction>> instances;
+        /// The concrete config was created and restored with the graph; never replay its factory here.
+        AsyncOperator asyncOperator;
+        /// One shared operator-state group with independent slot state for each admitted row slot.
+        std::vector<AsyncExecutionContext> contexts;
     };
 
-    /// A handed-off buffer whose rows are called.
+    /// A handed-off buffer whose rows are processed.
     struct InFlightBuffer
     {
         TupleBuffer input;
@@ -128,17 +125,19 @@ private:
         std::deque<InFlightBuffer> buffers;
         size_t unstartedRows = 0;
         size_t runningRows = 0;
-        std::exception_ptr failure;
+        std::optional<AsyncError> failure;
+        std::exception_ptr infrastructureFailure;
         /// Set by the channel when a buffer arrives or it closes; reset by the source thread before it looks.
         bool channelChanged = false;
     };
 
-    static std::unordered_map<AsyncCall::Ptr, BoundCall> bindGraph(const AsyncCallGraph& graph);
+    static std::unordered_map<AsyncCall::Ptr, CallState> createCallStates(const AsyncCallGraph& graph);
     RuntimeValue readInput(const InputFieldReference& field, const TupleBuffer& input, size_t row) const;
     /// Service retries belong to the shared producer invocation, never to its subscribers.
-    boost::asio::awaitable<SharedRuntimeValues> callWithRetries(AsyncCall::Ptr node, size_t slot, SharedRuntimeValues arguments) const;
+    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+    callWithRetries(AsyncCall::Ptr node, size_t slot, SharedRuntimeValues arguments);
     /// Borrows a deque element until finishRow publishes completion; the in-flight state outlives every row.
-    boost::asio::awaitable<void> processRow(size_t slot, InFlightBuffer& buffer, size_t row);
+    boost::asio::awaitable<AsyncResult<void>> processRow(size_t slot, InFlightBuffer& buffer, size_t row);
 
     /// Source thread.
     void admit(TupleBuffer input);
@@ -149,16 +148,15 @@ private:
 
     /// Strand only: starts rows while a slot is free.
     void startRows();
-    void finishRow(InFlightBuffer& buffer, size_t slot, const std::exception_ptr& error);
+    void finishRow(InFlightBuffer& buffer, size_t slot, const std::exception_ptr& infrastructureError, const AsyncResult<void>& outcome);
 
-    /// The configured bound, lowered to what the stage's functions allow.
+    /// The configured bound, lowered to what the operator configurations allow.
     size_t maxConcurrency;
     size_t maxRetries;
     AsyncHandoffLayout layout;
-    std::shared_ptr<TupleBufferRef> inputBufferRef;
-    std::shared_ptr<TupleBufferRef> outputBufferRef;
+    std::shared_ptr<const TupleBufferRef> rowBufferRef;
     std::shared_ptr<const AsyncCallGraph> graph;
-    std::unordered_map<AsyncCall::Ptr, BoundCall> calls;
+    std::unordered_map<AsyncCall::Ptr, CallState> calls;
     std::vector<AsyncOutputMapping> outputMappings;
 
     /// Taken when the source is created, so that a source that fails afterwards still releases the channel.
@@ -170,7 +168,7 @@ private:
     /// Source thread only: the channel is closed and drained.
     bool inputExhausted = false;
     InFlightState inFlight;
-    /// Strand only. A row in flight holds one slot: its function instances and its cancellation signal.
+    /// Strand only. A row in flight holds one slot: its per-call contexts and its cancellation signal.
     std::vector<size_t> freeSlots;
     std::vector<boost::asio::cancellation_signal> cancelSignals;
     std::vector<std::shared_ptr<AsyncGraphExecution>> executions;

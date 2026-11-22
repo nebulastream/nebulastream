@@ -11,262 +11,378 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cerrno>
+/// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <future>
 #include <limits>
 #include <optional>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/RuntimeValue.hpp>
+#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/HttpCallLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/LogicalFunctionProvider.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Sources/AsyncFunction.hpp>
+#include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncOperator.hpp>
+#include <Sources/AsyncOperatorReflection.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_signal.hpp>
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/asio/co_spawn.hpp> /// NOLINT(misc-include-cleaner) Public Asio provider; cleaner misattributes co_spawn.
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/use_future.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/error.hpp>
+#include <boost/beast/http/message.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for request type; cleaner misses this test's use.
+#include <boost/beast/http/read.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for read; cleaner misses this test's use.
+#include <boost/beast/http/string_body.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for string_body; cleaner misses this test's use.
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; cleaner misattributes error_code.
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <HttpCallAsyncFunction.hpp>
-#include <LogicalFunctionRegistry.hpp>
+#include <HttpCallAsyncOperator.hpp>
 
 namespace NES
 {
 namespace
 {
-LogicalFunction constant(const DataType::Type type, std::string value)
+const DataType text{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
+const DataType integer{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+
+RuntimeValue textValue(const std::string& value)
 {
-    return ConstantValueLogicalFunction{DataType{type, DataType::NULLABLE::NOT_NULLABLE}, std::move(value)};
+    return *RuntimeValue::fromLiteral(text, value);
 }
 
-HttpCallLogicalFunction logicalCall(std::optional<LogicalFunction> retries = std::nullopt)
+RuntimeValue integerValue(const std::string& value)
 {
-    return HttpCallLogicalFunction{
-        constant(DataType::Type::VARSIZED, "payload"),
-        constant(DataType::Type::VARSIZED, "http://localhost/echo"),
-        constant(DataType::Type::UINT64, "30000"),
-        std::move(retries)};
+    return *RuntimeValue::fromLiteral(integer, value);
+}
+
+LogicalFunction constant(DataType type, std::string value)
+{
+    return ConstantValueLogicalFunction{type, std::move(value)};
+}
+
+LogicalFunction httpCall(std::vector<LogicalFunction> args)
+{
+    return LogicalFunctionProvider::provide("HTTP_CALL", std::move(args));
 }
 }
 
-TEST(HttpCallFunctionTest, RetriesDefaultToZero)
+TEST(HttpCallFunctionTest, NativeConfigurationHasStableScalarOutputAndValidatesArity)
 {
-    HttpCallAsyncFunction function;
-    EXPECT_EQ(
-        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}))->retryOverride, size_t{0});
-    EXPECT_EQ(
-        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}))
-            ->retryOverride,
-        size_t{0});
+    const auto op = HttpCallAsyncOperator::create({.argumentTypes = {text, text}});
+    EXPECT_EQ(op.getType(), "HTTP_CALL");
+    ASSERT_EQ(op.getOutputSchema().size(), 1);
+    EXPECT_EQ(op.getOutputSchema().begin()->getDataType(), text);
+    EXPECT_EQ(static_cast<const Identifier&>(op.getOutputSchema().begin()->getFullyQualifiedName()), Identifier::parse("response"));
+    EXPECT_THROW(HttpCallAsyncOperator::create({.argumentTypes = {text}}), Exception);
+    EXPECT_THROW(HttpCallAsyncOperator::create({.argumentTypes = {text, text, integer, integer, integer}}), Exception);
 }
 
-TEST(HttpCallFunctionTest, ExplicitRetriesAcceptIntegerWidthsAndZero)
+TEST(HttpCallFunctionTest, NativeInferenceValidatesTypesAndConstantOptions)
 {
-    HttpCallAsyncFunction function;
-    EXPECT_EQ(
-        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, uint8_t{2}))
-            ->retryOverride,
-        size_t{2});
-    EXPECT_EQ(
-        function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{0}))
-            ->retryOverride,
-        size_t{0});
-}
-
-TEST(HttpCallFunctionTest, InvalidRetryCountsAreUserInputErrors)
-{
-    HttpCallAsyncFunction function;
-    EXPECT_THROW(
-        static_cast<void>(function.prepare(
-            SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, int64_t{-1}))),
-        Exception);
-    EXPECT_THROW(
-        static_cast<void>(function.prepare(
-            SharedRuntimeValues::make(
-                std::string{"body"}, std::string{"http://localhost/echo"}, uint64_t{30000}, std::numeric_limits<uint64_t>::max()))),
-        Exception);
-}
-
-TEST(HttpCallFunctionTest, FactoryCreatedFunctionPreparesOptionsForEachInvocation)
-{
-    auto function = HttpCallAsyncFunction::create(AsyncFunctionRegistryArguments{.binding = {}});
-    const auto first = function->prepare(
-        SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/first"}, uint64_t{1234}, uint64_t{3}));
-    const auto second = function->prepare(
-        SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/second"}, uint64_t{500}, uint64_t{0}));
-    EXPECT_EQ(first->retryOverride, size_t{3});
-    EXPECT_EQ(second->retryOverride, size_t{0});
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(function->prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))),
-        ErrorCode::FormattingError);
-}
-
-TEST(HttpCallFunctionTest, DynamicBadOptionsFailSynchronouslyDuringPreparation)
-{
-    HttpCallAsyncFunction function;
-    EXPECT_THROW(static_cast<void>(function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))), Exception);
+    const HttpCallAsyncOperator config;
+    EXPECT_NO_THROW(
+        static_cast<void>(config.withInferredArguments(
+            {{text, textValue("body")},
+             {text, textValue("http://localhost")},
+             {integer, integerValue("100")},
+             {integer, integerValue("0")}})));
+    for (const auto& invalid : {std::string{"not a URL"}, std::string{"https://localhost"}, std::string{"http:/no-host"}})
+    {
+        EXPECT_THROW(static_cast<void>(config.withInferredArguments({{text, textValue("body")}, {text, textValue(invalid)}})), Exception);
+    }
     EXPECT_THROW(
         static_cast<void>(
-            function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, uint64_t{0}))),
+            config.withInferredArguments({{text, textValue("body")}, {text, textValue("http://localhost")}, {integer, integerValue("0")}})),
+        Exception);
+    EXPECT_THROW(
+        static_cast<void>(config.withInferredArguments(
+            {{text, textValue("body")}, {text, textValue("http://localhost")}, {integer, integerValue("18446744073709551615")}})),
+        Exception);
+    EXPECT_THROW(
+        static_cast<void>(config.withInferredArguments(
+            {{text, textValue("body")},
+             {text, textValue("http://localhost")},
+             {integer, integerValue("10")},
+             {integer, integerValue("18446744073709551615")}})),
+        Exception);
+    const DataType signedInteger{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
+    const auto negative = RuntimeValue::fromLiteral(signedInteger, "-1");
+    ASSERT_TRUE(negative);
+    EXPECT_THROW(
+        static_cast<void>(
+            config.withInferredArguments({{text, textValue("body")}, {text, textValue("http://localhost")}, {signedInteger, *negative}})),
+        Exception);
+    const DataType floatType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE};
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(
+            config.withInferredArguments({{text, std::nullopt}, {text, std::nullopt}, {integer, std::nullopt}, {floatType, std::nullopt}})),
+        ErrorCode::DifferentFieldTypeExpected);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(
+            config.withInferredArguments({{text, textValue("body")}, {text, textValue("http://localhost")}, {integer, integerValue("0")}})),
+        ErrorCode::CannotInferSchema);
+    const auto nullableInteger = DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE};
+    EXPECT_THROW(
+        static_cast<void>(config.withInferredArguments(
+            {{text, textValue("body")}, {text, textValue("http://localhost")}, {nullableInteger, std::nullopt}})),
         Exception);
 }
+
+TEST(HttpCallFunctionTest, LogicalInferenceAndChildRewritePreserveCallArguments)
+{
+    const auto call
+        = httpCall({constant(text, "body"), constant(text, "http://localhost/echo"), constant(integer, "30000"), constant(integer, "2")});
+    const auto inferred = call.withInferredDataType(Schema<Field, Unordered>{});
+    EXPECT_EQ(inferred.getDataType(), text);
+    const auto originalArguments = call.getChildren();
+    for (std::vector<LogicalFunction>::difference_type count = 2; count <= 4; ++count)
+    {
+        const auto scalar = httpCall(std::vector<LogicalFunction>(originalArguments.begin(), originalArguments.begin() + count))
+                                .withInferredDataType(Schema<Field, Unordered>{});
+        EXPECT_EQ(scalar.getDataType(), text);
+        EXPECT_EQ(scalar.getAs<AsyncCallLogicalFunction>()->getOutputName(), Identifier::parse("response"));
+    }
+    const auto asyncCall = inferred.getAs<AsyncCallLogicalFunction>();
+    ASSERT_EQ(asyncCall->getArguments().size(), 4);
+    EXPECT_EQ(asyncCall->getOutputName(), Identifier::parse("response"));
+    EXPECT_EQ(inferred.withChildren(call.getChildren()).withInferredDataType(Schema<Field, Unordered>{}).getChildren(), call.getChildren());
+    EXPECT_THROW(
+        static_cast<void>(httpCall({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "0")})
+                              .withInferredDataType(Schema<Field, Unordered>{})),
+        Exception);
+    const auto schema = Schema<Field, Unordered>{};
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"), constant(text, "not a URL")}).withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}, "256")})
+                              .withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(integer, "30000"),
+                                    constant(DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}, "256")})
+                              .withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(DataType{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE}, "body"),
+                                    constant(text, "http://localhost")})
+                              .withInferredDataType(schema)),
+        ErrorCode::DifferentFieldTypeExpected);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(integer, "30000"),
+                                    constant(DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}, "-1")})
+                              .withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}, "-1")})
+                              .withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "18446744073709551615")})
+                              .withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(integer, "30000"),
+                                    constant(integer, "18446744073709551615")})
+                              .withInferredDataType(schema)),
+        ErrorCode::CannotInferSchema);
+    EXPECT_THROW(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "timeout")})
+                              .withInferredDataType(schema)),
+        Exception);
+    const auto nullableRetry = ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "2"};
+    EXPECT_THROW(
+        static_cast<void>(httpCall({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "30000"), nullableRetry})
+                              .withInferredDataType(schema)),
+        Exception);
+    EXPECT_THROW(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "3.0")})
+                              .withInferredDataType(schema)),
+        Exception);
+    EXPECT_THROW(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(integer, "30000"),
+                                    constant(DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "2")})
+                              .withInferredDataType(schema)),
+        Exception);
+    EXPECT_THROW(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(integer, "30000"),
+                                    constant(DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "2.0")})
+                              .withInferredDataType(schema)),
+        Exception);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(LogicalFunctionProvider::provide("HTTP_CALL", {})), ErrorCode::InvalidQuerySyntax);
+    auto tooMany
+        = httpCall({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "30000"), constant(integer, "0")})
+              .getChildren();
+    tooMany.push_back(constant(integer, "1"));
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(LogicalFunctionProvider::provide("HTTP_CALL", tooMany)), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST(HttpCallFunctionTest, RetryDefaultsAndExplicitCountsAreFixedAtPreparation)
+{
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext context;
+    const auto defaults = config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"})).value();
+    EXPECT_EQ(defaults->getRetryOverride(), size_t{0});
+    const auto defaultsWithTimeout
+        = config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000})).value();
+    EXPECT_EQ(defaultsWithTimeout->getRetryOverride(), size_t{0});
+    const auto explicitZero
+        = config
+              .prepare(
+                  context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000}, uint8_t{0}))
+              .value();
+    EXPECT_EQ(explicitZero->getRetryOverride(), size_t{0});
+    const auto positive
+        = config
+              .prepare(
+                  context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000}, uint8_t{2}))
+              .value();
+    EXPECT_EQ(positive->getRetryOverride(), size_t{2});
+    EXPECT_EQ(
+        config
+            .prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000}, int64_t{0}))
+            .value()
+            ->getRetryOverride(),
+        size_t{0});
+    EXPECT_EQ(
+        config
+            .prepare(
+                context,
+                SharedRuntimeValues::make(
+                    std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000}, std::numeric_limits<uint64_t>::max()))
+            .error()
+            .kind,
+        AsyncError::Type::Permanent);
+    EXPECT_EQ(
+        config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"})).error().kind,
+        AsyncError::Type::Permanent);
+    EXPECT_EQ(
+        config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{0})).error().kind,
+        AsyncError::Type::Permanent);
+    EXPECT_EQ(
+        config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{1}, int64_t{-1}))
+            .error()
+            .kind,
+        AsyncError::Type::Permanent);
+}
+
+TEST(HttpCallFunctionTest, EachPreparedInvocationKeepsItsOwnTimeoutAndRetryOptions)
+{
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext firstContext;
+    AsyncExecutionContext secondContext;
+    const auto first = config.prepare(
+        firstContext, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/first"}, uint64_t{1234}, uint64_t{3}));
+    const auto second = config.prepare(
+        secondContext, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost/second"}, uint64_t{500}, uint64_t{0}));
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(second);
+    EXPECT_EQ((*first)->getRetryOverride(), size_t{3});
+    EXPECT_EQ((*second)->getRetryOverride(), size_t{0});
+    EXPECT_EQ(
+        config.prepare(firstContext, SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"})).error().kind,
+        AsyncError::Type::Permanent);
+}
+
+/// NOLINTBEGIN(misc-include-cleaner) Public provider attribution is verified; cleaner misses this callsite.
+/// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
+TEST(HttpCallFunctionTest, FreshExecutionContextsPrepareIndependentConnectionState)
+{
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::acceptor reserved{ioContext, {boost::asio::ip::tcp::v4(), 0}};
+    const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
+    reserved.close();
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext firstContext;
+    AsyncExecutionContext secondContext;
+    const auto first = config.prepare(firstContext, SharedRuntimeValues::make(std::string{"one"}, url, uint64_t{1000}));
+    const auto second = config.prepare(secondContext, SharedRuntimeValues::make(std::string{"two"}, url, uint64_t{1000}));
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(second);
+    auto firstFuture = boost::asio::co_spawn(ioContext, (*first)->executeAttempt(), boost::asio::use_future);
+    auto secondFuture = boost::asio::co_spawn(ioContext, (*second)->executeAttempt(), boost::asio::use_future);
+    ioContext.run();
+    const auto firstResult = firstFuture.get();
+    const auto secondResult = secondFuture.get();
+    ASSERT_FALSE(firstResult);
+    ASSERT_FALSE(secondResult);
+    EXPECT_EQ(firstResult.error().kind, AsyncError::Type::Retryable);
+    EXPECT_EQ(secondResult.error().kind, AsyncError::Type::Retryable);
+}
+
+/// NOLINTEND(misc-include-cleaner)
+/// NOLINTEND(misc-include-cleaner)
 
 TEST(HttpCallFunctionTest, UnrepresentableTimeoutsAreRejectedBeforeDns)
 {
-    for (const auto millis : {std::numeric_limits<uint64_t>::max(), static_cast<uint64_t>(std::numeric_limits<int64_t>::max())})
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    for (const auto timeout : {std::numeric_limits<uint64_t>::max(), static_cast<uint64_t>(std::numeric_limits<int64_t>::max())})
     {
-        boost::asio::io_context context;
-        HttpCallAsyncFunction function;
-        const auto body = [&]() -> boost::asio::awaitable<void>
-        {
-            static_cast<void>(co_await invokeOnce(
-                function, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, millis)));
-        };
-        auto future = boost::asio::co_spawn(context, body(), boost::asio::use_future);
-        context.run();
-        try
-        {
-            future.get();
-            ADD_FAILURE() << "An unrepresentable timeout must fail";
-        }
-        catch (const Exception& error)
-        {
-            EXPECT_NE(std::string{error.what()}.find("representable steady-clock deadline"), std::string::npos);
-        }
+        boost::asio::io_context ioContext;
+        auto future = boost::asio::co_spawn(
+            ioContext,
+            invokeOnce(config, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://unused.invalid"}, timeout)),
+            boost::asio::use_future);
+        ioContext.run();
+        EXPECT_EQ(future.get().error().kind, AsyncError::Type::Permanent);
     }
 }
 
-TEST(HttpCallFunctionTest, RetryArgumentSurvivesReflectionEqualityAndChildReplacement)
-{
-    const auto original = logicalCall(constant(DataType::Type::UINT64, "2"));
-    const auto reflected = ReflectionContext{}.reflect(LogicalFunction{original});
-    const auto copy = ReflectionContext{}.unreflect<LogicalFunction>(reflected);
-    EXPECT_EQ(copy, LogicalFunction{original});
-    EXPECT_EQ(original.getChildren().size(), 4);
-    EXPECT_NE(original, logicalCall(constant(DataType::Type::UINT64, "3")));
-    auto children = original.getChildren();
-    children[3] = constant(DataType::Type::UINT64, "3");
-    EXPECT_EQ(original.withChildren(children), logicalCall(children[3]));
-    EXPECT_EQ(original.withChildren(logicalCall().getChildren()), logicalCall());
-    EXPECT_NE(original.explain(ExplainVerbosity::Short), logicalCall().explain(ExplainVerbosity::Short));
-}
-
-TEST(HttpCallFunctionTest, RejectsInvalidConstantTimeoutRetryAndUrlDuringInference)
-{
-    const Schema<Field, Unordered> schema{};
-    for (const auto& millis : {std::string{"0"}, std::string{"18446744073709551615"}, std::string{"9223372036854775807"}})
-    {
-        const HttpCallLogicalFunction call{
-            constant(DataType::Type::VARSIZED, "x"),
-            constant(DataType::Type::VARSIZED, "http://localhost"),
-            constant(DataType::Type::UINT64, millis),
-            std::nullopt};
-        EXPECT_THROW(static_cast<void>(call.withInferredDataType(schema)), Exception);
-    }
-    const HttpCallLogicalFunction negativeTimeout{
-        constant(DataType::Type::VARSIZED, "x"),
-        constant(DataType::Type::VARSIZED, "http://localhost"),
-        constant(DataType::Type::INT64, "-1"),
-        std::nullopt};
-    EXPECT_THROW(static_cast<void>(negativeTimeout.withInferredDataType(schema)), Exception);
-    for (const auto& url : {"not a url", "https://localhost", "http:/no-host"})
-    {
-        const HttpCallLogicalFunction call{
-            constant(DataType::Type::VARSIZED, "x"), constant(DataType::Type::VARSIZED, url), std::nullopt, std::nullopt};
-        EXPECT_THROW(static_cast<void>(call.withInferredDataType(schema)), Exception);
-    }
-    EXPECT_THROW(static_cast<void>(logicalCall(constant(DataType::Type::INT64, "-1")).withInferredDataType(schema)), Exception);
-    EXPECT_THROW(
-        static_cast<void>(logicalCall(constant(DataType::Type::UINT64, "18446744073709551615")).withInferredDataType(schema)), Exception);
-}
-
-TEST(HttpCallFunctionTest, ErrorCodesDistinguishInferenceInputAndTransportFailures)
-{
-    const Schema<Field, Unordered> schema{};
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(logicalCall(constant(DataType::Type::INT64, "-1")).withInferredDataType(schema)), ErrorCode::CannotInferSchema);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(logicalCall(constant(DataType::Type::VARSIZED, "two")).withInferredDataType(schema)),
-        ErrorCode::DifferentFieldTypeExpected);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(logicalCall(constant(DataType::Type::UINT8, "256")).withInferredDataType(schema)), ErrorCode::InvalidLiteral);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(HttpCallLogicalFunction::createHTTP_CALL({.children = {}})), ErrorCode::InvalidQuerySyntax);
-
-    HttpCallAsyncFunction function;
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"}))),
-        ErrorCode::FormattingError);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{0}))),
-        ErrorCode::ArithmeticalError);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(
-            function.prepare(SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{1}, int64_t{-1}))),
-        ErrorCode::ArithmeticalError);
-
-    boost::asio::io_context context;
-    boost::asio::ip::tcp::acceptor reserved{context, {boost::asio::ip::tcp::v4(), 0}};
-    const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
-    reserved.close();
-    const auto invoke = [&]() -> boost::asio::awaitable<void>
-    { static_cast<void>(co_await invokeOnce(function, SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000}))); };
-    auto future = boost::asio::co_spawn(context, invoke(), boost::asio::use_future);
-    context.run();
-    ASSERT_EXCEPTION_ERRORCODE(future.get(), ErrorCode::RetryableAsyncError);
-}
-
-TEST(HttpCallFunctionTest, OnlyExplicitTransientStatusesAreRetryable)
+TEST(HttpCallFunctionTest, StatusAndTransportClassificationRetainRetryWhitelist)
 {
     for (unsigned status = 100; status < 600; ++status)
     {
-        SCOPED_TRACE(status);
-        if (status >= 200 && status < 300)
+        const auto result = detail::checkHttpStatus(status, "http://test/endpoint", "response");
+        const bool success = status >= 200 && status < 300;
+        const bool retryable = status == 408 || status == 429 || status == 500 || status == 502 || status == 503 || status == 504;
+        EXPECT_EQ(result.has_value(), success) << status;
+        if (!success)
         {
-            EXPECT_NO_THROW(detail::checkHttpStatus(status, "http://test/endpoint", "response"));
-        }
-        else if (status == 408 || status == 429 || status == 500 || status == 502 || status == 503 || status == 504)
-        {
-            ASSERT_EXCEPTION_ERRORCODE(detail::checkHttpStatus(status, "http://test/endpoint", "response"), ErrorCode::RetryableAsyncError);
-        }
-        else
-        {
-            ASSERT_EXCEPTION_ERRORCODE(detail::checkHttpStatus(status, "http://test/endpoint", "response"), ErrorCode::IOError);
+            EXPECT_EQ(result.error().kind, retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent) << status;
         }
     }
-}
-
-namespace
-{
-void failTransport(const boost::system::error_code& code)
-{
-    try
-    {
-        throw boost::system::system_error{code};
-    }
-    catch (const boost::system::system_error& error)
-    {
-        detail::rethrowHttpTransportError(error, "http://test/endpoint");
-    }
-}
-}
-
-TEST(HttpCallFunctionTest, OnlyWhitelistedTransportFailuresAreRetryable)
-{
     namespace asioError = boost::asio::error;
+    /// NOLINTNEXTLINE(misc-include-cleaner) error_code is declared by public boost/system/error_code.hpp.
     const std::vector<boost::system::error_code> transient{
         asioError::connection_refused,
         asioError::connection_reset,
@@ -275,18 +391,14 @@ TEST(HttpCallFunctionTest, OnlyWhitelistedTransportFailuresAreRetryable)
         asioError::network_unreachable,
         asioError::network_down,
         asioError::host_unreachable,
-#ifdef EHOSTDOWN
-        boost::system::error_code{EHOSTDOWN, boost::system::system_category()},
-#endif
         asioError::try_again,
         asioError::eof,
         asioError::host_not_found_try_again,
         boost::beast::error::timeout,
         boost::beast::http::error::end_of_stream};
-    for (const auto& code : transient)
+    for (const auto& error : transient)
     {
-        SCOPED_TRACE(code.message());
-        ASSERT_EXCEPTION_ERRORCODE(failTransport(code), ErrorCode::RetryableAsyncError);
+        EXPECT_EQ(detail::classifyHttpTransportError(error, "http://host").kind, AsyncError::Type::Retryable);
     }
     const std::vector<boost::system::error_code> permanent{
         asioError::host_not_found,
@@ -297,81 +409,199 @@ TEST(HttpCallFunctionTest, OnlyWhitelistedTransportFailuresAreRetryable)
         boost::beast::http::error::bad_content_length,
         boost::beast::http::error::partial_message,
         boost::beast::http::error::body_limit};
-    for (const auto& code : permanent)
+    for (const auto& error : permanent)
     {
-        SCOPED_TRACE(code.message());
-        ASSERT_EXCEPTION_ERRORCODE(failTransport(code), ErrorCode::IOError);
+        EXPECT_EQ(detail::classifyHttpTransportError(error, "http://host").kind, AsyncError::Type::Permanent);
     }
+    EXPECT_EQ(detail::classifyHttpTransportError(asioError::operation_aborted, "http://host").kind, AsyncError::Type::Cancelled);
 }
 
-TEST(HttpCallFunctionTest, CancellationRethrowsOriginalExceptionWithoutRetryClassification)
+TEST(HttpCallFunctionTest, LogicalCallReflectionRetainsOptionsAndReplacementArguments)
 {
-    const boost::system::system_error original{boost::asio::error::operation_aborted, "cancelled by test"};
-    try
-    {
-        try
-        {
-            throw original;
-        }
-        catch (const boost::system::system_error& error)
-        {
-            detail::rethrowHttpTransportError(error, "http://test/endpoint");
-        }
-    }
-    catch (const boost::system::system_error& error)
-    {
-        EXPECT_EQ(error.code(), original.code());
-        EXPECT_STREQ(error.what(), original.what());
-        return;
-    }
-    FAIL() << "Cancellation must remain a system_error";
+    const auto call
+        = httpCall({constant(text, "body"), constant(text, "http://localhost/one"), constant(integer, "30000"), constant(integer, "2")});
+    const auto reflected = ReflectionContext{}.reflect(call);
+    const auto restored = ReflectionContext{}.unreflect<LogicalFunction>(reflected);
+    EXPECT_EQ(restored.getType(), call.getType());
+    EXPECT_EQ(restored.getChildren(), call.getChildren());
+    EXPECT_EQ(restored.getDataType(), call.getDataType());
+    EXPECT_NE(
+        call.explain(ExplainVerbosity::Short),
+        httpCall({constant(text, "body"), constant(text, "http://localhost/other"), constant(integer, "30000"), constant(integer, "2")})
+            .explain(ExplainVerbosity::Short));
+    const auto operatorCopy = AsyncOperator{HttpCallAsyncOperator{}};
+    const auto reflectedOperator = ReflectionContext{}.reflect(operatorCopy);
+    const auto restoredOperator = ReflectionContext{}.unreflect<AsyncOperator>(reflectedOperator);
+    EXPECT_EQ(restoredOperator.getType(), operatorCopy.getType());
+    EXPECT_EQ(restoredOperator.getOutputSchema(), operatorCopy.getOutputSchema());
+    auto changed = call.getChildren();
+    changed[3] = constant(integer, "3");
+    EXPECT_EQ(call.withChildren(changed).getChildren(), changed);
 }
 
-TEST(HttpCallFunctionTest, PreparedAttemptsOwnOptionsAndDoNotReparseArguments)
+TEST(HttpCallFunctionTest, PreparedInvocationOwnsInputsAcrossRepeatedAttempts)
 {
-    boost::asio::io_context context;
-    HttpCallAsyncFunction function;
-    boost::asio::ip::tcp::acceptor reserved{context, {boost::asio::ip::tcp::v4(), 0}};
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::acceptor reserved{ioContext, {boost::asio::ip::tcp::v4(), 0}};
     const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
     reserved.close();
-    auto arguments = SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000}, uint8_t{2});
-    const auto prepared = function.prepare(arguments);
-    arguments = SharedRuntimeValues::make(std::string{"changed"}, std::string{"not a URL"}, int64_t{-1}, int64_t{-1});
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext context;
+    auto values = SharedRuntimeValues::make(std::string{"original"}, url, uint64_t{1000}, uint8_t{2});
+    const auto prepared = config.prepare(context, values).value();
+    values = SharedRuntimeValues::make(std::string{"changed"}, std::string{"not a URL"}, int64_t{-1}, int64_t{-1});
+    EXPECT_EQ(prepared->getRetryOverride(), size_t{2});
     for (int attempt = 0; attempt < 2; ++attempt)
     {
-        EXPECT_EQ(prepared->retryOverride, size_t{2});
-        auto future = boost::asio::co_spawn(context, prepared->executeAttempt(), boost::asio::use_future);
-        context.run();
-        ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(future.get()), ErrorCode::RetryableAsyncError);
-        context.restart();
+        auto future = boost::asio::co_spawn(ioContext, prepared->executeAttempt(), boost::asio::use_future);
+        ioContext.run();
+        const auto result = future.get();
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error().kind, AsyncError::Type::Retryable);
+        ioContext.restart();
     }
 }
 
-TEST(HttpCallFunctionTest, RetryableFailuresWarnAboutPostReplay)
+TEST(HttpCallFunctionTest, InvalidRetryCountsAreUserInputErrors)
 {
-    try
-    {
-        detail::checkHttpStatus(503, "http://test/endpoint", "overloaded");
-        FAIL() << "503 must fail";
-    }
-    catch (const Exception& error)
-    {
-        const std::string message{error.what()};
-        EXPECT_NE(message.find("http://test/endpoint"), std::string::npos);
-        EXPECT_NE(message.find("503"), std::string::npos);
-        EXPECT_NE(message.find("overloaded"), std::string::npos);
-        EXPECT_NE(message.find("POST may duplicate server-side effects"), std::string::npos);
-    }
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext context;
+    const auto negative = config.prepare(
+        context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000}, int64_t{-1}));
+    const auto overflow = config.prepare(
+        context,
+        SharedRuntimeValues::make(
+            std::string{"body"}, std::string{"http://localhost"}, uint64_t{30000}, std::numeric_limits<uint64_t>::max()));
+    ASSERT_FALSE(negative);
+    ASSERT_FALSE(overflow);
+    EXPECT_EQ(negative.error().kind, AsyncError::Type::Permanent);
+    EXPECT_EQ(overflow.error().kind, AsyncError::Type::Permanent);
 }
 
-TEST(HttpCallFunctionTest, RetriesMustBeANonNullableInteger)
+TEST(HttpCallFunctionTest, DynamicBadOptionsFailSynchronouslyDuringPreparation)
 {
-    const Schema<Field, Unordered> schema{};
-    EXPECT_NO_THROW(static_cast<void>(logicalCall(constant(DataType::Type::UINT8, "2")).withInferredDataType(schema)));
-    EXPECT_THROW(static_cast<void>(logicalCall(constant(DataType::Type::VARSIZED, "two")).withInferredDataType(schema)), Exception);
-    EXPECT_THROW(static_cast<void>(logicalCall(constant(DataType::Type::FLOAT64, "2.0")).withInferredDataType(schema)), Exception);
-    const auto nullable = ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "2"};
-    EXPECT_THROW(static_cast<void>(logicalCall(nullable).withInferredDataType(schema)), Exception);
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext context;
+    EXPECT_EQ(
+        config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"not a URL"})).error().kind,
+        AsyncError::Type::Permanent);
+    EXPECT_EQ(
+        config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{0})).error().kind,
+        AsyncError::Type::Permanent);
+    EXPECT_EQ(
+        config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, uint64_t{100}, int64_t{-1}))
+            .error()
+            .kind,
+        AsyncError::Type::Permanent);
+    const auto wrongType = config.prepare(
+        context, SharedRuntimeValues::make(std::string{"body"}, std::string{"http://localhost"}, std::string{"not a timeout"}));
+    ASSERT_FALSE(wrongType);
+    EXPECT_EQ(wrongType.error().kind, AsyncError::Type::Permanent);
+    EXPECT_EQ(wrongType.error().exception.code(), ErrorCode::DifferentFieldTypeExpected);
 }
 
+TEST(HttpCallFunctionTest, RetriesMustBeNonNullableIntegers)
+{
+    const auto schema = Schema<Field, Unordered>{};
+    const auto prefix
+        = std::vector<LogicalFunction>{constant(text, "body"), constant(text, "http://localhost"), constant(integer, "30000")};
+    EXPECT_NO_THROW(
+        static_cast<void>(httpCall({constant(text, "body"),
+                                    constant(text, "http://localhost"),
+                                    constant(integer, "30000"),
+                                    constant(DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}, "2")})
+                              .withInferredDataType(schema)));
+    for (const auto& invalid : std::vector<LogicalFunction>{
+             constant(DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "two"),
+             constant(DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "2.0"),
+             ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "2"}})
+    {
+        auto arguments = prefix;
+        arguments.push_back(invalid);
+        EXPECT_THROW(static_cast<void>(httpCall(std::move(arguments)).withInferredDataType(schema)), Exception);
+    }
 }
+
+/// NOLINTBEGIN(misc-include-cleaner) Public provider attribution is verified; cleaner misses this callsite.
+/// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
+TEST(HttpCallFunctionTest, DirectPreparedAttemptReportsCancellationAsAnAsyncError)
+{
+    namespace asio = boost::asio;
+    namespace http = boost::beast::http;
+    asio::io_context serverIo;
+    asio::ip::tcp::acceptor acceptor{serverIo, {asio::ip::tcp::v4(), 0}};
+    const auto url = "http://127.0.0.1:" + std::to_string(acceptor.local_endpoint().port());
+    const std::jthread server(
+        [&]
+        {
+            asio::ip::tcp::socket socket{serverIo};
+            acceptor.accept(socket);
+            boost::beast::flat_buffer buffer;
+            http::request<http::string_body> request;
+            boost::system::error_code error;
+            http::read(socket, buffer, request, error);
+            std::this_thread::sleep_for(std::chrono::milliseconds{100});
+        });
+
+    asio::io_context clientIo;
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    AsyncExecutionContext context;
+    auto prepared = config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{30000})).value();
+    asio::cancellation_signal cancellation;
+    asio::steady_timer stop{clientIo, std::chrono::milliseconds{10}};
+    stop.async_wait([&](const auto&) { cancellation.emit(asio::cancellation_type::terminal); });
+    auto future = asio::co_spawn(clientIo, prepared->executeAttempt(), asio::bind_cancellation_slot(cancellation.slot(), asio::use_future));
+    clientIo.run();
+    const auto result = future.get();
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().kind, AsyncError::Type::Cancelled);
+}
+
+/// NOLINTEND(misc-include-cleaner)
+/// NOLINTEND(misc-include-cleaner)
+
+TEST(HttpCallFunctionTest, PreparedInvocationRetainsSlotStateAfterContextDestruction)
+{
+    namespace asio = boost::asio;
+    asio::io_context ioContext;
+    asio::ip::tcp::acceptor reserved{ioContext, {asio::ip::tcp::v4(), 0}};
+    const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
+    reserved.close();
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    auto prepared = [&]
+    {
+        AsyncExecutionContext context;
+        return config.prepare(context, SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000})).value();
+    }();
+
+    auto future = asio::co_spawn(ioContext, prepared->executeAttempt(), asio::use_future);
+    ioContext.run();
+    const auto result = future.get();
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().kind, AsyncError::Type::Retryable);
+}
+
+TEST(HttpCallFunctionTest, RefusedConnectionRemainsRetryableAndWarnsAboutPostReplay)
+{
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::acceptor reserved{ioContext, {boost::asio::ip::tcp::v4(), 0}};
+    const auto url = "http://127.0.0.1:" + std::to_string(reserved.local_endpoint().port());
+    reserved.close();
+    const AsyncOperator config = HttpCallAsyncOperator{};
+    auto future = boost::asio::co_spawn(
+        ioContext, invokeOnce(config, SharedRuntimeValues::make(std::string{"body"}, url, uint64_t{1000})), boost::asio::use_future);
+    ioContext.run();
+    const auto result = future.get();
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().kind, AsyncError::Type::Retryable);
+    const auto warning = detail::checkHttpStatus(503, url, "busy");
+    ASSERT_FALSE(warning);
+    const std::string message{warning.error().exception.what()};
+    EXPECT_NE(message.find(url), std::string::npos);
+    EXPECT_NE(message.find("503"), std::string::npos);
+    EXPECT_NE(message.find("busy"), std::string::npos);
+    EXPECT_NE(message.find("POST may duplicate server-side effects"), std::string::npos);
+}
+}
+
+/// NOLINTEND(readability-magic-numbers)

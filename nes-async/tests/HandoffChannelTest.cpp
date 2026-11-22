@@ -13,6 +13,7 @@
 */
 
 #include <chrono>
+#include <cstddef>
 #include <future>
 #include <memory>
 #include <optional>
@@ -25,9 +26,12 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 
+/// NOLINTBEGIN(bugprone-unchecked-optional-access) GoogleTest fatal assertions guard optional reads
 namespace NES
 {
 namespace
@@ -59,7 +63,7 @@ TEST_F(HandoffChannelTest, PositiveCapacityAndBoundedFifo)
     EXPECT_EQ(sender.tryPush(buffer), PushResult::PUSHED);
     EXPECT_EQ(sender.tryPush(buffer), PushResult::FULL);
     auto received = receiver.tryPop();
-    ASSERT_TRUE(received);
+    ASSERT_TRUE(received.has_value());
     EXPECT_EQ(received->getAvailableMemoryArea().data(), buffer.getAvailableMemoryArea().data());
     EXPECT_EQ(sender.tryPush(buffer), PushResult::PUSHED);
     sender.close();
@@ -73,7 +77,7 @@ TEST_F(HandoffChannelTest, PositiveCapacityAndBoundedFifo)
 
 TEST_F(HandoffChannelTest, EitherEndpointCanBeClaimedFirst)
 {
-    for (bool senderFirst : {false, true})
+    for (const bool senderFirst : {false, true})
     {
         HandoffChannel channels{1};
         std::optional<HandoffChannel::Sender> sender;
@@ -147,7 +151,7 @@ TEST_F(HandoffChannelTest, AbortWakesWaitingReceiver)
 TEST_F(HandoffChannelTest, StopRequestInterruptsPopWithoutClosingChannel)
 {
     auto [sender, receiver] = HandoffChannel::create(1);
-    std::stop_source stop;
+    const std::stop_source stop;
     stop.request_stop();
     EXPECT_FALSE(receiver.pop(stop.get_token()));
     EXPECT_FALSE(receiver.exhausted());
@@ -158,7 +162,7 @@ TEST_F(HandoffChannelTest, StoppedReceiverDoesNotReportProducerAbortAsFailure)
 {
     auto [sender, receiver] = HandoffChannel::create(1);
     std::optional<HandoffChannel::Sender> owner{std::move(sender)};
-    std::stop_source stop;
+    const std::stop_source stop;
     stop.request_stop();
     owner.reset();
     EXPECT_FALSE(receiver.pop(stop.get_token()));
@@ -296,7 +300,7 @@ TEST_F(HandoffChannelTest, DistinctChannelObjectsAreIsolated)
 TEST_F(HandoffChannelTest, SharedConfigurationReflectionPreservesIdentityAndCreatesFreshQueue)
 {
     auto channel = std::make_shared<HandoffChannel>(2);
-    const ReflectionContext writer;
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
     const auto sourceConfig = writer.reflect(channel);
     auto sender = channel->takeSender();
     auto receiver = channel->takeReceiver();
@@ -304,23 +308,28 @@ TEST_F(HandoffChannelTest, SharedConfigurationReflectionPreservesIdentityAndCrea
 
     /// Claims and queued buffers must not change the serialized definition.
     const auto sinkConfig = writer.reflect(channel);
-    const ReflectionContext reader;
+    const auto sharedObjects = std::make_shared<SharedPointerDeserializationState>();
+    const ReflectionContext reader{sharedObjects};
     const auto sourceChannel = reader.unreflect<std::shared_ptr<HandoffChannel>>(sourceConfig);
     const auto sinkChannel = reader.unreflect<std::shared_ptr<HandoffChannel>>(sinkConfig);
     EXPECT_EQ(sourceChannel, sinkChannel);
     EXPECT_NE(sourceChannel, channel);
     EXPECT_EQ(sourceChannel->getCapacity(), 2);
-    EXPECT_THROW(reader.validateSharedObjects(), Exception);
+    const auto channels = sharedObjects->getObjects<HandoffChannel>();
+    ASSERT_EQ(channels.size(), 1);
+    EXPECT_EQ(channels.front(), sourceChannel);
+    EXPECT_THROW(sourceChannel->validate(), Exception);
     auto freshReceiver = sourceChannel->takeReceiver();
     EXPECT_FALSE(freshReceiver.tryPop());
-    EXPECT_THROW(reader.validateSharedObjects(), Exception);
+    EXPECT_THROW(sourceChannel->validate(), Exception);
     auto freshSender = sinkChannel->takeSender();
-    EXPECT_NO_THROW(reader.validateSharedObjects());
+    EXPECT_NO_THROW(sourceChannel->validate());
     EXPECT_EQ(freshSender.tryPush(bufferManager->getBufferBlocking()), PushResult::PUSHED);
     EXPECT_TRUE(freshReceiver.tryPop());
     EXPECT_TRUE(receiver.tryPop());
 
-    const auto separate = ReflectionContext{}.unreflect<std::shared_ptr<HandoffChannel>>(sourceConfig);
+    const ReflectionContext separateReader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto separate = separateReader.unreflect<std::shared_ptr<HandoffChannel>>(sourceConfig);
     EXPECT_NE(separate, sourceChannel);
     EXPECT_THROW(separate->validate(), Exception);
 }
@@ -341,3 +350,5 @@ TEST_F(HandoffChannelTest, MovingChannelPreservesQueueAndClaims)
 
 }
 }
+
+/// NOLINTEND(bugprone-unchecked-optional-access)

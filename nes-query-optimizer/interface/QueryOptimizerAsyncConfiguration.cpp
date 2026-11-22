@@ -58,7 +58,7 @@ const ConfigField<std::optional<uint64_t>> CHANNEL_CAPACITY{
 
 const ConfigField<std::optional<uint64_t>> MAX_RETRIES{
     Identifier::parse("max_retries"),
-    "Further attempts after RetryableAsyncError, with exponential backoff starting at 100 ms",
+    "Further attempts after retryable async errors, with exponential backoff starting at 100 ms",
     optionalUInt,
     std::nullopt,
     "Not set"};
