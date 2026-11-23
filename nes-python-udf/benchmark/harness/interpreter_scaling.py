@@ -42,7 +42,7 @@ def queries(test):
     return {number + 1: statement for number, statement in enumerate(statements)}
 
 
-def variant_settings(variant, gil_venv, ft_venv):
+def variant_settings(variant, gil_venv, ft_venv, protocol):
     """The environment and worker arguments of a variant."""
     if variant in ("SHARED", "SUBINTERPRETER", "DLMOPEN", "FREE_THREADED"):
         venv = ft_venv if variant == "FREE_THREADED" else gil_venv
@@ -54,7 +54,11 @@ def variant_settings(variant, gil_venv, ft_venv):
     venv = ft_venv if flavor == "FT" else gil_venv
     if not venv:
         raise SystemExit(f"{variant} needs {'--ft-venv' if flavor == 'FT' else '--gil-venv'}")
-    return ({"NES_UDF_SHARED_PROCESSES": "threads"} if kind == "THREADS" else {}), [f"--worker.python_udf.process_venv={venv}"]
+    # Only the shared memory protocols let one host process serve several UDF operators, see PythonProcesses::start
+    if kind == "THREADS" and not protocol.startswith("SHARED_MEMORY"):
+        raise SystemExit(f"{variant} needs a SHARED_MEMORY protocol")
+    return ({"NES_UDF_SHARED_PROCESSES": "threads"} if kind == "THREADS" else {}), [
+        f"--worker.python_udf.process_venv={venv}", f"--worker.python_udf.process_protocol={protocol}"]
 
 
 def main():
@@ -66,6 +70,7 @@ def main():
     parser.add_argument("--calls", default="ROW", help="worker.default_query_execution.in_process_udf_calls")
     parser.add_argument("--rounds", type=int, default=1)
     parser.add_argument("--build", default=os.path.join(REPOSITORY, "cmake-build-relwithdebinfo-libstdcxx-none"))
+    parser.add_argument("--protocol", default="SHARED_MEMORY_ZERO_COPY", help="worker.python_udf.process_protocol of OUT_OF_PROCESS variants")
     parser.add_argument("--gil-venv", default="", help="venv of a Python with a GIL")
     parser.add_argument("--ft-venv", default="", help="venv of a free-threaded Python, e.g. <build>/udf-ft-venv")
     parser.add_argument("--data", default="/dev/shm/nes-udf-bench")
@@ -79,7 +84,7 @@ def main():
     statements = queries(arguments.test)
     results_path = os.path.join(HARNESS, "../results", arguments.experiment + ".jsonl")
     for interpreter in arguments.variants.split(","):
-        variant_environment, variant_arguments = variant_settings(interpreter, arguments.gil_venv, arguments.ft_venv)
+        variant_environment, variant_arguments = variant_settings(interpreter, arguments.gil_venv, arguments.ft_venv, arguments.protocol)
         for threads in map(int, arguments.threads.split(",")):
             run_dir = os.path.join(arguments.scratch, f"{arguments.experiment}-{interpreter}-w{threads}")
             shutil.rmtree(run_dir, ignore_errors=True)

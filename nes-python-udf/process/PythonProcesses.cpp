@@ -103,13 +103,14 @@ def _read(size):
 
 
 def _pool(fd):
-    # All operators share the one mapping of the pool of the worker
+    # All operators share the one mapping of the pool of the worker, each through a memoryview of its own: the threads of
+    # NES_UDF_SHARED_PROCESSES=threads slice it at the same time, which one shared memoryview does not survive without a GIL
     status = os.fstat(fd)
     key = (status.st_dev, status.st_ino)
     if key not in _pools:
-        _pools[key] = memoryview(mmap.mmap(fd, 0))
+        _pools[key] = mmap.mmap(fd, 0)
     os.close(fd)
-    return _pools[key]
+    return memoryview(_pools[key])
 
 
 def _attached(operator):
