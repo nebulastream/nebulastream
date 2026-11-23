@@ -15,6 +15,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <vector>
 
 #include <DataTypes/VarVal.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -38,6 +39,14 @@ public:
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal);
     nautilus::val<uint64_t> getNumberOfFields() const;
     [[nodiscard]] bool hasField(const RecordFieldIdentifier& fieldName) const;
+
+    /// To be called right before emitting the values out of a pipeline. Lazily represented values cannot persist in this state across pipelines.
+    /// Therefore, they need to be deserialized at this point.
+    void deserializeAllFields();
+
+    /// Replaces the value of the fields listed in fieldIdentifiers with their deserialized version.
+    /// Use this instead of deserializeAllFields(), if only a known subset of fields is required in its deserialized form.
+    void deserializeFields(const std::vector<RecordFieldIdentifier>& fieldIdentifiers);
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
     friend nautilus::val<bool> operator==(const Record& lhs, const Record& rhs);

@@ -17,8 +17,8 @@
 #include <numeric>
 #include <ostream>
 #include <ranges>
-#include <string>
 #include <unordered_map>
+#include <vector>
 #include <DataTypes/VarVal.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -60,6 +60,25 @@ void Record::reassignFields(const Record& other)
     for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(other.recordFields))
     {
         write(fieldIdentifier, value);
+    }
+}
+
+void Record::deserializeAllFields()
+{
+    for (auto& [fieldName, value] : nautilus::static_iterable(recordFields))
+    {
+        value.deserializeUnderlyingVal();
+    }
+}
+
+void Record::deserializeFields(const std::vector<RecordFieldIdentifier>& fieldIdentifiers)
+{
+    for (const auto& fieldIdentifier : fieldIdentifiers)
+    {
+        if (const auto field = recordFields.find(fieldIdentifier); field != recordFields.end())
+        {
+            field->second.deserializeUnderlyingVal();
+        }
     }
 }
 

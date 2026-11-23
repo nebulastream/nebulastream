@@ -48,7 +48,10 @@ std::vector<WhenThenPhysicalFunction> groupWhenThens(const std::vector<PhysicalF
 /// produced it.
 VarVal withDeclaredType(const VarVal& value, const DataType& resultType)
 {
-    return value.customVisit([&]<typename T>(const T& raw) { return VarVal{raw, resultType.nullable, value.isNull()}; });
+    /// We deserialize any lazily represented values here, since the deserializer that comes with them makes assumptions about the nullability of the value, which might change here.
+    const auto deserializedVal = value.getAsDeserializedUnderlyingValue();
+    return deserializedVal.customVisit([&]<typename T>(const T& raw)
+                                       { return VarVal{raw, resultType.nullable, deserializedVal.isNull()}; });
 }
 }
 

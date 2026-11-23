@@ -14,6 +14,7 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -48,6 +49,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -122,6 +125,41 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         }
     }
     return aggregationPhysicalFunctions;
+}
+
+/// Collects the record fields the build operator reads: The event-time field, the grouping keys, and the aggregation inputs.
+/// The keys and inputs are plain field accesses, lowered through the field mapping, so the names are resolved the same way
+/// FunctionProvider::lowerFunction resolves them. The time function reads the field under its last name.
+std::vector<Record::RecordFieldIdentifier>
+getAccessedFields(const WindowedAggregationLogicalOperator& aggregation, const FieldMappingTrait& fieldMapping)
+{
+    std::vector<Record::RecordFieldIdentifier> accessedFields;
+    const auto addMappedField = [&](const Field& field)
+    {
+        const auto mappedName = fieldMapping.getMapping(unbind(field));
+        INVARIANT(mappedName.has_value(), "Can not find mapping for {}", field);
+        if (std::ranges::find(accessedFields, *mappedName) == accessedFields.end())
+        {
+            accessedFields.push_back(*mappedName);
+        }
+    };
+
+    const auto timeCharacteristic = std::get<Windowing::BoundTimeCharacteristic>(aggregation.getCharacteristic());
+    if (const auto* eventTime = std::get_if<Windowing::BoundEventTimeCharacteristic>(&timeCharacteristic))
+    {
+        accessedFields.emplace_back(eventTime->field->getField().getLastName());
+    }
+    for (const auto& key : aggregation.getGroupingKeys())
+    {
+        addMappedField(key->getField());
+    }
+    for (const auto& projectedAggregation : aggregation.getWindowAggregation())
+    {
+        const auto input = projectedAggregation.function.getInputFunction();
+        const auto fieldAccess = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(input);
+        addMappedField(fieldAccess->getField());
+    }
+    return accessedFields;
 }
 }
 
@@ -213,8 +251,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
+    auto accessedFields = getAccessedFields(*aggregation, *childTraitSet.get<FieldMappingTrait>());
     const AggregationBuildPhysicalOperator build{
-        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
+        handlerId,
+        std::move(timeFunction),
+        std::move(sliceStoreRef),
+        aggregationPhysicalFunctions,
+        hashMapConfig,
+        keyFunctions,
+        std::move(accessedFields)};
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
