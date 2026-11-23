@@ -1,0 +1,176 @@
+# name: udf/HiPyInline.test
+# description: INLINE UDFs compiled with HiPy (COMPILER HIPY) and traced with Nautilus (HiPyPhysicalFunction): integer, float
+# and string arguments and results, if/else, for loops over a range and over a string, a while loop, string builtins and
+# NULL arguments. The expected results are CPython's. brackets() leaves out the row with non-ASCII text, as HiPy's upper()
+# changes only ASCII letters. Needs NES_HIPY_DIR.
+# groups: [HiPy]
+
+CREATE LOGICAL SOURCE nums(id INT64 NOT NULL, x INT64, f FLOAT64);
+CREATE PHYSICAL SOURCE FOR nums TYPE File;
+ATTACH INLINE
+1,7,36.6
+2,-7,-40.0
+3,27,0.1
+4,,
+
+CREATE LOGICAL SOURCE words(id INT64 NOT NULL, w VARSIZED);
+CREATE PHYSICAL SOURCE FOR words TYPE File;
+ATTACH INLINE
+1,Hello Condo 42
+2,ab [x y z] 9
+3,Grüße 2024
+4,no brackets here
+5,
+
+CREATE LOGICAL SOURCE nstr(id INT64 NOT NULL, s VARSIZED);
+CREATE PHYSICAL SOURCE FOR nstr TYPE File;
+ATTACH INLINE
+1,12
+2,-5
+3,+0
+
+CREATE FUNCTION inc (x INT64) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    return x + 1
+$python$;
+CREATE FUNCTION floordiv (x INT64) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    return x // 3 * 10 + x % 3
+$python$;
+CREATE FUNCTION squares (x INT64) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    t = 0
+    for i in range(x):
+        t += i * i
+    return t
+$python$;
+CREATE FUNCTION countdown (x INT64) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    t = 0
+    for i in range(x, 0, -2):
+        t = t * 10 + i
+    return t
+$python$;
+CREATE FUNCTION collatz (x INT64) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    n = 0
+    while x > 1:
+        if x % 2 == 0:
+            x = x // 2
+        else:
+            x = 3 * x + 1
+        n += 1
+    return n
+$python$;
+CREATE FUNCTION digits (s VARSIZED) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    n = 0
+    for c in s:
+        if '0' <= c <= '9':
+            n += 1
+    return n
+$python$;
+CREATE FUNCTION classify (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE COMPILER HIPY AS $python$
+    t = s.lower()
+    if 'condo' in t:
+        return 'condo'
+    return t[0:3] + str(len(t))
+$python$;
+CREATE FUNCTION brackets (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE COMPILER HIPY AS $python$
+    i = s.find('[')
+    j = s.rfind(']')
+    if i < 0 or j < i:
+        return s.strip().upper()
+    return s[i + 1:j].replace(' ', '_')
+$python$;
+CREATE FUNCTION fmodulo (f FLOAT64) RETURNS FLOAT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    return f % 7.5 - f % -2.5
+$python$;
+CREATE FUNCTION fahrenheit (f FLOAT64) RETURNS FLOAT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    return round(f * 9 / 5 + 32, 1)
+$python$;
+CREATE FUNCTION ftext (f FLOAT64) RETURNS VARSIZED EXECUTION INLINE COMPILER HIPY AS $python$
+    return str(f / 4) + '|' + str(int(f))
+$python$;
+CREATE FUNCTION parse (s VARSIZED) RETURNS INT64 EXECUTION INLINE COMPILER HIPY AS $python$
+    return int(s.strip()) * 2
+$python$;
+
+SELECT id, inc(x) AS r FROM nums INTO FILE();
+----
+1,8
+2,-6
+3,28
+4,NULL
+
+SELECT id, floordiv(x) AS r FROM nums INTO FILE();
+----
+1,21
+2,-28
+3,90
+4,NULL
+
+SELECT id, squares(x) AS r FROM nums INTO FILE();
+----
+1,91
+2,0
+3,6201
+4,NULL
+
+SELECT id, countdown(x) AS r FROM nums INTO FILE();
+----
+1,7531
+2,0
+3,297530864197531
+4,NULL
+
+SELECT id, collatz(x) AS r FROM nums INTO FILE();
+----
+1,16
+2,0
+3,111
+4,NULL
+
+SELECT id, digits(w) AS r FROM words INTO FILE();
+----
+1,2
+2,1
+3,4
+4,0
+5,NULL
+
+SELECT id, classify(w) AS r FROM words INTO FILE();
+----
+1,condo
+2,ab 12
+3,grü10
+4,no 16
+5,NULL
+
+SELECT id, brackets(w) AS r FROM words WHERE id != INT64(3) INTO FILE();
+----
+1,HELLO CONDO 42
+2,x_y_z
+4,NO BRACKETS HERE
+5,NULL
+
+SELECT id, fmodulo(f) AS r FROM nums INTO FILE();
+----
+1,7.5
+2,5.0
+3,2.5
+4,NULL
+
+SELECT id, fahrenheit(f) AS r FROM nums INTO FILE();
+----
+1,97.9
+2,-40.0
+3,32.2
+4,NULL
+
+SELECT id, ftext(f) AS r FROM nums INTO FILE();
+----
+1,9.15|36
+2,-10.0|-40
+3,0.025|0
+4,NULL
+
+SELECT id, parse(s) AS r FROM nstr INTO FILE();
+----
+1,24
+2,-10
+3,0

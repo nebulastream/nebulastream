@@ -15,13 +15,17 @@ include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 # The Python UDF backends of the UdfLowering registry, and the Codon-compiled physical function behind the Codon backend.
 add_library(nes-python-udf STATIC
         CodonUdfLowering.cpp
+        HiPyPhysicalFunction.cpp
+        HiPyUdfLowering.cpp
         NumbaUdfLowering.cpp
         PythonPhysicalFunction.cpp
         PythonUdfRuntime.cpp)
 target_include_directories(nes-python-udf PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(nes-python-udf PRIVATE nes-physical-operators nes-udf-runtime nes-codon-plugin nes-python-udf-compiler nes-numba-runtime
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(nes-python-udf PRIVATE nlohmann_json::nlohmann_json nes-physical-operators nes-udf-runtime nes-codon-plugin nes-python-udf-compiler nes-numba-runtime
         codon::compiler)
 
 link_plugin_library(nes-physical-operators nes-python-udf)
 add_registry_entry(UdfLowering Codon)
 add_registry_entry(UdfLowering Numba)
+add_registry_entry(UdfLowering HiPy)

@@ -328,11 +328,11 @@ public:
             {
                 throw InvalidStatement("CREATE FUNCTION ... COMPILER {}: only an EXECUTION INLINE function has a compiler", compilerName);
             }
-            if (compilerName != "CODON" && compilerName != "NUMBA")
+            if (compilerName != "CODON" && compilerName != "NUMBA" && compilerName != "HIPY")
             {
-                throw InvalidStatement("CREATE FUNCTION ... COMPILER {}: expected CODON or NUMBA", compilerName);
+                throw InvalidStatement("CREATE FUNCTION ... COMPILER {}: expected CODON, NUMBA or HIPY", compilerName);
             }
-            compiler = compilerName == "CODON" ? "Codon" : "Numba";
+            compiler = compilerName == "CODON" ? "Codon" : compilerName == "NUMBA" ? "Numba" : "HiPy";
             if (functionDefAST->pythonCompat != nullptr && compiler != "Codon")
             {
                 throw InvalidStatement("CREATE FUNCTION ... COMPILER {} PYTHON_COMPAT: only COMPILER CODON has PYTHON_COMPAT", compilerName);
