@@ -10,9 +10,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Runs the queries of benchmark/PythonUdfInterpreters.test for each IN_PROCESS UDF interpreter and number of worker threads, in
-benchmark mode (one query at a time), and appends one line per query to ../results/<experiment>.jsonl: its time, its rows per
-second, the commit and the full command line. Generate the inputs first, see nes-systests/benchmark/generate_udf_bench_input.py."""
+"""Runs the queries of a benchmark test file for each variant and number of worker threads, in benchmark mode (one query at a time),
+and appends one line per query to ../results/<experiment>.jsonl: its time, its rows per second, the commit and the full command
+line. A variant is an IN_PROCESS UDF interpreter (SHARED, SUBINTERPRETER, DLMOPEN, FREE_THREADED) for
+benchmark/PythonUdfInterpreters.test, or a way to run OUT_OF_PROCESS UDFs for benchmark/PythonUdfProcessThreads.test: one process per
+worker thread (PROCESSES) or one process with one thread per worker thread (THREADS), each on the python of --gil-venv or, with the
+suffix _FT, of --ft-venv. Generate the inputs first, see nes-systests/benchmark/generate_udf_bench_input.py."""
 
 import argparse
 import glob
@@ -39,17 +42,32 @@ def queries(test):
     return {number + 1: statement for number, statement in enumerate(statements)}
 
 
+def variant_settings(variant, gil_venv, ft_venv):
+    """The environment and worker arguments of a variant."""
+    if variant in ("SHARED", "SUBINTERPRETER", "DLMOPEN", "FREE_THREADED"):
+        venv = ft_venv if variant == "FREE_THREADED" else gil_venv
+        return {}, [f"--worker.default_query_execution.in_process_udf_interpreter={variant}",
+                    *([f"--worker.python_udf.venv={venv}"] if venv else [])]
+    kind, _, flavor = variant.partition("_")
+    if kind not in ("PROCESSES", "THREADS") or flavor not in ("", "FT"):
+        raise SystemExit(f"unknown variant {variant}")
+    venv = ft_venv if flavor == "FT" else gil_venv
+    if not venv:
+        raise SystemExit(f"{variant} needs {'--ft-venv' if flavor == 'FT' else '--gil-venv'}")
+    return ({"NES_UDF_SHARED_PROCESSES": "threads"} if kind == "THREADS" else {}), [f"--worker.python_udf.process_venv={venv}"]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment", required=True)
     parser.add_argument("--test", default=TEST)
-    parser.add_argument("--interpreters", default="SHARED,SUBINTERPRETER,DLMOPEN,FREE_THREADED")
+    parser.add_argument("--variants", default="SHARED,SUBINTERPRETER,DLMOPEN,FREE_THREADED")
     parser.add_argument("--threads", default="1,2,4,8,16")
     parser.add_argument("--calls", default="ROW", help="worker.default_query_execution.in_process_udf_calls")
     parser.add_argument("--rounds", type=int, default=1)
     parser.add_argument("--build", default=os.path.join(REPOSITORY, "cmake-build-relwithdebinfo-libstdcxx-none"))
-    parser.add_argument("--venv", action="append", default=[], metavar="INTERPRETER=PATH",
-                        help="worker.python_udf.venv for one interpreter, e.g. FREE_THREADED=<build>/udf-ft-venv")
+    parser.add_argument("--gil-venv", default="", help="venv of a Python with a GIL")
+    parser.add_argument("--ft-venv", default="", help="venv of a free-threaded Python, e.g. <build>/udf-ft-venv")
     parser.add_argument("--data", default="/dev/shm/nes-udf-bench")
     parser.add_argument("--scratch", default="/tmp/nes-udf-experiments")
     parser.add_argument("--environment", action="append", default=[], metavar="NAME=VALUE")
@@ -58,21 +76,22 @@ def main():
     if git("status", "--porcelain", "--untracked-files=no"):
         raise SystemExit("There are uncommitted changes. Commit them first, so that the recorded commit says what was measured.")
 
-    venvs = dict(setting.split("=", 1) for setting in arguments.venv)
     statements = queries(arguments.test)
     results_path = os.path.join(HARNESS, "../results", arguments.experiment + ".jsonl")
-    for interpreter in arguments.interpreters.split(","):
+    for interpreter in arguments.variants.split(","):
+        variant_environment, variant_arguments = variant_settings(interpreter, arguments.gil_venv, arguments.ft_venv)
         for threads in map(int, arguments.threads.split(",")):
             run_dir = os.path.join(arguments.scratch, f"{arguments.experiment}-{interpreter}-w{threads}")
             shutil.rmtree(run_dir, ignore_errors=True)
             os.makedirs(run_dir + "/work")
             environment = dict(os.environ)
+            environment.update(variant_environment)
             environment.update(setting.split("=", 1) for setting in arguments.environment)
             worker_arguments = [
                 f"--worker.query_engine.number_of_worker_threads={threads}",
                 f"--worker.default_query_execution.in_process_udf_interpreter={interpreter}",
                 f"--worker.default_query_execution.in_process_udf_calls={arguments.calls}",
-                *([f"--worker.python_udf.venv={venvs[interpreter]}"] if interpreter in venvs else []),
+                *variant_arguments,
             ]
             command = [
                 os.path.join(arguments.build, "nes-systests/systest/systest"),
@@ -93,7 +112,7 @@ def main():
                 "commit": git("rev-parse", "HEAD"),
                 "started": started,
                 "command": command,
-                "environment": arguments.environment,
+                "environment": arguments.environment + [f"{name}={value}" for name, value in variant_environment.items()],
                 "interpreter": interpreter,
                 "threads": threads,
                 "calls": arguments.calls,

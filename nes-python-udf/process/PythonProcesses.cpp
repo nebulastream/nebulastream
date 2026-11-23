@@ -80,8 +80,11 @@ exec(compile(read(struct.unpack("<Q", read(8))[0]), "<nes-udf-process>", "exec")
 /// memory with the rings of the operator and the pool of the worker as file descriptors, and the program generatePythonBatchWrapper
 /// made for the operator. It runs each program in a module of its own and then handles the requests of all operators in turn, one
 /// at a time each. An operator leaves when the worker closes its socket; the process ends when the worker closes the socket of the
-/// process.
-constexpr const char* HOST = R"(import mmap, os, select, socket, struct, time, traceback, types
+/// process. With NES_UDF_SHARED_PROCESSES=threads, the one host process runs each operator in a thread of its own instead, which
+/// runs at the same time as the others only on a Python without a GIL, such as a free-threaded CPython (python3.14t).
+constexpr const char* HOST = R"(import mmap, os, select, socket, struct, threading, time, traceback, types
+
+_THREADED = os.environ.get("NES_UDF_SHARED_PROCESSES") == "threads"
 
 _SPIN_SECONDS = 1e-4
 _SLEEP_SECONDS = 1e-3
@@ -145,6 +148,10 @@ def _attach():
         os.close(fds[1])
     channel.setblocking(False)
     _attached(operator)
+    if _THREADED:
+        # The thread waits for requests and handles them as a process of its own would, see SHARED_MEMORY_START
+        threading.Thread(target=operator._main, daemon=True).start()
+        return True
     _operators.append(operator)
     return True
 
@@ -195,6 +202,10 @@ def _idle():
 
 
 def _serve():
+    if _THREADED:
+        while _attach():
+            pass
+        return
     sock.setblocking(False)
     rounds = 0
     while True:
@@ -353,14 +364,20 @@ Process attach(const size_t index, const std::string_view program, const int sha
 bool sharedProcesses()
 {
     const auto* const shared = std::getenv("NES_UDF_SHARED_PROCESSES"); /// NOLINT(concurrency-mt-unsafe)
-    return shared != nullptr && std::string_view{shared} == "1";
+    return shared != nullptr && (std::string_view{shared} == "1" || std::string_view{shared} == "threads");
+}
+
+bool threadedProcess()
+{
+    const auto* const shared = std::getenv("NES_UDF_SHARED_PROCESSES"); /// NOLINT(concurrency-mt-unsafe)
+    return shared != nullptr && std::string_view{shared} == "threads";
 }
 
 Process start(const std::string_view program, const int sharedFd, const int poolFd, const size_t index)
 {
     if (sharedFd >= 0 && sharedProcesses())
     {
-        return attach(index, program, sharedFd, poolFd);
+        return attach(threadedProcess() ? 0 : index, program, sharedFd, poolFd);
     }
     return spawn(program, sharedFd, poolFd);
 }

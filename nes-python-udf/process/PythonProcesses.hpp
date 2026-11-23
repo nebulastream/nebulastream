@@ -55,7 +55,10 @@ struct Process
 };
 
 /// NES_UDF_SHARED_PROCESSES=1: the UDF operators of the worker share its processes instead of starting their own.
+/// NES_UDF_SHARED_PROCESSES=threads: they share one process, which serves each of them in a thread of its own.
 [[nodiscard]] bool sharedProcesses();
+/// NES_UDF_SHARED_PROCESSES=threads, see sharedProcesses.
+[[nodiscard]] bool threadedProcess();
 
 /// Starts a Python process that runs `program`: the python of NES_UDF_PROCESS_VENV or else NES_UDF_VENV, otherwise python3 on the
 /// PATH. `sharedFd` and `poolFd`, if not -1, become the file descriptors 4 and 5 of the process. Does not wait for the program to start.
