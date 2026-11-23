@@ -15,6 +15,7 @@
 #include <PythonUdfRuntime.hpp>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <cctype>
@@ -313,6 +314,64 @@ CodonString formatCodonValue(const T value, const CodonString format, bool* erro
         *error = true;
         return copyCodonString(exception.what());
     }
+}
+
+/// repr() of a float as CPython writes it: the shortest digits that read back as the same value, in fixed notation when
+/// the decimal point falls within 16 digits of the first digit (with ".0" for an integral value), else as d.ddde+XX.
+std::string pythonFloatRepr(const double value)
+{
+    if (std::isnan(value))
+    {
+        return "nan";
+    }
+    if (std::isinf(value))
+    {
+        return value > 0 ? "inf" : "-inf";
+    }
+    std::array<char, 32> buffer{};
+    const auto [end, error] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value, std::chars_format::scientific);
+    INVARIANT(error == std::errc{}, "to_chars of a double cannot fail with 32 bytes");
+    const std::string_view scientific{buffer.data(), end};
+    const auto exponentPosition = scientific.find('e');
+    const bool negative = scientific.front() == '-';
+    std::string digits;
+    for (const char character : scientific.substr(negative ? 1 : 0, exponentPosition - (negative ? 1 : 0)))
+    {
+        if (character != '.')
+        {
+            digits.push_back(character);
+        }
+    }
+    /// from_chars does not accept the '+' that to_chars writes before a positive exponent.
+    const auto* exponentStart = scientific.data() + exponentPosition + 1;
+    exponentStart += *exponentStart == '+' ? 1 : 0;
+    int exponent = 0;
+    std::from_chars(exponentStart, scientific.data() + scientific.size(), exponent);
+    /// The position of the decimal point after the first digit, as in CPython's format_float_short.
+    const int decimalPoint = exponent + 1;
+    std::string result = negative ? "-" : "";
+    if (decimalPoint > -4 && decimalPoint <= 16)
+    {
+        if (decimalPoint <= 0)
+        {
+            result += "0." + std::string(static_cast<size_t>(-decimalPoint), '0') + digits;
+        }
+        else if (static_cast<size_t>(decimalPoint) >= digits.size())
+        {
+            result += digits + std::string(static_cast<size_t>(decimalPoint) - digits.size(), '0') + ".0";
+        }
+        else
+        {
+            result += digits.substr(0, decimalPoint) + "." + digits.substr(decimalPoint);
+        }
+        return result;
+    }
+    result += digits.substr(0, 1);
+    if (digits.size() > 1)
+    {
+        result += "." + digits.substr(1);
+    }
+    return result + fmt::format("e{}{:02d}", exponent < 0 ? '-' : '+', std::abs(exponent));
 }
 
 template <typename T>
@@ -618,7 +677,13 @@ extern "C" __attribute__((visibility("default"), used)) CodonString seq_str_uint
 
 extern "C" __attribute__((visibility("default"), used)) CodonString seq_str_float(const double value, const CodonString format, bool* error)
 {
-    return formatCodonValue(value, format, error, "{:g}");
+    /// Without a format spec (str, repr, f"{x}"), the float is written as CPython's repr does. With a spec, fmt formats it.
+    if (format.length == 0)
+    {
+        *error = false;
+        return copyCodonString(pythonFloatRepr(value));
+    }
+    return formatCodonValue(value, format, error);
 }
 
 extern "C" __attribute__((visibility("default"), used)) double seq_float_from_str(const CodonString string, const char** end)
