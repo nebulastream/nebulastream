@@ -11,13 +11,14 @@ A case is one Python module with a header that tells the UDF signature in NES ty
 The harness calls the entry function on every row in CPython (in a child process) and in the target (--compiler):
 Codon or Numba with nes-python-udf-runner, which compiles the module as CREATE FUNCTION does; Babelfish with
 FuzzCaseRunner of the Babelfish port (GraalPy in the Babelfish query engine); LPython with lpython_driver.c (only cases
-whose functions LPython can type: the harness annotates the entry function from the header). It compares the results row
+whose functions LPython can type: the harness annotates the entry function from the header); PyPy runs the reference
+child of this harness in PyPy. It compares the results row
 by row and appends one JSON line per case to --results. Statuses: ok, diff, reject (the target did not compile or run the
 module), crash (the target died on a signal), timeout, reference-error (the module fails in CPython, so the case is not
 valid).
 
 Usage:
-    codon_diff.py CASE.py|DIR [...] --results FILE [--compiler Codon|Numba|Babelfish|LPython] [--jobs N] [--rows N] [--seed S] [--build DIR]
+    codon_diff.py CASE.py|DIR [...] --results FILE [--compiler Codon|Numba|Babelfish|LPython|PyPy][--jobs N] [--rows N] [--seed S] [--build DIR]
 """
 
 import argparse
@@ -398,7 +399,14 @@ def run_lpython(options, header, module, work, rows_tsv, out_path):
     return result, command
 
 
-TARGETS = {"Codon": run_nes, "Numba": run_nes, "Babelfish": run_babelfish, "LPython": run_lpython}
+def run_pypy(options, header, module, work, rows_tsv, out_path):
+    """Runs the reference child of this harness in PyPy: the same calls and formatting, another interpreter."""
+    command = [options.pypy, os.path.abspath(__file__), "--reference", os.path.join(work, module + ".py"), header["entry"],
+               ",".join(header["args"]), header["returns"], os.path.join(work, "rows.jsonl"), out_path]
+    return subprocess.run(command, capture_output=True, text=True, timeout=options.timeout), command
+
+
+TARGETS = {"Codon": run_nes, "Numba": run_nes, "Babelfish": run_babelfish, "LPython": run_lpython, "PyPy": run_pypy}
 
 
 # ------------------------------------------------------------------------------------------------------------------ run
@@ -526,6 +534,7 @@ def main():
     parser.add_argument("--babelfish", default="/data-ssd/lukas/babelfish", help="Babelfish checkout (Babelfish)")
     parser.add_argument("--java", default="/home/lukas-ldap.linux/tools/graalvm/bin/java", help="GraalVM 25 java (Babelfish)")
     parser.add_argument("--lpython", default=None, help="the lpython binary (LPython)")
+    parser.add_argument("--pypy", default="/usr/bin/pypy3", help="the PyPy interpreter (PyPy)")
     parser.add_argument("--work", default=None, help="directory for the temporary files of each case")
     parser.add_argument("--keep", default=None, help="directory that keeps the files of crashed cases")
     options = parser.parse_args()
