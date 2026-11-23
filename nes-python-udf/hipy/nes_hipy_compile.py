@@ -20,7 +20,9 @@ HiPy runs the UDF's code at compile time with abstract arguments of the declared
 HiPy's stand-ins for re, math, datetime, random, statistics, collections and urllib.parse are imported, as they replace those
 modules only once loaded. The UDF is compiled with fallback: what HiPy cannot compile natively becomes CPython operations
 (Py* operations, python.* builtins), which the engine runs through the CPython bridge. The output is
-{"entry": <function name>, "pythonOps": <number of CPython operations>, "module": <HiPy IR as JSON (ir.Module.serialize)>}.
+{"entry": <function name>, "pythonOps": <number of CPython operations>, "module": <HiPy IR as JSON (ir.Module.serialize)>,
+"chain": <the UDF as a linear chain of native and Python stages (nes_hipy_split), for a plan that runs each stage as an
+operator>}. The catalog stores this output with the UDF.
 """
 
 import contextlib
@@ -108,6 +110,22 @@ def keep_keywords_in_fallback():
     hipy.context.Context.perform_call = perform_call
 
 
+def stage_chain(serialized, entry_function):
+    """The stages of the UDF, with the Python source that computes each (stage_<i>(values) -> outputs). A split that fails
+    leaves the UDF as one unit: it does not fail the registration."""
+    import nes_hipy_split
+
+    try:
+        chain = nes_hipy_split.split(serialized, entry_function)
+        chain["pythonSource"] = nes_hipy_split.module_source(serialized, chain, nes_hipy_split.python_setup(serialized))
+        shape = " -> ".join(stage["kind"] for stage in chain["stages"])
+        print(f"HiPy stages: {shape}", file=sys.stderr)
+        return chain
+    except Exception as error:  # noqa: BLE001 (any failure of the split keeps the unsplit UDF)
+        print(f"HiPy stages: not split ({type(error).__name__}: {error})", file=sys.stderr)
+        return {"error": f"{type(error).__name__}: {error}"}
+
+
 def main():
     with open(sys.argv[1], encoding="utf-8") as file:
         request = json.load(file)
@@ -140,8 +158,9 @@ def main():
     if in_python:
         print(f"HiPy left {len(in_python)} operations to CPython: " + ", ".join(sorted(set(in_python))), file=sys.stderr)
     entry_function = inspect.unwrap(entry.pyfunc).__name__ + hipy.config.function_suffix
+    output = {"entry": entry_function, "pythonOps": len(in_python), "module": serialized, "chain": stage_chain(serialized, entry_function)}
     with open(sys.argv[2], "w", encoding="utf-8") as file:
-        json.dump({"entry": entry_function, "pythonOps": len(in_python), "module": serialized}, file, default=lambda value: value.serialize())
+        json.dump(output, file, default=lambda value: value.serialize())
 
 
 if __name__ == "__main__":
