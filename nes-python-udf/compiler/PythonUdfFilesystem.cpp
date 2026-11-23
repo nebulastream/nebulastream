@@ -103,6 +103,29 @@ std::vector<std::string> splitIntoLines(const std::string_view source)
     return lines;
 }
 
+/// The directories of pure-Python libraries that Codon UDFs may import from (NES_CODON_PYTHON_PATH, ':'-separated, e.g.
+/// CPython's standard library): searched after Codon's stdlib, the plugins and the UDF import paths.
+std::vector<std::string> pythonLibraryPaths()
+{
+    std::vector<std::string> paths;
+    const char* value = std::getenv("NES_CODON_PYTHON_PATH"); /// NOLINT(concurrency-mt-unsafe)
+    if (value == nullptr)
+    {
+        return paths;
+    }
+    std::string_view rest{value};
+    while (!rest.empty())
+    {
+        const auto end = rest.find(':');
+        if (const auto path = rest.substr(0, end); !path.empty())
+        {
+            paths.emplace_back(path);
+        }
+        rest = end == std::string_view::npos ? std::string_view{} : rest.substr(end + 1);
+    }
+    return paths;
+}
+
 class PythonUdfFilesystem final : public codon::ast::ResourceFilesystem
 {
 public:
@@ -114,6 +137,13 @@ public:
             add_search_path(importPath);
             udfDirectories.push_back(std::filesystem::absolute(importPath).lexically_normal());
         }
+        /// Pure-Python libraries (e.g. CPython's standard library) after the UDF import paths, so that Codon's stdlib and
+        /// the plugins come first and a library module fills in what they lack (urllib.parse, base64, ...).
+        for (const auto& libraryPath : pythonLibraryPaths())
+        {
+            add_search_path(libraryPath);
+            pythonLibraryDirectories.push_back(std::filesystem::absolute(libraryPath).lexically_normal());
+        }
     }
 
     [[nodiscard]] std::vector<std::string> read_lines(const path_t& path) const override
@@ -123,7 +153,7 @@ public:
             return splitIntoLines(source);
         }
         auto lines = ResourceFilesystem::read_lines(path);
-        if (isUdfModule(path) && isCompatPluginLoaded())
+        if ((isUdfModule(path) || isUnder(path, pythonLibraryDirectories)) && isCompatPluginLoaded())
         {
             /// Prepended rather than merged into the first line, so compile errors in the module are one line off.
             lines.insert(lines.begin(), std::string{compatImport});
@@ -151,6 +181,13 @@ public:
     /// although they are found in search paths; plugin modules are library code, as is the stdlib.
     [[nodiscard]] bool is_library(const path_t& path) const override { return !isUdfModule(path); }
 
+    /// Python 3 has no implicit relative imports: in a module of a Python library, `import re` must find Codon's re,
+    /// not the library's own re next to it.
+    [[nodiscard]] bool implicit_relative_imports(const path_t& path) const override
+    {
+        return !isUnder(path, pythonLibraryDirectories);
+    }
+
     /// A module loaded from a configured UDF import path, as opposed to Codon's stdlib or a plugin module.
     [[nodiscard]] bool isUdfModule(const path_t& path) const
     {
@@ -165,7 +202,20 @@ public:
     }
 
 private:
+    static bool isUnder(const path_t& path, const std::vector<std::filesystem::path>& directories)
+    {
+        const auto file = std::filesystem::absolute(path).lexically_normal();
+        return std::ranges::any_of(
+            directories,
+            [&](const auto& directory)
+            {
+                const auto relative = file.lexically_relative(directory);
+                return !relative.empty() && *relative.begin() != "..";
+            });
+    }
+
     std::vector<std::filesystem::path> udfDirectories;
+    std::vector<std::filesystem::path> pythonLibraryDirectories;
 };
 
 /// Finds import statements inside function bodies. `from C import` declares an external C function and imports no module.
