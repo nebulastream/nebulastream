@@ -44,7 +44,6 @@
 #include <Sources/SourceReturnType.hpp>
 #include <BackpressureChannel.hpp>
 #include <Binder.hpp>
-#include <BufferPool.hpp>
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <InterceptorSource.hpp>
@@ -70,7 +69,10 @@ constexpr std::chrono::milliseconds QUEUE_WRITE_POLL{100};
 class SourceSessionState
 {
 public:
-    explicit SourceSessionState(const SourceSessionOptions& options) : options(options) { }
+    SourceSessionState(const SourceSessionOptions& options, std::shared_ptr<NES::AbstractBufferProvider> pool)
+        : options(options), pool(std::move(pool))
+    {
+    }
 
     SourceSessionState(const SourceSessionState&) = delete;
     SourceSessionState& operator=(const SourceSessionState&) = delete;
@@ -168,18 +170,6 @@ private:
         if (stuck)
         {
             return errorReply(harnessErrorInfo("open", "StepTimeout", stopTimeoutMessage()));
-        }
-
-        if (!pool)
-        {
-            try
-            {
-                pool = makeBufferPool(options.bufferSize, options.bufferCount);
-            }
-            catch (const std::exception& ex)
-            {
-                return errorReply(harnessErrorInfo("open", "HarnessIO", ex.what()));
-            }
         }
 
         queue = std::make_unique<folly::MPMCQueue<TupleBuffer>>(options.bufferCount.getRawValue());
@@ -460,9 +450,9 @@ private:
 
 }
 
-bool runSourceSession(const SourceSessionOptions& options, ControlChannel& channel)
+bool runSourceSession(const SourceSessionOptions& options, std::shared_ptr<AbstractBufferProvider> pool, ControlChannel& channel)
 {
-    SourceSessionState state(options);
+    SourceSessionState state(options, std::move(pool));
     while (true)
     {
         const auto line = channel.readLine();

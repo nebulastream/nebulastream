@@ -22,8 +22,10 @@
 /// The reply shapes are defined in `conntest_runner/protocol.py`.
 
 #include <filesystem>
+#include <memory>
 #include <optional>
 
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SessionOptions.hpp>
 
 namespace NES::ConnTest
@@ -45,8 +47,9 @@ struct SourceSessionOptions
 };
 
 /// Returns false on a channel error and true when the channel reaches EOF.
+/// Every OPEN's source takes its buffers from the pool, which the caller makes from the flags before the session starts.
 /// When a source does not stop within the step timeout, its thread still uses the session,
 /// so the harness replies with a StepTimeout error and exits with STUCK_EXIT_CODE without unwinding.
-bool runSourceSession(const SourceSessionOptions& options, ControlChannel& channel);
+bool runSourceSession(const SourceSessionOptions& options, std::shared_ptr<AbstractBufferProvider> pool, ControlChannel& channel);
 
 }
