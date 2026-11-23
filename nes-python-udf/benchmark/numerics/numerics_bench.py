@@ -16,7 +16,8 @@ import subprocess
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPOSITORY = os.path.abspath(os.path.join(HERE, "../../.."))
 KERNELS = {"int_floordiv_mod": ("a,b", "INT64"), "int_add_mul": ("a,b", "INT64"), "float_div": ("f,b", "FLOAT64"),
-           "float_floordiv_mod": ("f,b", "FLOAT64")}
+           "float_floordiv_mod": ("f,b", "FLOAT64"), "float_pow_int": ("f,b", "FLOAT64"),
+           "float_list_contains": ("f,b", "FLOAT64")}
 COLUMNS = {"a": (0, "INT64"), "b": (1, "INT64"), "f": (2, "FLOAT64")}
 
 

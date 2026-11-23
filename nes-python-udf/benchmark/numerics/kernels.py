@@ -40,3 +40,25 @@ def float_floordiv_mod(f, b):
         total += x // (i * 0.75) + x % (b + 0.5)
         x = x * 0.999 - 3.0
     return total
+
+
+def float_pow_int(f, b):
+    total = 0.0
+    x = f * 1e-6
+    for i in range(1, 65):
+        total += x ** 2 + (x * 0.5) ** 3
+        total += int(x * 1000.0)
+        x = x * 0.999 + 0.001
+    return total
+
+
+def float_list_contains(f, b):
+    values = [f, f * 0.5, f * 0.25, f * 0.125, f + 1.0, f - 1.0, f * 2.0, f * 3.0]
+    total = 0
+    x = f
+    for i in range(1, 65):
+        if x in values:
+            total += 1
+        total += values.count(x * 0.5)
+        x = x * 0.5 if i % 2 == 0 else f
+    return float(total)
