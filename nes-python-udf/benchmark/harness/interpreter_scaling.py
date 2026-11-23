@@ -89,7 +89,6 @@ def main():
             environment.update(setting.split("=", 1) for setting in arguments.environment)
             worker_arguments = [
                 f"--worker.query_engine.number_of_worker_threads={threads}",
-                f"--worker.default_query_execution.in_process_udf_interpreter={interpreter}",
                 f"--worker.default_query_execution.in_process_udf_calls={arguments.calls}",
                 *variant_arguments,
             ]
