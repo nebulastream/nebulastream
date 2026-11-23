@@ -23,6 +23,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <SliceStore/Slice.hpp>
 #include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
@@ -43,32 +44,20 @@ NLJSlice::NLJSlice(
     const uint64_t pvPageBufferSize = bufferProvider.getBufferSize();
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            /// initialize the paged vector tuple buffer
-            /// No inline records, as the slices are combined via movePagesFrom.
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeLeft, false);
-            leftPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ left paged vector main buffer");
-        }
+        /// initialize the paged vector tuple buffer
+        /// No inline records, as the slices are combined via movePagesFrom.
+        auto pagedVectorBuffer = getPooledBufferIfFits(pvMainBufferSize, bufferProvider);
+        PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeLeft, false);
+        leftPagedVectorBuffers.emplace_back(pagedVectorBuffer);
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        if (auto pagedVectorBuffer = bufferProvider.getUnpooledBuffer(pvMainBufferSize))
-        {
-            /// initialize the paged vector tuple buffer
-            /// No inline records, as the slices are combined via movePagesFrom.
-            PagedVector::init(pagedVectorBuffer.value(), pvPageBufferSize, tupleSizeRight, false);
-            rightPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ right paged vector main buffer");
-        }
+        /// initialize the paged vector tuple buffer
+        /// No inline records, as the slices are combined via movePagesFrom.
+        auto pagedVectorBuffer = getPooledBufferIfFits(pvMainBufferSize, bufferProvider);
+        PagedVector::init(pagedVectorBuffer, pvPageBufferSize, tupleSizeRight, false);
+        rightPagedVectorBuffers.emplace_back(pagedVectorBuffer);
     }
 }
 

@@ -30,6 +30,7 @@
 #include <nautilus/function.hpp>
 
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -267,16 +268,12 @@ void MedianAggregationPhysicalFunction::reset(
         +[](TupleBuffer* parentBuffer, AbstractBufferProvider* bufferProvider, uint64_t tupleSize)
         {
             /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): aggregation state stores a TupleBuffer at this slot.
-            if (auto pagedVectorBufferOpt = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-            {
-                /// initialize paged vector buffer
-                auto pagedVectorBuffer = pagedVectorBufferOpt.value();
-                /// No inline records, as the median combines vectors via copyPagesFrom.
-                PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize, false);
-                auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
-                return childBufferIndex.getRawValue();
-            }
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for median aggregation paged vector!");
+            /// initialize paged vector buffer
+            auto pagedVectorBuffer = getPooledBufferIfFits(PagedVector::getMainBufferSize(), *bufferProvider);
+            /// No inline records, as the median combines vectors via copyPagesFrom.
+            PagedVector::init(pagedVectorBuffer, bufferProvider->getBufferSize(), tupleSize, false);
+            auto childBufferIndex = parentBuffer->storeChildBuffer(pagedVectorBuffer);
+            return childBufferIndex.getRawValue();
         },
         parentBuffer.asArg(),
         pipelineMemoryProvider.bufferProvider,
