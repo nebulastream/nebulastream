@@ -1,0 +1,16 @@
+E87 A/B, 2026-11-23, NES 3bdb4da2c8, runner linked with Codon fork 94ba688 (old) and 3b8c3a9 (new), interleaved, median of 3
+best ns per row. Command: python3 nes-python-udf/benchmark/numerics/ab_codon.py <new runner> <old runner>
+/data-ssd/lukas/babelfish-data/E87/kernels/numerics-input.tsv <out>. Load average ~44 (another build) during the run.
+
+int_floordiv_mod     compat=0 old   1226.3 new   1238.4 new/old  1.01
+int_floordiv_mod     compat=1 old   1172.9 new   1171.8 new/old  1.00
+int_add_mul          compat=0 old    172.7 new    172.0 new/old  1.00
+int_add_mul          compat=1 old    176.1 new    173.2 new/old  0.98
+float_div            compat=0 old    296.3 new    307.2 new/old  1.04
+float_div            compat=1 old    301.6 new    301.5 new/old  1.00
+float_floordiv_mod   compat=0 old    656.4 new    645.8 new/old  0.98
+float_floordiv_mod   compat=1 old   2157.2 new   2156.7 new/old  1.00
+float_pow_int        compat=0 old    242.4 new    244.9 new/old  1.01
+float_pow_int        compat=1 old   4171.6 new   4165.1 new/old  1.00
+float_list_contains  compat=0 old    678.6 new    677.1 new/old  1.00
+float_list_contains  compat=1 old   1091.4 new   1093.8 new/old  1.00
