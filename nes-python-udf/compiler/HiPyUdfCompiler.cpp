@@ -140,12 +140,14 @@ CompiledInlineUdf HiPyUdfCompiler::createHiPy(UdfCompilerRegistryArguments argum
     }
     auto output = readFile(outputPath);
     std::filesystem::remove_all(directory);
-    const auto entry = nlohmann::json::parse(output).at("entry").get<std::string>();
+    const auto parsed = nlohmann::json::parse(output);
+    const auto entry = parsed.at("entry").get<std::string>();
     fmt::print(
         stderr,
-        "[PythonUDF] Compiled '{}' with HiPy in {:.3f} ms\n",
+        "[PythonUDF] Compiled '{}' with HiPy in {:.3f} ms ({} operations in CPython)\n",
         udf.getName(),
-        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count(),
+        parsed.value("pythonOps", 0));
     return CompiledInlineUdf{.symbol = entry, .pipelineBitcode = std::move(output), .interpreterBitcode = {}};
 }
 

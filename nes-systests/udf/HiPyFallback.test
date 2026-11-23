@@ -1,0 +1,61 @@
+# name: udf/HiPyFallback.test
+# description: Partial extraction with COMPILER HIPY: HiPy compiles what it can of a UDF natively, which Nautilus traces into
+# the pipeline, and leaves the rest to CPython, which runs through the CPython bridge (hipy_py_* in CPythonUdfBridge.cpp).
+# Results of CPython become the declared type, None becomes NULL, keyword arguments reach CPython, and a CPython exception
+# fails the query. The expected results are CPython's. Needs NES_HIPY_DIR and the CPython bridge.
+# groups: [HiPy]
+
+CREATE LOGICAL SOURCE words(id INT64 NOT NULL, w VARSIZED);
+CREATE PHYSICAL SOURCE FOR words TYPE File;
+ATTACH INLINE
+1,Hello
+2,  World 
+3,Grüße
+
+CREATE LOGICAL SOURCE docs(id INT64 NOT NULL, d VARSIZED);
+CREATE PHYSICAL SOURCE FOR docs TYPE File SET('|' AS INPUT_FORMATTER.FIELD_DELIMITER);
+ATTACH INLINE
+1|{"key": "a1"}
+2|{"other": 3}
+3|plain
+
+CREATE LOGICAL SOURCE nums(id INT64 NOT NULL, m INT64);
+CREATE PHYSICAL SOURCE FOR nums TYPE File;
+ATTACH INLINE
+1,0
+2,7
+3,-90
+
+CREATE FUNCTION md5_bucket (s VARSIZED) RETURNS INT64 EXECUTION INLINE COMPILER HIPY ENTRYPOINT 'hipy_fallback.bucket';
+CREATE FUNCTION sha_digest (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE COMPILER HIPY ENTRYPOINT 'hipy_fallback.digest';
+CREATE FUNCTION maybe_key (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE COMPILER HIPY ENTRYPOINT 'hipy_fallback.maybe_key';
+CREATE FUNCTION shift_minutes (m INT64) RETURNS INT64 EXECUTION INLINE COMPILER HIPY ENTRYPOINT 'hipy_fallback.shift_minutes';
+CREATE FUNCTION parse_strict (s VARSIZED) RETURNS VARSIZED EXECUTION INLINE COMPILER HIPY ENTRYPOINT 'hipy_fallback.parse_strict';
+
+SELECT id, md5_bucket(w) AS r FROM words INTO FILE();
+----
+1,28873
+2,37121
+3,70252
+
+SELECT id, sha_digest(w) AS r FROM words INTO FILE();
+----
+1,f7ff9e8b7b:5
+2,7e5b95656c:8
+3,f649751d6e:5
+
+SELECT id, maybe_key(d) AS r FROM docs INTO FILE();
+----
+1,a1
+2,NULL
+3,NULL
+
+SELECT id, shift_minutes(m) AS r FROM nums INTO FILE();
+----
+1,0
+2,420
+3,-5400
+
+SELECT id, parse_strict(d) AS r FROM docs WHERE id = INT64(3) INTO FILE();
+----
+ERROR UdfExecutionError "HiPy UDF, in CPython: JSONDecodeError: Expecting value: line 1 column 1 (char 0)"

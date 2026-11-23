@@ -1437,4 +1437,293 @@ extern "C" void cleanup_udf_stage(UdfStageInstance* stage)
     delete ctx;
 }
 
+/* ---- Object API for HiPy UDFs (HiPyPhysicalFunction in the engine) ----
+ * HiPy compiles the parts of a UDF that it cannot compile natively to CPython operations, and the engine runs them through these
+ * functions, as Nautilus calls in its pipeline. A row brackets its calls in hipy_py_enter and hipy_py_exit, which take and
+ * release the GIL of the main interpreter. Every object that a function returns is a new reference that the frame of the row
+ * owns, and hipy_py_exit releases all of them, so the engine never counts references. On a Python error a function returns
+ * nullptr or -1, and hipy_py_error returns the message. */
+namespace
+{
+thread_local std::vector<PyObject*> t_hipyFrame;
+thread_local PyGILState_STATE t_hipyGil{};
+thread_local bool t_hipyEntered = false;
+thread_local std::string t_hipyError;
+
+void hipyFail()
+{
+    char* message = fetchPythonError();
+    t_hipyError = message != nullptr ? message : "unknown Python error";
+    std::free(message);
+}
+
+PyObject* own(PyObject* object)
+{
+    if (object == nullptr)
+    {
+        hipyFail();
+        return nullptr;
+    }
+    t_hipyFrame.push_back(object);
+    return object;
+}
+
+PyObject* object(void* value)
+{
+    return static_cast<PyObject*>(value);
+}
+}
+
+extern "C" void hipy_py_exit()
+{
+    if (!t_hipyEntered)
+    {
+        return;
+    }
+    for (PyObject* owned : t_hipyFrame)
+    {
+        Py_DECREF(owned);
+    }
+    t_hipyFrame.clear();
+    t_hipyEntered = false;
+    PyGILState_Release(t_hipyGil);
+}
+
+extern "C" int hipy_py_enter()
+{
+    std::call_once(g_pyInit, initPythonOnce);
+    if (!g_pyReady)
+    {
+        t_hipyError = "the embedded Python interpreter could not be initialized";
+        return -1;
+    }
+    hipy_py_exit(); /* a row that failed in the engine left its frame open */
+    t_hipyGil = ensureGil();
+    t_hipyEntered = true;
+    return 0;
+}
+
+extern "C" const char* hipy_py_error()
+{
+    return t_hipyError.c_str();
+}
+
+/* Runs `source` in the namespace of __main__, where HiPy expects the module-level names of the UDF: its imports and the functions
+ * it left to Python. */
+extern "C" int hipy_py_exec_main(const char* source)
+{
+    PyObject* main = PyImport_AddModule("__main__"); /* borrowed */
+    if (main == nullptr)
+    {
+        hipyFail();
+        return -1;
+    }
+    PyObject* globals = PyModule_GetDict(main); /* borrowed */
+    PyObject* result = PyRun_String(source, Py_file_input, globals, globals);
+    if (result == nullptr)
+    {
+        hipyFail();
+        return -1;
+    }
+    Py_DECREF(result);
+    return 0;
+}
+
+extern "C" void* hipy_py_import(const char* name)
+{
+    return own(PyImport_ImportModule(name));
+}
+
+extern "C" void* hipy_py_getattr(void* on, const char* name)
+{
+    return own(PyObject_GetAttrString(object(on), name));
+}
+
+extern "C" int hipy_py_setattr(void* on, const char* name, void* value)
+{
+    if (PyObject_SetAttrString(object(on), name, object(value)) != 0)
+    {
+        hipyFail();
+        return -1;
+    }
+    return 0;
+}
+
+extern "C" void* hipy_py_tuple(long long size)
+{
+    return own(PyTuple_New(static_cast<Py_ssize_t>(size)));
+}
+
+extern "C" void hipy_py_tuple_set(void* tuple, long long index, void* item)
+{
+    Py_INCREF(object(item)); /* PyTuple_SET_ITEM steals it, the frame keeps its own reference */
+    PyTuple_SET_ITEM(object(tuple), static_cast<Py_ssize_t>(index), object(item));
+}
+
+extern "C" int hipy_py_dict_set(void* dict, const char* key, void* value)
+{
+    if (PyDict_SetItemString(object(dict), key, object(value)) != 0)
+    {
+        hipyFail();
+        return -1;
+    }
+    return 0;
+}
+
+extern "C" void* hipy_py_call(void* callable, void* arguments, void* keywords)
+{
+    return own(PyObject_Call(object(callable), object(arguments), object(keywords)));
+}
+
+extern "C" void* hipy_py_from_int(long long value)
+{
+    return own(PyLong_FromLongLong(value));
+}
+
+extern "C" void* hipy_py_from_float(double value)
+{
+    return own(PyFloat_FromDouble(value));
+}
+
+extern "C" void* hipy_py_from_bool(int value)
+{
+    return own(PyBool_FromLong(value));
+}
+
+extern "C" void* hipy_py_from_string(const char* data, long long size)
+{
+    return own(PyUnicode_DecodeUTF8(data, static_cast<Py_ssize_t>(size), "strict"));
+}
+
+extern "C" void* hipy_py_none()
+{
+    Py_INCREF(Py_None);
+    return own(Py_None);
+}
+
+extern "C" int hipy_py_is_none(void* value)
+{
+    return object(value) == Py_None ? 1 : 0;
+}
+
+extern "C" int hipy_py_to_int(void* value, long long* out)
+{
+    *out = PyLong_AsLongLong(object(value));
+    if (*out == -1 && PyErr_Occurred() != nullptr)
+    {
+        hipyFail();
+        return -1;
+    }
+    return 0;
+}
+
+extern "C" int hipy_py_to_float(void* value, double* out)
+{
+    *out = PyFloat_AsDouble(object(value));
+    if (*out == -1.0 && PyErr_Occurred() != nullptr)
+    {
+        hipyFail();
+        return -1;
+    }
+    return 0;
+}
+
+/* 1 or 0, the truth value; -1 on an error. */
+extern "C" int hipy_py_to_bool(void* value)
+{
+    const int truth = PyObject_IsTrue(object(value));
+    if (truth < 0)
+    {
+        hipyFail();
+    }
+    return truth;
+}
+
+/* The UTF-8 text of a str, valid while the frame owns it. */
+extern "C" int hipy_py_to_string(void* value, const char** data, long long* size)
+{
+    if (PyUnicode_Check(object(value)) == 0)
+    {
+        t_hipyError = std::string("TypeError: expected str, got ") + Py_TYPE(object(value))->tp_name;
+        return -1;
+    }
+    Py_ssize_t length = 0;
+    *data = PyUnicode_AsUTF8AndSize(object(value), &length);
+    if (*data == nullptr)
+    {
+        hipyFail();
+        return -1;
+    }
+    *size = length;
+    return 0;
+}
+
+/* HiPy's python.operator.*: 0 add, 1 sub, 2 mul, 3 div (true division), 4 mod, 5 pow, 6 lt, 7 gt, 8 eq. */
+extern "C" void* hipy_py_binary(int operation, void* left, void* right)
+{
+    PyObject* const a = object(left);
+    PyObject* const b = object(right);
+    switch (operation)
+    {
+        case 0:
+            return own(PyNumber_Add(a, b));
+        case 1:
+            return own(PyNumber_Subtract(a, b));
+        case 2:
+            return own(PyNumber_Multiply(a, b));
+        case 3:
+            return own(PyNumber_TrueDivide(a, b));
+        case 4:
+            return own(PyNumber_Remainder(a, b));
+        case 5:
+            return own(PyNumber_Power(a, b, Py_None));
+        case 6:
+            return own(PyObject_RichCompare(a, b, Py_LT));
+        case 7:
+            return own(PyObject_RichCompare(a, b, Py_GT));
+        case 8:
+            return own(PyObject_RichCompare(a, b, Py_EQ));
+        default:
+            t_hipyError = "unknown binary operation";
+            return nullptr;
+    }
+}
+
+/* 0 neg, 1 invert. */
+extern "C" void* hipy_py_unary(int operation, void* value)
+{
+    return own(operation == 0 ? PyNumber_Negative(object(value)) : PyNumber_Invert(object(value)));
+}
+
+/* 1 or 0, whether `item in container`; -1 on an error. */
+extern "C" int hipy_py_contains(void* container, void* item)
+{
+    const int found = PySequence_Contains(object(container), object(item));
+    if (found < 0)
+    {
+        hipyFail();
+    }
+    return found;
+}
+
+extern "C" void* hipy_py_list()
+{
+    return own(PyList_New(0));
+}
+
+extern "C" void* hipy_py_dict()
+{
+    return own(PyDict_New());
+}
+
+extern "C" void* hipy_py_slice(void* start, void* stop, void* step)
+{
+    return own(PySlice_New(object(start), object(stop), object(step)));
+}
+
+extern "C" void* hipy_py_tuple_from_list(void* list)
+{
+    return own(PySequence_Tuple(object(list)));
+}
+
 /// NOLINTEND(google-runtime-int,cppcoreguidelines-owning-memory,cppcoreguidelines-no-malloc,misc-include-cleaner,cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-const-cast,cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-identifier-naming,concurrency-mt-unsafe)

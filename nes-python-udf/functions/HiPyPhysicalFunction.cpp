@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -44,8 +45,10 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <nlohmann/json.hpp>
+#include <dlfcn.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <UdfBridgeRegistry.hpp>
 #include <UdfDescriptor.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -72,6 +75,8 @@ struct Type
         Record,
         Nullable,
         FunctionRef,
+        /// A CPython object (PyObject*), for the parts of the UDF that HiPy left to CPython.
+        PyObject,
         Unsupported
     };
     Kind kind = Kind::Void;
@@ -96,6 +101,11 @@ enum class OpKind : uint8_t
     Call,
     CallIndirect,
     Undef,
+    /// CPython operations (the fallback of HiPy): import a module, get or set an attribute, call an object.
+    PyImport,
+    PyGetAttr,
+    PySetAttr,
+    PyCall,
     NoOp
 };
 
@@ -138,6 +148,12 @@ struct Program
     size_t valueCount = 0;
     /// Values defined by an integer Constant, to emit a counting loop when the step of a range is a constant.
     std::unordered_map<int64_t, int64_t> intConstants;
+    /// The number of operations that run in CPython. A UDF with any runs each row in a frame of the CPython bridge.
+    size_t pythonOps = 0;
+    /// Python code that defines the module-level names HiPy expects in __main__: the UDF's imports and the functions it left
+    /// to Python. It runs once, in the first frame.
+    std::string pythonSetup;
+    mutable std::once_flag pythonSetupDone;
 };
 
 namespace
@@ -214,6 +230,31 @@ const std::unordered_set<std::string_view> supportedBuiltins = {
     "scalar.string.strip",
     "scalar.string.substr",
     "scalar.string.at",
+    "scalar.int.to_python",
+    "scalar.float.to_python",
+    "scalar.bool.to_python",
+    "scalar.string.to_python",
+    "scalar.int.from_python",
+    "scalar.float.from_python",
+    "scalar.bool.from_python",
+    "scalar.string.from_python",
+    "python.get_none",
+    "python.create_list",
+    "python.create_dict",
+    "python.create_slice",
+    "python.tuple_from_list",
+    "python.operator.add",
+    "python.operator.sub",
+    "python.operator.mul",
+    "python.operator.div",
+    "python.operator.mod",
+    "python.operator.pow",
+    "python.operator.lt",
+    "python.operator.gt",
+    "python.operator.eq",
+    "python.operator.neg",
+    "python.operator.inv",
+    "python.operator.contains",
 };
 
 Type parseType(const nlohmann::json& json)
@@ -253,6 +294,10 @@ Type parseType(const nlohmann::json& json)
     {
         type.kind = Type::Kind::Nullable;
         type.inner.push_back(parseType(json.at("type")));
+    }
+    else if (type.name == "py_object")
+    {
+        type.kind = Type::Kind::PyObject;
     }
     else if (type.name == "function_ref")
     {
@@ -390,6 +435,37 @@ public:
                 op.name = json.at("name").get<std::string>();
             }
         }
+        else if (kind == "PyImport")
+        {
+            op.kind = OpKind::PyImport;
+            op.name = json.at("name").get<std::string>();
+        }
+        else if (kind == "PyGetAttr")
+        {
+            op.kind = OpKind::PyGetAttr;
+            op.name = json.at("name").get<std::string>();
+            op.args = {value(json.at("on"))};
+        }
+        else if (kind == "PySetAttr")
+        {
+            op.kind = OpKind::PySetAttr;
+            op.name = json.at("name").get<std::string>();
+            op.args = {value(json.at("on")), value(json.at("value"))};
+        }
+        else if (kind == "PyCall2")
+        {
+            op.kind = OpKind::PyCall;
+            op.args = {value(json.at("callable"))};
+            for (const auto& argument : json.at("args"))
+            {
+                op.args.push_back(value(argument));
+            }
+            for (const auto& keyword : json.at("kw_args"))
+            {
+                op.members.push_back(keyword.at("name").get<std::string>());
+                op.args.push_back(value(keyword.at("value")));
+            }
+        }
         else if (kind == "Undef")
         {
             op.kind = OpKind::Undef;
@@ -401,6 +477,10 @@ public:
         else
         {
             unsupported.insert(kind);
+        }
+        if (kind.starts_with("Py") || op.name.starts_with("python.") || op.name.ends_with("_python"))
+        {
+            ++program.pythonOps;
         }
         return op;
     }
@@ -441,6 +521,15 @@ std::shared_ptr<const Program> parseProgram(const std::string& text)
         function.body = parser.block(functionJson.at("body"));
         program->functions.emplace(function.name, std::move(function));
     }
+    /// HiPy resolves the UDF's own module as __main__ (Context.import_pymodule), as LingoDB runs it.
+    for (const auto& [alias, module] : json.at("module").at("imports").items())
+    {
+        program->pythonSetup += fmt::format("import {} as {}\n", module.get<std::string>(), alias);
+    }
+    for (const auto& [name, source] : json.at("module").at("py_functions").items())
+    {
+        program->pythonSetup += source.get<std::string>() + "\n";
+    }
     if (!program->functions.contains(program->entry))
     {
         throw QueryCompilerError("HiPy UDF: the module has no function {}", program->entry);
@@ -461,6 +550,298 @@ std::shared_ptr<const Program> parseProgram(const std::string& text)
 /// ---------------------------------------------------------------------------------------------------------------------------
 
 thread_local std::string result; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+
+/// The object API of the CPython bridge (libnes-cpython-udf-bridge.so, hipy_py_*), loaded with dlopen like InProcessBackend
+/// loads it, so both share its one embedded interpreter. Objects are PyObject*, here int8_t*.
+struct PythonApi
+{
+    int (*enter)();
+    void (*exit)();
+    const char* (*error)();
+    int (*execMain)(const char*);
+    void* (*import)(const char*);
+    void* (*getattr)(void*, const char*);
+    int (*setattr)(void*, const char*, void*);
+    void* (*tuple)(long long);
+    void (*tupleSet)(void*, long long, void*);
+    int (*dictSet)(void*, const char*, void*);
+    void* (*call)(void*, void*, void*);
+    void* (*fromInt)(long long);
+    void* (*fromFloat)(double);
+    void* (*fromBool)(int);
+    void* (*fromString)(const char*, long long);
+    void* (*none)();
+    int (*isNone)(void*);
+    int (*toInt)(void*, long long*);
+    int (*toFloat)(void*, double*);
+    int (*toBool)(void*);
+    int (*toString)(void*, const char**, long long*);
+    void* (*binary)(int, void*, void*);
+    void* (*unary)(int, void*);
+    int (*contains)(void*, void*);
+    void* (*list)();
+    void* (*dict)();
+    void* (*slice)(void*, void*, void*);
+    void* (*tupleFromList)(void*);
+};
+
+const PythonApi* pythonApi = nullptr; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+
+template <typename Function>
+void bind(void* handle, const char* name, Function& function)
+{
+    function = reinterpret_cast<Function>(dlsym(handle, name));
+    if (function == nullptr)
+    {
+        throw QueryCompilerError("HiPy UDF: the CPython bridge does not export {}", name);
+    }
+}
+
+/// Loads the bridge once. Throws QueryCompilerError if this build has none.
+const PythonApi& loadPythonApi()
+{
+    static const PythonApi api = []
+    {
+        const auto path = resolveUdfBridgeLibraryPath(UdfLanguage::Python, UdfExecution::InProcess);
+        void* handle = path.empty() ? nullptr : dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
+        if (handle == nullptr)
+        {
+            throw QueryCompilerError(
+                "HiPy UDF: parts of the UDF run in CPython, but the CPython bridge '{}' cannot be loaded: {}", path.string(), dlerror());
+        }
+        PythonApi loaded{};
+        bind(handle, "hipy_py_enter", loaded.enter);
+        bind(handle, "hipy_py_exit", loaded.exit);
+        bind(handle, "hipy_py_error", loaded.error);
+        bind(handle, "hipy_py_exec_main", loaded.execMain);
+        bind(handle, "hipy_py_import", loaded.import);
+        bind(handle, "hipy_py_getattr", loaded.getattr);
+        bind(handle, "hipy_py_setattr", loaded.setattr);
+        bind(handle, "hipy_py_tuple", loaded.tuple);
+        bind(handle, "hipy_py_tuple_set", loaded.tupleSet);
+        bind(handle, "hipy_py_dict_set", loaded.dictSet);
+        bind(handle, "hipy_py_call", loaded.call);
+        bind(handle, "hipy_py_from_int", loaded.fromInt);
+        bind(handle, "hipy_py_from_float", loaded.fromFloat);
+        bind(handle, "hipy_py_from_bool", loaded.fromBool);
+        bind(handle, "hipy_py_from_string", loaded.fromString);
+        bind(handle, "hipy_py_none", loaded.none);
+        bind(handle, "hipy_py_is_none", loaded.isNone);
+        bind(handle, "hipy_py_to_int", loaded.toInt);
+        bind(handle, "hipy_py_to_float", loaded.toFloat);
+        bind(handle, "hipy_py_to_bool", loaded.toBool);
+        bind(handle, "hipy_py_to_string", loaded.toString);
+        bind(handle, "hipy_py_binary", loaded.binary);
+        bind(handle, "hipy_py_unary", loaded.unary);
+        bind(handle, "hipy_py_contains", loaded.contains);
+        bind(handle, "hipy_py_list", loaded.list);
+        bind(handle, "hipy_py_dict", loaded.dict);
+        bind(handle, "hipy_py_slice", loaded.slice);
+        bind(handle, "hipy_py_tuple_from_list", loaded.tupleFromList);
+        return loaded;
+    }();
+    pythonApi = &api;
+    return api;
+}
+
+/// Whether this thread holds a frame of the bridge (and the GIL). A runtime function that throws closes it first, as the row
+/// ends without reaching hipyPyExit.
+thread_local bool pythonFrameOpen = false; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+
+void closePythonFrame()
+{
+    if (pythonFrameOpen)
+    {
+        pythonApi->exit();
+        pythonFrameOpen = false;
+    }
+}
+
+[[noreturn]] void throwPythonError()
+{
+    const std::string message = pythonApi->error();
+    closePythonFrame();
+    throw UdfExecutionError("HiPy UDF, in CPython: {}", message);
+}
+
+int8_t* checked(void* object)
+{
+    if (object == nullptr)
+    {
+        throwPythonError();
+    }
+    return static_cast<int8_t*>(object);
+}
+
+void* raw(int8_t* object)
+{
+    return object;
+}
+
+const char* text(const int8_t* data)
+{
+    return reinterpret_cast<const char*>(data);
+}
+
+/// Opens the frame of a row; the first frame of a program runs its Python setup.
+void hipyPyEnter(const int8_t* programPointer)
+{
+    closePythonFrame();
+    if (pythonApi->enter() != 0)
+    {
+        throw UdfExecutionError("HiPy UDF: {}", pythonApi->error());
+    }
+    pythonFrameOpen = true;
+    const auto* program = reinterpret_cast<const Program*>(programPointer);
+    if (!program->pythonSetup.empty())
+    {
+        std::call_once(
+            program->pythonSetupDone,
+            [program]
+            {
+                if (pythonApi->execMain(program->pythonSetup.c_str()) != 0)
+                {
+                    throwPythonError();
+                }
+            });
+    }
+}
+
+void hipyPyExit()
+{
+    closePythonFrame();
+}
+
+int8_t* hipyPyImport(const int8_t* name)
+{
+    return checked(pythonApi->import(text(name)));
+}
+int8_t* hipyPyGetAttr(int8_t* on, const int8_t* name)
+{
+    return checked(pythonApi->getattr(raw(on), text(name)));
+}
+void hipyPySetAttr(int8_t* on, const int8_t* name, int8_t* value)
+{
+    if (pythonApi->setattr(raw(on), text(name), raw(value)) != 0)
+    {
+        throwPythonError();
+    }
+}
+int8_t* hipyPyTuple(const int64_t size)
+{
+    return checked(pythonApi->tuple(size));
+}
+void hipyPyTupleSet(int8_t* tuple, const int64_t index, int8_t* item)
+{
+    pythonApi->tupleSet(raw(tuple), index, raw(item));
+}
+int8_t* hipyPyDict()
+{
+    return checked(pythonApi->dict());
+}
+void hipyPyDictSet(int8_t* dict, const int8_t* key, int8_t* value)
+{
+    if (pythonApi->dictSet(raw(dict), text(key), raw(value)) != 0)
+    {
+        throwPythonError();
+    }
+}
+int8_t* hipyPyCall(int8_t* callable, int8_t* arguments, int8_t* keywords)
+{
+    return checked(pythonApi->call(raw(callable), raw(arguments), raw(keywords)));
+}
+int8_t* hipyPyFromInt(const int64_t value)
+{
+    return checked(pythonApi->fromInt(value));
+}
+int8_t* hipyPyFromFloat(const double value)
+{
+    return checked(pythonApi->fromFloat(value));
+}
+int8_t* hipyPyFromBool(const bool value)
+{
+    return checked(pythonApi->fromBool(value ? 1 : 0));
+}
+int8_t* hipyPyFromString(const int8_t* data, const uint64_t size)
+{
+    return checked(pythonApi->fromString(text(data), static_cast<long long>(size)));
+}
+int8_t* hipyPyNone()
+{
+    return checked(pythonApi->none());
+}
+bool hipyPyIsNone(int8_t* value)
+{
+    return pythonApi->isNone(raw(value)) != 0;
+}
+int64_t hipyPyToInt(int8_t* value)
+{
+    long long converted = 0;
+    if (pythonApi->toInt(raw(value), &converted) != 0)
+    {
+        throwPythonError();
+    }
+    return converted;
+}
+double hipyPyToFloat(int8_t* value)
+{
+    double converted = 0;
+    if (pythonApi->toFloat(raw(value), &converted) != 0)
+    {
+        throwPythonError();
+    }
+    return converted;
+}
+bool hipyPyToBool(int8_t* value)
+{
+    const int truth = pythonApi->toBool(raw(value));
+    if (truth < 0)
+    {
+        throwPythonError();
+    }
+    return truth != 0;
+}
+/// Copies the text of a str to `result`, as the str dies with the frame.
+uint64_t hipyPyToString(int8_t* value)
+{
+    const char* data = nullptr;
+    long long size = 0;
+    if (pythonApi->toString(raw(value), &data, &size) != 0)
+    {
+        throwPythonError();
+    }
+    result.assign(data, static_cast<size_t>(size));
+    return result.size();
+}
+int8_t* hipyPyBinary(const int32_t operation, int8_t* left, int8_t* right)
+{
+    return checked(pythonApi->binary(operation, raw(left), raw(right)));
+}
+int8_t* hipyPyUnary(const int32_t operation, int8_t* value)
+{
+    return checked(pythonApi->unary(operation, raw(value)));
+}
+bool hipyPyContains(int8_t* container, int8_t* item)
+{
+    const int found = pythonApi->contains(raw(container), raw(item));
+    if (found < 0)
+    {
+        throwPythonError();
+    }
+    return found != 0;
+}
+int8_t* hipyPyList()
+{
+    return checked(pythonApi->list());
+}
+int8_t* hipyPySlice(int8_t* start, int8_t* stop, int8_t* step)
+{
+    return checked(pythonApi->slice(raw(start), raw(stop), raw(step)));
+}
+int8_t* hipyPyTupleFromList(int8_t* list)
+{
+    return checked(pythonApi->tupleFromList(raw(list)));
+}
 
 std::string_view view(const int8_t* data, const uint64_t size)
 {
@@ -552,12 +933,14 @@ int64_t hipyOrd(const int8_t* data, const uint64_t size)
 {
     if (size == 0)
     {
+        closePythonFrame();
         throw UdfExecutionError("TypeError: ord() expected a character, but string of length 0 found");
     }
     const auto* bytes = reinterpret_cast<const uint8_t*>(data);
     const auto length = hipyCodePointSize(data, size, 0);
     if (length != size)
     {
+        closePythonFrame();
         throw UdfExecutionError("TypeError: ord() expected a character, but a longer string was found");
     }
     if (length == 1)
@@ -574,11 +957,13 @@ int64_t hipyOrd(const int8_t* data, const uint64_t size)
 
 void hipyRaise(const int8_t* data, const uint64_t size)
 {
+    closePythonFrame();
     throw UdfExecutionError("HiPy UDF raised: {}", view(data, size));
 }
 
 void hipyRaiseZeroDivision()
 {
+    closePythonFrame();
     throw UdfExecutionError("ZeroDivisionError: integer division or modulo by zero");
 }
 
@@ -734,6 +1119,7 @@ int64_t hipyIntFromString(const int8_t* data, const uint64_t size)
     const auto [end, error] = std::from_chars(begin, text.data() + text.size(), value);
     if (text.empty() || error != std::errc{} || end != text.data() + text.size())
     {
+        closePythonFrame();
         throw UdfExecutionError("ValueError: invalid literal for int() with base 10: '{}'", view(data, size));
     }
     return value;
@@ -746,6 +1132,7 @@ double hipyFloatFromString(const int8_t* data, const uint64_t size)
     const auto value = std::strtod(text.c_str(), &end);
     if (text.empty() || end != text.c_str() + text.size())
     {
+        closePythonFrame();
         throw UdfExecutionError("ValueError: could not convert string to float: '{}'", view(data, size));
     }
     return value;
@@ -793,6 +1180,7 @@ double hipyFmod(const double left, const double right)
 {
     if (right == 0.0)
     {
+        closePythonFrame();
         throw UdfExecutionError("ZeroDivisionError: float modulo");
     }
     auto remainder = std::fmod(left, right);
@@ -861,6 +1249,7 @@ using Value = std::variant<
     val<int64_t>,
     val<double>,
     VariableSizedData,
+    val<int8_t*>, /// a CPython object
     std::shared_ptr<RecordValue>,
     std::shared_ptr<NullableValue>,
     std::shared_ptr<FunctionRefValue>>;
@@ -941,6 +1330,8 @@ public:
                 return std::make_shared<NullableValue>(NullableValue{.value = placeholder(type.inner.front()), .isNull = val<bool>(true)});
             case Type::Kind::Void:
                 return std::monostate{};
+            case Type::Kind::PyObject:
+                return val<int8_t*>(nullptr);
             case Type::Kind::FunctionRef:
             case Type::Kind::Unsupported:
                 break;
@@ -1035,11 +1426,53 @@ private:
         return *value;
     }
 
-    static val<int64_t>& integer(std::vector<Value>& environment, const int64_t id) { return as<val<int64_t>>(environment, id); }
-    static val<double>& real(std::vector<Value>& environment, const int64_t id) { return as<val<double>>(environment, id); }
-    static val<bool>& boolean(std::vector<Value>& environment, const int64_t id) { return as<val<bool>>(environment, id); }
-    static VariableSizedData& string(std::vector<Value>& environment, const int64_t id) { return as<VariableSizedData>(environment, id); }
+    /// The operands of native operations. HiPy also passes a CPython object where its stand-ins expect a native value (for
+    /// example math.ceil of a quotient that CPython computed): such an object is converted first, as CPython would.
+    template <typename T>
+    T native(std::vector<Value>& environment, const int64_t id, const Type::Kind kind)
+    {
+        if (auto* object = std::get_if<val<int8_t*>>(&environment[id]))
+        {
+            environment[id] = fromPython(*object, kind);
+        }
+        return as<T>(environment, id);
+    }
 
+    val<int64_t> integer(std::vector<Value>& environment, const int64_t id) { return native<val<int64_t>>(environment, id, Type::Kind::Int); }
+    val<double> real(std::vector<Value>& environment, const int64_t id) { return native<val<double>>(environment, id, Type::Kind::Float); }
+    val<bool> boolean(std::vector<Value>& environment, const int64_t id) { return native<val<bool>>(environment, id, Type::Kind::Bool); }
+    static val<int8_t*>& python(std::vector<Value>& environment, const int64_t id) { return as<val<int8_t*>>(environment, id); }
+
+    /// A pointer to the text of a name in the program, NUL-terminated, for the bridge.
+    static val<int8_t*> name(const std::string& text)
+    {
+        return val<int8_t*>(const_cast<int8_t*>(reinterpret_cast<const int8_t*>(text.c_str()))); /// NOLINT
+    }
+    VariableSizedData string(std::vector<Value>& environment, const int64_t id)
+    {
+        return native<VariableSizedData>(environment, id, Type::Kind::String);
+    }
+
+public:
+    /// The value of a CPython object as `type`: int, float, bool or str.
+    Value fromPython(const val<int8_t*>& object, const Type::Kind type)
+    {
+        switch (type)
+        {
+            case Type::Kind::Int:
+                return nautilus::invoke(hipyPyToInt, object);
+            case Type::Kind::Float:
+                return nautilus::invoke(hipyPyToFloat, object);
+            case Type::Kind::Bool:
+                return nautilus::invoke(hipyPyToBool, object);
+            case Type::Kind::String:
+                return takeResult(nautilus::invoke(hipyPyToString, object));
+            default:
+                throw QueryCompilerError("HiPy UDF: no conversion of a Python object to this type");
+        }
+    }
+
+private:
     VariableSizedData takeResult(const val<uint64_t>& size)
     {
         auto data = arena.allocateVariableSizedData(size);
@@ -1059,6 +1492,27 @@ private:
             arguments.push_back((*function)->closure);
         }
         return call((*function)->name, std::move(arguments));
+    }
+
+    /// Drops the values that the ops of `block` defined, including those of nested if/else.
+    static void release(const std::vector<Op>& block, std::vector<Value>& environment)
+    {
+        for (const auto& op : block)
+        {
+            if (op.result >= 0)
+            {
+                environment[op.result] = std::monostate{};
+            }
+            if (op.kind == OpKind::IfElse)
+            {
+                for (const auto id : op.results)
+                {
+                    environment[id] = std::monostate{};
+                }
+                release(op.ifBody, environment);
+                release(op.elseBody, environment);
+            }
+        }
     }
 
     std::vector<Value> run(const std::vector<Op>& block, std::vector<Value>& environment)
@@ -1136,21 +1590,30 @@ private:
                     {
                         results.push_back(placeholder(op.resultTypes[index]));
                     }
+                    /// Each branch ends with the same Nautilus values alive: the results, assigned from what it yields. A value
+                    /// that one branch defines dies in that branch (release), since Nautilus merges two paths only where the
+                    /// same values are alive; otherwise every further if/else doubles the paths it traces.
                     if (boolean(environment, op.condition))
                     {
-                        const auto yielded = run(op.ifBody, environment);
-                        for (nautilus::static_val<size_t> index = 0; index < results.size(); ++index)
                         {
-                            assign(results[index], yielded.at(index));
+                            const auto yielded = run(op.ifBody, environment);
+                            for (nautilus::static_val<size_t> index = 0; index < results.size(); ++index)
+                            {
+                                assign(results[index], yielded.at(index));
+                            }
                         }
+                        release(op.ifBody, environment);
                     }
                     else
                     {
-                        const auto yielded = run(op.elseBody, environment);
-                        for (nautilus::static_val<size_t> index = 0; index < results.size(); ++index)
                         {
-                            assign(results[index], yielded.at(index));
+                            const auto yielded = run(op.elseBody, environment);
+                            for (nautilus::static_val<size_t> index = 0; index < results.size(); ++index)
+                            {
+                                assign(results[index], yielded.at(index));
+                            }
                         }
+                        release(op.elseBody, environment);
                     }
                     for (nautilus::static_val<size_t> index = 0; index < results.size(); ++index)
                     {
@@ -1161,6 +1624,38 @@ private:
                 case OpKind::CallBuiltin:
                     environment[op.result] = builtin(op, environment);
                     break;
+                case OpKind::PyImport:
+                    environment[op.result] = nautilus::invoke(hipyPyImport, name(op.name));
+                    break;
+                case OpKind::PyGetAttr:
+                    environment[op.result] = nautilus::invoke(hipyPyGetAttr, python(environment, op.args[0]), name(op.name));
+                    break;
+                case OpKind::PySetAttr:
+                    nautilus::invoke(hipyPySetAttr, python(environment, op.args[0]), name(op.name), python(environment, op.args[1]));
+                    environment[op.result] = placeholder(op.resultType);
+                    break;
+                case OpKind::PyCall: {
+                    /// args[0] is the callable, then the positional arguments, then the keyword arguments (named by members).
+                    const auto positional = op.args.size() - 1 - op.members.size();
+                    const val<int8_t*> arguments = nautilus::invoke(hipyPyTuple, val<int64_t>(static_cast<int64_t>(positional)));
+                    for (nautilus::static_val<size_t> index = 0; index < positional; ++index)
+                    {
+                        nautilus::invoke(
+                            hipyPyTupleSet, arguments, val<int64_t>(static_cast<int64_t>(index)), python(environment, op.args[1 + index]));
+                    }
+                    val<int8_t*> keywords(nullptr);
+                    if (!op.members.empty())
+                    {
+                        keywords = nautilus::invoke(hipyPyDict);
+                        for (nautilus::static_val<size_t> index = 0; index < op.members.size(); ++index)
+                        {
+                            nautilus::invoke(
+                                hipyPyDictSet, keywords, name(op.members[index]), python(environment, op.args[1 + positional + index]));
+                        }
+                    }
+                    environment[op.result] = nautilus::invoke(hipyPyCall, python(environment, op.args[0]), arguments, keywords);
+                    break;
+                }
             }
         }
         return {};
@@ -1193,6 +1688,11 @@ private:
         const auto& name = op.name;
         const auto& a = op.args;
         auto& env = environment;
+        /// CPython values (HiPy's fallback)
+        if (name.ends_with("_python") || name.starts_with("python."))
+        {
+            return pythonBuiltin(op, env);
+        }
         /// Integers: C semantics, as the MLIR backend (arith.divsi, arith.remsi); HiPy's int implements Python's floor division.
         if (name == "scalar.int.add")
         {
@@ -1543,6 +2043,88 @@ private:
         }
     }
 
+    Value pythonBuiltin(const Op& op, std::vector<Value>& env)
+    {
+        const auto& name = op.name;
+        const auto& a = op.args;
+        if (name == "scalar.int.to_python")
+        {
+            return nautilus::invoke(hipyPyFromInt, integer(env, a[0]));
+        }
+        if (name == "scalar.float.to_python")
+        {
+            return nautilus::invoke(hipyPyFromFloat, real(env, a[0]));
+        }
+        if (name == "scalar.bool.to_python")
+        {
+            return nautilus::invoke(hipyPyFromBool, boolean(env, a[0]));
+        }
+        if (name == "scalar.string.to_python")
+        {
+            const auto& value = string(env, a[0]);
+            return nautilus::invoke(hipyPyFromString, value.getContent(), value.getSize());
+        }
+        if (name == "scalar.int.from_python")
+        {
+            return fromPython(python(env, a[0]), Type::Kind::Int);
+        }
+        if (name == "scalar.float.from_python")
+        {
+            return fromPython(python(env, a[0]), Type::Kind::Float);
+        }
+        if (name == "scalar.bool.from_python")
+        {
+            return fromPython(python(env, a[0]), Type::Kind::Bool);
+        }
+        if (name == "scalar.string.from_python")
+        {
+            return fromPython(python(env, a[0]), Type::Kind::String);
+        }
+        if (name == "python.get_none")
+        {
+            return nautilus::invoke(hipyPyNone);
+        }
+        if (name == "python.create_list")
+        {
+            return nautilus::invoke(hipyPyList);
+        }
+        if (name == "python.create_dict")
+        {
+            return nautilus::invoke(hipyPyDict);
+        }
+        if (name == "python.create_slice")
+        {
+            return nautilus::invoke(hipyPySlice, python(env, a[0]), python(env, a[1]), python(env, a[2]));
+        }
+        if (name == "python.tuple_from_list")
+        {
+            return nautilus::invoke(hipyPyTupleFromList, python(env, a[0]));
+        }
+        if (name == "python.operator.contains")
+        {
+            return nautilus::invoke(hipyPyContains, python(env, a[0]), python(env, a[1]));
+        }
+        if (name == "python.operator.neg" || name == "python.operator.inv")
+        {
+            return nautilus::invoke(hipyPyUnary, val<int32_t>(name == "python.operator.neg" ? 0 : 1), python(env, a[0]));
+        }
+        static const std::unordered_map<std::string_view, int32_t> binary
+            = {{"python.operator.add", 0},
+               {"python.operator.sub", 1},
+               {"python.operator.mul", 2},
+               {"python.operator.div", 3},
+               {"python.operator.mod", 4},
+               {"python.operator.pow", 5},
+               {"python.operator.lt", 6},
+               {"python.operator.gt", 7},
+               {"python.operator.eq", 8}};
+        if (const auto found = binary.find(name); found != binary.end())
+        {
+            return nautilus::invoke(hipyPyBinary, val<int32_t>(found->second), python(env, a[0]), python(env, a[1]));
+        }
+        throw QueryCompilerError("HiPy UDF: the Nautilus backend does not support {}", name);
+    }
+
     template <typename T>
     static val<bool> compare(const std::string_view predicate, const val<T>& left, const val<T>& right)
     {
@@ -1667,6 +2249,10 @@ HiPyPhysicalFunction::HiPyPhysicalFunction(
     , argumentTypes(std::move(argumentTypes))
     , returnType(std::move(returnType))
 {
+    if (program->pythonOps > 0)
+    {
+        HiPy::loadPythonApi();
+    }
     const auto& entry = program->functions.at(program->entry);
     if (entry.args.size() != this->argumentTypes.size())
     {
@@ -1702,7 +2288,25 @@ VarVal HiPyPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
         return HiPy::resultValue(HiPy::Interpreter::placeholder(HiPy::Type{.kind = HiPy::Type::Kind::Int, .name = "int", .memberNames = {}, .memberTypes = {}, .inner = {}}), returnType, val<bool>(true));
     }
     const auto& scalarType = entryType.kind == HiPy::Type::Kind::Nullable ? entryType.inner.front() : entryType;
-    auto result = HiPy::Interpreter::placeholder(scalarType);
+    /// A result that is a CPython object becomes a value of the declared type; None is NULL.
+    const auto pythonResult = scalarType.kind == HiPy::Type::Kind::PyObject;
+    const auto declaredKind = [this]
+    {
+        switch (returnType.type)
+        {
+            case DataType::Type::BOOLEAN:
+                return HiPy::Type::Kind::Bool;
+            case DataType::Type::FLOAT32:
+            case DataType::Type::FLOAT64:
+                return HiPy::Type::Kind::Float;
+            case DataType::Type::VARSIZED:
+                return HiPy::Type::Kind::String;
+            default:
+                return HiPy::Type::Kind::Int;
+        }
+    }();
+    auto result = HiPy::Interpreter::placeholder(
+        pythonResult ? HiPy::Type{.kind = declaredKind, .name = "declared", .memberNames = {}, .memberTypes = {}, .inner = {}} : scalarType);
     val<bool> isNull(true);
     const auto callUdf = [&]
     {
@@ -1712,8 +2316,21 @@ VarVal HiPyPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
             hipyArguments.push_back(HiPy::argumentValue(values[index], argumentTypes[index]));
         }
         HiPy::Interpreter interpreter(*program, arena);
+        if (program->pythonOps > 0)
+        {
+            nautilus::invoke(HiPy::hipyPyEnter, val<int8_t*>(reinterpret_cast<int8_t*>(const_cast<HiPy::Program*>(program.get())))); /// NOLINT
+        }
         const auto returned = interpreter.call(program->entry, std::move(hipyArguments));
-        if (const auto* nullable = std::get_if<std::shared_ptr<HiPy::NullableValue>>(&returned))
+        if (const auto* object = std::get_if<val<int8_t*>>(&returned))
+        {
+            const val<bool> none = nautilus::invoke(HiPy::hipyPyIsNone, *object);
+            if (!none)
+            {
+                HiPy::Interpreter::assign(result, interpreter.fromPython(*object, declaredKind));
+                isNull = val<bool>(false);
+            }
+        }
+        else if (const auto* nullable = std::get_if<std::shared_ptr<HiPy::NullableValue>>(&returned))
         {
             HiPy::Interpreter::assign(result, (*nullable)->value);
             isNull = (*nullable)->isNull;
@@ -1722,6 +2339,10 @@ VarVal HiPyPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
         {
             HiPy::Interpreter::assign(result, returned);
             isNull = val<bool>(false);
+        }
+        if (program->pythonOps > 0)
+        {
+            nautilus::invoke(HiPy::hipyPyExit);
         }
     };
     if (!anyNull.has_value())

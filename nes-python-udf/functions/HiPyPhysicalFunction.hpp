@@ -36,6 +36,11 @@ struct Program;
 /// pipeline like any physical function: ints, floats and bools are val<> arithmetic, strings are VariableSizedData, an if/else
 /// is Nautilus control flow, a loop builtin is a Nautilus loop over the loop function, and string builtins call runtime
 /// functions. A NULL argument gives a NULL result without a call.
+///
+/// Partial extraction: what HiPy cannot compile natively, it leaves to CPython (Py* operations, python.* builtins, conversions
+/// to and from Python objects). These run through the object API of the CPython bridge (hipy_py_* in CPythonUdfBridge.cpp),
+/// as Nautilus calls between the native parts. A row with such operations runs in a frame of the bridge, which holds the GIL
+/// and owns every object the row creates. A Python result becomes the declared type, and None becomes NULL.
 class HiPyPhysicalFunction final
 {
 public:

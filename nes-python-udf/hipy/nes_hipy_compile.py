@@ -17,9 +17,10 @@ its parameter names, the argument and return types (NES type names), the import 
 
 HiPy runs the UDF's code at compile time with abstract arguments of the declared types and records the operations as its IR
 (hipy.compiler). Every function of the UDF's module is marked for HiPy: an unmarked function would become a CPython call.
-HiPy's stand-ins for re, math, datetime, random, statistics and collections are imported, as they replace those modules
-only once loaded. The UDF is compiled without fallback, and a module that still calls CPython (py_* operations or python.*
-builtins) is rejected. The output is {"entry": <function name>, "module": <HiPy IR as JSON (ir.Module.serialize)>}.
+HiPy's stand-ins for re, math, datetime, random, statistics, collections and urllib.parse are imported, as they replace those
+modules only once loaded. The UDF is compiled with fallback: what HiPy cannot compile natively becomes CPython operations
+(Py* operations, python.* builtins), which the engine runs through the CPython bridge. The output is
+{"entry": <function name>, "pythonOps": <number of CPython operations>, "module": <HiPy IR as JSON (ir.Module.serialize)>}.
 """
 
 import contextlib
@@ -75,9 +76,9 @@ def python_operations(node, found):
     if isinstance(node, dict):
         kind = node.get("kind", "")
         if kind.startswith("Py") or kind == "PythonCall":
-            found.add(kind)
+            found.append(kind)
         if kind == "CallBuiltin" and (node["name"].startswith("python.") or node["name"].endswith("_python")):
-            found.add(node["name"])
+            found.append(node["name"])
         for value in node.values():
             python_operations(value, found)
     elif isinstance(node, list):
@@ -86,16 +87,37 @@ def python_operations(node, found):
     return found
 
 
+def keep_keywords_in_fallback():
+    """HiPy drops the keyword arguments of a call when it falls back to CPython after one of its stand-ins raised
+    NotImplementedError (Context.perform_call re-calls with `perform_call(self.to_python(original_fn), args)`, e.g. for
+    datetime.timedelta(seconds=x)). The re-call passes the same `args` list, so the keywords of the outer call are passed on."""
+    import hipy.context
+
+    original = hipy.context.Context.perform_call
+    calls = []
+
+    def perform_call(self, fn, args=[], kwargs={}, _action_id=None):  # noqa: B006 (HiPy's signature)
+        if not kwargs and calls and calls[-1][0] is args:
+            kwargs = calls[-1][1]
+        calls.append((args, kwargs))
+        try:
+            return original(self, fn, args, kwargs, _action_id=_action_id)
+        finally:
+            calls.pop()
+
+    hipy.context.Context.perform_call = perform_call
+
+
 def main():
     with open(sys.argv[1], encoding="utf-8") as file:
         request = json.load(file)
     sys.path.insert(0, request["hipyDir"])
-    try:
-        import networkx  # noqa: F401
-    except ImportError:
-        sys.path.append(os.path.join(HERE, "shim"))  # the part of networkx that hipy.compiler uses
+    # Stand-ins for the parts of networkx and typeshed_client that HiPy uses, after the installed packages.
+    sys.path.append(os.path.join(HERE, "shim"))
     import hipy
     import hipy.compiler
+
+    keep_keywords_in_fallback()
 
     for library in ("re", "math", "datetime", "random", "statistics", "collections", "urllib.parse"):
         with contextlib.suppress(Exception):
@@ -112,14 +134,14 @@ def main():
     argument_types = [hipy_type(kind) for kind in request["argumentTypes"]]
     # HiPy prints its diagnostics to stdout.
     with contextlib.redirect_stdout(sys.stderr):
-        ir_module = hipy.compiler.compile(entry, arg_types=argument_types, fallback=False, debug=False)
+        ir_module = hipy.compiler.compile(entry, arg_types=argument_types, fallback=True, debug=False)
     serialized = json.loads(json.dumps(ir_module.serialize(), default=lambda value: value.serialize()))
-    in_python = python_operations(serialized, set())
+    in_python = python_operations(serialized, [])
     if in_python:
-        raise TypeError("HiPy compiled parts of the UDF to CPython calls: " + ", ".join(sorted(in_python)))
+        print(f"HiPy left {len(in_python)} operations to CPython: " + ", ".join(sorted(set(in_python))), file=sys.stderr)
     entry_function = inspect.unwrap(entry.pyfunc).__name__ + hipy.config.function_suffix
     with open(sys.argv[2], "w", encoding="utf-8") as file:
-        json.dump({"entry": entry_function, "module": serialized}, file, default=lambda value: value.serialize())
+        json.dump({"entry": entry_function, "pythonOps": len(in_python), "module": serialized}, file, default=lambda value: value.serialize())
 
 
 if __name__ == "__main__":
