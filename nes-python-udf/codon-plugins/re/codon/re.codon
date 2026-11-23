@@ -127,6 +127,15 @@ class Pattern:
     flags: int
     _re: cobj
 
+# NES: as in Python, the module-level functions also take a compiled Pattern (flags must then be 0).
+def _nes_pattern(pattern, flags: int):
+    if isinstance(pattern, Pattern):
+        if flags != 0:
+            raise ValueError("cannot process flags argument with a compiled pattern")
+        return pattern
+    else:
+        return compile(pattern, flags)
+
 def compile(pattern: str, flags: int = 0):
     re = seq_re_compile(pattern, flags)
     err_msg = seq_re_pattern_error(re)
@@ -134,29 +143,29 @@ def compile(pattern: str, flags: int = 0):
         raise error(err_msg, pattern)
     return Pattern(pattern, flags, re)
 
-def search(pattern: str, string: str, flags: int = 0):
-    return compile(pattern, flags).search(string)
+def search(pattern, string: str, flags: int = 0):
+    return _nes_pattern(pattern, flags).search(string)
 
-def match(pattern: str, string: str, flags: int = 0):
-    return compile(pattern, flags).match(string)
+def match(pattern, string: str, flags: int = 0):
+    return _nes_pattern(pattern, flags).match(string)
 
-def fullmatch(pattern: str, string: str, flags: int = 0):
-    return compile(pattern, flags).fullmatch(string)
+def fullmatch(pattern, string: str, flags: int = 0):
+    return _nes_pattern(pattern, flags).fullmatch(string)
 
-def finditer(pattern: str, string: str, flags: int = 0):
-    return compile(pattern, flags).finditer(string)
+def finditer(pattern, string: str, flags: int = 0):
+    return _nes_pattern(pattern, flags).finditer(string)
 
-def findall(pattern: str, string: str, flags: int = 0):
-    return compile(pattern, flags).findall(string)
+def findall(pattern, string: str, flags: int = 0):
+    return _nes_pattern(pattern, flags).findall(string)
 
-def split(pattern: str, string: str, maxsplit: int = 0, flags: int = 0):
-    return compile(pattern, flags).split(string, maxsplit)
+def split(pattern, string: str, maxsplit: int = 0, flags: int = 0):
+    return _nes_pattern(pattern, flags).split(string, maxsplit)
 
-def sub(pattern: str, repl, string: str, count: int = 0, flags: int = 0):
-    return compile(pattern, flags).sub(repl, string, count)
+def sub(pattern, repl, string: str, count: int = 0, flags: int = 0):
+    return _nes_pattern(pattern, flags).sub(repl, string, count)
 
-def subn(pattern: str, repl, string: str, count: int = 0, flags: int = 0):
-    return compile(pattern, flags).subn(repl, string, count)
+def subn(pattern, repl, string: str, count: int = 0, flags: int = 0):
+    return _nes_pattern(pattern, flags).subn(repl, string, count)
 
 def escape(pattern: str):
     return seq_re_escape(pattern)
