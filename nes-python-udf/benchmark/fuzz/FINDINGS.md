@@ -472,3 +472,60 @@ bound method or a lambda); the overlay leaves `hosts` alone in `__init__`, and `
 networks itself.
 
 Results (`results/E100-*.jsonl`, without overlays set): no change from E99.
+
+## IN_PROCESS interpreters without a GIL (E101, 2026-11-23, NES 0c482e95ec)
+
+New `in_process_udf_interpreter=FREE_THREADED` (8deb6bf441): the CPython bridge built a second time against a
+free-threaded CPython 3.14.9 from uv (`libnes-cpython-udf-bridge-ft.so`, `NES_CPYTHON_FREE_THREADED_EXECUTABLE`). All
+worker threads share one interpreter without a GIL. numpy 2.5 and pyarrow 26 have free-threaded wheels and keep the GIL
+off. The bridge now locks the lazy creation of the batch objects and sets the Python home from the location of
+libpython. All 374 queries of the PythonUdf group pass with FREE_THREADED and with SHARED.
+
+Setup: `harness/interpreter_scaling.py`, `benchmark/PythonUdfInterpreters.test`, ROW calls, unpinned, single node,
+inputs in /dev/shm. M rows/s at 1/2/4/8/16 worker threads (DLMOPEN up to 8, as glibc has about 12 link namespaces):
+
+| UDF | SHARED | SUBINTERPRETER | DLMOPEN | FREE_THREADED |
+|---|---|---|---|---|
+| `x + 1` (3M) | 0.94 / 0.51 / 0.19 / 0.07 / 0.05 | 0.91 / 1.75 / 3.23 / 6.10 / 8.02 | 0.91 / 1.64 / 2.93 / 4.93 | 1.23 / 2.52 / 4.24 / 7.75 / 9.78 |
+| `x.upper()` (3M) | 0.79 / 0.40 / 0.15 / 0.07 / 0.05 | 0.78 / 1.28 / 2.90 / 4.51 / 7.15 | 0.68 / 1.29 / 2.51 / 4.48 | 1.18 / 1.97 / 3.56 / 6.49 / 9.83 |
+| 20 LCG steps (1M) | 0.10 / 0.07 / 0.06 / 0.05 / 0.03 | 0.10 / 0.20 / 0.40 / 0.76 / 1.32 | 0.10 / 0.19 / 0.38 / 0.75 | 0.13 / 0.27 / 0.49 / 0.99 / 1.77 |
+| word count dict (1M) | 0.48 / 0.26 / 0.10 / 0.07 / 0.04 | 0.46 / 0.85 / 1.53 / 2.70 / 3.93 | 0.44 / 0.86 / 1.37 / 2.73 | 0.67 / 1.26 / 2.17 / 3.46 / 4.76 |
+
+- SHARED gets slower with each thread: the threads fight for the GIL (16 threads: 20x slower than 1).
+- FREE_THREADED scales about as well as SUBINTERPRETER (LCG: 13.6x at 16 threads, SUBINTERPRETER 13.2x) and loads
+  numpy and pyarrow, which SUBINTERPRETER cannot.
+- FREE_THREADED is 1.3–1.5x faster at one thread. This is not the free-threading: the uv build (3.14.9, Clang) differs
+  from Debian's libpython 3.14.4 that the default bridge uses. A fair single-thread comparison needs the default
+  bridge built against uv's 3.14.9 with GIL.
+- A worker must not load both bridges: each promotes its libpython to RTLD_GLOBAL, with the same symbol names.
+
+## OUT_OF_PROCESS: one process with threads against one process per thread (E102, 2026-11-23, NES 122067e226)
+
+New `NES_UDF_SHARED_PROCESSES=threads` (7e80fd10e6, 122067e226): all UDF operators of the worker share one host process,
+which runs each operator in a Python thread of its own, as a process of its own would run it. Only the SHARED_MEMORY
+protocols use host processes; the default ARROW_IPC ignores the setting (a first run of E102 measured ARROW_IPC by
+mistake and was deleted). On free-threaded Python the threads sliced one shared memoryview of the pool at the same
+time and failed with "operation forbidden on released memoryview object"; each operator now has its own memoryview.
+
+Correctness, PythonUdfProcess group, SHARED_MEMORY, 4 threads, 3.14t: 300/300 with processes, 296/300 with threads. The
+4 failures (`PythonUdfOutOfProcess:9,11,13,14`) are of the host processes, not of the threads: with the existing
+`NES_UDF_SHARED_PROCESSES=1` the same file fails 5 times. That file runs two workers in one systest process, which
+share the static host processes; a failing UDF there ends the host for all operators.
+
+Setup: `benchmark/PythonUdfProcessThreads.test` (same UDFs, OUT_OF_PROCESS), SHARED_MEMORY_ZERO_COPY, unpinned, uv
+CPython 3.14.9 with GIL (`udf-gil-venv`) and free-threaded (`udf-ft-venv`). M rows/s at 1/2/4/8/16 worker threads
+(THREADS with GIL at 1/4/16):
+
+| UDF | PROCESSES (GIL) | PROCESSES_FT | THREADS (GIL) | THREADS_FT |
+|---|---|---|---|---|
+| `x + 1` (3M) | 1.94 / 2.72 / 4.19 / 4.98 / 4.81 | 1.78 / 2.80 / 3.76 / 4.54 / 4.06 | 1.96 / – / 2.03 / – / 1.90 | 2.01 / 2.85 / 4.08 / 5.06 / 4.49 |
+| `x.upper()` (3M) | 0.97 / 1.82 / 2.90 / 4.08 / 4.21 | 0.93 / 1.78 / 2.90 / 3.82 / 3.56 | 1.00 / – / 0.92 / – / 0.73 | 0.94 / 1.78 / 2.71 / 3.80 / 4.14 |
+| 20 LCG steps (1M) | 0.16 / 0.30 / 0.54 / 0.88 / 1.20 | 0.17 / 0.32 / 0.57 / 0.95 / 1.20 | 0.16 / – / 0.15 / – / 0.10 | 0.16 / 0.31 / 0.55 / 0.85 / 1.15 |
+| word count dict (1M) | 0.81 / 1.24 / 1.73 / 1.99 / 2.17 | 0.78 / 1.17 / 1.65 / 1.73 / 2.04 | 0.80 / – / 0.78 / – / 0.68 | 0.76 / 1.18 / 1.46 / 1.72 / 1.88 |
+
+- One free-threaded process with N threads is as fast as N processes, within about 10%. With a GIL, threads do not scale.
+- Free-threading costs about 5–10% per thread against the GIL build of the same version (PROCESSES_FT vs PROCESSES).
+- Above 8 threads, all variants of the cheap UDFs stop at about 5 M rows/s: the worker side limits them, not Python.
+- At one thread, OUT_OF_PROCESS is faster than IN_PROCESS ROW calls (`x + 1`: 1.94 vs 0.94 M rows/s), as the process
+  calls the UDF in a loop over a batch, not once per row through the C API. At 16 threads, IN_PROCESS FREE_THREADED is
+  faster (9.78 vs 4.49), as it has no handoff between processes.
