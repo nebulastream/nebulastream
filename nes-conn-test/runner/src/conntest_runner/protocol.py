@@ -96,7 +96,7 @@ class Got:
 
     A FILL reply has no row counts, because the data is checked from the ``--observed-path`` file.
     ``partial_read_ms`` lists how long each read that returned a partly filled buffer took during a FILL.
-    ``n_buffers`` is how many buffers a sink's START made from its input, which WRITE then hands to the sink.
+    ``n_buffers`` is how many buffers a sink's LOAD made from its input, which WRITE then hands to the sink.
     ``schema`` is the schema that a BIND bound, empty in every other reply.
     ``step_timeout_ms`` is the harness's step timeout, which only a BIND reports.
     """

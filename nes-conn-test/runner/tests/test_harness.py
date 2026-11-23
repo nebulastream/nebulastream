@@ -104,3 +104,15 @@ def test_a_respawned_harness_gets_a_bind_before_its_first_step(tmp_path: Path) -
     source.open()
     source.cleanup()
     assert (tmp_path / "unused.nesql.commands").read_text(encoding="utf-8").split() == ["BIND", "BIND", "OPEN"]
+
+
+def test_a_respawned_sink_harness_gets_its_setup_steps_before_start(tmp_path: Path) -> None:
+    # A sink's session needs BIND and LOAD before START, and a respawned harness has a new session.
+    config = tmp_path / "unused.nesql"
+    sink = harness.Sink(harness=_fake_harness(tmp_path, _LOGS_COMMANDS), config=config)
+    sink.bind()
+    sink.load()
+    sink.kill()
+    sink.start()
+    sink.cleanup()
+    assert (tmp_path / "unused.nesql.commands").read_text(encoding="utf-8").split() == ["BIND", "LOAD", "BIND", "LOAD", "START"]

@@ -143,18 +143,28 @@ _FILE_CONFIGS = {
 }
 
 
-@pytest.mark.parametrize(("mode", "step"), [("source", "OPEN"), ("sink", "START")])
-def test_a_step_before_bind_fails_with_harness_protocol(
-    harness_binary: Path, sock_dir: Path, tmp_path: Path, mode: str, step: str
+@pytest.mark.parametrize(
+    ("mode", "setup", "step", "missing"),
+    [
+        pytest.param("source", [], "OPEN", "BIND", id="source-open-before-bind"),
+        pytest.param("sink", [], "LOAD", "BIND", id="sink-load-before-bind"),
+        pytest.param("sink", ["BIND"], "START", "LOAD", id="sink-start-before-load"),
+    ],
+)
+def test_a_step_before_its_setup_fails_with_harness_protocol(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path, mode: str, setup: list[str], step: str, missing: str
 ) -> None:
-    # The runner generates its rows for the schema of the BIND reply, so a step before BIND means that the runner skipped it.
+    # The runner generates its rows for the schema of the BIND reply and writes a sink's input after it,
+    # so a step before its setup means that the runner skipped one.
     config = tmp_path / f"{mode}.nesql"
     config.write_text(_FILE_CONFIGS[mode], encoding="utf-8")
     with Session(harness_binary, sock_dir, config=config, mode=mode) as session:
+        for done in setup:
+            assert session.command(done)["ok"] is True
         reply = session.command(step)
-        expected = (False, "harness", "HarnessProtocol", f"{step} before BIND")
+        expected = (False, "harness", "HarnessProtocol", f"{step} before {missing}")
         assert (reply["ok"], reply["origin"], reply["name"], reply["message"]) == expected, reply
-        assert session.command("BIND")["ok"] is True
+        assert session.command(missing)["ok"] is True
         assert session.end() == _EXIT_OK
 
 
@@ -247,8 +257,9 @@ def test_sink_gets_records_that_continue_in_child_buffers(harness_binary: Path, 
     args = [f"--input-path={records_path}", "--buffer-size=64"]
     with Session(harness_binary, sock_dir, config=config, mode="sink", args=args) as session:
         assert session.command("BIND")["ok"] is True
-        start = session.command("START")
-        assert start == {"ok": True, "phase": "start", "n_buffers": 3}, start
+        load = session.command("LOAD")
+        assert load == {"ok": True, "phase": "load", "n_buffers": 3}, load
+        assert session.command("START")["ok"] is True
         assert session.command("WRITE 3")["ok"] is True
         assert session.command("STOP")["ok"] is True
         assert session.end() == _EXIT_OK

@@ -111,8 +111,8 @@ def test_read_reply_ok_bind() -> None:
     assert got == Got(schema=(("ID", "INT32", False), ("Label", "VARSIZED", True)), step_timeout_ms=30000)
 
 
-def test_read_reply_ok_start() -> None:
-    got = read_reply(json.dumps({"ok": True, "phase": "start", "n_buffers": 3}))
+def test_read_reply_ok_load() -> None:
+    got = read_reply(json.dumps({"ok": True, "phase": "load", "n_buffers": 3}))
     assert got == Got(eos=False, n_buffers=3)
 
 

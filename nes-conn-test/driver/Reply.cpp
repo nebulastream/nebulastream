@@ -72,10 +72,10 @@ struct FillReply
     std::vector<std::int64_t> partial_read_ms; /// NOLINT(readability-identifier-naming): the member name is the JSON key
 };
 
-struct StartReply
+struct LoadReply
 {
     bool ok = true;
-    std::string phase = "start";
+    std::string phase = "load";
     std::uint64_t n_buffers = 0; /// NOLINT(readability-identifier-naming): the member name is the JSON key
 };
 
@@ -165,9 +165,9 @@ std::string fillReply(const std::string_view phase, const bool eos, const std::v
     return write(FillReply{.phase = std::string{phase}, .eos = eos, .partial_read_ms = std::move(partialReadMs)});
 }
 
-std::string startReply(const std::uint64_t numberOfBuffers)
+std::string loadReply(const std::uint64_t numberOfBuffers)
 {
-    return write(StartReply{.n_buffers = numberOfBuffers});
+    return write(LoadReply{.n_buffers = numberOfBuffers});
 }
 
 }
