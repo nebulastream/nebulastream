@@ -473,7 +473,7 @@ networks itself.
 
 Results (`results/E100-*.jsonl`, without overlays set): no change from E99.
 
-## IN_PROCESS interpreters without a GIL (E101, 2026-11-23, NES 0c482e95ec)
+## IN_PROCESS interpreters without a GIL (E105, 2026-11-23, NES 0c482e95ec)
 
 New `in_process_udf_interpreter=FREE_THREADED` (8deb6bf441): the CPython bridge built a second time against a
 free-threaded CPython 3.14.9 from uv (`libnes-cpython-udf-bridge-ft.so`, `NES_CPYTHON_FREE_THREADED_EXECUTABLE`). All
@@ -499,11 +499,11 @@ inputs in /dev/shm. M rows/s at 1/2/4/8/16 worker threads (DLMOPEN up to 8, as g
   bridge built against uv's 3.14.9 with GIL.
 - A worker must not load both bridges: each promotes its libpython to RTLD_GLOBAL, with the same symbol names.
 
-## OUT_OF_PROCESS: one process with threads against one process per thread (E102, 2026-11-23, NES 122067e226)
+## OUT_OF_PROCESS: one process with threads against one process per thread (E106, 2026-11-23, NES 122067e226)
 
 New `NES_UDF_SHARED_PROCESSES=threads` (7e80fd10e6, 122067e226): all UDF operators of the worker share one host process,
 which runs each operator in a Python thread of its own, as a process of its own would run it. Only the SHARED_MEMORY
-protocols use host processes; the default ARROW_IPC ignores the setting (a first run of E102 measured ARROW_IPC by
+protocols use host processes; the default ARROW_IPC ignores the setting (a first run of E106 measured ARROW_IPC by
 mistake and was deleted). On free-threaded Python the threads sliced one shared memoryview of the pool at the same
 time and failed with "operation forbidden on released memoryview object"; each operator now has its own memoryview.
 
