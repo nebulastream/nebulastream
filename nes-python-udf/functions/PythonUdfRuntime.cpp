@@ -686,6 +686,12 @@ extern "C" __attribute__((visibility("default"), used)) CodonString seq_str_floa
     return formatCodonValue(value, format, error);
 }
 
+/// A str with a format spec (f"{s:>10}", format(s, "^8")): fmt applies the spec to the text.
+extern "C" __attribute__((visibility("default"), used)) CodonString seq_str_str(const CodonString value, const CodonString format, bool* error)
+{
+    return formatCodonValue(std::string_view{value.data, static_cast<size_t>(value.length)}, format, error);
+}
+
 extern "C" __attribute__((visibility("default"), used)) double seq_float_from_str(const CodonString string, const char** end)
 {
     const auto [result, suffix] = NES::from_chars_prefix<double>(std::string_view(string.data, string.length));
@@ -793,6 +799,7 @@ std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols()
         {.name = "seq_str_int", .address = reinterpret_cast<void*>(&seq_str_int)},
         {.name = "seq_str_uint", .address = reinterpret_cast<void*>(&seq_str_uint)},
         {.name = "seq_str_float", .address = reinterpret_cast<void*>(&seq_str_float)},
+        {.name = "seq_str_str", .address = reinterpret_cast<void*>(&seq_str_str)},
         {.name = "seq_float_from_str", .address = reinterpret_cast<void*>(&seq_float_from_str)},
         {.name = "seq_stdout", .address = reinterpret_cast<void*>(&seq_stdout)},
         {.name = "seq_stdin", .address = reinterpret_cast<void*>(&seq_stdin)},

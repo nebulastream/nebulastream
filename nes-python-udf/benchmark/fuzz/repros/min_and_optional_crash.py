@@ -1,7 +1,8 @@
 # codon-fuzz: entry=udf args=INT64 returns=FLOAT64
 # codon-fuzz-rows: 0
 # codon-fuzz-inputs: [[3], [0]]
-# Codon (fork 3b8c3a9) crashes with SIGSEGV on the first row: 'x and float(x)' with an Optional x, then arithmetic.
+# Codon fork 3b8c3a9 crashed (SIGSEGV) while it removed the IR types of this UDF, and computed wrong values: `x and float(x)`
+# with an Optional x built a Union with an Optional member. Fixed in the fork (Module::remove, and/or lowering).
 # Found in the real UDF github_spark/rewiring_extract_percentage.
 
 

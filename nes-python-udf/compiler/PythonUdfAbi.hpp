@@ -24,7 +24,7 @@ namespace NES
 /// implements it, and pure libc functions that Codon's stdlib calls. A compiled UDF may call only these, the native functions
 /// of the Codon plugins, and LLVM intrinsics. The frontend checks a UDF against this list when it compiles it, the worker
 /// before it runs it; the worker's symbol table must define exactly these names.
-inline constexpr std::array<std::string_view, 34> PythonUdfRuntimeSymbolNames{
+inline constexpr std::array<std::string_view, 35> PythonUdfRuntimeSymbolNames{
     "seq_alloc",
     "seq_alloc_atomic",
     "seq_realloc",
@@ -37,6 +37,7 @@ inline constexpr std::array<std::string_view, 34> PythonUdfRuntimeSymbolNames{
     "seq_str_int",
     "seq_str_uint",
     "seq_str_float",
+    "seq_str_str",
     "seq_float_from_str",
     "seq_stdout",
     "seq_stdin",
