@@ -27,6 +27,7 @@
 #include <Util/Strings.hpp>
 #include <Binder.hpp>
 #include <ControlChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <Reply.hpp>
 #include <SinkSession.hpp>
 #include <SourceSession.hpp>
@@ -63,21 +64,30 @@ void configureArgumentParser(argparse::ArgumentParser& program)
 }
 
 /// An absent flag leaves `target` at its default.
-template <typename T>
-bool applyUnsigned(const argparse::ArgumentParser& program, const std::string& flag, T& target)
+/// The flag is parsed as a 64-bit number, so that the option's own bounds reject a value that its type cannot hold.
+template <typename Option>
+bool applyOption(const argparse::ArgumentParser& program, const std::string& flag, Option& target)
 {
     const auto raw = program.present<std::string>(flag);
     if (not raw)
     {
         return true;
     }
-    const auto parsed = NES::from_chars<T>(*raw);
+    const auto parsed = NES::from_chars<std::uint64_t>(*raw);
     if (not parsed)
     {
         std::cerr << "error: " << flag << " expects an unsigned integer, got '" << *raw << "'\n";
         return false;
     }
-    target = *parsed;
+    try
+    {
+        target = Option{*parsed};
+    }
+    catch (const Exception& ex)
+    {
+        std::cerr << "error: " << flag << ": " << trimWhiteSpaces(ex.what()) << "\n";
+        return false;
+    }
     return true;
 }
 
@@ -86,8 +96,7 @@ ExitCode runSource(const argparse::ArgumentParser& program, ControlChannel& chan
     SourceSessionOptions options;
     options.configFile = program.get<std::string>("--config");
 
-    if (not applyUnsigned(program, "--buffer-size", options.bufferSize)
-        or not applyUnsigned(program, "--buffer-count", options.bufferCount))
+    if (not applyOption(program, "--buffer-size", options.bufferSize) or not applyOption(program, "--buffer-count", options.bufferCount))
     {
         return ExitCode::BadArguments;
     }
@@ -104,7 +113,7 @@ ExitCode runSink(const argparse::ArgumentParser& program, ControlChannel& channe
     SinkSessionOptions options;
     options.configFile = program.get<std::string>("--config");
 
-    if (not applyUnsigned(program, "--buffer-size", options.bufferSize) or not applyUnsigned(program, "--threads", options.threads))
+    if (not applyOption(program, "--buffer-size", options.bufferSize) or not applyOption(program, "--threads", options.threads))
     {
         return ExitCode::BadArguments;
     }

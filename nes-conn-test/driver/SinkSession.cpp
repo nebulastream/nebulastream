@@ -409,15 +409,16 @@ private:
         {
             /// A worker's pool is far larger than one test's data, so the source never waits for a buffer that the sink still holds.
             /// A batch takes its main buffer and a child for each further buffer size of bytes.
+            /// An input that needs more buffers than the pool can count fails here, as a harness error of START.
+            const std::size_t bufferSize = options.bufferSize.getRawValue();
             std::size_t bufferCount = 0;
             for (const auto& batch : batches)
             {
-                bufferCount += (batch.size() + options.bufferSize - 1) / options.bufferSize;
+                bufferCount += (batch.size() + bufferSize - 1) / bufferSize;
             }
-            pool = makeBufferPool(
-                static_cast<std::uint32_t>(options.bufferSize), static_cast<std::uint32_t>(std::max<std::size_t>(bufferCount, 1)));
+            pool = makeBufferPool(options.bufferSize, BufferCount{std::max<std::size_t>(bufferCount, 1)});
             engine = std::make_unique<QueryEngine>(
-                QueryEngineConfiguration{std::max<std::size_t>(options.threads, 1), workerDefaults.queryEngine.admissionQueueSize},
+                QueryEngineConfiguration{options.threads.getRawValue(), workerDefaults.queryEngine.admissionQueueSize},
                 observer,
                 observer,
                 pool,
@@ -458,7 +459,7 @@ private:
         std::string batch;
         for (const auto record : records)
         {
-            if (batch.size() >= options.bufferSize)
+            if (batch.size() >= options.bufferSize.getRawValue())
             {
                 batches.push_back(std::exchange(batch, {}));
             }

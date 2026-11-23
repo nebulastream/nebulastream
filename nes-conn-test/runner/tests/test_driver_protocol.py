@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 _TIMEOUT_S = 30.0
 _EXIT_OK = 0
+_EXIT_BAD_ARGUMENTS = 2
 
 
 @pytest.fixture
@@ -60,6 +61,7 @@ class Session:
             stderr=subprocess.PIPE,
             text=True,
         )
+        self.stderr = ""
         self._listener.settimeout(_TIMEOUT_S)
         self._conn, _ = self._listener.accept()
         self._conn.settimeout(_TIMEOUT_S)
@@ -76,7 +78,7 @@ class Session:
         self._reader.close()
         self._conn.close()
         self._listener.close()
-        self.proc.communicate(timeout=_TIMEOUT_S)
+        _, self.stderr = self.proc.communicate(timeout=_TIMEOUT_S)
         return self.proc.returncode
 
     def __enter__(self) -> Self:
@@ -91,6 +93,33 @@ class Session:
         if self.proc.poll() is None:
             self.proc.kill()
             self.proc.communicate(timeout=_TIMEOUT_S)
+
+
+_MAX_UINT32 = 2**32 - 1
+
+
+@pytest.mark.parametrize(
+    ("mode", "flag", "value", "message"),
+    [
+        pytest.param("source", "--buffer-size", 0, "the buffer size", id="source-buffer-size-0"),
+        pytest.param("source", "--buffer-size", _MAX_UINT32 + 1, "the buffer size", id="source-buffer-size-2^32"),
+        pytest.param("source", "--buffer-count", 0, "the buffer count", id="source-buffer-count-0"),
+        pytest.param("source", "--buffer-count", _MAX_UINT32 + 1, "the buffer count", id="source-buffer-count-2^32"),
+        pytest.param("sink", "--buffer-size", 0, "the buffer size", id="sink-buffer-size-0"),
+        pytest.param("sink", "--buffer-size", _MAX_UINT32 + 1, "the buffer size", id="sink-buffer-size-2^32"),
+        pytest.param("sink", "--threads", 0, "the number of worker threads", id="sink-threads-0"),
+        pytest.param("sink", "--threads", _MAX_UINT32 + 1, "the number of worker threads", id="sink-threads-2^32"),
+    ],
+)
+def test_harness_rejects_an_option_outside_its_bounds(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path, mode: str, flag: str, value: int, message: str
+) -> None:
+    # The pool takes 32-bit sizes and counts, and a buffer size of 0 divides by zero, so the harness exits before a session starts.
+    config = tmp_path / "never-read.nesql"
+    with Session(harness_binary, sock_dir, config=config, mode=mode, args=[f"{flag}={value}"]) as session:
+        assert session.end() == _EXIT_BAD_ARGUMENTS
+    assert f"error: {flag}: " in session.stderr, session.stderr
+    assert f"{message} must be between 1 and {_MAX_UINT32}, got {value}" in session.stderr, session.stderr
 
 
 def test_harness_error_is_replayed(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:

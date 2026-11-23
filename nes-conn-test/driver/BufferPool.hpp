@@ -14,15 +14,15 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 
 #include <Runtime/BufferManager.hpp>
+#include <SessionOptions.hpp>
 
 namespace NES::ConnTest
 {
 
 /// A pool of at least `bufferCount` buffers of `bufferSize` bytes, which also hands out unpooled buffers up to a fixed budget.
-std::shared_ptr<BufferManager> makeBufferPool(std::uint32_t bufferSize, std::uint32_t bufferCount);
+std::shared_ptr<BufferManager> makeBufferPool(BufferSize bufferSize, BufferCount bufferCount);
 
 }

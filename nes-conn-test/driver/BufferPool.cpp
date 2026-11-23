@@ -15,11 +15,11 @@
 #include <BufferPool.hpp>
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <SessionOptions.hpp>
 
 namespace NES::ConnTest
 {
@@ -31,15 +31,16 @@ constexpr std::size_t UNPOOLED_MEMORY_BUDGET_IN_BYTES = 256UZ * 1024 * 1024;
 
 /// The buffer manager is sized by a memory budget, not a buffer count.
 /// Its rounding only moves bytes from the unpooled to the pooled share, so the pool holds at least the requested count.
-std::shared_ptr<BufferManager> makeBufferPool(const std::uint32_t bufferSize, const std::uint32_t bufferCount)
+std::shared_ptr<BufferManager> makeBufferPool(const BufferSize bufferSize, const BufferCount bufferCount)
 {
     constexpr BufferAlignment alignment{64};
-    const auto totalMemory = (static_cast<std::size_t>(bufferSize) * bufferCount) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
+    const auto totalMemory
+        = (static_cast<std::size_t>(bufferSize.getRawValue()) * bufferCount.getRawValue()) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
     return BufferManager::create(
         totalMemory,
         static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(totalMemory),
         alignment,
-        bufferSize,
+        bufferSize.getRawValue(),
         std::make_shared<NesDefaultMemoryAllocator>());
 }
 
