@@ -256,6 +256,8 @@ def run_nes(options, header, module, work, rows_tsv, out_path):
                work, "--returns", header["returns"], "--input", rows_tsv, "--rounds", "0", "--escaped", "1", "--output", out_path]
     for index, kind in enumerate(header["args"]):
         command += ["--arg", f"column:{index}:{kind}"]
+    if options.compiler == "Codon":
+        command += ["--python-compat", "1" if options.python_compat else "0"]
     environment = dict(os.environ)
     if options.compiler == "Numba":
         environment["NES_NUMBA_PYTHON"] = options.numba_python
@@ -420,6 +422,8 @@ def run_case(path, options):
     rows = [list(r) for r in header["inputs"]] + values.rows(types, count, seed, options.null_fraction)
     record = {"case": os.path.relpath(path, REPOSITORY), "compiler": options.compiler, "rows": len(rows), "args": types,
               "returns": returns}
+    if options.compiler == "Codon":
+        record["python_compat"] = bool(options.python_compat)
 
     work = tempfile.mkdtemp(prefix="codon-diff-", dir=options.work)
     try:
@@ -535,6 +539,8 @@ def main():
     parser.add_argument("--babelfish", default="/data-ssd/lukas/babelfish", help="Babelfish checkout (Babelfish)")
     parser.add_argument("--java", default="/home/lukas-ldap.linux/tools/graalvm/bin/java", help="GraalVM 25 java (Babelfish)")
     parser.add_argument("--lpython", default=None, help="the lpython binary (LPython)")
+    parser.add_argument("--python-compat", type=int, default=1, choices=(0, 1),
+                        help="Codon: compile as COMPILER CODON PYTHON_COMPAT (default 1)")
     parser.add_argument("--pypy", default="/usr/bin/pypy3", help="the PyPy interpreter (PyPy)")
     parser.add_argument("--work", default=None, help="directory for the temporary files of each case")
     parser.add_argument("--keep", default=None, help="directory that keeps the files of crashed cases")

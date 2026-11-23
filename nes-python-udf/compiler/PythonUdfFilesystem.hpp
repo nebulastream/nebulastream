@@ -27,7 +27,12 @@ struct CodonCompilationResult
     double optimizeMilliseconds;
 };
 
-/// Compiles a generated UDF source whose exported entry point is `entrySymbol`.
+/// Compiles a generated UDF source whose exported entry point is `entrySymbol`, with Codon's Python numerics if
+/// `pythonCompat` (PYTHON_COMPAT) is set and its C numerics otherwise.
 CodonCompilationResult compileWithCodon(
-    const std::string& sourcePath, const std::string& source, const std::string& entrySymbol, const std::vector<std::string>& importPaths);
+    const std::string& sourcePath,
+    const std::string& source,
+    const std::string& entrySymbol,
+    const std::vector<std::string>& importPaths,
+    bool pythonCompat);
 }

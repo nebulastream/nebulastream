@@ -333,7 +333,12 @@ public:
                 throw InvalidStatement("CREATE FUNCTION ... COMPILER {}: expected CODON or NUMBA", compilerName);
             }
             compiler = compilerName == "CODON" ? "Codon" : "Numba";
+            if (functionDefAST->pythonCompat != nullptr && compiler != "Codon")
+            {
+                throw InvalidStatement("CREATE FUNCTION ... COMPILER {} PYTHON_COMPAT: only COMPILER CODON has PYTHON_COMPAT", compilerName);
+            }
         }
+        const bool pythonCompat = functionDefAST->pythonCompat != nullptr;
         const auto path = resolveUdfBridgeLibraryPath(language, execution).string();
         const auto entrypoint = functionDefAST->entrypoint != nullptr ? bindStringLiteral(functionDefAST->entrypoint) : std::string{};
 
@@ -393,7 +398,8 @@ public:
             .execution = execution,
             .source = std::move(source),
             .language = language,
-            .compiler = std::move(compiler)};
+            .compiler = std::move(compiler),
+            .pythonCompat = pythonCompat};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

@@ -1,4 +1,4 @@
-"""Compares Codon's C numerics with Python numerics (NES_CODON_PY_NUMERICS=1) on the arithmetic kernels of kernels.py.
+"""Compares Codon's C numerics with Python numerics (PYTHON_COMPAT, --python-compat 1 of the runner) on the arithmetic kernels of kernels.py.
 
 Runs each kernel with nes-python-udf-runner in both modes on the same seeded input (a: INT64 in [-1e6, 1e6], b: INT64 in
 [1, 1000], f: FLOAT64 in [-1e6, 1e6]) and appends the runner's JSON line per kernel and mode to results/<experiment>.jsonl.
@@ -50,12 +50,12 @@ def main():
         for mode in ("c", "py"):
             output = os.path.join(arguments.scratch, f"{kernel}-{mode}.out")
             command = [runner, "--compiler", "Codon", "--entrypoint", f"kernels.{kernel}", "--import-path", HERE,
-                       "--returns", returns, "--input", data, "--rounds", str(arguments.rounds), "--output", output]
+                       "--returns", returns, "--input", data, "--rounds", str(arguments.rounds), "--output", output,
+                "--python-compat", "1" if mode == "py" else "0"]
             for column in columns.split(","):
                 index, kind = COLUMNS[column]
                 command += ["--arg", f"column:{index}:{kind}"]
-            environment = {**os.environ, "NES_CODON_PY_NUMERICS": "1" if mode == "py" else "0"}
-            completed = subprocess.run(command, capture_output=True, text=True, env=environment)
+            completed = subprocess.run(command, capture_output=True, text=True)
             lines = [line for line in completed.stdout.splitlines() if line.startswith("{")]
             record = json.loads(lines[-1]) if lines else {"error": completed.stderr.strip()[-500:]}
             outputs[mode] = output

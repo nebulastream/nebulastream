@@ -52,7 +52,8 @@ CompiledInlineUdf CodonUdfCompiler::createCodon(UdfCompilerRegistryArguments arg
         returnType,
         codonImportPaths(arguments.importPaths),
         udf.getBytesArguments(),
-        bodyNullable);
+        bodyNullable,
+        udf.getPythonCompat());
 }
 
 }

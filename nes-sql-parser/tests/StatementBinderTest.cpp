@@ -493,6 +493,24 @@ TEST_F(StatementBinderTest, BindCreateFunctionInlineWithCompiler)
     const auto codon = binder->parseAndBindSingle("CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE ENTRYPOINT 'm.f'");
     ASSERT_TRUE(codon.has_value()) << codon.error().what();
     EXPECT_EQ(std::get<CreateFunctionStatement>(*codon).compiler, "Codon");
+    EXPECT_FALSE(std::get<CreateFunctionStatement>(*codon).pythonCompat);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionInlineWithPythonCompat)
+{
+    if (!isUdfBridgeShipped(InlineBridge))
+    {
+        GTEST_SKIP() << "UDF bridge " << InlineBridge << " is not part of this build";
+    }
+    const auto codon = binder->parseAndBindSingle(
+        "CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE COMPILER CODON PYTHON_COMPAT ENTRYPOINT 'm.f'");
+    ASSERT_TRUE(codon.has_value()) << codon.error().what();
+    EXPECT_EQ(std::get<CreateFunctionStatement>(*codon).compiler, "Codon");
+    EXPECT_TRUE(std::get<CreateFunctionStatement>(*codon).pythonCompat);
+    const auto numba = binder->parseAndBindSingle(
+        "CREATE FUNCTION f (a INT64) RETURNS INT64 EXECUTION INLINE COMPILER NUMBA PYTHON_COMPAT ENTRYPOINT 'm.f'");
+    ASSERT_FALSE(numba.has_value());
+    EXPECT_EQ(numba.error().code(), ErrorCode::InvalidStatement);
 }
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithCompilerOutsideInlineThrows)

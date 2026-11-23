@@ -800,7 +800,8 @@ CompiledInlineUdf compilePythonUdf(
     const DataType& returnType,
     const std::vector<std::string>& importPaths,
     const std::vector<uint64_t>& bytesArguments,
-    const std::vector<bool>& bodyNullable)
+    const std::vector<bool>& bodyNullable,
+    const bool pythonCompat)
 {
     static std::mutex codonCompilerMutex;
     const auto mutexWaitStart = std::chrono::steady_clock::now();
@@ -814,7 +815,7 @@ CompiledInlineUdf compilePythonUdf(
         const auto sourceDirectory = pythonUdfSourceDirectory();
         std::filesystem::create_directories(sourceDirectory);
         const auto sourcePath = (sourceDirectory / fmt::format("{:016x}.py", std::hash<std::string>{}(source))).string();
-        const auto codonResult = compileWithCodon(sourcePath, source, symbol, importPaths);
+        const auto codonResult = compileWithCodon(sourcePath, source, symbol, importPaths, pythonCompat);
         const auto& codonBitcode = codonResult.llvmBitcode;
 
         llvm::LLVMContext llvmContext;

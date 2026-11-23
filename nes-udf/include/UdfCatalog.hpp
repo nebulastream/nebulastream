@@ -70,7 +70,10 @@ public:
         std::vector<uint64_t> bytesArguments = {},
         /// The compiler of an Inline UDF: "Codon" or "Numba".
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
-        std::string compiler = "Codon");
+        std::string compiler = "Codon",
+        /// Compile an Inline Codon UDF with CPython semantics where they cost time (PYTHON_COMPAT).
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        bool pythonCompat = false);
     void removeUdf(const std::string& udfName);
     [[nodiscard]] bool hasUdf(const std::string& udfName) const;
     [[nodiscard]] std::vector<std::string> getUdfNames() const;

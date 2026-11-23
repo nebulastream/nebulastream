@@ -27,8 +27,9 @@
 ///   nes-python-udf-runner --compiler Codon|Numba --entrypoint module.function --import-path DIR --returns TYPE
 ///       --arg column:INDEX:TYPE | --arg literal:TYPE:VALUE  (once per UDF argument, in order)
 ///       --input FILE [--delimiter TAB] [--rows N] [--rounds R] [--output FILE] [--optimize 0|1] [--escaped 0|1]
+///       [--python-compat 0|1]
 /// With --escaped 1 (for differential tests), a field of the input is NULL only if it is \N, and an empty field is an empty
-/// string. Fields and the text results in --output use the escapes \\, \t, \n, \r and \xHH, and a NULL result is \N.
+/// string. --python-compat 1 compiles as COMPILER CODON PYTHON_COMPAT. Fields and the text results in --output use the escapes \\, \t, \n, \r and \xHH, and a NULL result is \N.
 /// Types are NES type names (VARSIZED, INT32, INT64, FLOAT64, ...). An empty field of a column is NULL. Numba needs
 /// NES_NUMBA_PYTHON, as in the worker.
 
@@ -90,6 +91,7 @@ struct Options
     std::string output;
     bool optimize = true;
     bool escaped = false;
+    bool pythonCompat = false;
 };
 
 Options parseOptions(const int argc, char** argv)
@@ -146,6 +148,10 @@ Options parseOptions(const int argc, char** argv)
         else if (name == "--escaped")
         {
             options.escaped = value != "0";
+        }
+        else if (name == "--python-compat")
+        {
+            options.pythonCompat = value != "0";
         }
         else if (name == "--output")
         {
@@ -373,7 +379,8 @@ NES::CompiledInlineUdf compile(const Options& options, const std::vector<Argumen
         std::nullopt,
         NES::UdfLanguage::Python,
         {},
-        options.compiler);
+        options.compiler,
+        options.pythonCompat);
     const auto compiled = catalog.load("runner_udf").getCompiled();
     if (!compiled)
     {
@@ -605,10 +612,11 @@ int run(const Options& options)
     const auto best = timed.empty() ? roundSeconds.front() : timed.front();
     const auto median = timed.empty() ? roundSeconds.front() : timed[timed.size() / 2];
     std::cout << fmt::format(
-        R"({{"compiler": "{}", "entrypoint": "{}", "rows": {}, "rounds": {}, "errors_per_round": {}, "load_ms": {:.1f}, )"
+        R"({{"compiler": "{}", "python_compat": {}, "entrypoint": "{}", "rows": {}, "rounds": {}, "errors_per_round": {}, "load_ms": {:.1f}, )"
         R"("compile_ms": {:.1f}, "jit_ms": {:.1f}, "first_round_ns_per_row": {:.1f}, "best_ns_per_row": {:.1f}, )"
         R"("median_ns_per_row": {:.1f}, "checksum": {}}})",
         options.compiler,
+        options.pythonCompat,
         options.entrypoint,
         rowCount,
         options.rounds,

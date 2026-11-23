@@ -125,6 +125,7 @@ struct ReflectedUdfDescriptor
     std::optional<std::string> compiledPipelineBitcode;
     std::optional<std::string> compiledInterpreterBitcode;
     std::optional<std::string> compiler;
+    std::optional<bool> pythonCompat;
 };
 
 constexpr std::string_view base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -216,7 +217,8 @@ Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, 
             = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->pipelineBitcode)) : std::nullopt,
             .compiledInterpreterBitcode
             = compiled.has_value() ? std::make_optional(detail::encodeBase64(compiled->interpreterBitcode)) : std::nullopt,
-            .compiler = std::make_optional(descriptor.getCompiler())});
+            .compiler = std::make_optional(descriptor.getCompiler()),
+            .pythonCompat = std::make_optional(descriptor.getPythonCompat())});
 }
 
 UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -254,7 +256,8 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
         reflected.execution.value_or(UdfExecution::InProcess),
         reflected.language.value_or(UdfLanguage::Python),
         std::move(compiled),
-        std::move(reflected.compiler).value_or("Codon")};
+        std::move(reflected.compiler).value_or("Codon"),
+        reflected.pythonCompat.value_or(false)};
 }
 
 }

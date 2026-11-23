@@ -199,6 +199,8 @@ struct CreateFunctionStatement
     UdfLanguage language = UdfLanguage::Python;
     /// The compiler of an INLINE UDF: "Codon" (default) or "Numba" (COMPILER after EXECUTION INLINE).
     std::string compiler = "Codon";
+    /// COMPILER CODON PYTHON_COMPAT: compile with CPython semantics where they cost time (Codon's Python numerics).
+    bool pythonCompat = false;
 };
 
 struct ShowFunctionsStatement

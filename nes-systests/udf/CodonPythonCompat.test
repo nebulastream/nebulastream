@@ -1,0 +1,52 @@
+# name: udf/CodonPythonCompat.test
+# description: INLINE Codon UDFs with and without PYTHON_COMPAT (COMPILER CODON PYTHON_COMPAT): integer // and % round
+# toward negative infinity only with PYTHON_COMPAT, a NaN matches a NaN in a list only with PYTHON_COMPAT, and both modes
+# write floats as CPython's repr does and format negative ints in bin(). A query with UDFs of both modes compiles each UDF
+# in its own mode.
+# groups: [PythonUdf]
+
+CREATE LOGICAL SOURCE numbers(id INT64 NOT NULL, x INT64 NOT NULL, f FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,-7,0.1
+2,7,1.0
+3,0,126.5
+
+CREATE FUNCTION divmod_c (x INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER CODON AS $python$
+    return f"{x // 2} {x % 2}"
+$python$;
+CREATE FUNCTION divmod_py (x INT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER CODON PYTHON_COMPAT AS $python$
+    return f"{x // 2} {x % 2}"
+$python$;
+CREATE FUNCTION repr_c (f FLOAT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER CODON AS $python$
+    return str(f) + " " + str(f * 1e20) + " " + bin(-int(f * 10))
+$python$;
+CREATE FUNCTION repr_py (f FLOAT64 NOT NULL) RETURNS VARSIZED EXECUTION INLINE COMPILER CODON PYTHON_COMPAT AS $python$
+    return str(f) + " " + str(f * 1e20) + " " + bin(-int(f * 10))
+$python$;
+CREATE FUNCTION nan_in_list_c (f FLOAT64 NOT NULL) RETURNS BOOLEAN EXECUTION INLINE COMPILER CODON AS $python$
+    n = f - f + float("nan")
+    return n in [f, n]
+$python$;
+CREATE FUNCTION nan_in_list_py (f FLOAT64 NOT NULL) RETURNS BOOLEAN EXECUTION INLINE COMPILER CODON PYTHON_COMPAT AS $python$
+    n = f - f + float("nan")
+    return n in [f, n]
+$python$;
+
+SELECT id, divmod_c(x) AS c, divmod_py(x) AS py FROM numbers INTO FILE();
+----
+1,-3 -1,-4 1
+2,3 1,3 1
+3,0 0,0 0
+
+SELECT id, repr_c(f) AS c, repr_py(f) AS py FROM numbers INTO FILE();
+----
+1,0.1 1e+19 -0b1,0.1 1e+19 -0b1
+2,1.0 1e+20 -0b1010,1.0 1e+20 -0b1010
+3,126.5 1.265e+22 -0b10011110001,126.5 1.265e+22 -0b10011110001
+
+SELECT id, nan_in_list_c(f) AS c, nan_in_list_py(f) AS py FROM numbers INTO FILE();
+----
+1,0,1
+2,0,1
+3,0,1

@@ -1,4 +1,4 @@
-"""Arithmetic kernels for the comparison of Codon's C numerics and Python numerics (NES_CODON_PY_NUMERICS).
+"""Arithmetic kernels for the comparison of Codon's C numerics and Python numerics (PYTHON_COMPAT).
 
 Each kernel runs 64 loop iterations per call, so the arithmetic and not the call dominates. The values stay small, so the
 results do not overflow 64 bits. x takes negative values, where // and % of the two modes differ.

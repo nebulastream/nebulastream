@@ -348,7 +348,8 @@ std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::ope
             statement.source,
             statement.language,
             statement.bytesArguments,
-            statement.compiler);
+            statement.compiler,
+            statement.pythonCompat);
     }
     catch (const Exception& e)
     {

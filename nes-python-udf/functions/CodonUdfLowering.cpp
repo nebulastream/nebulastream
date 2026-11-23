@@ -62,7 +62,8 @@ PhysicalFunction CodonUdfLowering::createCodon(UdfLoweringRegistryArguments argu
         arguments.outputType,
         codonImportPaths(arguments.importPaths),
         udf.getBytesArguments(),
-        arguments.inputTypes | std::views::transform([](const DataType& type) { return type.nullable; }) | std::ranges::to<std::vector>());
+        arguments.inputTypes | std::views::transform([](const DataType& type) { return type.nullable; }) | std::ranges::to<std::vector>(),
+        udf.getPythonCompat());
     return PhysicalFunction{PythonPhysicalFunction(compiled, arguments.childFunctions, arguments.inputTypes, arguments.outputType)}
         .withSetupChildren(std::move(arguments.childFunctions));
 }

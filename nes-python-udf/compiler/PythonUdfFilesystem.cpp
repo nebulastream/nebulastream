@@ -15,6 +15,7 @@
 #include <PythonUdfFilesystem.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <chrono>
 #include <cstddef>
@@ -321,18 +322,6 @@ struct CacheNodesAccess
 
 template struct CacheNodesAccess<&codon::ast::Cache::_nodes>;
 
-/// NES_CODON_PY_NUMERICS=1 compiles with Codon's Python numerics: integer // and % round toward negative infinity, and a
-/// division by zero raises ZeroDivisionError. The default is Codon's C numerics, which are faster but differ from CPython.
-bool codonPyNumerics()
-{
-    static const bool enabled = []
-    {
-        const char* value = std::getenv("NES_CODON_PY_NUMERICS"); /// NOLINT(concurrency-mt-unsafe)
-        return value != nullptr && std::string_view{value} == "1";
-    }();
-    return enabled;
-}
-
 /// The AST nodes are deleted after the compiler, as the compiler's members may still refer to them while being destroyed.
 void deleteCodonCompiler(codon::Compiler* compiler)
 {
@@ -515,14 +504,15 @@ void finishCodonModule(
 class PersistentCodonCompiler
 {
 public:
-    PersistentCodonCompiler()
+    /// `pyNumerics`: Codon's Python numerics (PYTHON_COMPAT), a compiler option that the stdlib sees as __py_numerics__.
+    explicit PersistentCodonCompiler(const bool pyNumerics)
         : compiler(
               new codon::Compiler( /// NOLINT(cppcoreguidelines-owning-memory)
                   "nes-worker",
                   codon::Compiler::Mode::JIT,
                   std::vector<std::string>{},
                   false,
-                  codonPyNumerics(),
+                  pyNumerics,
                   false,
                   std::make_shared<PythonUdfFilesystem>("nes-worker", "", std::vector<std::string>{})),
               &deleteCodonCompiler)
@@ -1034,7 +1024,8 @@ CodonCompilationResult compileWithCodon(
     const std::string& sourcePath,
     const std::string& generatedSource,
     const std::string& entrySymbol,
-    const std::vector<std::string>& importPaths)
+    const std::vector<std::string>& importPaths,
+    const bool pythonCompat)
 {
     codon::ir::setNativeOptimizationEnabled(false);
     /// Inline UDF bodies are part of the generated source, so it imports the compat stand-ins like UDF modules do.
@@ -1054,13 +1045,15 @@ CodonCompilationResult compileWithCodon(
     /// NOLINTNEXTLINE(concurrency-mt-unsafe)
     if (const char* fresh = std::getenv("NES_CODON_FRESH_COMPILER"); fresh == nullptr || std::string_view{fresh} != "1")
     {
-        /// Created at the first UDF, after the plugins are loaded. The caller holds the Codon compiler mutex.
-        static std::unique_ptr<PersistentCodonCompiler> persistent;
-        if (!persistent)
+        /// Created at the first UDF of each numerics mode, after the plugins are loaded: the mode is fixed when Codon parses
+        /// the stdlib. The caller holds the Codon compiler mutex.
+        static std::array<std::unique_ptr<PersistentCodonCompiler>, 2> persistent;
+        auto& compiler = persistent.at(pythonCompat ? 1 : 0);
+        if (!compiler)
         {
-            persistent = std::make_unique<PersistentCodonCompiler>();
+            compiler = std::make_unique<PersistentCodonCompiler>(pythonCompat);
         }
-        return persistent->compile(sourcePath, source, entrySymbol, importPaths);
+        return compiler->compile(sourcePath, source, entrySymbol, importPaths);
     }
 
     auto filesystem = std::make_shared<PythonUdfFilesystem>("nes-worker", sourcePath, importPaths);
@@ -1071,7 +1064,7 @@ CodonCompilationResult compileWithCodon(
             codon::Compiler::Mode::RELEASE,
             std::vector<std::string>{},
             false,
-            codonPyNumerics(),
+            pythonCompat,
             false,
             filesystem),
         &deleteCodonCompiler};

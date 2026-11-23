@@ -41,7 +41,8 @@ void UdfCatalog::registerUdf(
     std::optional<InlineUdfSource> source,
     const UdfLanguage language,
     std::vector<uint64_t> bytesArguments,
-    std::string compiler)
+    std::string compiler,
+    const bool pythonCompat)
 {
     if (source.has_value() && source->parameterNames.size() != argTypes.size())
     {
@@ -96,7 +97,8 @@ void UdfCatalog::registerUdf(
         execution,
         language,
         std::nullopt,
-        compiler};
+        compiler,
+        pythonCompat};
     /// Compiled once here instead of for each call in a query. A build without Python UDFs has no compiler; the worker then
     /// reports that it cannot execute the UDF.
     if (execution == UdfExecution::Inline && language == UdfLanguage::Python)

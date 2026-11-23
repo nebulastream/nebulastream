@@ -53,7 +53,8 @@ void loadCodonPlugins();
 /// Compiles a Python UDF body with Codon into LLVM bitcode for the query pipeline and for the interpreter, with the entry
 /// points `symbol` and interpreterSymbolName(symbol). The entry points take `argumentTypes`; the body receives the arguments
 /// for which `bodyNullable` is set as Optional, and for a NULL in another nullable argument the result is NULL without a
-/// call. Throws QueryCompilerError if Codon cannot compile it.
+/// call. With `pythonCompat` (PYTHON_COMPAT), Codon compiles with its Python numerics. Throws QueryCompilerError if Codon
+/// cannot compile it.
 [[nodiscard]] CompiledInlineUdf compilePythonUdf(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
@@ -62,7 +63,8 @@ void loadCodonPlugins();
     const DataType& returnType,
     const std::vector<std::string>& importPaths,
     const std::vector<uint64_t>& bytesArguments,
-    const std::vector<bool>& bodyNullable);
+    const std::vector<bool>& bodyNullable,
+    bool pythonCompat);
 
 /// A UDF named by its entry point, expressed as the inline function the Codon path compiles: the ENTRYPOINT module is
 /// imported and called from a generated body.

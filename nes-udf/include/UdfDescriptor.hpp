@@ -100,6 +100,8 @@ class UdfDescriptor
     std::optional<CompiledInlineUdf> compiled;
     /// The compiler of an Inline UDF ("Codon" or "Numba"), which also selects how the worker runs the compiled code.
     std::string compiler;
+    /// PYTHON_COMPAT: Codon compiles with Python numerics (// and % floor, checked math and int(float), NaN in lists).
+    bool pythonCompat;
 
     UdfDescriptor(
         std::string name,
@@ -112,7 +114,8 @@ class UdfDescriptor
         UdfExecution execution,
         UdfLanguage language,
         std::optional<CompiledInlineUdf> compiled = std::nullopt,
-        std::string compiler = "Codon")
+        std::string compiler = "Codon",
+        bool pythonCompat = false)
         : name(std::move(name))
         , path(std::move(path))
         , entrypoint(std::move(entrypoint))
@@ -124,6 +127,7 @@ class UdfDescriptor
         , language(language)
         , compiled(std::move(compiled))
         , compiler(std::move(compiler))
+        , pythonCompat(pythonCompat)
     {
     }
 
@@ -171,6 +175,9 @@ public:
 
     /// "Codon" or "Numba"; meaningful for an Inline UDF.
     [[nodiscard]] const std::string& getCompiler() const { return compiler; }
+
+    /// True if the UDF was created with COMPILER CODON PYTHON_COMPAT.
+    [[nodiscard]] bool getPythonCompat() const { return pythonCompat; }
 
     bool operator==(const UdfDescriptor&) const = default;
 };
