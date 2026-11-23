@@ -61,6 +61,30 @@ atan2, sinh, tanh, asinh, erf, gamma, lgamma, log1p, expm1, hypot, ldexp), `re.s
 bool arithmetic, heterogeneous lists, mutable default arguments, `tuple(list)`, user classes in sets or sorted with only
 `__lt__`, `class E(ValueError): pass`, `math.comb/perm/isqrt/dist`, json.dumps keywords and mixed-type values.
 
+## Codon and Numba findings by cause and fix location (2026-11-23)
+
+Owner: where a fix goes. "Fork" is ls-1801/codon (Codon stdlib and compiler). "Codon plugin" is `codon-plugins/` (re on
+RE2, json on simdjson, unicode, compat). "nes_numba_ext" is `numba/python/nes_numba_ext/`. "Numba" is upstream Numba
+(we can override it from nes_numba_ext). "Design" means fixed-width values, which a fix cannot remove without a cost.
+
+| # | Cause | Codon | Numba | Owner | Fix |
+|---|---|---|---|---|---|
+| 1 | Process-ending bugs | int `//` 0 SIGFPE (C numerics); bin/hex/oct hang and float hash error (Python numerics); NaN hash hang; generator consumed twice SIGSEGV; `{**d}` SIGABRT | `str(-2**63)` throws std::bad_alloc | Fork; nes_numba_ext or Numba | Fix each; highest priority |
+| 2 | Float to str | `%g`: `0`, `0.333333` | `<object type:float64>` | Fork; nes_numba_ext | One shortest round-trip formatter in the NES runtime, called by both |
+| 3 | Math and float errors do not raise | `x ** 2` overflow, `(-x) ** 0.5`, `fmod(inf)`, `int(inf)` | `log(0)`, `sqrt(-1)`, `exp(1000)` | Fork; nes_numba_ext | Check the domain and raise ValueError or OverflowError |
+| 4 | Int and float mix | `10 ** -1` is 0; `float(n) == n` for 2**53+1; `n / 7` 1 ulp off; `round(n)` gives float | `10 ** -1` is 0; `float(n) == n` | Fork; Numba | Negative exponent gives float; exact int/float compare; correctly rounded int division |
+| 5 | Integer `//` and `%` | truncation with C numerics | floor (correct) | Codon default | Make Python numerics the default: E83 cost 1.01x on UDFBench, 3.3x on a float `//` kernel |
+| 6 | Rounding and format specs | `round(2.675, 2)`, half-even, `,` grouping, zero fill, `g` default | specs mostly not supported | Fork | Port CPython's float formatting (shares the formatter of row 2) |
+| 7 | NaN identity in containers | `x in [x]`, `(x,) == (x,)` | same | Fork; Numba | Identity check before `==` |
+| 8 | str and int parsing | `int('+7')`, `int('1_000')`, `int('0', 0)`, `float('0x1f')` | `int('٣٤')` raises (our `int(str)` overload) | Fork; nes_numba_ext | Follow CPython's grammar, including Unicode digits |
+| 9 | str methods | clean | `split(None, maxsplit)`, `replace('', x)`, `chr(255)` | Numba | Override in nes_numba_ext |
+| 10 | re | zero-width matches, `findall` with one group, `(a)(b)?`, VERBOSE, `re.escape` | not checked against re_ext yet (literal patterns only) | Codon plugin (RE2); nes_numba_ext | Python's empty-match rules in the plugin's loop |
+| 11 | json | duplicate keys, `[2.0]` prints `[2]`, `1e400`/`NaN` rejected | not checked yet | Codon plugin; nes_numba_ext | Last key wins; float repr from row 2; accept the CPython extensions |
+| 12 | Language details | late-binding closures, `hash(-1)`, `\U`/`\N{}` literals | n/a | Fork | Low priority, except the str literals |
+
+Rows 2, 3, 6 and 7 come back in both compilers. A fix in a shared C helper (float formatting, the math domain checks)
+serves both. Rows 4 and 5 are partly design: an exact fix costs time on every operation, so measure each as E83 did.
+
 ## The same cases in Numba, LPython and Babelfish (E85, 2026-11-22, commit 35c1eec406)
 
 `codon_diff.py --compiler` runs a case in Numba (nes-python-udf-runner), LPython 0.22.0 (`lpython_driver.c`, the
