@@ -215,3 +215,25 @@ Different results (9) and crash (1):
 - `optional unpack failed` (tlhop_process_lang).
 - A parameter named `str` shadows the type (repros/min_param_named_str.py).
 - SIGSEGV on `(x and float(x)) / 2.0` with an Optional x (repros/min_and_optional_crash.py).
+
+## Codon bug fixes for real UDFs (E90, 2026-11-23, Codon fork cd4d924)
+
+Fixes (fork commits 1f54ebc to cd4d924, NES 65cadfbf96 and 4385d73730):
+- Crash (SIGSEGV) when the persistent compiler removed the IR types of a UDF with two types of one name (any Union).
+- `x or y` / `x and y` with an Optional operand built a Union with an Optional member: wrong values and "invalid
+  union call" (`name or "-"`, `d.get(k) or "-"`, `(x and float(x)) / 100`).
+- A variable named `str`, `int` or `float` was the class in attribute access (`str.split(sep)` split `sep`), and
+  f-strings called a user variable named `str` or `repr`.
+- The token parser rejected a keyword directly followed by `(` (`if(x):`, `return(x)`, `raise(e)`, `while(...)`).
+- A bare lambda statement did not type check; unpacking a generator (`a, b = map(...)`) and `x in generator` /
+  `x in d.keys()` did not compile.
+- NES: `seq_str_str` (format spec on a str) and the libm functions of `math` (tan, atan2, asin, sinh, erf, hypot, ...)
+  were not allowed.
+
+Results (`results/E90-*.jsonl`): real UDFs 117 ok, 8 diff, 95 reject, 0 crash (E89: 100, 9, 110, 1); differential
+cases 230 ok, 96 diff, 17 reject of 343 (E88: 212, 90, 34 of 336). No case that was ok before fails now.
+
+Known, not fixed: a class with inferred fields used as an annotation of another class's `__init__` parameter
+(`class D: def __init__(self, v: str): self.v = v` and `class Rec: def __init__(self, d: D): self.d = d`) cannot be type
+checked: Codon makes D generic over its inferred fields. Declaring the fields (`v: str`) avoids it. A Union with an
+Optional member is still broken when a UDF writes it explicitly.
