@@ -237,3 +237,26 @@ Known, not fixed: a class with inferred fields used as an annotation of another 
 (`class D: def __init__(self, v: str): self.v = v` and `class Rec: def __init__(self, d: D): self.d = d`) cannot be type
 checked: Codon makes D generic over its inferred fields. Declaring the fields (`v: str`) avoids it. A Union with an
 Optional member is still broken when a UDF writes it explicitly.
+
+## Second batch of bug fixes (E91, 2026-11-23, Codon fork 9256f72)
+
+Fixes (fork 0fceea3 to 9256f72; NES c20b3c9032, 38f0020336, 8e7a7705c1, a310b201fa):
+- `str * n` with `n < 0` allocated a negative size and ended the worker (fork and NES unicode plugin).
+- `d.get(k, None)` raised "optional unpack failed", also for a present key.
+- A function that returns an int and a float (`return 1` and `return 1 - d / m`) did not compile; it now returns float.
+- re plugin: an empty match was taken twice (`re.sub(r"$", "<", "a")` gave `a<<`); `findall` with one group gave whole
+  matches; `"|".join(re.split(...))` did not compile.
+- `int()` and `float()` of a str: `+7`, `1_000`, Unicode digits and spaces, `float("1e400")`; `float("0x1f")` was accepted.
+- Format specs: the zero flag (`{n:06d}`), `,` grouping, and a spec starting with a sign (`{n:+d}`, a syntax error).
+
+Results (`results/E91-*.jsonl`): real UDFs 125 ok, 2 diff, 93 reject (E90: 117, 8, 95); differential cases 252 ok,
+80 diff, 15 reject of 347 (E90: 230, 96, 17 of 343).
+
+Changes in three differential cases that were ok by chance: `findall` with more than one group now raises
+NotImplementedError (it gave whole matches; Python gives tuples, a type that depends on the pattern), so c07 and c31
+differ; `re.split` gives "" for a group that did not take part in the match (Python: None), so c15 differs.
+
+Known, not fixed: rebinding a str variable to None (`t = s; t = None`) fails at run time (the variable's type is fixed
+at its first assignment); `d.get(k, opt)` with an Optional variable as default; a return annotation that the body does
+not follow (`-> int` returning a float); format specs `_` grouping, `%` type and a precision without a type
+(`{x:10.4}`); `$` before a trailing newline, `re.VERBOSE`, `(?i)` with `İ`; json `NaN`/`Infinity`/`1e400`.
