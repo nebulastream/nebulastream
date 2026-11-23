@@ -15,12 +15,13 @@
 #pragma once
 
 /// The `--mode=sink` session of `conntest-harness`, which the runner steps one command at a time.
-/// Commands are `BIND`, `LOAD`, `START`, `WRITE <n_buffers>` and `STOP`.
+/// Commands are `BIND`, `LOAD`, `START`, `WRITE <n_buffers>`, `WRITE_UNTIL_BACKPRESSURE <n_buffers>` and `STOP`.
 /// Each command gets one JSON reply line, and EOF ends the session.
 /// LOAD packs the input's JSONL records into batches and makes the engine, whose pool is sized for them.
 /// One batch becomes one buffer of `WRITE <n_buffers>`: a main buffer, and child buffers for the bytes that do not fit.
 /// Every START runs a query in the engine, from a source that reads the batches into a new sink from the once-bound descriptor.
 /// WRITE releases the next batches to the source and returns once the sink has taken them.
+/// WRITE_UNTIL_BACKPRESSURE returns as soon as the sink applies backpressure, and its reply says whether it did.
 /// STOP stops the query, and the engine stops the sink.
 /// The reply shapes are defined in `conntest_runner/protocol.py`.
 
