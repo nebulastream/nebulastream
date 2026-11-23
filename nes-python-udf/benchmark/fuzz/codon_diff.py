@@ -3,7 +3,7 @@
 A case is one Python module with a header that tells the UDF signature in NES types:
 
     # codon-fuzz: entry=udf args=VARSIZED,INT64 returns=VARSIZED
-    # codon-fuzz-rows: 300                          (optional, default --rows)
+    # codon-fuzz-rows: 300                          (optional, default --rows; 0: only the inputs below)
     # codon-fuzz-inputs: [["abc", 3], ["", -1]]     (optional JSON rows, run before the generated rows)
     # codon-fuzz-field: 0 s.lower()                 (optional labels of the fields of a split result, see below)
     # codon-fuzz-split: 1                           (optional: a VARSIZED result holds fields separated by \\x1f)
@@ -417,9 +417,10 @@ def run_case(path, options):
     started = time.time()
     header = parse_case(path)
     types, returns = header["args"], header["returns"]
-    count = header["rows"] or options.rows
+    # codon-fuzz-rows: 0 means only the codon-fuzz-inputs rows, without the edge values and random rows.
+    count = options.rows if header["rows"] is None else header["rows"]
     seed = int(hashlib.sha256(f"{options.seed}:{os.path.basename(path)}".encode()).hexdigest()[:8], 16)
-    rows = [list(r) for r in header["inputs"]] + values.rows(types, count, seed, options.null_fraction)
+    rows = [list(r) for r in header["inputs"]] + (values.rows(types, count, seed, options.null_fraction) if count else [])
     record = {"case": os.path.relpath(path, REPOSITORY), "compiler": options.compiler, "rows": len(rows), "args": types,
               "returns": returns}
     if options.compiler == "Codon":
