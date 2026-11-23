@@ -15,8 +15,8 @@ vcpkg_from_github(
         # NebulaStream's fork of Codon: the former port patches as commits, and a token-based parser
         # (codon/parser/tok), on the branch nebulastream.
         REPO ls-1801/codon
-        REF 94ba688752c5b7a44966836381730feed25f0434
-        SHA512 b190c085ac99b1dd1028a626ebf6819a67a601da4398d58df73c32cb49355bb441142dc4a5ba32218c26be33a8cd0d486889934a4f45bad6cac420f3bb97f080
+        REF 3b8c3a9c756248ca5724c1ab76c5bdc0f719a658
+        SHA512 6070ac0f85614149b1807ddf2d723410962a3f0eb8001473843ab97660d96c9e860095d899d4d1960a7ea42f7d1211df94cc7707f9d19ede4949e2a36d4e15db
         HEAD_REF nebulastream
 )
 
