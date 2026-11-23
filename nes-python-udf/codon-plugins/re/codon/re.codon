@@ -214,6 +214,11 @@ class Match:
     def __getitem__(self, g):
         return self._get_match(g, self.re.groups)
 
+    # NES: a group's text, or "" if it did not take part in the match (as re.findall gives it).
+    def _nes_group_or_empty(self, g: int) -> str:
+        text = self._get_match(g, self.re.groups)
+        return "" if text is None else text.__val__()
+
     # NES: the spans hold byte offsets, and positions count code points, as in CPython.
     def _position(self, offset: int) -> int:
         return offset if offset < 0 else self.string._nes_index(offset)
@@ -420,21 +425,26 @@ class Pattern:
         # NES: the first call checks the UTF-8 of the subject from offset on. The later offsets are larger and start a
         # code point, so the later calls skip the check, which otherwise reads the rest of the subject at each match.
         spans = seq_re_match(self._re, anchor, string, offset, end_offset)
+        # NES: Python's rule for empty matches: an empty match is not taken at the position where the previous match
+        # ended if that match was empty too (the search moves on one code point); after a non-empty match, an empty
+        # match at its end is taken. The loop took the same empty match twice (re.sub(r"$", "<", "a") gave "a<<").
+        prev_end = -1
+        prev_empty = False
         while True:
             if not spans[0]:
                 break
-
-            yield Match(spans, posx, endposx, self, string)
-
-            if offset == end_offset:
-                break
-
-            elif offset == spans[0][1]:
-                # We matched the empty string at pos and would be stuck, so in order
-                # to make forward progress, move to the next code point.
+            start, end = spans[0][0], spans[0][1]
+            if start == end and prev_empty and start == prev_end:
+                if offset >= end_offset:
+                    break
                 offset += string._nes_char_length(offset)
             else:
-                offset = spans[0][1]
+                yield Match(spans, posx, endposx, self, string)
+                prev_end = end
+                prev_empty = start == end
+                offset = end
+            if offset > end_offset:
+                break
             spans = seq_re_match_next(self._re, anchor, string, offset, end_offset)
 
     def search(self, string: str, pos: Optional[int] = None, endpos: Optional[int] = None):
@@ -450,6 +460,13 @@ class Pattern:
         return self._match(_ANCHOR_NONE, string, pos, endpos)
 
     def findall(self, string: str, pos: Optional[int] = None, endpos: Optional[int] = None):
+        # NES: as in Python, the whole match without groups and the group (or "") with one group. With more groups
+        # Python gives tuples, a type that depends on the pattern at run time; that is not supported here.
+        groups = self.groups
+        if groups > 1:
+            raise NotImplementedError("re.findall with more than one group is not supported")
+        if groups == 1:
+            return [m._nes_group_or_empty(1) for m in self.finditer(string, pos, endpos)]
         return [m.group() for m in self.finditer(string, pos, endpos)]
 
     def _split(self, cb, string: str, maxsplit: int = 0, T: type = str):
@@ -471,8 +488,10 @@ class Pattern:
         return pieces, numsplit
 
     def split(self, string: str, maxsplit: int = 0):
-        cb = lambda match: [match[group] for group in range(1, self.groups + 1)]
-        pieces, _ = self._split(cb, string, maxsplit, Optional[str])
+        # NES: a List[str], so that "|".join(re.split(...)) compiles; a group that did not take part in the match is ""
+        # here (None in Python).
+        cb = lambda match: [match._nes_group_or_empty(group) for group in range(1, self.groups + 1)]
+        pieces, _ = self._split(cb, string, maxsplit, str)
         return pieces
 
     def _repl(match, repl):
