@@ -29,6 +29,7 @@
 #include <mutex>
 #include <optional>
 #include <ostream>
+#include <span>
 #include <stop_token>
 #include <string>
 #include <string_view>
@@ -161,6 +162,17 @@ protected:
 private:
     std::shared_ptr<BatchFeed> feed;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+};
+
+/// The session's query from START until STOP, so that ending it clears all of its state at once.
+struct RunningQuery
+{
+    QueryId id;
+    /// The batches that WRITE releases to the query's source.
+    std::shared_ptr<BatchFeed> feed = std::make_shared<BatchFeed>();
+    /// The batches that WRITE has not released yet.
+    /// Every START writes the session's batches from the first one again.
+    std::span<const std::string> remaining;
 };
 
 /// Follows the session's query through the engine's listeners, so that a step can wait until the engine has done its work.
@@ -353,13 +365,8 @@ private:
             return errorReply(harnessErrorInfo("start", "HarnessProtocol", "START while the sink is started"));
         }
         const auto& descriptor = **bound;
-        /// Every START writes the batches from the first one again.
-        nextBatch = 0;
-        releasedBatches = 0;
-
-        query = QueryId::createLocal(LocalQueryId(generateUUID()));
-        observer->reset(*query);
-        feed = std::make_shared<BatchFeed>();
+        const auto& running = query.emplace(RunningQuery{.id = QueryId::createLocal(LocalQueryId(generateUUID())), .remaining = batches});
+        observer->reset(running.id);
         try
         {
             auto [controller, listener] = createBackpressureChannel();
@@ -371,9 +378,9 @@ private:
                     INITIAL_ORIGIN_ID,
                     SourceRuntimeConfiguration{workerDefaults.defaultMaxInflightBuffers},
                     pool,
-                    std::make_unique<FeedSource>(feed)),
+                    std::make_unique<FeedSource>(running.feed)),
                 std::vector<std::weak_ptr<ExecutablePipeline>>{sink});
-            engine->start(std::make_unique<ExecutableQueryPlan>(*query, std::vector{sink}, std::move(sources)));
+            engine->start(std::make_unique<ExecutableQueryPlan>(running.id, std::vector{sink}, std::move(sources)));
         }
         catch (const Exception& ex)
         {
@@ -492,13 +499,11 @@ private:
         {
             return errorReply(harnessErrorInfo("write", "HarnessProtocol", "WRITE without a started sink"));
         }
-        const auto count = std::min<std::uint64_t>(numberOfBuffers, batches.size() - nextBatch);
-        std::vector<std::string> step(
-            batches.begin() + static_cast<std::ptrdiff_t>(nextBatch), batches.begin() + static_cast<std::ptrdiff_t>(nextBatch + count));
-        nextBatch += count;
-        releasedBatches += count;
-        feed->release(std::move(step));
-        const auto released = releasedBatches;
+        auto& running = *query;
+        const auto step = running.remaining.first(std::min<std::size_t>(numberOfBuffers, running.remaining.size()));
+        running.remaining = running.remaining.subspan(step.size());
+        running.feed->release(std::vector<std::string>(step.begin(), step.end()));
+        const auto released = batches.size() - running.remaining.size();
         if (auto error = awaitStep("write", [released](const QueryObserver::State& state) { return state.takenBuffers() >= released; }))
         {
             return errorReply(*error);
@@ -513,7 +518,7 @@ private:
         {
             return errorReply(harnessErrorInfo("stop", "HarnessProtocol", "STOP without a started sink"));
         }
-        engine->stop(*query);
+        engine->stop(query->id);
         auto error = awaitStep("stop", [](const QueryObserver::State& state) { return state.status == QueryStatus::Stopped; });
         query.reset();
         if (error)
@@ -546,15 +551,11 @@ private:
     /// A worker's defaults for what a configuration of the engine and a source can set.
     WorkerConfiguration workerDefaults = defaultConfiguration<WorkerConfiguration>();
     std::optional<std::expected<SinkDescriptor, ErrorInfo>> bound;
-    /// The batches that LOAD made from the input, the next one that WRITE releases, and how many it released.
+    /// The batches that LOAD made from the input.
     std::vector<std::string> batches;
-    std::size_t nextBatch = 0;
-    std::uint64_t releasedBatches = 0;
-    std::shared_ptr<BatchFeed> feed;
     std::shared_ptr<QueryObserver> observer = std::make_shared<QueryObserver>();
     std::shared_ptr<BufferManager> pool;
-    /// The running query, from START until STOP.
-    std::optional<QueryId> query;
+    std::optional<RunningQuery> query;
     /// Set once a step timed out.
     bool stuck = false;
     /// Declared last, so that the engine stops its threads before the members that they use are destroyed.
