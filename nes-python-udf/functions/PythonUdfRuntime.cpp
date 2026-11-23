@@ -30,6 +30,7 @@
 #include <exception>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <mutex>
 #include <ranges>
 #include <span>
@@ -374,6 +375,80 @@ std::string pythonFloatRepr(const double value)
     return result + fmt::format("e{}{:02d}", exponent < 0 ? '-' : '+', std::abs(exponent));
 }
 
+/// The first code point (digit zero) of each run of ten Unicode decimal digits (category Nd, Unicode 16.0).
+constexpr std::array<char32_t, 76> UnicodeDigitZeros{
+    0x30, 0x660, 0x6F0, 0x7C0, 0x966, 0x9E6, 0xA66, 0xAE6, 0xB66, 0xBE6, 0xC66, 0xCE6, 0xD66, 0xDE6, 0xE50, 0xED0, 0xF20, 0x1040, 0x1090, 0x17E0, 0x1810, 0x1946, 0x19D0, 0x1A80, 0x1A90, 0x1B50, 0x1BB0, 0x1C40, 0x1C50, 0xA620, 0xA8D0, 0xA900, 0xA9D0, 0xA9F0, 0xAA50, 0xABF0, 0xFF10, 0x104A0, 0x10D30, 0x10D40, 0x11066, 0x110F0, 0x11136, 0x111D0, 0x112F0, 0x11450, 0x114D0, 0x11650, 0x116C0, 0x116D0, 0x116DA, 0x11730, 0x118E0, 0x11950, 0x11BF0, 0x11C50, 0x11D50, 0x11DA0, 0x11F50, 0x16130, 0x16A60, 0x16AC0, 0x16B50, 0x16D70, 0x1CCF0, 0x1D7CE, 0x1D7D8, 0x1D7E2, 0x1D7EC, 0x1D7F6, 0x1E140, 0x1E2F0, 0x1E4F0, 0x1E5F1, 0x1E950, 0x1FBF0};
+
+bool isPythonSpace(const char32_t c)
+{
+    return (c >= 0x09 && c <= 0x0D) || (c >= 0x1C && c <= 0x20) || c == 0x85 || c == 0xA0 || c == 0x1680
+        || (c >= 0x2000 && c <= 0x200A) || c == 0x2028 || c == 0x2029 || c == 0x202F || c == 0x205F || c == 0x3000;
+}
+
+/// The text of a number as Python's int() and float() read it, in the ASCII form that std::from_chars reads: without
+/// surrounding whitespace, a leading '+' and the '_' between digits, and with Unicode decimal digits as ASCII digits.
+/// Empty if the text is not valid UTF-8 or has a '_' that is not between two digits.
+std::optional<std::string> pythonNumberText(const std::string_view text)
+{
+    std::u32string codePoints;
+    for (size_t i = 0; i < text.size();)
+    {
+        const auto lead = static_cast<unsigned char>(text[i]);
+        const int length = lead < 0x80 ? 1 : (lead >> 5) == 0x6 ? 2 : (lead >> 4) == 0xE ? 3 : (lead >> 3) == 0x1E ? 4 : 0;
+        if (length == 0 || i + length > text.size())
+        {
+            return std::nullopt;
+        }
+        char32_t c = length == 1 ? lead : lead & (0x7F >> length);
+        for (int k = 1; k < length; ++k)
+        {
+            c = (c << 6) | (static_cast<unsigned char>(text[i + k]) & 0x3F);
+        }
+        i += length;
+        codePoints.push_back(c);
+    }
+    size_t begin = 0;
+    size_t end = codePoints.size();
+    while (begin < end && isPythonSpace(codePoints[begin]))
+    {
+        ++begin;
+    }
+    while (end > begin && isPythonSpace(codePoints[end - 1]))
+    {
+        --end;
+    }
+    if (begin < end && codePoints[begin] == U'+')
+    {
+        ++begin;
+    }
+    const auto isDigitLike = [](const char32_t c) { return c < 0x80 ? std::isalnum(static_cast<int>(c)) != 0 : true; };
+    std::string result;
+    for (size_t i = begin; i < end; ++i)
+    {
+        const auto c = codePoints[i];
+        if (c == U'_')
+        {
+            if (i == begin || i + 1 == end || !isDigitLike(codePoints[i - 1]) || !isDigitLike(codePoints[i + 1]))
+            {
+                return std::nullopt;
+            }
+            continue;
+        }
+        if (c < 0x80)
+        {
+            result.push_back(static_cast<char>(c));
+            continue;
+        }
+        const auto zero = std::ranges::upper_bound(UnicodeDigitZeros, c);
+        if (zero == UnicodeDigitZeros.begin() || c - *(zero - 1) > 9)
+        {
+            return std::nullopt;
+        }
+        result.push_back(static_cast<char>('0' + (c - *(zero - 1))));
+    }
+    return result;
+}
+
 template <typename T>
 uintptr_t readType(const uint8_t*& position)
 {
@@ -657,11 +732,20 @@ extern "C" __attribute__((visibility("default"), used)) _Unwind_Reason_Code seq_
     return handleCodonLsda(lsda, actions, exceptionClass, exceptionObject, context);
 }
 
+/// int(text, base) as in Python: see pythonNumberText. *end is the end of the text if all of it is a number, else its start.
 extern "C" __attribute__((visibility("default"), used)) int64_t seq_int_from_str(const CodonString string, const char** end, const int base)
 {
     int64_t result = 0;
-    const auto conversion = std::from_chars(string.data, string.data + string.length, result, base);
-    *end = conversion.ec == std::errc{} ? conversion.ptr : string.data;
+    *end = string.data;
+    const auto text = pythonNumberText(std::string_view{string.data, static_cast<size_t>(string.length)});
+    if (text.has_value() && !text->empty())
+    {
+        const auto conversion = std::from_chars(text->data(), text->data() + text->size(), result, base);
+        if (conversion.ec == std::errc{} && conversion.ptr == text->data() + text->size())
+        {
+            *end = string.data + string.length;
+        }
+    }
     return result;
 }
 
@@ -692,11 +776,28 @@ extern "C" __attribute__((visibility("default"), used)) CodonString seq_str_str(
     return formatCodonValue(std::string_view{value.data, static_cast<size_t>(value.length)}, format, error);
 }
 
+/// float(text) as in Python: see pythonNumberText; decimal and exponent forms, inf, infinity and nan, no hexadecimal.
+/// *end is the end of the text if all of it is a number, else its start.
 extern "C" __attribute__((visibility("default"), used)) double seq_float_from_str(const CodonString string, const char** end)
 {
-    const auto [result, suffix] = NES::from_chars_prefix<double>(std::string_view(string.data, string.length));
-    *end = suffix.data();
-    return result.value_or(0.0);
+    double result = 0.0;
+    *end = string.data;
+    const auto text = pythonNumberText(std::string_view{string.data, static_cast<size_t>(string.length)});
+    if (text.has_value() && !text->empty())
+    {
+        const auto conversion = std::from_chars(text->data(), text->data() + text->size(), result, std::chars_format::general);
+        if ((conversion.ec == std::errc{} || conversion.ec == std::errc::result_out_of_range)
+            && conversion.ptr == text->data() + text->size())
+        {
+            if (conversion.ec == std::errc::result_out_of_range)
+            {
+                /// from_chars leaves the result as it was; Python gives inf or 0.0 with the sign, as strtod does.
+                result = std::strtod(text->c_str(), nullptr);
+            }
+            *end = string.data + string.length;
+        }
+    }
+    return result;
 }
 
 extern "C" __attribute__((visibility("default"), used)) void* seq_stdout()
