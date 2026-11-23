@@ -1,0 +1,23 @@
+{"id": "bigquery_docs_get_hash", "reason": "non-deterministic: encrypts with a fresh random Fernet key on every call, so no two runs give the same output"}
+{"id": "bigquery_docs_vectorized_multiply", "reason": "not per-row: vectorized UDF over a pandas DataFrame batch (and the same logic as bigquery_docs_multiply)"}
+{"id": "clickhouse_test_input", "reason": "not a function: executable stdin/stdout script whose per-row logic is inline in a __main__ loop"}
+{"id": "clickhouse_test_input_sum", "reason": "not a function: executable stdin/stdout script whose per-row logic is inline in a __main__ loop"}
+{"id": "clickhouse_test_input_chunk_header_json", "reason": "not a function: executable stdin/stdout script whose per-row logic is inline in a __main__ loop"}
+{"id": "duckdb_docs_random_date", "reason": "non-deterministic: no inputs, returns a random date from Faker"}
+{"id": "duckdb_docs_swap_case", "reason": "not per-row: Arrow UDF that receives a pyarrow array per chunk"}
+{"id": "plpython_awesome_generate_token_urlsafe", "reason": "non-deterministic: returns a random token from secrets.token_urlsafe"}
+{"id": "plpython_awesome_ip_location", "reason": "needs network (HTTP lookup at ip-api.com) and is a table function that yields a record"}
+{"id": "redshift_aws_f_sentiment", "reason": "only calls a model: NLTK VADER needs the downloaded vader_lexicon data file; returns a dict of scores"}
+{"id": "redshift_periscope_now", "reason": "no inputs, non-deterministic (current time), and the body has no return statement (always None)"}
+{"id": "redshift_periscope_binomial_hpdr_lower", "reason": "duplicate of redshift_periscope_binomial_hpdr: same computation, returns the lower bound"}
+{"id": "redshift_periscope_binomial_hpdr_upper", "reason": "duplicate of redshift_periscope_binomial_hpdr: same computation, returns the upper bound"}
+{"id": "redshift_periscope_email_name", "reason": "duplicate of redshift_periscope_email_domain: same split('@'), index 0 instead of -1"}
+{"id": "redshift_periscope_json_array_last", "reason": "duplicate of redshift_periscope_json_array_first: same logic, index -1 instead of 0"}
+{"id": "redshift_periscope_mysql_month", "reason": "duplicate of redshift_periscope_mysql_year: same logic, other datetime attribute"}
+{"id": "redshift_periscope_mysql_day", "reason": "duplicate of redshift_periscope_mysql_year: same logic, other datetime attribute"}
+{"id": "redshift_periscope_mysql_hour", "reason": "duplicate of redshift_periscope_mysql_year: same logic, other datetime attribute"}
+{"id": "redshift_periscope_mysql_minute", "reason": "duplicate of redshift_periscope_mysql_year: same logic, other datetime attribute"}
+{"id": "redshift_periscope_mysql_second", "reason": "duplicate of redshift_periscope_mysql_year: same logic, other datetime attribute"}
+{"id": "redshift_periscope_str_rindex", "reason": "duplicate of redshift_periscope_str_index: same logic with rfind instead of find"}
+{"id": "redshift_periscope_url_path", "reason": "duplicate of redshift_periscope_url_domain: same urlparse logic, other attribute"}
+{"id": "redshift_periscope_url_protocol", "reason": "duplicate of redshift_periscope_url_domain: same urlparse logic, other attribute"}

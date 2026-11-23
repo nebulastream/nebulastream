@@ -1,0 +1,23 @@
+{"id": "kaggle_clean_data", "reason": "license"}
+{"id": "kaggle_create_soup", "reason": "license"}
+{"id": "kaggle_first_country", "reason": "license"}
+{"id": "kaggle_genre_list", "reason": "license"}
+{"id": "kaggle_get_director", "reason": "license"}
+{"id": "kaggle_get_grade", "reason": "license"}
+{"id": "kaggle_get_list_top3", "reason": "license"}
+{"id": "kaggle_overall_pass_status", "reason": "license"}
+{"id": "kaggle_remove_line_breaks", "reason": "license"}
+{"id": "kaggle_remove_numbers", "reason": "license"}
+{"id": "kaggle_remove_punctuation", "reason": "license"}
+{"id": "kaggle_remove_special_characters", "reason": "license"}
+{"id": "kaggle_set_main_industry", "reason": "license"}
+{"id": "kaggle_tokenize_words", "reason": "license"}
+{"id": "kaggle_weighted_rating", "reason": "license"}
+{"id": "kaggle_word_count", "reason": "license"}
+{"id": "babelfish_linreg_numpy", "reason": "not per-row scalar: takes two numpy arrays (rec.x, rec.y) and fits a linear regression over them"}
+{"id": "duckdb_random_date", "reason": "no per-row input and not deterministic: returns a random date from the Faker package"}
+{"id": "duckdb_string_length_arrow", "reason": "not per-row: vectorized UDF over a pyarrow array, returns a pyarrow array"}
+{"id": "duckdb_swap_case_arrow", "reason": "not per-row: vectorized UDF that calls pyarrow.compute.utf8_swapcase on a whole array"}
+{"id": "grizzly_onnx_sentiment", "reason": "only calls an ML model (RoBERTa ONNX session, tokenizer files on disk)"}
+{"id": "tuplex_logs_randomize_endpoint", "reason": "not deterministic: replaces the user part of the endpoint with random.choice letters, so results cannot be compared with CPython"}
+{"id": "tuplex_tpch_q06_revenue_aggregate", "reason": "not per-row: aggregate/combine lambdas of a stateful aggregation"}

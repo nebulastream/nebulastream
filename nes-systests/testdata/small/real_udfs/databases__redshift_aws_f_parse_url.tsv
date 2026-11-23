@@ -1,0 +1,6 @@
+0	https://www.example.com/products/shoes?color=red&size=42#reviews	netloc
+1	https://www.example.com/products/shoes?color=red&size=42#reviews	path
+2	http://api.shop.io:8080/v2/orders?id=10422&expand=items	query
+3	ftp://files.example.org/pub/data/2024.csv	scheme
+4	https://docs.python.org/3/library/urllib.parse.html#url-parsing	fragment
+5	https://User:Pw@Sub.Domain.EXAMPLE.com:443/login	hostname

@@ -1,0 +1,4 @@
+{"id": "jukola_normalize_name", "reason": "needs local modules count_names and shared and a name-stats JSON data file (data/name-counts/...) that are not part of the code; reads the file at import"}
+{"id": "suggests_compute_metanode", "reason": "needs the package-relative module 'from . import logger' that is not part of the code"}
+{"id": "tlhop_cleaning_text", "reason": "reads a CSV and a JSON data file shipped with the tlhop library at import (tlhop_internal_datasets); files are not part of the code"}
+{"id": "xraygpt_dicom_metadata", "reason": "takes a pickled pydicom object (bytes) that does not map to a scalar type; also upstream never imports json, so it always returns '{}'"}

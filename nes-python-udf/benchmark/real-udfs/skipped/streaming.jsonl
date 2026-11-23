@@ -1,0 +1,19 @@
+{"id": "aqi_float_to_decimal", "reason": "needs a database: the Lambda handler writes the payload to a DynamoDB table (table.put_item)"}
+{"id": "aws_pyflink_to_upper", "reason": "duplicate of vvp_py_upper (str.upper(); only adds a logging.info call)"}
+{"id": "beam_team_scores_dict", "reason": "needs a Beam runtime: reads the window start from beam.DoFn.WindowParam, and processing_time is time.time()"}
+{"id": "bytewax_anomaly_detector", "reason": "not per-row: stateful mapper that keeps the last 10 values per key"}
+{"id": "bytewax_format_event", "reason": "not per-row: formats a whole window of (value, ISO time) events (a list)"}
+{"id": "bytewax_impute_mapper", "reason": "not per-row: stateful windowed numpy array that imputes from the last 10 values"}
+{"id": "bytewax_keep_max", "reason": "not per-row: stateful running maximum"}
+{"id": "bytewax_search_session_ctr", "reason": "not per-row: operates on a session (list of event objects) per user"}
+{"id": "confluent_calculate_length", "reason": "duplicate of pyflink_length (len(input_str); the extra empty check gives the same result)"}
+{"id": "dagger_sample", "reason": "needs a file that is not part of the code (data/sample_data.txt)"}
+{"id": "faust_station_transform", "reason": "needs the Faust runtime: async agent over a topic with faust.Record types, sends to an output topic"}
+{"id": "faust_word_count", "reason": "needs the Faust runtime and is a stateful aggregation (word_counts table)"}
+{"id": "jellycat_analyze_score", "reason": "only calls a sentiment model (sentiment_utils.analyze_sentiment_with_score), not part of the code"}
+{"id": "mole_create_script_event", "reason": "needs Redis and network (HTTP calls to a Django API)"}
+{"id": "packt_build_record_fn", "reason": "needs a Beam runtime: reads the window start from beam.DoFn.WindowParam"}
+{"id": "quix_hard_braking_alert", "reason": "not per-row: hopping-window mean over a Quix StreamingDataFrame, written as module-level pipeline code"}
+{"id": "quix_pm_downsample_reducer", "reason": "not per-row: reducer/initializer of a windowed stateful aggregation"}
+{"id": "sumeh_check_complete", "reason": "takes something that cannot map: it only tests the value for NULL, and NES rows have no NULLs (constant result)"}
+{"id": "tspann_user_enrichment", "reason": "needs a database (Scylla cluster lookup per message)"}
