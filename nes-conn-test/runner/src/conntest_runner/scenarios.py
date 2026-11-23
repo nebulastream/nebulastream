@@ -192,13 +192,13 @@ class SinkCtx(Ctx):
 
     sink: Sink
     data: SinkModel
-    # The buffers that the sink's START made from the rows.
-    _buffers: int = field(default=0, init=False)
+    # The buffers that the harness's LOAD made from the rows.
+    buffers: int
     # The buffers written since the last START.
     _written: int = field(default=0, init=False)
 
     def connect(self) -> None:
-        self._buffers = self.sink.start().n_buffers
+        self.sink.start()
         self._written = 0
 
     def disconnect(self) -> None:
@@ -208,10 +208,10 @@ class SinkCtx(Ctx):
         self.sink.kill()
 
     def transfer_half(self) -> None:
-        self._write((self._buffers + 1) // 2 - self._written)
+        self._write((self.buffers + 1) // 2 - self._written)
 
     def transfer(self) -> None:
-        self._write(self._buffers - self._written)
+        self._write(self.buffers - self._written)
 
     def check_delivered(self) -> None:
         received = self.loader.read_back(

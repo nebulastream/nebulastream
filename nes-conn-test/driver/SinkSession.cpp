@@ -276,6 +276,10 @@ public:
         {
             return bind();
         }
+        if (verb == "LOAD")
+        {
+            return load();
+        }
         if (verb == "START")
         {
             return start();
@@ -307,7 +311,7 @@ public:
     }
 
 private:
-    /// Binds at the first BIND only, so a repeated BIND or a later START returns the same descriptor or the same error.
+    /// Binds at the first BIND only, so a repeated BIND or a later LOAD returns the same descriptor or the same error.
     std::string bind()
     {
         if (!bound)
@@ -338,28 +342,20 @@ private:
     /// Every START runs a new query in the engine, with a new sink from the once-bound descriptor and the session's source.
     std::string start()
     {
-        /// The runner generates its rows for the schema of the BIND reply, so a START without a BIND means that the runner skipped a step.
-        if (!bound)
+        /// The runner sends BIND and LOAD first, so a START before them means that the runner skipped a step.
+        /// LOAD makes the engine only after a BIND that succeeded, so a session with an engine has its descriptor.
+        if (!engine || !bound || !*bound)
         {
-            return errorReply(harnessErrorInfo("start", "HarnessProtocol", "START before BIND"));
-        }
-        const auto& descriptor = *bound;
-        if (!descriptor)
-        {
-            return errorReply(descriptor.error());
+            return errorReply(harnessErrorInfo("start", "HarnessProtocol", "START before LOAD"));
         }
         if (query)
         {
             return errorReply(harnessErrorInfo("start", "HarnessProtocol", "START while the sink is started"));
         }
-        if (auto inputError = ensureInput())
-        {
-            return errorReply(*inputError);
-        }
-        if (auto engineError = ensureEngine())
-        {
-            return errorReply(*engineError);
-        }
+        const auto& descriptor = **bound;
+        /// Every START writes the batches from the first one again.
+        nextBatch = 0;
+        releasedBatches = 0;
 
         query = QueryId::createLocal(LocalQueryId(generateUUID()));
         observer->reset(*query);
@@ -367,7 +363,7 @@ private:
         try
         {
             auto [controller, listener] = createBackpressureChannel();
-            auto sink = ExecutablePipeline::create(SINK_PIPELINE, NES::lower(std::move(controller), *descriptor), {});
+            auto sink = ExecutablePipeline::create(SINK_PIPELINE, NES::lower(std::move(controller), descriptor), {});
             std::vector<ExecutableQueryPlan::SourceWithSuccessor> sources;
             sources.emplace_back(
                 std::make_unique<SourceHandle>(
@@ -394,21 +390,60 @@ private:
             query.reset();
             return errorReply(*error);
         }
-        return startReply(batches.size());
+        return okReply("start");
     }
 
-    /// The pool and the engine are made once, at the first START, because the pool's size depends on the input.
-    std::optional<ErrorInfo> ensureEngine()
+    /// The runner writes the input after BIND, so LOAD reads it and packs it into the batches that every START writes.
+    /// LOAD also makes the pool and the engine, because the pool's size depends on the batches.
+    std::string load()
     {
+        if (!bound)
+        {
+            return errorReply(harnessErrorInfo("load", "HarnessProtocol", "LOAD before BIND"));
+        }
+        if (!*bound)
+        {
+            return errorReply(bound->error());
+        }
         if (engine)
+        {
+            return errorReply(harnessErrorInfo("load", "HarnessProtocol", "LOAD after the input was loaded"));
+        }
+        if (auto inputError = readInput())
+        {
+            return errorReply(*inputError);
+        }
+        if (auto engineError = makeEngine())
+        {
+            return errorReply(*engineError);
+        }
+        return loadReply(batches.size());
+    }
+
+    /// Without an input path, the session has no batches.
+    std::optional<ErrorInfo> readInput()
+    {
+        batches.clear();
+        if (!options.inputPath)
         {
             return std::nullopt;
         }
+        const auto bytes = slurpFile(*options.inputPath);
+        if (!bytes)
+        {
+            return harnessErrorInfo("load", "HarnessIO", fmt::format("cannot read input file: {}", options.inputPath->string()));
+        }
+        packRecords(splitRecords(*bytes));
+        return std::nullopt;
+    }
+
+    std::optional<ErrorInfo> makeEngine()
+    {
         try
         {
             /// A worker's pool is far larger than one test's data, so the source never waits for a buffer that the sink still holds.
             /// A batch takes its main buffer and a child for each further buffer size of bytes.
-            /// An input that needs more buffers than the pool can count fails here, as a harness error of START.
+            /// An input that needs more buffers than the pool can count fails here, as a harness error of LOAD.
             const std::size_t bufferSize = options.bufferSize.getRawValue();
             std::size_t bufferCount = 0;
             for (const auto& batch : batches)
@@ -425,28 +460,8 @@ private:
         }
         catch (const std::exception& ex)
         {
-            return harnessErrorInfo("start", "HarnessIO", ex.what());
+            return harnessErrorInfo("load", "HarnessIO", ex.what());
         }
-        return std::nullopt;
-    }
-
-    /// The runner writes the input after BIND, so the session reads it at the first START.
-    /// Every START writes the batches from the first one again.
-    std::optional<ErrorInfo> ensureInput()
-    {
-        nextBatch = 0;
-        releasedBatches = 0;
-        if (inputRead || !options.inputPath)
-        {
-            return std::nullopt;
-        }
-        const auto bytes = slurpFile(*options.inputPath);
-        if (!bytes)
-        {
-            return harnessErrorInfo("start", "HarnessIO", fmt::format("cannot read input file: {}", options.inputPath->string()));
-        }
-        packRecords(splitRecords(*bytes));
-        inputRead = true;
         return std::nullopt;
     }
 
@@ -470,7 +485,7 @@ private:
         }
     }
 
-    /// Releases the next batches that START made, or as many as are left, and returns once the sink has taken them.
+    /// Releases the next batches that LOAD made, or as many as are left, and returns once the sink has taken them.
     std::string write(const std::uint64_t numberOfBuffers)
     {
         if (!query)
@@ -531,8 +546,7 @@ private:
     /// A worker's defaults for what a configuration of the engine and a source can set.
     WorkerConfiguration workerDefaults = defaultConfiguration<WorkerConfiguration>();
     std::optional<std::expected<SinkDescriptor, ErrorInfo>> bound;
-    /// The batches that the first START made from the input, the next one that WRITE releases, and how many it released.
-    bool inputRead = false;
+    /// The batches that LOAD made from the input, the next one that WRITE releases, and how many it released.
     std::vector<std::string> batches;
     std::size_t nextBatch = 0;
     std::uint64_t releasedBatches = 0;

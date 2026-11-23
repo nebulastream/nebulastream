@@ -22,7 +22,7 @@ flowchart LR
 
     cli -- "reads the connectors that called add_conn_test" --> registry
     cli -- "docker compose up, then run" --> project
-    pytest -- "BIND, OPEN, FILL, CLOSE or<br/>BIND, START, WRITE, STOP<br/>one JSON reply each" --> harness
+    pytest -- "BIND, OPEN, FILL, CLOSE or<br/>BIND, LOAD, START, WRITE, STOP<br/>one JSON reply each" --> harness
     pytest -- "rows to seed, or<br/>a read-back of a sink's rows" --> loader
     loader -- "seeds or reads back" --> service
     connector -- "reads or writes" --> service
@@ -81,7 +81,8 @@ A sink session (`--mode=sink`) has its own commands:
 
 ```
 BIND                     bind the config and reply with its bound schema, as for a source
-START                    pack the input's records into buffers and run a query from the harness's source into a new sink; the reply has `n_buffers`
+LOAD                     pack the input's records into buffers and create the engine, whose pool is sized for them; the reply has `n_buffers`
+START                    run a query from the harness's source into a new sink
 WRITE <n_buffers>        release the next <n_buffers> buffers to the source, and reply once the sink has taken them
 STOP                     stop the query as a user does, which drops the buffers of a WRITE that has not returned
 ```
@@ -110,7 +111,7 @@ BIND rejects a sink config whose output format is not JSON, since the records ar
 5. The runner compares the collected rows with the generated ones, ignoring their order.
 6. `CLOSE` stops the source.
 
-For a sink, the runner writes the rows that it generated for the schema of the `BIND` reply to the harness's input file, which the harness reads at `START`.
+For a sink, the runner writes the rows that it generated for the schema of the `BIND` reply to the harness's input file, which `LOAD` reads.
 
 1. `START` creates the sink, which connects to the service.
 2. `WRITE` releases every buffer to the source, and the engine runs the sink with them.

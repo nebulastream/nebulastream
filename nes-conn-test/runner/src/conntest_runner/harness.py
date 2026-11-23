@@ -19,6 +19,7 @@ It is the only timer outside the harness.
 from __future__ import annotations
 
 import contextlib
+import itertools
 import shutil
 import socket
 import subprocess
@@ -165,8 +166,8 @@ class _Stepper:
         self._server.listen(1)
         self._proc: _HarnessProc | None = None
         self._step_timeout_ms: int | None = None
-        # Whether a BIND succeeded, after which a respawned harness gets one before its first step.
-        self._bound = False
+        # The setup steps that succeeded, which a respawned harness gets again before its first step.
+        self._setup: list[str] = []
         self._deadline = threading.Timer(_TEST_DEADLINE_S, self._on_deadline)
         self._deadline.daemon = True
         self._deadline.start()
@@ -185,9 +186,9 @@ class _Stepper:
             self._spawn()
             proc = self._proc
             assert proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
-            # A respawned harness has a new session, which fails an OPEN or START before BIND.
-            if self._bound and line != "BIND":
-                proc.command("BIND")
+            # A respawned harness has a new session, which fails a step before its setup steps.
+            for setup in itertools.takewhile(lambda step: step != line, self._setup):
+                proc.command(setup)
         return proc.command(line)
 
     def bind(self) -> list[NativeColumn]:
@@ -206,7 +207,7 @@ class _Stepper:
         # Every row of an empty schema is `{}`, so every comparison would pass without checking a value.
         if not schema:
             raise HarnessError(name="HarnessProtocol", phase="bind", message="the BIND reply has no schema")
-        self._bound = True
+        self._setup.append("BIND")
         return schema
 
     @property
@@ -276,8 +277,13 @@ class Sink(_Stepper):
     def __init__(self, **kw: Any) -> None:
         super().__init__(mode="sink", **kw)
 
-    def start(self) -> Got:
+    def load(self) -> Got:
         """The reply's ``n_buffers`` is how many buffers the harness made from the ``--input-path`` records."""
+        got = self._command("LOAD")
+        self._setup.append("LOAD")
+        return got
+
+    def start(self) -> Got:
         return self._command("START")
 
     def write(self, n_buffers: int) -> Got:
