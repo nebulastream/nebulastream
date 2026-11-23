@@ -276,14 +276,40 @@ does not use.
 |---|---|---|
 | 0 | `def f(a, *, b)`, `def f(a, /, b)` | fixed (fork 0bbf260) |
 | 1 | a nested def of the same name in both branches of an if/else (scoping: cannot bind) | medium-hard: the branch is static for a concrete type, but scoping runs before types |
-| 2 | `import types`: `try: from _types import *` (C module) with an introspection fallback | try-import fallback: small-medium; `types` needs a Codon shim |
+| 2 | `import types`: `try: from _types import *` (C module) with an introspection fallback | try-import fallback fixed (fork 683b2fd); the fallback code of `types` (introspection) still needs a Codon shim |
 | 3 | `import warnings`: `_py_warnings` (registry, filters, class tricks) | shim (warn as a no-op or log): small |
-| 4 | `import ipaddress`: `@functools.total_ordering` class decorator | compile-time total_ordering: about half a day; ipaddress may hit more |
+| 4 | `import ipaddress`: `@functools.total_ordering` class decorator | fixed (fork 39010f8); ipaddress itself not tried yet |
 | 5 | `namedtuple('X', 'a b')`: compiler crash on the string form | fixed (fork 465e7e2) |
 | 6 | `X.__doc__ = ...` | fixed (fork abc8b30) |
-| 7 | `class R(_NamedTupleBase, _Mixin)`: reference class from a tuple class | tuple-ness from the bases in type checking: half a day to a day |
-| 8 | a class with inferred fields as a base class: unbound generics, compiler assertion | medium-large; same root as the 6 Babelfish rejects |
+| 7 | `class R(_NamedTupleBase, _Mixin)`: reference class from a tuple class | fixed (fork 8f558f0) |
+| 8 | a class with inferred fields as a base class: unbound generics, compiler assertion | partly fixed: fields typed from the annotated `__init__` parameters (fork 5506259); else an error, not an assertion (5d33e3f) |
 | 9 | `_fix_result_transcoding`: class attributes assigned from outside at import time | dynamic; needs a source change or class variables |
 | 10 | `bytes` not defined in library modules | fixed in NES (compat import also for library modules) |
 | 11 | `bytes(frozenset(b'...'))`: NES compat bytes iterates as str, not int | compat bytes as Python's: medium |
-| ... | not reached yet: `_coerce_args` (str/bytes), `functools.lru_cache`, `Quoter(defaultdict)` with `__missing__` | unknown |
+| ... | not reached yet: `_coerce_args` (str/bytes), `Quoter(defaultdict)` with `__missing__` (`functools.lru_cache` is in fork 39010f8) | unknown |
+
+With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and the scratch copy at blocker 11.
+
+## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
+
+Fixes (fork 5506259 to 7145bd8), each with a repro in `repros/`:
+- A namedtuple subclass with mixins (`class R(namedtuple(...), Mixin)`) is a tuple class with the namedtuple's fields;
+  unpacking, indexing, `len`, `==` and `hash` work (`min_namedtuple_subclass_*`).
+- The repr of a named class is `Name(x=1, y='a')` as in Python, not `(x: 1, y: 'a')` (`min_namedtuple_repr`).
+- `from dataclasses import dataclass`, `@dataclasses.dataclass`; a dataclass has repr and `==` by default; `frozen`,
+  `unsafe_hash`, `slots`, `match_args` are accepted (`min_dataclass`).
+- `@functools.total_ordering` (compile time); `functools.reduce`, `cache`, `lru_cache` (the function itself),
+  `cmp_to_key` (`min_total_ordering`, `min_functools`).
+- `try: import X` / `except ImportError:` picks the branch at compile time: the handler if a module is not found, else
+  the body (`min_import_fallback*`). Adds ImportError and ModuleNotFoundError.
+- A string annotation is a forward reference: `other: "V"`, `List["Node"]` (`min_forward_reference`).
+- `a != b` without `__ne__` is `not (a == b)`; `==` of a reference class without `__eq__` is identity (`min_ne_from_eq`).
+- Inferred class fields take the annotation of the `__init__` parameter (5506259); an unannotated class with inferred
+  fields as a base class is an error, not a compiler assertion (5d33e3f).
+
+Results (`results/E92-*.jsonl`, same cases as E91): real UDFs 130 ok, 2 diff, 88 reject (E91: 125, 2, 93; the five
+are Babelfish UDFs with annotated `__init__` parameters); differential cases 252 ok, 80 diff, 15 reject, no change.
+
+Known, not fixed: a nested def of the same name in both branches of an if (urllib.parse blocker 1). The import rule
+applies only to a `try` body of imports; in a body with other statements, a missing module is still a compile-time
+error.
