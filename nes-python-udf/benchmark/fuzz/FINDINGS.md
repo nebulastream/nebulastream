@@ -276,7 +276,7 @@ does not use.
 |---|---|---|
 | 0 | `def f(a, *, b)`, `def f(a, /, b)` | fixed (fork 0bbf260) |
 | 1 | a nested def of the same name in both branches of an if/else (scoping: cannot bind) | fixed (fork 8c4be42) when the condition is static, as `isinstance(qs, str)` here |
-| 2 | `import types`: `try: from _types import *` (C module) with an introspection fallback | try-import fallback fixed (fork 683b2fd); the fallback code of `types` (introspection) still needs a Codon shim |
+| 2 | `import types`: `try: from _types import *` (C module) with an introspection fallback | fixed: try-import fallback (fork 683b2fd), Codon `types` module (3c7b9a1) |
 | 3 | `import warnings`: `_py_warnings` (registry, filters, class tricks) | shim (warn as a no-op or log): small |
 | 4 | `import ipaddress`: `@functools.total_ordering` class decorator | fixed (fork 39010f8); ipaddress itself not tried yet |
 | 5 | `namedtuple('X', 'a b')`: compiler crash on the string form | fixed (fork 465e7e2) |
@@ -289,7 +289,8 @@ does not use.
 | ... | not reached yet: `_coerce_args` (str/bytes), `Quoter(defaultdict)` with `__missing__` (`functools.lru_cache` is in fork 39010f8) | unknown |
 
 With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and the scratch copy at blocker 11. With
-fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeType.
+fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeType. With fork 3c7b9a1, it stops in
+`ipaddress` at `@classmethod` (line 427), which Codon does not define.
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -334,3 +335,20 @@ error "function 'f' is defined differently on two paths that can run" (`min_cond
 
 Results (`results/E93-*.jsonl`, E92 cases plus the repros): real UDFs 130 ok, 2 diff, 88 reject; differential cases
 252 ok, 80 diff, 15 reject. No change from E92.
+
+## The types module and __class_getitem__ (E94, 2026-11-23, Codon fork 3c7b9a1)
+
+- `stdlib/types.codon`: `FunctionType`, `LambdaType`, `GeneratorType` and `NoneType` are Codon types. `CodeType`,
+  `SimpleNamespace`, `GenericAlias`, `MethodType`, `ModuleType` and the other names are empty placeholder classes, so a
+  module that imports or mentions them compiles. `new_class`, `prepare_class`, `coroutine` and the other run-time class
+  helpers are not provided. Codon's stdlib comes before NES_CODON_PYTHON_PATH, so this module replaces CPython's
+  `types.py`, which cannot compile (it finds types through `_f.__code__`, `sys.implementation` and similar objects).
+- A `__class_getitem__` class variable (`classmethod(types.GenericAlias)`, which allows `C[int]` in type hints) is
+  removed in scoping. The class keeps its inferred fields (a class variable alone would stop the inference).
+- Repros: `min_types_module`, `min_class_getitem`. `isinstance(None, types.NoneType)` is False in Codon: the literal
+  `None` has the type `Optional[NoneType]`.
+
+Results (`results/E94-*.jsonl`): real UDFs 130 ok, 2 diff, 88 reject; differential cases 252 ok, 80 diff, 15 reject;
+all repros as in E93. No change.
+
+Next urllib.parse blocker: `ipaddress` uses `@classmethod` (Codon has `@staticmethod` only).
