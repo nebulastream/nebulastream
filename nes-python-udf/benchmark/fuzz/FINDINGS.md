@@ -178,3 +178,40 @@ Same cases as E85 (repros now 34). `results/E88-diff-codon-compat.jsonl`.
 | builtins (222) | 170 | 25 | 27 | 0 | 0 | 158, 34, 27, 0, 3 |
 | repros (34) | 9 | 25 | 0 | 0 | 0 | 0, 28, 0, 2, 1 (31 repros) |
 | programs (80) | 33 | 40 | 7 | 0 | 0 | 25, 47, 7, 1, 0 |
+
+## Real UDFs in Codon (E89, 2026-11-23, Codon fork 3b8c3a9, PYTHON_COMPAT)
+
+The 258 real-UDF cases (`nes-systests/udf/pyudfs/real_udfs`, realistic rows only): 220 have a CPython reference (the
+other 38 need packages the system Python lacks). All 210 standard-library cases pass as EXECUTION OUT_OF_PROCESS
+(`RealUdfsOutOfProcess.test`). Codon: 100 equal to CPython, 9 differ, 110 do not compile, 1 crash.
+`results/E89-real-udfs-codon.jsonl`.
+
+| Group | ok | diff | reject | crash |
+|---|---|---|---|---|
+| literature | 36 | 0 | 27 | 0 |
+| github_spark | 28 | 7 | 31 | 1 |
+| databases | 16 | 1 | 35 | 0 |
+| streaming | 20 | 1 | 17 | 0 |
+
+Not compiled (110), by first error:
+
+| Cases | Cause | Examples |
+|---|---|---|
+| 37 | module not in Codon: urllib.parse 9, unicodedata 5, base64 5, hashlib 3, logging 3, struct 2, difflib, argparse, xml.etree, and the packages pandas, scipy, thefuzz, ua_parser, dateutil | |
+| 16 | a name with several types (dynamic typing: a variable or return of int and str, Optional) | Tuplex Zillow, flights, logs, TPC-H Q19 |
+| 16 | cannot typecheck a lambda or `self` without annotations | Babelfish lambdas `lambda rec, ctx: ...` |
+| 13 | missing attribute: `str.format` 2, `datetime.strptime`, indexing a `map()` result, `json.Value.pop`, slicing a `json.Value` | |
+| 7 | NES rejects an import inside a function | kubeflow, Redshift json_array_*, mysql_year* |
+| 6 | missing name: `string.capwords`, `time.strftime`/`strptime`, `typing.AnyStr`, `datetime.timezone` | |
+| 3 | syntax error in the token parser | tuplex_logs_parse_with_regex, trivadis_ball_possession, redshift_aws_f_format_number |
+| 2 | unbound method call `str.title(x)`, `str.upper(x)` | |
+| 2 | name not defined: lazy annotation `Column`, `eval` | |
+| 1 each | `%` formatting, `math.atan2` (no NES ABI entry), `print` (seq_print_full), numpy on json.Value, `int + str` (a real bug) | |
+
+Different results (9) and crash (1):
+- f-string specs: `{x:,.2f}` (no grouping), `{n:06d}` (no zero fill).
+- `re.findall` with one group gives the whole match (2 cases).
+- `json.loads('NaN')`, `float('1_000.5')`, `datetime.fromisoformat` with an offset.
+- `optional unpack failed` (tlhop_process_lang).
+- A parameter named `str` shadows the type (repros/min_param_named_str.py).
+- SIGSEGV on `(x and float(x)) / 2.0` with an Optional x (repros/min_and_optional_crash.py).
