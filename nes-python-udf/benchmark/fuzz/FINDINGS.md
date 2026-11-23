@@ -290,7 +290,8 @@ does not use.
 
 With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and the scratch copy at blocker 11. With
 fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeType. With fork 3c7b9a1, it stops in
-`ipaddress` at `@classmethod` (line 427), which Codon does not define.
+`ipaddress` at `@classmethod` (line 427), which Codon does not define. With fork ca24f9f, it stops in `ipaddress` at
+`from functools import cached_property` (line 754).
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -352,3 +353,22 @@ Results (`results/E94-*.jsonl`): real UDFs 130 ok, 2 diff, 88 reject; differenti
 all repros as in E93. No change.
 
 Next urllib.parse blocker: `ipaddress` uses `@classmethod` (Codon has `@staticmethod` only).
+
+## classmethod, and virtual calls in UDF classes (E95, 2026-11-23, Codon fork ca24f9f)
+
+- `@classmethod` (fork 6184358): a static method whose first parameter (`cls`) is a type parameter. Access passes the
+  class: `C.m(x)` is `C.m(C, x)`, `obj.m(x)` is `C.m(type(obj), x)`. `cls(...)` and `cls.attr` resolve at compile
+  time, also in a subclass that inherits the method. Repros: `min_classmethod_*`.
+- Virtual calls (fork c36bec7), a crash found on the way: a UDF class that overrides a method of its base class ended
+  the worker with SIGSEGV at the first virtual call (`min_virtual_override`). Codon generates vtables and thunks only
+  for the stdlib (`prepareVTables`, "TODO: add JIT compatibility"). NES's `_init_vtables` sized the vtable array for
+  the stdlib's classes and did not set vtables of later classes, so the call read a slot past the end of the array
+  (Undo: the slot was memory of a std::map). Now every JIT cell generates the missing thunks, and its top-level code
+  grows the array and sets the vtables. Thunk generation is incremental across cells.
+- Field inference (fork ca24f9f): a class with an untyped class variable (`PREFIX = "n="`) and fields assigned in
+  `__init__` had no fields. Annotated items (fields, `ClassVar[...]`) still turn the inference off.
+
+Results (`results/E95-*.jsonl`): real UDFs 130 ok, 2 diff, 88 reject; differential cases 252 ok, 80 diff, 15 reject;
+repros as in E94 plus the 5 new ones ok. No change.
+
+Next urllib.parse blocker: `ipaddress` imports `functools.cached_property`.
