@@ -283,7 +283,7 @@ does not use.
 | 6 | `X.__doc__ = ...` | fixed (fork abc8b30) |
 | 7 | `class R(_NamedTupleBase, _Mixin)`: reference class from a tuple class | fixed (fork 8f558f0) |
 | 8 | a class with inferred fields as a base class: unbound generics, compiler assertion | partly fixed: fields typed from the annotated `__init__` parameters (fork 5506259); else an error, not an assertion (5d33e3f) |
-| 9 | `_fix_result_transcoding`: class attributes assigned from outside at import time | dynamic; needs a source change or class variables |
+| 9 | `_fix_result_transcoding`: class attributes assigned from outside at import time | fixed for module-level `C.attr = x` (fork 5cbdf87) |
 | 10 | `bytes` not defined in library modules | fixed in NES (compat import also for library modules) |
 | 11 | `bytes(frozenset(b'...'))`: NES compat bytes iterates as str, not int | compat bytes as Python's: medium |
 | ... | not reached yet: `_coerce_args` (str/bytes), `Quoter(defaultdict)` with `__missing__` (`functools.lru_cache` is in fork 39010f8) | unknown |
@@ -292,7 +292,8 @@ With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and
 fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeType. With fork 3c7b9a1, it stops in
 `ipaddress` at `@classmethod` (line 427), which Codon does not define. With fork ca24f9f, it stops in `ipaddress` at
 `from functools import cached_property` (line 754). With fork a6d0811, it stops at blocker 9: `_BaseNetwork._constants =
-_BaseConstants` (line 1131), a class attribute assigned from outside the class.
+_BaseConstants` (line 1131), a class attribute assigned from outside the class. With fork 5f95c6f, it stops in
+`ipaddress` at `'%s has host bits set' % self` (line 1541): printf-style `%` formatting of an object.
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -393,3 +394,24 @@ In Codon, the recomputation costs nothing measurable: LLVM inlines the methods a
 CPython, the first computation costs about 1.4 us and each cached read about 0.1 us.
 
 Results (`results/E96-*.jsonl`): no change from E95; the new repro is ok.
+
+## Class attributes (E97, 2026-11-23, Codon fork 5f95c6f)
+
+- `C.attr = x` at module level, for an attribute that C does not declare (or only inherits), creates a class variable
+  of C; subclasses that inherited the old entry get the new one (`min_class_attr_outside`). The value may be a class
+  (`IPv4Network._constants = _IPv4Constants`); a class variable that holds a class crashed the IR translation also
+  when declared in the class body (`min_class_var_type_alias`).
+- Wrong results found on the way (existing Codon behavior, no error): Codon compiles an inherited method once, for the
+  base class, so `self.attr` read the base's value also in a subclass with its own value, set in its body
+  (`min_class_var_override`) or from outside (`min_class_attr_per_subclass`). Such a method is now copied into the
+  subclass, as with `@extend`; calls through a base-class reference reach it by virtual dispatch
+  (`min_class_attr_base_reference`). Only methods that read `self.attr` or `cls.attr` directly are copied, not those
+  that reach it through another method.
+- Fields from tuple targets: `self.a, self.b = ...` in `__init__` declares a and b (`min_tuple_target_fields`).
+- Known, not fixed: a method call on `self` in `__init__` of a class with inferred fields fails, as the field types are
+  not known yet (`min_init_self_call`).
+
+Results (`results/E97-*.jsonl`): no change from E96; the 6 new repros ok, `min_init_self_call` rejected.
+
+Next urllib.parse blocker: `'%s has host bits set' % self` in `ipaddress` (printf-style formatting of an object). The
+real UDFs have more `%` rejects (E89 table: `'%05d'`, `'%d|%s'`, `'%.3f'`).
