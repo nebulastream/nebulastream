@@ -1,0 +1,10 @@
+-- A Kafka sink whose producer queue holds 4 messages, so that the sink finds it full and retries a buffer later.
+-- It applies backpressure once 4 buffers wait for a retry and releases it at 2.
+CREATE SINK kafka_small_queue_output (data UINT8) TYPE Kafka SET (
+    'localhost:9092' AS "SINK".BROKERS,
+    'conntest'       AS "SINK".TOPIC,
+    'JSON'           AS "SINK".OUTPUT_FORMAT,
+    4                AS "SINK".MAX_OUTSTANDING_MESSAGES,
+    4                AS "SINK".BACKPRESSURE_UPPER_THRESHOLD,
+    2                AS "SINK".BACKPRESSURE_LOWER_THRESHOLD
+);
