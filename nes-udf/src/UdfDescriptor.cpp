@@ -105,6 +105,23 @@ UdfDescriptor UdfDescriptor::fromSource(
         std::move(name), std::move(path), std::string{}, std::move(source), std::move(argTypes), {}, returnType, execution, language};
 }
 
+UdfDescriptor UdfDescriptor::fromCompiled(
+    std::string name, std::vector<DataType> argTypes, DataType returnType, std::string compiler, CompiledInlineUdf compiled)
+{
+    return UdfDescriptor{
+        std::move(name),
+        {},
+        std::string{},
+        std::nullopt,
+        std::move(argTypes),
+        {},
+        returnType,
+        UdfExecution::Inline,
+        UdfLanguage::Python,
+        std::move(compiled),
+        std::move(compiler)};
+}
+
 namespace detail
 {
 /// NOLINTNEXTLINE(misc-use-internal-linkage)

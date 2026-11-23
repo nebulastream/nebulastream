@@ -148,6 +148,11 @@ public:
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         UdfLanguage language = UdfLanguage::Python);
 
+    /// An Inline UDF defined in code that is compiled already, e.g. a stage of a UDF that HiPyChainRule split. `compiler`
+    /// selects its UdfLowering ("HiPy"). The caller vouches for the signature.
+    [[nodiscard]] static UdfDescriptor fromCompiled(
+        std::string name, std::vector<DataType> argTypes, DataType returnType, std::string compiler, CompiledInlineUdf compiled);
+
     [[nodiscard]] const std::string& getName() const { return name; }
 
     [[nodiscard]] const std::filesystem::path& getPath() const { return path; }

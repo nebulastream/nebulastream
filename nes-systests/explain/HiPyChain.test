@@ -1,0 +1,24 @@
+# name: explain/HiPyChain.test
+# description: A HiPy UDF (COMPILER HIPY) with parts left to CPython runs as a chain of stages (HiPyChainRule): the native stage
+# as Inline calls in the pre-projection, which Nautilus traces into the pipeline, and the Python stage as a UDF operator
+# (UDFLiftingRule). Each output of a stage is one call. Needs NES_HIPY_DIR.
+# groups: [explain, HiPy]
+
+CREATE LOGICAL SOURCE words(id INT64 NOT NULL, w VARSIZED);
+CREATE PHYSICAL SOURCE FOR words TYPE File;
+ATTACH INLINE
+1,Hello
+
+CREATE FUNCTION md5_bucket (s VARSIZED) RETURNS INT64 EXECUTION INLINE COMPILER HIPY ENTRYPOINT 'hipy_fallback.bucket';
+
+# Native: strip, lower, the length test, len * 1000 and the branch guard. Python: hashlib and what reads its result.
+EXPLAIN (OPTIMIZED) FORMAT TEXT
+SELECT id, md5_bucket(w) AS r FROM words INTO FILE();
+----
+== Optimized Global Plan ==
+SINK(FILE)
+  PROJECTION(fields: [ID, __UDF_CALL_4 as R])
+    UDF(execution: InProcess, calls: [__UDF_CALL_4 = MD5_BUCKET__s1_v37(__UDF_ARG_0, __UDF_ARG_1, __UDF_ARG_2, __UDF_ARG_3)])
+      PROJECTION(fields: [ID, W, MD5_BUCKET__s0_v2(W) as __UDF_ARG_0, MD5_BUCKET__s0_v5(W) as __UDF_ARG_1, MD5_BUCKET__s0_v16(W) as __UDF_ARG_2, MD5_BUCKET__s0_v39(W) as __UDF_ARG_3])
+        SOURCE(WORDS)
+==END==

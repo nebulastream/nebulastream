@@ -778,3 +778,114 @@ if __name__ == "__main__":
     compiled = json.load(open(sys.argv[1], encoding="utf-8"))
     chain = split(compiled["module"], compiled["entry"])
     print(" -> ".join(f"{s['kind']}[{len(s['ops'])} ops, in {len(s['inputs'])}, out {len(s['outputs'])}]" for s in chain["stages"]))
+
+
+# ---------------------------------------------------------------------------------------------------------------------------
+# Lowering: one UDF call per stage output, for HiPyChainRule (nes-query-optimizer).
+# ---------------------------------------------------------------------------------------------------------------------------
+
+NES_TYPES = {"int": "INT64", "pyint": "INT64", "float": "FLOAT64", "bool": "BOOLEAN", "string": "VARSIZED"}
+
+
+def nes_type(t):
+    """The NES type of a field that holds a value of HiPy type `t`, or None if a field cannot hold it."""
+    name = type_name(t)
+    if name == "nullable":
+        return nes_type(t["type"])
+    return NES_TYPES.get(name)
+
+
+def referenced_functions(ops, functions, found):
+    """The functions that `ops` reference (function references and calls), transitively."""
+    for op in ops:
+        for name in [op.get("name")] if op["kind"] in ("FunctionRef", "Call") else []:
+            if name in functions and name not in found:
+                found.add(name)
+                referenced_functions(functions[name]["body"], functions, found)
+        for body in ("ifBody", "elseBody"):
+            if body in op:
+                referenced_functions(op[body], functions, found)
+    return found
+
+
+def slice_for(ops, output):
+    """The ops that compute `output` (and every error op, which raises): the native program of one output."""
+    needed = {output}
+    kept = []
+    for op in reversed(ops):
+        if any(i in needed for i in defines(op)) or op.get("name") == "error":
+            kept.append(op)
+            needed.update(uses(op))
+    return list(reversed(kept))
+
+
+def lowering(chain, module, entry, argument_types, return_type):
+    """Adds the calls that compute each stage output to `chain`, and whether the chain can be lowered (`lowerable`)."""
+    stages = chain["stages"]
+    arguments = [a["id"] for a in chain["arguments"]]
+    declared = dict(zip(arguments, argument_types))
+    if not any(stage["kind"] == "python" for stage in stages):
+        chain["lowerable"], chain["reason"] = False, "no Python stage: the UDF runs natively as one unit"
+        return chain
+    defined_by = {o["id"]: (index, stage["kind"]) for index, stage in enumerate(stages) for o in stage["outputs"]}
+    for index, stage in enumerate(stages):
+        for value in stage["inputs"] + (stage["outputs"] if index < len(stages) - 1 else []):
+            if value["id"] not in declared and nes_type(value["type"]) is None:
+                chain["lowerable"] = False
+                chain["reason"] = f"value %{value['id']} of type {type_name(value['type'])} crosses a cut"
+                return chain
+    functions = {function["name"]: function for function in module["functions"]}
+    source = chain["pythonSource"]
+    digest = __import__("hashlib").sha256(source.encode()).hexdigest()[:16]
+    last = len(stages) - 1
+
+    types = {value["id"]: value["type"] for stage in stages for value in stage["inputs"] + stage["outputs"]}
+    types.update({a["id"]: a["type"] for a in chain["arguments"]})
+
+    def type_of(i):
+        return nes_type(types[i])
+
+    for index, stage in enumerate(stages):
+        inputs = [value["id"] for value in stage["inputs"]]
+        calls = {}
+        for output in stage["outputs"]:
+            o = output["id"]
+            result_type = return_type if o == chain["result"] else type_of(o)
+            if stage["kind"] == "native":
+                # A NULL argument of the UDF makes the result NULL; a value that a guard did not compute arrives as NULL from
+                # a Python stage and is a placeholder here. The arguments of the UDF are passed too, so that a NULL argument
+                # also nulls the later native stages.
+                parameters = inputs + [a for a in arguments if a not in inputs]
+                body = slice_for(stage["ops"], o)
+                names = referenced_functions(body, functions, set())
+                program = {
+                    "entry": f"stage_{index}_{o}",
+                    "module": {"kind": "module", "imports": {}, "py_functions": {}, "functions": [
+                        {"kind": "function", "name": f"stage_{index}_{o}",
+                         "args": [{"kind": "value", "id": i, "type": types[i]} for i in parameters],
+                         "res_type": types[o], "body": body + [{"kind": "Return", "values": [{"kind": "value", "id": o, "type": types[o]}]}]},
+                        *[functions[name] for name in sorted(names)]]},
+                    "nullPropagates": [i in declared for i in parameters],
+                }
+                calls[o] = {"kind": "native", "arguments": parameters, "argumentTypes": [declared.get(i) or type_of(i) for i in parameters],
+                            "notNull": [False] * len(parameters), "returnType": result_type, "program": json.dumps(program)}
+            else:
+                # An argument of the UDF or a value of a native stage is NULL only if an argument of the UDF is: then the call
+                # returns NULL without running. A value of an earlier Python stage that a guard did not compute is None.
+                parameters = inputs
+                body = "\n".join([
+                    "import builtins",
+                    "chains = builtins.__dict__.setdefault('__hipy_chains__', {})",
+                    f"chain = chains.get({digest!r})",
+                    "if chain is None:",
+                    f"    chain = {{'__name__': '__hipy_chain_{digest}'}}",
+                    f"    exec(compile({source!r}, '<hipy chain {digest}>', 'exec'), chain)",
+                    f"    chains[{digest!r}] = chain",
+                    f"return chain['stage_{index}']({{{', '.join(f'{i}: a{n}' for n, i in enumerate(parameters))}}})[{o}]",
+                ])
+                calls[o] = {"kind": "python", "arguments": parameters, "argumentTypes": [declared.get(i) or type_of(i) for i in parameters],
+                            "notNull": [i in declared or defined_by.get(i, (0, "native"))[1] == "native" for i in parameters],
+                            "returnType": result_type, "parameterNames": [f"a{n}" for n in range(len(parameters))], "body": body}
+        stage["calls"] = calls
+    chain["lowerable"] = True
+    return chain

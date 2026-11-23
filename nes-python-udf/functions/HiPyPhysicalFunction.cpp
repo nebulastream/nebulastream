@@ -106,6 +106,9 @@ enum class OpKind : uint8_t
     PyGetAttr,
     PySetAttr,
     PyCall,
+    /// Ops of a stage that nes_hipy_split.py made straight-line: the value of an if/else (Select) and a renamed value (Alias).
+    Select,
+    Alias,
     NoOp
 };
 
@@ -131,12 +134,15 @@ struct Op
     /// FunctionRef: the closure, if any. CallIndirect: the function reference.
     int64_t closure = -1;
     int64_t fnref = -1;
+    /// A bool value: the op runs only if it is true (nes_hipy_split.py), else its result is a placeholder.
+    int64_t guard = -1;
 };
 
 struct Function
 {
     std::string name;
     std::vector<int64_t> args;
+    std::vector<Type> argTypes;
     Type resultType;
     std::vector<Op> body;
 };
@@ -150,6 +156,9 @@ struct Program
     std::unordered_map<int64_t, int64_t> intConstants;
     /// The number of operations that run in CPython. A UDF with any runs each row in a frame of the CPython bridge.
     size_t pythonOps = 0;
+    /// Per argument of the entry function: whether NULL makes the result NULL (the default), or is a placeholder value (a
+    /// value of a split UDF that a guard did not compute).
+    std::vector<bool> nullPropagates;
     /// Python code that defines the module-level names HiPy expects in __main__: the UDF's imports and the functions it left
     /// to Python. It runs once, in the first frame.
     std::string pythonSetup;
@@ -466,6 +475,11 @@ public:
                 op.args.push_back(value(keyword.at("value")));
             }
         }
+        else if (kind == "Select" || kind == "Alias")
+        {
+            op.kind = kind == "Select" ? OpKind::Select : OpKind::Alias;
+            op.args = values(json.at("args"));
+        }
         else if (kind == "Undef")
         {
             op.kind = OpKind::Undef;
@@ -477,6 +491,11 @@ public:
         else
         {
             unsupported.insert(kind);
+        }
+        if (json.contains("guard") && !json.at("guard").is_null())
+        {
+            op.guard = json.at("guard").get<int64_t>();
+            program.valueCount = std::max(program.valueCount, static_cast<size_t>(op.guard) + 1);
         }
         if (kind.starts_with("Py") || op.name.starts_with("python.") || op.name.ends_with("_python"))
         {
@@ -509,6 +528,10 @@ std::shared_ptr<const Program> parseProgram(const std::string& text)
 {
     auto program = std::make_shared<Program>();
     const auto json = nlohmann::json::parse(text);
+    if (json.contains("nullPropagates"))
+    {
+        program->nullPropagates = json.at("nullPropagates").get<std::vector<bool>>();
+    }
     program->entry = json.at("entry").get<std::string>();
     Parser parser(*program);
     for (const auto& functionJson : json.at("module").at("functions"))
@@ -516,6 +539,10 @@ std::shared_ptr<const Program> parseProgram(const std::string& text)
         Function function;
         function.name = functionJson.at("name").get<std::string>();
         function.args = parser.values(functionJson.at("args"));
+        for (const auto& argument : functionJson.at("args"))
+        {
+            function.argTypes.push_back(parseType(argument.at("type")));
+        }
         function.resultType = parseType(functionJson.at("res_type"));
         parser.checkType(function.resultType);
         function.body = parser.block(functionJson.at("body"));
@@ -1375,12 +1402,70 @@ public:
             value);
     }
 
+    /// `condition ? a : b` without control flow, member by member.
+    static Value select(const val<bool>& condition, const Value& a, const Value& b)
+    {
+        if (a.index() != b.index())
+        {
+            throw QueryCompilerError("HiPy UDF: a select of values of different kinds ({} and {})", a.index(), b.index());
+        }
+        return std::visit(
+            [&]<typename T>(const T& first) -> Value
+            {
+                const auto& second = std::get<T>(b);
+                if constexpr (std::is_same_v<T, std::shared_ptr<RecordValue>>)
+                {
+                    auto record = std::make_shared<RecordValue>();
+                    for (nautilus::static_val<size_t> index = 0; index < first->members.size(); ++index)
+                    {
+                        record->members.emplace_back(
+                            first->members[index].first, select(condition, first->members[index].second, second->members.at(index).second));
+                    }
+                    return record;
+                }
+                else if constexpr (std::is_same_v<T, std::shared_ptr<NullableValue>>)
+                {
+                    return std::make_shared<NullableValue>(NullableValue{
+                        .value = select(condition, first->value, second->value),
+                        .isNull = nautilus::select(condition, first->isNull, second->isNull)});
+                }
+                else if constexpr (std::is_same_v<T, std::shared_ptr<FunctionRefValue>>)
+                {
+                    if (first->name != second->name)
+                    {
+                        throw QueryCompilerError("HiPy UDF: a select of two functions");
+                    }
+                    return std::make_shared<FunctionRefValue>(
+                        FunctionRefValue{.name = first->name, .closure = select(condition, first->closure, second->closure)});
+                }
+                else if constexpr (std::is_same_v<T, VariableSizedData>)
+                {
+                    return VariableSizedData(
+                        nautilus::select(condition, first.getContent(), second.getContent()),
+                        nautilus::select(condition, first.getSize(), second.getSize()));
+                }
+                else if constexpr (std::is_same_v<T, std::monostate>)
+                {
+                    return std::monostate{};
+                }
+                else
+                {
+                    return T(nautilus::select(condition, first, second));
+                }
+            },
+            a);
+    }
+
     /// Assigns the Nautilus variables of `target` from `source`, member by member.
     static void assign(Value& target, const Value& source)
     {
         if (target.index() != source.index())
         {
-            throw QueryCompilerError("HiPy UDF: a branch or loop assigns a value of a different kind");
+            throw QueryCompilerError(
+                "HiPy UDF: a branch or loop assigns a value of a different kind (kind {} to kind {}, in op %{})",
+                source.index(),
+                target.index(),
+                currentResult);
         }
         std::visit(
             [&source]<typename T>(T& alternative)
@@ -1522,17 +1607,59 @@ private:
         for (nautilus::static_val<size_t> opIndex = 0; opIndex < block.size(); ++opIndex)
         {
             const auto& op = block[opIndex];
+            if (op.kind == OpKind::Return || op.kind == OpKind::Yield)
+            {
+                std::vector<Value> results;
+                for (nautilus::static_val<size_t> index = 0; index < op.args.size(); ++index)
+                {
+                    results.push_back(environment[op.args[index]]);
+                }
+                return results;
+            }
+            if (op.guard < 0)
+            {
+                step(op, environment);
+                continue;
+            }
+            /// A guarded op: its result is a placeholder that the op assigns if the guard holds. Its own values die in the
+            /// branch, so that both paths end with the same values alive (see the if/else above).
+            auto slot = op.result >= 0 ? placeholder(op.resultType) : Value{};
+            if (boolean(environment, op.guard))
+            {
+                step(op, environment);
+                if (op.result >= 0)
+                {
+                    assign(slot, environment[op.result]);
+                    environment[op.result] = std::monostate{};
+                }
+            }
+            if (op.result >= 0)
+            {
+                environment[op.result] = std::move(slot);
+            }
+        }
+        return {};
+    }
+
+    /// Runs one op that is not a Yield or Return.
+    void step(const Op& op, std::vector<Value>& environment)
+    {
+        currentResult = op.result;
+        {
+            {
             switch (op.kind)
             {
                 case OpKind::Return:
-                case OpKind::Yield: {
-                    std::vector<Value> results;
-                    for (nautilus::static_val<size_t> index = 0; index < op.args.size(); ++index)
-                    {
-                        results.push_back(environment[op.args[index]]);
-                    }
-                    return results;
-                }
+                case OpKind::Yield:
+                    break;
+                case OpKind::Select:
+                    /// Branch-free: Nautilus lost the assignment of one arm when the two arms of an if/else read a constant
+                    /// that the trace had made on another path.
+                    environment[op.result] = select(boolean(environment, op.args[0]), environment[op.args[1]], environment[op.args[2]]);
+                    break;
+                case OpKind::Alias:
+                    environment[op.result] = environment[op.args[0]];
+                    break;
                 case OpKind::Constant:
                     environment[op.result] = constant(op);
                     break;
@@ -1657,8 +1784,8 @@ private:
                     break;
                 }
             }
+            }
         }
-        return {};
     }
 
     static Value constant(const Op& op)
@@ -2158,7 +2285,31 @@ private:
     const Program& program;
     ArenaRef& arena;
     size_t depth = 0;
+    /// The result of the op that runs, for errors.
+    static inline thread_local int64_t currentResult = -1; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 };
+
+/// The HiPy type of an argument of NES type `type`.
+Type nesType(const DataType& type)
+{
+    Type converted{.kind = Type::Kind::Int, .name = "int", .memberNames = {}, .memberTypes = {}, .inner = {}};
+    switch (type.type)
+    {
+        case DataType::Type::VARSIZED:
+            converted.kind = Type::Kind::String;
+            break;
+        case DataType::Type::BOOLEAN:
+            converted.kind = Type::Kind::Bool;
+            break;
+        case DataType::Type::FLOAT32:
+        case DataType::Type::FLOAT64:
+            converted.kind = Type::Kind::Float;
+            break;
+        default:
+            break;
+    }
+    return converted;
+}
 
 /// The UDF's argument as a value of HiPy's type: ints as int64, floats as double.
 Value argumentValue(const VarVal& value, const DataType& type)
@@ -2274,7 +2425,7 @@ VarVal HiPyPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
     for (nautilus::static_val<size_t> index = 0; index < values.size(); ++index)
     {
         const auto& value = values[index];
-        if (value.isNullable())
+        if (value.isNullable() && (program->nullPropagates.empty() || program->nullPropagates.at(index)))
         {
             anyNull = anyNull.has_value() ? val<bool>(*anyNull || value.isNull()) : value.isNull();
         }
@@ -2313,7 +2464,30 @@ VarVal HiPyPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
         std::vector<HiPy::Value> hipyArguments;
         for (nautilus::static_val<size_t> index = 0; index < values.size(); ++index)
         {
-            hipyArguments.push_back(HiPy::argumentValue(values[index], argumentTypes[index]));
+            auto argument = HiPy::argumentValue(values[index], argumentTypes[index]);
+            const auto& parameterType = program->functions.at(program->entry).argTypes.at(index);
+            if (parameterType.kind == HiPy::Type::Kind::Nullable)
+            {
+                /// A nullable value of an earlier stage: NULL is the value None.
+                auto inner = HiPy::Interpreter::placeholder(parameterType.inner.front());
+                const val<bool> isNullArgument = values[index].isNullable() ? values[index].isNull() : val<bool>(false);
+                if (!isNullArgument)
+                {
+                    HiPy::Interpreter::assign(inner, argument);
+                }
+                argument = std::make_shared<HiPy::NullableValue>(HiPy::NullableValue{.value = std::move(inner), .isNull = isNullArgument});
+            }
+            else if (values[index].isNullable() && !program->nullPropagates.empty() && !program->nullPropagates.at(index))
+            {
+                /// NULL is a value that a guard did not compute: a placeholder, which no guarded op reads.
+                auto slot = HiPy::Interpreter::placeholder(HiPy::nesType(argumentTypes[index]));
+                if (!values[index].isNull())
+                {
+                    HiPy::Interpreter::assign(slot, argument);
+                }
+                argument = std::move(slot);
+            }
+            hipyArguments.push_back(std::move(argument));
         }
         HiPy::Interpreter interpreter(*program, arena);
         if (program->pythonOps > 0)

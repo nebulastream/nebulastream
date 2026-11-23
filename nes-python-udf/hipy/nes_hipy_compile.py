@@ -110,7 +110,7 @@ def keep_keywords_in_fallback():
     hipy.context.Context.perform_call = perform_call
 
 
-def stage_chain(serialized, entry_function):
+def stage_chain(serialized, entry_function, argument_types, return_type):
     """The stages of the UDF, with the Python source that computes each (stage_<i>(values) -> outputs). A split that fails
     leaves the UDF as one unit: it does not fail the registration."""
     import nes_hipy_split
@@ -118,6 +118,7 @@ def stage_chain(serialized, entry_function):
     try:
         chain = nes_hipy_split.split(serialized, entry_function)
         chain["pythonSource"] = nes_hipy_split.module_source(serialized, chain, nes_hipy_split.python_setup(serialized))
+        nes_hipy_split.lowering(chain, serialized, entry_function, argument_types, return_type)
         shape = " -> ".join(stage["kind"] for stage in chain["stages"])
         print(f"HiPy stages: {shape}", file=sys.stderr)
         return chain
@@ -158,7 +159,7 @@ def main():
     if in_python:
         print(f"HiPy left {len(in_python)} operations to CPython: " + ", ".join(sorted(set(in_python))), file=sys.stderr)
     entry_function = inspect.unwrap(entry.pyfunc).__name__ + hipy.config.function_suffix
-    output = {"entry": entry_function, "pythonOps": len(in_python), "module": serialized, "chain": stage_chain(serialized, entry_function)}
+    output = {"entry": entry_function, "pythonOps": len(in_python), "module": serialized, "chain": stage_chain(serialized, entry_function, request["argumentTypes"], request["returnType"])}
     with open(sys.argv[2], "w", encoding="utf-8") as file:
         json.dump(output, file, default=lambda value: value.serialize())
 

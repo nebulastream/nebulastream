@@ -12,6 +12,7 @@
 
 add_source_files(nes-query-optimizer
         DecideJoinTypesRule.cpp
+        HiPyChainRule.cpp
         DecideMemoryLayoutRule.cpp
         PredicatePushdownRule.cpp
         RedundantProjectionRemovalRule.cpp
@@ -32,3 +33,4 @@ add_registry_entry(PlanRule DecideFieldMappings)
 add_registry_entry(PlanRule DecideFieldOrder)
 add_registry_entry(PlanRule OriginIdInferenceRule KEY OriginIdInference)
 add_registry_entry(PlanRule UDFLiftingRule KEY UDFLifting)
+add_registry_entry(PlanRule HiPyChainRule KEY HiPyChain)

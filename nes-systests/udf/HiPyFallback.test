@@ -58,4 +58,4 @@ SELECT id, shift_minutes(m) AS r FROM nums INTO FILE();
 
 SELECT id, parse_strict(d) AS r FROM docs WHERE id = INT64(3) INTO FILE();
 ----
-ERROR UdfExecutionError "HiPy UDF, in CPython: JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+ERROR 3007
