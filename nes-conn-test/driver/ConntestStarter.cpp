@@ -19,13 +19,16 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include <Plugins/BuiltinPlugins.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Strings.hpp>
 #include <Binder.hpp>
+#include <BufferPool.hpp>
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <Reply.hpp>
@@ -105,7 +108,20 @@ ExitCode runSource(const argparse::ArgumentParser& program, ControlChannel& chan
     {
         options.observedPath = std::filesystem::path{*observed};
     }
-    return runSourceSession(options, channel) ? ExitCode::Ok : ExitCode::ChannelError;
+
+    /// The pool's size depends only on the flags, so the harness makes it before the first command.
+    /// An exception from making it rejects the flags, as a value outside its bounds does.
+    std::shared_ptr<AbstractBufferProvider> pool;
+    try
+    {
+        pool = makeBufferPool(options.bufferSize, options.bufferCount);
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << "error: --buffer-size and --buffer-count: cannot make the buffer pool: " << trimWhiteSpaces(ex.what()) << "\n";
+        return ExitCode::BadArguments;
+    }
+    return runSourceSession(options, std::move(pool), channel) ? ExitCode::Ok : ExitCode::ChannelError;
 }
 
 ExitCode runSink(const argparse::ArgumentParser& program, ControlChannel& channel)
