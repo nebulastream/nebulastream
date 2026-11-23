@@ -45,7 +45,7 @@ ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const 
 
 bool ConcatLogicalFunction::operator==(const ConcatLogicalFunction& rhs) const
 {
-    return left == rhs.left and right == rhs.right;
+    return StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
 }
 
 std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -58,11 +58,11 @@ DataType ConcatLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction ConcatLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newDataType.has_value() || not newDataType.value().isType(DataType::Type::VARSIZED))
     {

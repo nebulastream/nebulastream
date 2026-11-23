@@ -44,7 +44,7 @@ FromBase64LogicalFunction::FromBase64LogicalFunction(const LogicalFunction& chil
 
 bool FromBase64LogicalFunction::operator==(const FromBase64LogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 std::string FromBase64LogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -64,12 +64,12 @@ FromBase64LogicalFunction FromBase64LogicalFunction::withDataType(const DataType
     return copy;
 };
 
-LogicalFunction FromBase64LogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction FromBase64LogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     std::vector<LogicalFunction> newChildren;
-    for (auto& chr : getChildren())
+    for (const auto& chr : getChildren())
     {
-        newChildren.push_back(chr.withInferredDataType(schema));
+        newChildren.push_back(context.inferType(chr));
     }
     INVARIANT(newChildren.size() == 1, "FromBase64LogicalFunction expects exactly one child but has {}", newChildren.size());
     if (not newChildren[0].getDataType().isType(DataType::Type::VARSIZED))

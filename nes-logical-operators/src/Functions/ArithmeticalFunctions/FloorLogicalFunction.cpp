@@ -45,10 +45,10 @@ DataType FloorLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction FloorLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (!copy.child.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply floor function on non-numeric input function {}", copy.child);
@@ -80,7 +80,7 @@ std::string_view FloorLogicalFunction::getType() const
 
 bool FloorLogicalFunction::operator==(const FloorLogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const

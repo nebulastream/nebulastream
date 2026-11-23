@@ -67,8 +67,8 @@ std::string_view AndLogicalFunction::getType() const
 
 bool AndLogicalFunction::operator==(const AndLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    const bool simpleMatch = StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
+    const bool commutativeMatch = StructuralFunctionEqual{}(left, rhs.right) and StructuralFunctionEqual{}(right, rhs.left);
     return simpleMatch or commutativeMatch;
 }
 
@@ -77,11 +77,11 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} AND {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-LogicalFunction AndLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction AndLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
 
     if (!copy.left.getDataType().isType(DataType::Type::BOOLEAN) || !copy.right.getDataType().isType(DataType::Type::BOOLEAN))
     {

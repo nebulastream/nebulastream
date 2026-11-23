@@ -43,7 +43,7 @@ GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunc
 
 bool GreaterLogicalFunction::operator==(const GreaterLogicalFunction& rhs) const
 {
-    return left == rhs.left and right == rhs.right;
+    return StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
 }
 
 std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -56,11 +56,11 @@ DataType GreaterLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction GreaterLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction GreaterLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = copy.left.withInferredDataType(schema);
-    copy.right = copy.right.withInferredDataType(schema);
+    copy.left = context.inferType(copy.left);
+    copy.right = context.inferType(copy.right);
     if (!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric())
     {
         throw CannotInferStamp(

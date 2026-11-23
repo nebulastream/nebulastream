@@ -346,6 +346,8 @@ private:
 }
 
 TypedLogicalFunction<FieldAccessLogicalFunction> inferFieldAccess(AggregationFieldAccess field, const Schema<Field, Unordered>& schema);
+[[nodiscard]] bool aggregationFieldAccessEqual(const AggregationFieldAccess& lhs, const AggregationFieldAccess& rhs);
+[[nodiscard]] std::size_t aggregationFieldAccessHash(const AggregationFieldAccess& field) noexcept;
 }
 
 template <NES::WindowAggregationFunctionConcept FunctionType>

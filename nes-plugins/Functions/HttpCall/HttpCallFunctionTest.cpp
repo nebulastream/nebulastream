@@ -12,11 +12,13 @@
     limitations under the License.
 */
 /// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <future>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
@@ -39,6 +41,8 @@
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/cancellation_type.hpp>
@@ -167,7 +171,11 @@ TEST(HttpCallFunctionTest, LogicalInferenceAndChildRewritePreserveCallArguments)
     const auto asyncCall = inferred.getAs<AsyncCallLogicalFunction>();
     ASSERT_EQ(asyncCall->getArguments().size(), 4);
     EXPECT_EQ(asyncCall->getOutputName(), Identifier::parse("response"));
-    EXPECT_EQ(inferred.withChildren(call.getChildren()).withInferredDataType(Schema<Field, Unordered>{}).getChildren(), call.getChildren());
+    EXPECT_TRUE(
+        std::ranges::equal(
+            inferred.withChildren(call.getChildren()).withInferredDataType(Schema<Field, Unordered>{}).getChildren(),
+            call.getChildren(),
+            StructuralFunctionEqual{}));
     EXPECT_THROW(
         static_cast<void>(httpCall({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "0")})
                               .withInferredDataType(Schema<Field, Unordered>{})),
@@ -420,10 +428,12 @@ TEST(HttpCallFunctionTest, LogicalCallReflectionRetainsOptionsAndReplacementArgu
 {
     const auto call
         = httpCall({constant(text, "body"), constant(text, "http://localhost/one"), constant(integer, "30000"), constant(integer, "2")});
-    const auto reflected = ReflectionContext{}.reflect(call);
-    const auto restored = ReflectionContext{}.unreflect<LogicalFunction>(reflected);
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto reflected = writer.reflect(call);
+    const auto restored = reader.unreflect<LogicalFunction>(reflected);
     EXPECT_EQ(restored.getType(), call.getType());
-    EXPECT_EQ(restored.getChildren(), call.getChildren());
+    EXPECT_TRUE(std::ranges::equal(restored.getChildren(), call.getChildren(), StructuralFunctionEqual{}));
     EXPECT_EQ(restored.getDataType(), call.getDataType());
     EXPECT_NE(
         call.explain(ExplainVerbosity::Short),

@@ -45,7 +45,10 @@ struct UnboundEventTimeCharacteristic
 {
     TypedLogicalFunction<UnboundFieldAccessLogicalFunction> field;
     TimeUnit unit{1};
-    [[nodiscard]] bool operator==(const UnboundEventTimeCharacteristic& other) const = default;
+    [[nodiscard]] bool operator==(const UnboundEventTimeCharacteristic& other) const
+    {
+        return StructuralFunctionEqual{}(field, other.field) && unit == other.unit;
+    }
     friend std::ostream& operator<<(std::ostream& os, const UnboundEventTimeCharacteristic& timeCharacteristic);
 };
 
@@ -53,7 +56,10 @@ struct BoundEventTimeCharacteristic
 {
     TypedLogicalFunction<FieldAccessLogicalFunction> field;
     TimeUnit unit{1};
-    [[nodiscard]] bool operator==(const BoundEventTimeCharacteristic& other) const = default;
+    [[nodiscard]] bool operator==(const BoundEventTimeCharacteristic& other) const
+    {
+        return StructuralFunctionEqual{}(field, other.field) && unit == other.unit;
+    }
     friend std::ostream& operator<<(std::ostream& os, const BoundEventTimeCharacteristic& timeCharacteristic);
 };
 

@@ -35,7 +35,6 @@
 #include <Sources/AsyncOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/UUID.hpp>
 
 namespace NES
 {
@@ -46,7 +45,7 @@ struct BoundAsyncOutput
     [[nodiscard]] bool operator==(const BoundAsyncOutput&) const = default;
 };
 
-/// Actual unary async invocation. Equality is occurrence identity, never expression structure.
+/// Actual unary async invocation. Instance identity is pointer equality via TypedLogicalOperator.
 /// NOLINTNEXTLINE(misc-multiple-inheritance) logical operators combine ordering and managed-identity mixins
 class AsyncLogicalOperator : public Reorderer, public ManagedByOperator
 {
@@ -56,25 +55,12 @@ public:
         LogicalOperator child,
         AsyncOperator implementation,
         std::vector<LogicalFunction> arguments,
-        std::vector<Identifier> outputBindings,
-        AsyncInvocationId occurrence);
-    [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator> create(
-        LogicalOperator child,
-        const std::string& operatorName,
-        std::vector<LogicalFunction> args,
-        std::vector<Identifier> outputBindings,
-        AsyncInvocationId occurrence);
+        std::vector<Identifier> outputBindings);
     [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator> create(
         LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args, std::vector<Identifier> outputBindings);
     [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator>
     create(LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args);
 
-    [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator> create(
-        LogicalOperator child,
-        AsyncOperator implementation,
-        std::vector<LogicalFunction> arguments,
-        std::vector<Identifier> outputBindings,
-        AsyncInvocationId occurrence);
     [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator> create(
         LogicalOperator child,
         AsyncOperator implementation,
@@ -96,12 +82,10 @@ public:
     // TODO remove just call getAsyncOperator getType
     [[nodiscard]] std::string getOperatorName() const { return concreteAsyncImpl.getType(); }
 
-    [[nodiscard]] AsyncInvocationId getOccurrenceId() const { return occurrence; }
-
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) Required by the logical-operator interface.
     [[nodiscard]] std::string_view getName() const noexcept { return "Async"; }
 
-    [[nodiscard]] bool operator==(const AsyncLogicalOperator& rhs) const { return occurrence == rhs.occurrence; }
+    [[nodiscard]] bool operator==(const AsyncLogicalOperator& rhs) const;
 
     [[nodiscard]] AsyncLogicalOperator withArguments(std::vector<LogicalFunction> args) const;
     [[nodiscard]] AsyncLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
@@ -124,7 +108,6 @@ private:
     AsyncOperator concreteAsyncImpl;
     std::vector<LogicalFunction> arguments;
     std::vector<BoundAsyncOutput> outputs;
-    AsyncInvocationId occurrence;
     TraitSet traitSet;
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 };
@@ -137,7 +120,6 @@ struct ReflectedAsyncLogicalOperator
     AsyncOperator implementation;
     std::vector<LogicalFunction> arguments;
     std::vector<BoundAsyncOutput> outputs;
-    AsyncInvocationId occurrence;
 };
 }
 
@@ -162,8 +144,5 @@ static_assert(LogicalOperatorConcept<AsyncLogicalOperator>);
 template <>
 struct std::hash<NES::AsyncLogicalOperator>
 {
-    size_t operator()(const NES::AsyncLogicalOperator& op) const noexcept
-    {
-        return std::hash<NES::AsyncInvocationId>{}(op.getOccurrenceId());
-    }
+    size_t operator()(const NES::AsyncLogicalOperator& op) const noexcept;
 };

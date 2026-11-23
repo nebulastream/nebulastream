@@ -21,7 +21,6 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -172,18 +171,14 @@ LogicalPlan AsyncOperatorDecompositionRule::apply(LogicalPlan plan) const
 {
     using Visitor = PlanVisitor<bool, bool>;
     std::vector<LogicalOperator> roots;
-    std::unordered_set<AsyncInvocationId> occurrences;
     Visitor visitor{
-        [&occurrences](const LogicalOperator& op, const std::vector<bool>& parentSharing) -> Visitor::DownResult
+        [](const LogicalOperator& op, const std::vector<bool>& parentSharing) -> Visitor::DownResult
         {
             const bool shared = parentSharing.size() > 1 || std::ranges::any_of(parentSharing, [](const bool value) { return value; });
-            if (const auto invocation = op.tryGetAs<AsyncLogicalOperator>())
+            if (op.tryGetAs<AsyncLogicalOperator>() && shared)
             {
-                if (shared || !occurrences.insert(invocation.value()->getOccurrenceId()).second)
-                {
-                    throw UnsupportedQuery(
-                        "Shared async subplans with multiple consumers are not supported; bind and reuse output fields within one branch");
-                }
+                throw UnsupportedQuery(
+                    "Shared async subplans with multiple consumers are not supported; bind and reuse output fields within one branch");
             }
             std::unordered_map<LogicalOperator, bool> children;
             for (const auto& child : op.getChildren())

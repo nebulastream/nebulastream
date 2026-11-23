@@ -70,8 +70,9 @@ std::string UnboundFieldAccessLogicalFunction::explain(ExplainVerbosity verbosit
     return fmt::format("{}", fieldName);
 }
 
-LogicalFunction UnboundFieldAccessLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction UnboundFieldAccessLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
+    const auto& schema = context.getSchema();
     const auto existingField = schema.getFieldByName(fieldName);
     if (!existingField)
     {

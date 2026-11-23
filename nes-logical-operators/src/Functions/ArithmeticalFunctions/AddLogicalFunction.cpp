@@ -47,11 +47,11 @@ DataType AddLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AddLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction AddLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     AddLogicalFunction copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
 
     auto newType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newType.has_value())
@@ -86,8 +86,8 @@ std::string_view AddLogicalFunction::getType() const
 
 bool AddLogicalFunction::operator==(const AddLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    const bool simpleMatch = StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
+    const bool commutativeMatch = StructuralFunctionEqual{}(left, rhs.right) and StructuralFunctionEqual{}(right, rhs.left);
     return simpleMatch or commutativeMatch;
 }
 

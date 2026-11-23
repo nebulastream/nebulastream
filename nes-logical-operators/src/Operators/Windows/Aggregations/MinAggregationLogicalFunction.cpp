@@ -81,7 +81,7 @@ std::string MinAggregationLogicalFunction::explain(ExplainVerbosity verbosity) c
 
 bool MinAggregationLogicalFunction::operator==(const MinAggregationLogicalFunction& other) const
 {
-    return inputFunction == other.inputFunction && aggregateType == other.aggregateType;
+    return aggregationFieldAccessEqual(inputFunction, other.inputFunction) && aggregateType == other.aggregateType;
 }
 
 MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
@@ -123,5 +123,6 @@ AggregationLogicalFunctionRegistryReturnType MinAggregationLogicalFunction::crea
 size_t
 std::hash<NES::MinAggregationLogicalFunction>::operator()(const NES::MinAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), aggregationFunction.getName());
+    return folly::hash::hash_combine(
+        NES::aggregationFieldAccessHash(aggregationFunction.getInputFunction()), aggregationFunction.getName());
 }

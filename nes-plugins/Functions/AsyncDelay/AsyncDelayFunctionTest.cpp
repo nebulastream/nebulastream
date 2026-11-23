@@ -12,11 +12,13 @@
     limitations under the License.
 */
 /// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <future>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -38,6 +40,8 @@
 #include <Sources/AsyncOperatorReflection.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
@@ -170,9 +174,11 @@ TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfi
     const auto withConcurrency
         = delayCall({one, zero, ConstantValueLogicalFunction{integer, "2"}}).withInferredDataType(Schema<Field, Unordered>{});
     EXPECT_EQ(withConcurrency.getDataType(), integer);
-    const auto reflected = ReflectionContext{}.reflect(withConcurrency);
-    const auto restored = ReflectionContext{}.unreflect<LogicalFunction>(reflected);
-    EXPECT_EQ(restored.getChildren(), withConcurrency.getChildren());
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto reflected = writer.reflect(withConcurrency);
+    const auto restored = reader.unreflect<LogicalFunction>(reflected);
+    EXPECT_TRUE(std::ranges::equal(restored.getChildren(), withConcurrency.getChildren(), StructuralFunctionEqual{}));
     EXPECT_EQ(restored.getAs<AsyncCallLogicalFunction>()->getAsyncOperator().maxConcurrency(), 2);
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(delayCall({one, ConstantValueLogicalFunction{integer, "-1"}}).withInferredDataType(Schema<Field, Unordered>{})),

@@ -185,11 +185,14 @@ std::hash<NES::Windowing::IngestionTimeCharacteristic>::operator()(const NES::Wi
 std::size_t std::hash<NES::Windowing::UnboundEventTimeCharacteristic>::operator()(
     const NES::Windowing::UnboundEventTimeCharacteristic& timeCharacteristic) const noexcept
 {
-    return folly::hash::hash_combine(timeCharacteristic.field, timeCharacteristic.unit);
+    const auto fieldHash
+        = timeCharacteristic.field ? std::hash<NES::UnboundFieldAccessLogicalFunction>{}(*timeCharacteristic.field) : 0;
+    return folly::hash::hash_combine(fieldHash, timeCharacteristic.unit);
 }
 
 std::size_t std::hash<NES::Windowing::BoundEventTimeCharacteristic>::operator()(
     const NES::Windowing::BoundEventTimeCharacteristic& timeCharacteristic) const noexcept
 {
-    return folly::hash::hash_combine(timeCharacteristic.field, timeCharacteristic.unit);
+    const auto fieldHash = timeCharacteristic.field ? std::hash<NES::FieldAccessLogicalFunction>{}(*timeCharacteristic.field) : 0;
+    return folly::hash::hash_combine(fieldHash, timeCharacteristic.unit);
 }

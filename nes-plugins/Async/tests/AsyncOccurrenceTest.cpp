@@ -13,6 +13,7 @@
 */
 
 /// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -26,7 +27,14 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/AsyncCallLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/IsNaNLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
@@ -37,6 +45,7 @@
 #include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Rules/Static/AsyncFunctionLiftingRule.hpp>
@@ -54,6 +63,8 @@
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp> /// NOLINT(misc-include-cleaner) Public Asio provider; cleaner misattributes co_spawn.
 #include <boost/asio/io_context.hpp>
@@ -333,14 +344,16 @@ TEST_F(AsyncOccurrenceTest, ReflectionPreservesConcreteStateWithoutReplayingFact
     scalarFactoryCalls = 0;
     const auto call = LogicalFunctionProvider::provide("TEST_SCALAR_ALIAS", {}).getAs<AsyncCallLogicalFunction>().get();
     ASSERT_EQ(scalarFactoryCalls, 1);
-    const auto inferred = call.withChildren({}).withInferredDataType(source().getOutputSchema());
+    TypeInferenceContext inferenceContext{source().getOutputSchema()};
+    const auto inferred = call.withChildren({}).withInferredDataType(inferenceContext);
     EXPECT_EQ(inferred.getAs<AsyncCallLogicalFunction>()->getAsyncOperator().getAs<TestScalarAsyncOperator>()->marker, 1);
-    const ReflectionContext context;
-    const auto restored = context.unreflect<AsyncCallLogicalFunction>(context.reflect(call));
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto restored = reader.unreflect<AsyncCallLogicalFunction>(writer.reflect(call));
     EXPECT_EQ(restored.getAsyncOperator().getAs<TestScalarAsyncOperator>()->marker, 1);
-    EXPECT_EQ(restored.getOccurrenceId(), call.getOccurrenceId());
+    EXPECT_EQ(restored, call);
     const AsyncOperator custom = TestScalarAsyncOperator{.marker = 73};
-    const auto decoded = context.unreflect<AsyncOperator>(context.reflect(custom));
+    const auto decoded = reader.unreflect<AsyncOperator>(writer.reflect(custom));
     EXPECT_EQ(decoded.getAs<TestScalarAsyncOperator>()->marker, 73);
     EXPECT_EQ(scalarFactoryCalls, 1);
 }
@@ -352,9 +365,10 @@ TEST_F(AsyncOccurrenceTest, LogicalReflectionKeepsExpressionsOutsideNativeConfig
         ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "7"}};
     const auto call = LogicalFunctionProvider::provide("TEST_CUSTOM_PAYLOAD", arguments).getAs<AsyncCallLogicalFunction>().get();
     ASSERT_EQ(customFactoryCalls, 1);
-    const ReflectionContext context;
-    const auto restored = context.unreflect<AsyncCallLogicalFunction>(context.reflect(call));
-    EXPECT_EQ(restored.getArguments(), arguments);
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto restored = reader.unreflect<AsyncCallLogicalFunction>(writer.reflect(call));
+    EXPECT_TRUE(std::ranges::equal(restored.getArguments(), arguments, StructuralFunctionEqual{}));
     EXPECT_EQ(restored.getAsyncOperator().getAs<NES::Test::CustomReflectedAsyncOperator>()->getValue(), 73);
     EXPECT_EQ(customFactoryCalls, 1);
 }
@@ -382,13 +396,11 @@ TEST_F(AsyncOccurrenceTest, NormalizationTransfersFactoryPayloadInsteadOfConstru
 {
     scalarFactoryCalls = 0;
     const auto call = LogicalFunctionProvider::provide("TEST_SCALAR_ALIAS", {});
-    const auto id = call.getAs<AsyncCallLogicalFunction>()->getOccurrenceId();
     const LogicalOperator projection
         = ProjectionLogicalOperator::create(source(), {{Identifier::parse("result"), call}}, ProjectionLogicalOperator::Asterisk{false});
     const auto normalized = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {projection}});
     const auto invocation
         = normalized.getRootOperators().front().getAs<ProjectionLogicalOperator>()->getChild().getAs<AsyncLogicalOperator>();
-    EXPECT_EQ(invocation->getOccurrenceId(), id);
     EXPECT_EQ(invocation->getAsyncOperator().getAs<TestScalarAsyncOperator>()->marker, 1);
     EXPECT_EQ(scalarFactoryCalls, 1);
 }
@@ -398,23 +410,176 @@ TEST_F(AsyncOccurrenceTest, ProviderCallsHaveDistinctIdentityEvenWithIdenticalAr
     const auto first = LogicalFunctionProvider::provide(scalarName, {});
     const auto second = LogicalFunctionProvider::provide(scalarName, {});
     EXPECT_NE(first, second);
-    EXPECT_NE(
-        first.getAs<AsyncCallLogicalFunction>().get().getOccurrenceId(), second.getAs<AsyncCallLogicalFunction>().get().getOccurrenceId());
     EXPECT_EQ(first, first);
+    EXPECT_TRUE(StructuralFunctionEqual{}(first, second));
 }
 
-TEST_F(AsyncOccurrenceTest, ScalarIdentitySurvivesChildrenInferenceAndReflection)
+TEST_F(AsyncOccurrenceTest, TypeInferenceContextPreservesSharedDagNodesAndDistinctInstances)
 {
-    const auto call = LogicalFunctionProvider::provide(scalarName, {}).getAs<AsyncCallLogicalFunction>().get();
-    const auto identity = call.getOccurrenceId();
-    EXPECT_EQ(call.withChildren({}).getOccurrenceId(), identity);
-    const auto inferred = call.withInferredDataType(source().getOutputSchema());
-    EXPECT_EQ(inferred.getAs<AsyncCallLogicalFunction>().get().getOccurrenceId(), identity);
-    const ReflectionContext context;
-    const auto reflected = Reflector<AsyncCallLogicalFunction>{}(call, context);
-    const auto restored = Unreflector<AsyncCallLogicalFunction>{}(reflected, context);
-    EXPECT_EQ(restored.getOccurrenceId(), identity);
-    EXPECT_EQ(restored, call);
+    const auto schema = source().getOutputSchema();
+    const auto sharedCall = LogicalFunctionProvider::provide(scalarName, {});
+    const auto separateCall = LogicalFunctionProvider::provide(scalarName, {});
+    const LogicalFunction one = ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "1"};
+    const LogicalFunction two = ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "2"};
+
+    /// BETWEEN-style DAG: both bounds share the exact same AsyncCallLogicalFunction pointer.
+    const LogicalFunction between = AndLogicalFunction{
+        GreaterEqualsLogicalFunction{sharedCall, one}, LessEqualsLogicalFunction{sharedCall, two}};
+    const auto inferredBetween = between.withInferredDataType(schema);
+    const auto inferredLeftCall = inferredBetween.getChildren().at(0).getChildren().at(0);
+    const auto inferredRightCall = inferredBetween.getChildren().at(1).getChildren().at(0);
+    EXPECT_EQ(inferredLeftCall, inferredRightCall);
+
+    /// Nested pure expression shared across IN-style OR branches.
+    const LogicalFunction sharedAdd = AddLogicalFunction{sharedCall, one};
+    const LogicalFunction inExpr = OrLogicalFunction{
+        EqualsLogicalFunction{sharedAdd, one}, EqualsLogicalFunction{sharedAdd, two}};
+    const auto inferredIn = inExpr.withInferredDataType(schema);
+    const auto inferredAddLeft = inferredIn.getChildren().at(0).getChildren().at(0);
+    const auto inferredAddRight = inferredIn.getChildren().at(1).getChildren().at(0);
+    EXPECT_EQ(inferredAddLeft, inferredAddRight);
+    EXPECT_EQ(inferredAddLeft.getChildren().at(0), inferredAddRight.getChildren().at(0));
+
+    /// Distinct call nodes remain distinct after type inference.
+    const LogicalFunction distinctSum = AddLogicalFunction{sharedCall, separateCall};
+    const auto inferredSum = distinctSum.withInferredDataType(schema);
+    EXPECT_NE(inferredSum.getChildren().at(0), inferredSum.getChildren().at(1));
+    EXPECT_TRUE(StructuralFunctionEqual{}(inferredSum.getChildren().at(0), inferredSum.getChildren().at(1)));
+
+    /// Lifting turns a shared DAG call into one AsyncLogicalOperator and two distinct calls into two.
+    const LogicalOperator sharedSelection = SelectionLogicalOperator::create(source(), inExpr);
+    const auto liftedShared = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {sharedSelection}});
+    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(liftedShared).size(), 1);
+
+    const LogicalOperator distinctProjection
+        = ProjectionLogicalOperator::create(source(), {{Identifier::parse("sum"), distinctSum}}, ProjectionLogicalOperator::Asterisk{false});
+    const auto liftedDistinct = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {distinctProjection}});
+    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(liftedDistinct).size(), 2);
+}
+
+TEST_F(AsyncOccurrenceTest, ProjectionInferencePreservesSharingAcrossExpressionRoots)
+{
+    const auto child = source();
+    const auto sharedCall = LogicalFunctionProvider::provide(scalarName, {});
+    const auto distinctCall = LogicalFunctionProvider::provide(scalarName, {});
+    const LogicalOperator projection = ProjectionLogicalOperator::create(
+        child,
+        {{Identifier::parse("first"), sharedCall}, {Identifier::parse("second"), sharedCall}, {Identifier::parse("third"), distinctCall}},
+        ProjectionLogicalOperator::Asterisk{false});
+    const auto rewritten = projection.withChildren({child});
+    const auto expressions = rewritten.getAs<ProjectionLogicalOperator>()->getProjections();
+    ASSERT_EQ(expressions.size(), 3);
+    EXPECT_EQ(expressions.at(0).second, expressions.at(1).second);
+    EXPECT_NE(expressions.at(0).second, expressions.at(2).second);
+
+    const auto lifted = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {rewritten}});
+    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(lifted).size(), 2);
+    const auto outputs = lifted.getRootOperators().front().getAs<ProjectionLogicalOperator>()->getProjections();
+    ASSERT_EQ(outputs.size(), 3);
+    const auto first = outputs.at(0).second.getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName();
+    const auto second = outputs.at(1).second.getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName();
+    const auto third = outputs.at(2).second.getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName();
+    EXPECT_EQ(first, second);
+    EXPECT_NE(first, third);
+}
+
+TEST_F(AsyncOccurrenceTest, TypeInferenceContextRetainsSuccessfulChildrenAfterParentFailure)
+{
+    TypeInferenceContext context{source().getOutputSchema()};
+    const auto call = LogicalFunctionProvider::provide(scalarName, {});
+    const LogicalFunction text
+        = ConstantValueLogicalFunction{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "not numeric"};
+    const LogicalFunction invalid = AddLogicalFunction{call, text};
+    EXPECT_THROW(static_cast<void>(context.inferType(invalid)), Exception);
+    const auto inferredCall = context.inferType(call);
+
+    const LogicalFunction one = ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "1"};
+    const auto valid = context.inferType(LogicalFunction{AddLogicalFunction{call, one}});
+    ASSERT_EQ(valid.getChildren().size(), 2);
+    EXPECT_EQ(valid.getChildren().front(), inferredCall);
+    EXPECT_THROW(static_cast<void>(context.inferType(invalid)), Exception);
+    EXPECT_EQ(context.inferType(call), inferredCall);
+}
+
+TEST_F(AsyncOccurrenceTest, IsNaNDesugaringPreservesSharedChildIdentity)
+{
+    const auto floatSchema = Schema<UnqualifiedUnboundField, Ordered>{
+        UnqualifiedUnboundField{Identifier::parse("x"), DataTypeProvider::provideDataType(DataType::Type::FLOAT64)}};
+    const SourceCatalog catalog;
+    const auto descriptor = catalog.getAnonymousSource(
+        Identifier::parse("FILE"),
+        floatSchema,
+        Host{"localhost:8080"},
+        {{Identifier::parse("TYPE"), "NATIVE"}},
+        {{Identifier::parse("FILE_PATH"), "/dev/null"}});
+    ASSERT_TRUE(descriptor.has_value());
+    const LogicalOperator floatSource = SourceDescriptorLogicalOperator::create(*descriptor);
+
+    const LogicalFunction call = LogicalFunctionProvider::provide(scalarName, {});
+    const LogicalFunction sumFloat = AddLogicalFunction{call, UnboundFieldAccessLogicalFunction{Identifier::parse("x")}};
+    const LogicalFunction isNaN = IsNaNLogicalFunction{sumFloat};
+
+    /// IS NAN on a float desugars to NOT(x = x) where both sides share the same inferred expression and async call.
+    const auto inferred = isNaN.withInferredDataType(floatSource.getOutputSchema());
+    const auto equalsNode = inferred.getChildren().at(0);
+    EXPECT_EQ(equalsNode.getChildren().at(0), equalsNode.getChildren().at(1));
+
+    const LogicalOperator selection = SelectionLogicalOperator::create(floatSource, isNaN);
+    const auto lifted = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {selection}});
+    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(lifted).size(), 1);
+}
+
+TEST_F(AsyncOccurrenceTest, IntegerIsNaNPreservesOperandEffectsAndNullability)
+{
+    const auto child = source();
+    const LogicalFunction call = LogicalFunctionProvider::provide(scalarName, {});
+    const LogicalFunction isNaN = IsNaNLogicalFunction{call};
+    const auto inferred = isNaN.withInferredDataType(child.getOutputSchema());
+    const auto operands = inferred.getChildren().at(0).getChildren();
+    ASSERT_EQ(operands.size(), 2);
+    EXPECT_EQ(operands.at(0), operands.at(1));
+    ASSERT_TRUE(operands.front().tryGetAs<AsyncCallLogicalFunction>().has_value());
+    const LogicalOperator selection = SelectionLogicalOperator::create(child, isNaN);
+    const auto lifted = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {selection}});
+    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(lifted).size(), 1);
+
+    const LogicalFunction nullable = ConstantValueLogicalFunction{DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}, "1"};
+    const LogicalFunction nullableIsNaN = IsNaNLogicalFunction{nullable};
+    const auto nullableInferred = nullableIsNaN.withInferredDataType(child.getOutputSchema());
+    EXPECT_TRUE(nullableInferred.getDataType().nullable);
+    EXPECT_EQ(nullableInferred.getChildren().at(0).getChildren().size(), 2);
+}
+
+TEST_F(AsyncOccurrenceTest, LogicalFunctionReflectionPreservesSharedDagNodes)
+{
+    const auto sharedCall = LogicalFunctionProvider::provide(scalarName, {});
+    const auto separateCall = LogicalFunctionProvider::provide(scalarName, {});
+    const LogicalFunction one = ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "1"};
+    const LogicalFunction two = ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "2"};
+
+    const LogicalFunction dag = AndLogicalFunction{
+        EqualsLogicalFunction{sharedCall, one},
+        AndLogicalFunction{EqualsLogicalFunction{sharedCall, two}, EqualsLogicalFunction{separateCall, one}}};
+
+    /// Reflecting or unreflecting without shared pointer state fails fast.
+    EXPECT_THROW(static_cast<void>(ReflectionContext{}.reflect(dag)), Exception);
+
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto wire = writer.reflect(dag);
+    EXPECT_THROW(static_cast<void>(ReflectionContext{}.unreflect<LogicalFunction>(wire)), Exception);
+
+    const auto restored = reader.unreflect<LogicalFunction>(wire);
+    EXPECT_NE(restored, dag);
+    EXPECT_TRUE(*restored == *dag);
+
+    const auto restoredSharedLeft = restored.getChildren().at(0).getChildren().at(0);
+    const auto restoredSharedRight = restored.getChildren().at(1).getChildren().at(0).getChildren().at(0);
+    const auto restoredSeparate = restored.getChildren().at(1).getChildren().at(1).getChildren().at(0);
+    EXPECT_EQ(restoredSharedLeft, restoredSharedRight);
+    EXPECT_NE(restoredSharedLeft, sharedCall);
+    EXPECT_NE(restoredSharedLeft, restoredSeparate);
+    EXPECT_TRUE(*restoredSharedLeft == *restoredSeparate);
 }
 
 TEST_F(AsyncOccurrenceTest, MultioutputDefinitionRejectsScalarShorthand)
@@ -443,10 +608,10 @@ TEST_F(AsyncOccurrenceTest, ExplicitOperatorAppendsEveryOutputWithDeclaredTypesA
     EXPECT_EQ(outputs[1].field.getDataType(), DataTypeProvider::provideDataType(DataType::Type::UINT64));
     /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     EXPECT_EQ(op.get().getOutputSchema().size(), child.getOutputSchema().size() + 2);
-    EXPECT_EQ(op.get().withChildren({child}).getOccurrenceId(), op.get().getOccurrenceId());
-    EXPECT_EQ(op.get().withInferredSchema().getOccurrenceId(), op.get().getOccurrenceId());
+    EXPECT_EQ(op.get().withChildren({child}).getOutputBindings(), outputs);
+    EXPECT_EQ(op.get().withInferredSchema().getOutputBindings(), outputs);
     const auto second = AsyncLogicalOperator::create(child, multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}});
-    EXPECT_NE(second.get().getOccurrenceId(), op.get().getOccurrenceId());
+    EXPECT_NE(LogicalOperator{second}, LogicalOperator{op});
 }
 
 /// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.

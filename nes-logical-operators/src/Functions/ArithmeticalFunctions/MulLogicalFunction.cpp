@@ -42,8 +42,8 @@ MulLogicalFunction::MulLogicalFunction(LogicalFunction left, LogicalFunction rig
 
 bool MulLogicalFunction::operator==(const MulLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    const bool simpleMatch = StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
+    const bool commutativeMatch = StructuralFunctionEqual{}(left, rhs.right) and StructuralFunctionEqual{}(right, rhs.left);
     return simpleMatch or commutativeMatch;
 }
 
@@ -61,11 +61,11 @@ DataType MulLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction MulLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction MulLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
 
     if (not newDataType.has_value())

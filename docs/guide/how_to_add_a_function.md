@@ -119,9 +119,9 @@ DataType getDataType() const;
 /// New function with the given children
 T withChildren(const std::vector<LogicalFunction>& children) const;
 
-/// New function with the result type inferred from the input schema.
+/// New function with the result type inferred using the type inference context.
 /// This is the place to validate argument types and report invalid user input.
-LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
 /// The registry key of the function, usually NAME
 std::string_view getType() const;
@@ -146,11 +146,15 @@ To confirm the interface, add `static_assert(PhysicalFunctionConcept<T>);`.
 
 ## 6. Type Inference in the Logical Function
 
-`withInferredDataType` receives the input schema, which lists the fields available to the function together with their types.
+`withInferredDataType` receives a `TypeInferenceContext`, which holds the input schema (accessible via `context.getSchema()`) and caches inferred sub-expressions by pointer identity so shared DAG nodes are not duplicated.
+Infer every child through `context.inferType(child)`, using the same context for all roots in one operator's expression forest.
+Create a fresh context when the input schema changes; do not recursively call the schema-taking convenience overload, which would start a separate cache.
+Distinct function instances stay distinct even when their expressions look identical. Handle equality and hashing use pointer identity;
+use `StructuralFunctionEqual` explicitly for structural comparisons, never to merge effectful invocations.
 It returns a copy of the function with a known result type, and it validates the arguments along the way.
 
 For the Conditional function it works in three steps.
-First it infers the type of the default result, which is the type of the whole expression.
+First it infers the type of the default result via `context.inferType(elseCase)`, which is the type of the whole expression.
 A field access child resolves its type from the schema, and a nested function infers its own type.
 Second it infers the type of every condition and every branch result the same way.
 Third it checks that every condition is BOOLEAN and every branch result has the same type as the default.
@@ -159,18 +163,18 @@ A mismatch comes from the user's query, so it throws a query error rather than a
 The check compares the type only. Nullability is joined instead of compared, because a branch that can produce a null makes the whole expression nullable, as in SQL.
 
 ```cpp
-LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction ConditionalLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     /// The default result carries the type of the whole expression.
-    const auto inferredElseCase = elseCase.withInferredDataType(schema);
+    const auto inferredElseCase = context.inferType(elseCase);
     auto resultType = inferredElseCase.getDataType();
 
     std::vector<WhenThenLogicalFunction> inferredWhenThens;
     inferredWhenThens.reserve(whenThens.size());
     for (const auto& [when, then] : whenThens)
     {
-        auto inferredWhen = when.withInferredDataType(schema);
-        auto inferredThen = then.withInferredDataType(schema);
+        auto inferredWhen = context.inferType(when);
+        auto inferredThen = context.inferType(then);
         if (not inferredWhen.getDataType().isType(DataType::Type::BOOLEAN))
         {
             throw DifferentFieldTypeExpected("CASE WHEN condition must be BOOLEAN, but got {}", inferredWhen.getDataType());

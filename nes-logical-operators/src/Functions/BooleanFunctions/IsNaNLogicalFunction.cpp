@@ -23,7 +23,6 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
-#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -45,7 +44,7 @@ IsNaNLogicalFunction::IsNaNLogicalFunction(LogicalFunction child)
 
 bool IsNaNLogicalFunction::operator==(const IsNaNLogicalFunction& rhs) const
 {
-    return rhs.getChildren().size() == 1 and this->child == rhs.getChildren()[0];
+    return rhs.getChildren().size() == 1 and StructuralFunctionEqual{}(this->child, rhs.getChildren()[0]);
 }
 
 std::string IsNaNLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -53,9 +52,9 @@ std::string IsNaNLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ISNAN({})", child.explain(verbosity));
 }
 
-LogicalFunction IsNaNLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction IsNaNLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
-    const auto inferredChild = child.withInferredDataType(schema);
+    const auto inferredChild = context.inferType(child);
     if (not inferredChild.getDataType().isNumeric())
     {
         throw CannotInferStamp("IS NaN expects a numeric input function but got {}", inferredChild.getDataType());
@@ -63,17 +62,10 @@ LogicalFunction IsNaNLogicalFunction::withInferredDataType(const Schema<Field, U
 
     /// NaN is the only value that does not compare equal to itself, so IS NaN desugars into NOT(x = x) and needs no physical
     /// function of its own. Comparing against a NaN constant would not work, as every comparison with NaN is false, NaN = NaN
-    /// included. Integers always compare equal to themselves and thus yield false, as required.
+    /// included. Keep the integer operand too: it can have effects, and nullable integers must propagate NULL.
     /// Unlike ISNULL, IS NaN follows the usual nullability propagation, i.e., NULL IS NaN is NULL. Both Equals and Negate
     /// propagate NULL, so the desugared form keeps that behaviour.
-    if (inferredChild.getDataType().isInteger())
-    {
-        const DataType trueDataType{
-            DataType::Type::BOOLEAN,
-            inferredChild.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
-        return ConstantValueLogicalFunction{trueDataType, "false"};
-    }
-    return NegateLogicalFunction{EqualsLogicalFunction{inferredChild, inferredChild}}.withInferredDataType(schema);
+    return NegateLogicalFunction{EqualsLogicalFunction{inferredChild, inferredChild}}.withInferredDataType(context);
 }
 
 DataType IsNaNLogicalFunction::getDataType() const

@@ -14,9 +14,12 @@
 
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
+#include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -35,16 +38,35 @@ namespace NES
 
 TypedLogicalFunction<FieldAccessLogicalFunction> inferFieldAccess(AggregationFieldAccess field, const Schema<Field, Unordered>& schema)
 {
+    TypeInferenceContext context{schema};
     return std::visit(
-        Overloaded{
-            [&schema](const TypedLogicalFunction<UnboundFieldAccessLogicalFunction>& unboundFieldAccessLogicalFunction)
-            {
-                const auto shouldBeFieldAccess = unboundFieldAccessLogicalFunction.withInferredDataType(schema);
-                return shouldBeFieldAccess.getAs<FieldAccessLogicalFunction>();
-            },
-            [&schema](const TypedLogicalFunction<FieldAccessLogicalFunction>& fieldAccessLogicalFunction)
-            { return fieldAccessLogicalFunction.withInferredDataType(schema).getAs<FieldAccessLogicalFunction>(); },
-        },
+        [&context](const auto& fieldAccessLogicalFunction)
+        { return context.inferType(fieldAccessLogicalFunction).template getAs<FieldAccessLogicalFunction>(); },
         field);
+}
+
+bool aggregationFieldAccessEqual(const AggregationFieldAccess& lhs, const AggregationFieldAccess& rhs)
+{
+    if (lhs.index() != rhs.index())
+    {
+        return false;
+    }
+    return std::visit(
+        [](const auto& lhsFn, const auto& rhsFn) -> bool
+        {
+            if constexpr (std::is_same_v<std::decay_t<decltype(lhsFn)>, std::decay_t<decltype(rhsFn)>>)
+            {
+                return StructuralFunctionEqual{}(lhsFn, rhsFn);
+            }
+            return false;
+        },
+        lhs,
+        rhs);
+}
+
+std::size_t aggregationFieldAccessHash(const AggregationFieldAccess& field) noexcept
+{
+    return std::visit(
+        [](const auto& fn) -> std::size_t { return fn ? std::hash<std::remove_cvref_t<decltype(*fn)>>{}(*fn) : 0; }, field);
 }
 }

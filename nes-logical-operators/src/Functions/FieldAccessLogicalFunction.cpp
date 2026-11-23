@@ -70,8 +70,9 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("{}", field.getLastName());
 }
 
-LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction FieldAccessLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
+    const auto& schema = context.getSchema();
     const auto newField = schema.getFieldByName(field.getLastName());
     if (!newField)
     {

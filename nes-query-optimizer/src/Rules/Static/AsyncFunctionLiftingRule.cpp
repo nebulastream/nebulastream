@@ -30,7 +30,6 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
@@ -77,10 +76,11 @@ std::set<std::type_index> AsyncFunctionLiftingRule::wants() const
 namespace
 {
 using UnboundProjection = ProjectionLogicalOperator::UnboundProjection;
-/// Parser expansion of IN/BETWEEN copies one written occurrence into several expression nodes.
-/// Resolve those copies to one produced field only within their evaluation region, never by
-/// expression structure, arguments, types or text, and never across clauses/operators.
-using RegionOutputs = std::unordered_map<AsyncInvocationId, Identifier>;
+/// Parser/inference desugaring (IN/BETWEEN/IS NAN) shares one AsyncCallLogicalFunction DAG node
+/// across several expression edges. Resolve shared pointer references to one produced field only
+/// within their evaluation region, never by expression structure, arguments, types or text, and
+/// never across clauses/operators.
+using RegionOutputs = std::unordered_map<TypedLogicalFunction<AsyncCallLogicalFunction>, Identifier>;
 
 bool containsAsync(const LogicalFunction& function)
 {
@@ -289,7 +289,6 @@ public:
         {
             /// PlanVisitor visits each original DAG node once, even with multiple parents.
             /// Newly emitted operators are not revisited during this pass.
-            claim(async.value()->getOccurrenceId());
             auto input = async.value()->getChild();
             const auto visible = orderedSchemas.get(original);
             RegionOutputs regionOutputs;
@@ -305,7 +304,7 @@ public:
                 /// Already normalized: do not add another restoring projection on later passes.
                 return current;
             }
-            /// withArguments/withChildren preserve both the occurrence and all multioutput bindings.
+            /// withArguments/withChildren preserve all multioutput bindings.
             const LogicalOperator normalized = async.value()->withChildrenUnsafe({input}).withArguments(arguments);
             std::vector<UnboundProjection> restored;
             for (const auto& field : visible)
@@ -331,17 +330,16 @@ private:
     OrderedSchemas orderedSchemas;
     size_t counter = 0;
     std::set<std::string> names;
-    /// Compare only strong occurrence tokens, never expressions or arguments.
-    std::vector<AsyncInvocationId> occurrences;
+    /// Compare only instance identity (pointer equality), never expression structure or arguments.
+    std::unordered_set<TypedLogicalFunction<AsyncCallLogicalFunction>> seenCalls;
 
-    void claim(const AsyncInvocationId& id)
+    void claim(const TypedLogicalFunction<AsyncCallLogicalFunction>& call)
     {
-        if (std::ranges::find(occurrences, id) != occurrences.end())
+        if (!seenCalls.insert(call).second)
         {
             throw InvalidQuerySyntax(
-                "Async normalization: reused occurrence token across independent evaluation regions; share a bound output field instead");
+                "Async normalization: reused async call node across independent evaluation regions; share a bound output field instead");
         }
-        occurrences.push_back(id);
     }
 
     static void rejectUnsupported(const LogicalFunction& expression, std::string_view context)
@@ -388,15 +386,14 @@ private:
         const auto call = expression.tryGetAs<AsyncCallLogicalFunction>();
         if (call)
         {
-            const auto occurrence = call.value()->getOccurrenceId();
-            if (const auto produced = regionOutputs.find(occurrence); produced != regionOutputs.end())
+            if (const auto produced = regionOutputs.find(*call); produced != regionOutputs.end())
             {
-                /// Resolve parser-generated copies before visiting their children: a copied
-                /// outer call must not execute or claim any nested occurrences again.
+                /// Resolve shared DAG references before visiting their children: a shared
+                /// outer call must not execute or claim any nested calls again.
                 return accessOutput(input, produced->second);
             }
             /// First encounter in this region must still be unique across the whole plan.
-            claim(occurrence);
+            claim(*call);
         }
         std::vector<LogicalFunction> arguments;
         for (const auto& child : expression.getChildren())
@@ -410,9 +407,8 @@ private:
             return expression.withChildren(arguments);
         }
         const auto binding = freshName("call");
-        input = AsyncLogicalOperator::create(
-            input, call.value()->getAsyncOperator(), std::move(arguments), {binding}, call.value()->getOccurrenceId());
-        regionOutputs.emplace(call.value()->getOccurrenceId(), binding);
+        input = AsyncLogicalOperator::create(input, call.value()->getAsyncOperator(), std::move(arguments), {binding});
+        regionOutputs.emplace(*call, binding);
         return accessOutput(input, binding);
     }
 };

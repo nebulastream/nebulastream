@@ -41,7 +41,7 @@ IsNullCheckLogicalFunction::IsNullCheckLogicalFunction(LogicalFunction child)
 
 bool IsNullCheckLogicalFunction::operator==(const IsNullCheckLogicalFunction& rhs) const
 {
-    return rhs.getChildren().size() == 1 and this->child == rhs.getChildren()[0];
+    return rhs.getChildren().size() == 1 and StructuralFunctionEqual{}(this->child, rhs.getChildren()[0]);
 }
 
 std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -49,10 +49,10 @@ std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("ISNULL({})", child.explain(verbosity));
 }
 
-LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     return copy;
 }
 

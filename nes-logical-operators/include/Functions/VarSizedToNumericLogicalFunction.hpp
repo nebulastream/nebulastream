@@ -41,7 +41,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] VarSizedToNumericLogicalFunction withDataType(const DataType& newDataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] VarSizedToNumericLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

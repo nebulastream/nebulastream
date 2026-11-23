@@ -42,7 +42,7 @@ CastToTypeLogicalFunction::CastToTypeLogicalFunction(const DataType dataType, Lo
 
 bool CastToTypeLogicalFunction::operator==(const CastToTypeLogicalFunction& rhs) const
 {
-    return this->castToType == rhs.castToType;
+    return this->castToType == rhs.castToType && StructuralFunctionEqual{}(this->child, rhs.child);
 }
 
 DataType CastToTypeLogicalFunction::getDataType() const
@@ -57,15 +57,15 @@ CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType
     return copy;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction CastToTypeLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
-    auto inferredChild = child.withInferredDataType(schema);
+    auto inferredChild = context.inferType(child);
     auto childDataType = inferredChild.getDataType();
 
     /// If the child is VARSIZED and the target is numeric, delegate to VarSizedToNumericLogicalFunction
     if (childDataType.type == DataType::Type::VARSIZED && castToType.isNumeric())
     {
-        return VarSizedToNumericLogicalFunction{inferredChild, castToType}.withInferredDataType(schema);
+        return VarSizedToNumericLogicalFunction{inferredChild, castToType}.withInferredDataType(context);
     }
 
     auto copy = *this;

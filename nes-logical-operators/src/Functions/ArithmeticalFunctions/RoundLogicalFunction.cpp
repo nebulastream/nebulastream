@@ -42,7 +42,7 @@ RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : child(std::m
 
 bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
-    return child == rhs.getChildren()[0];
+    return StructuralFunctionEqual{}(child, rhs.getChildren()[0]);
 }
 
 std::string RoundLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -59,10 +59,10 @@ DataType RoundLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction RoundLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (!copy.child.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply round function on non-numeric input function {}", copy.child);

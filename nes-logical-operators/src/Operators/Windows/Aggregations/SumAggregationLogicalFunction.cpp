@@ -137,7 +137,7 @@ std::string SumAggregationLogicalFunction::explain(ExplainVerbosity verbosity) c
 
 bool SumAggregationLogicalFunction::operator==(const SumAggregationLogicalFunction& other) const
 {
-    return inputFunction == other.inputFunction && aggregateType == other.aggregateType;
+    return aggregationFieldAccessEqual(inputFunction, other.inputFunction) && aggregateType == other.aggregateType;
 }
 
 Reflected
@@ -165,5 +165,6 @@ AggregationLogicalFunctionRegistryReturnType SumAggregationLogicalFunction::crea
 size_t
 std::hash<NES::SumAggregationLogicalFunction>::operator()(const NES::SumAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), aggregationFunction.getName());
+    return folly::hash::hash_combine(
+        NES::aggregationFieldAccessHash(aggregationFunction.getInputFunction()), aggregationFunction.getName());
 }

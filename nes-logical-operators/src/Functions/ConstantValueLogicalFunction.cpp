@@ -160,7 +160,7 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema<Field, Unordered>&) const
+LogicalFunction ConstantValueLogicalFunction::withInferredDataType(TypeInferenceContext&) const
 {
     if (dataType.type != DataType::Type::UNDEFINED)
     {

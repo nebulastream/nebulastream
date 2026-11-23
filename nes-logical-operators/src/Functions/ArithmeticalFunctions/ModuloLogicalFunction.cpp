@@ -43,7 +43,7 @@ ModuloLogicalFunction::ModuloLogicalFunction(LogicalFunction left, LogicalFuncti
 
 bool ModuloLogicalFunction::operator==(const ModuloLogicalFunction& rhs) const
 {
-    return left == rhs.left and right == rhs.right;
+    return StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
 }
 
 DataType ModuloLogicalFunction::getDataType() const
@@ -51,11 +51,11 @@ DataType ModuloLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ModuloLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction ModuloLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newDataType.has_value())
     {

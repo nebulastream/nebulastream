@@ -14,9 +14,12 @@
 
 #pragma once
 #include <concepts>
+#include <memory>
 #include <string>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <ErrorHandling.hpp>
 #include <nameof.hpp>
 
 namespace NES::detail
@@ -37,8 +40,27 @@ struct Reflector<detail::ErasedLogicalFunction>
 {
     Reflected operator()(const detail::ErasedLogicalFunction& function, const ReflectionContext& context) const
     {
-        return function.reflect(context);
+        return context.reflect(
+            detail::ReflectedLogicalFunction{.functionType = std::string{function.getType()}, .functionConfig = function.reflect(context)});
     }
+};
+
+template <>
+struct Unreflector<std::shared_ptr<const detail::ErasedLogicalFunction>>
+{
+    using ContextType = std::shared_ptr<SharedPointerDeserializationState>;
+
+    explicit Unreflector(ContextType state);
+    std::shared_ptr<const detail::ErasedLogicalFunction> operator()(const Reflected& data, const ReflectionContext& context) const;
+
+private:
+    ContextType state;
+};
+
+template <>
+struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
+{
+    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function, const ReflectionContext& context) const;
 };
 
 template <LogicalFunctionConcept Checked>
@@ -46,14 +68,8 @@ struct Reflector<TypedLogicalFunction<Checked>>
 {
     Reflected operator()(const TypedLogicalFunction<Checked>& function, const ReflectionContext& context) const
     {
-        return context.reflect(detail::ReflectedLogicalFunction{std::string{function.getType()}, Reflector<Checked>{}(*function, context)});
+        return context.reflect(LogicalFunction{function});
     }
-};
-
-template <>
-struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
-{
-    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function, const ReflectionContext& context) const;
 };
 
 template <>
@@ -68,6 +84,10 @@ struct Unreflector<TypedLogicalFunction<Checked>>
     TypedLogicalFunction<Checked> operator()(const Reflected& rfl, const ReflectionContext& context) const
     {
         auto erased = context.unreflect<LogicalFunction>(rfl);
+        if (!erased)
+        {
+            throw CannotDeserialize("Expected logical function of type {}, but got null", NAMEOF_TYPE(Checked));
+        }
         if (auto casted = erased.tryGetAs<Checked>())
         {
             return casted.value();
@@ -76,8 +96,7 @@ struct Unreflector<TypedLogicalFunction<Checked>>
     }
 };
 
-static_assert(requires(LogicalFunction logicalFunction, ReflectionContext& context) {
-    { context.reflect(logicalFunction) } -> std::same_as<Reflected>;
-});
+static_assert(HasTwoParamReflector<LogicalFunction>);
+static_assert(HasTwoParamUnreflector<LogicalFunction>);
 
 }

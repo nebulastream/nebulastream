@@ -124,7 +124,7 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
 
     /// Retrieves all leaf functions, as we need the leaf functions (join comparison) to check if they have the same number and data types
     /// for both join sides.
-    std::unordered_set<LogicalFunction> parentsOfJoinComparisons;
+    std::unordered_set<LogicalFunction, StructuralFunctionHash, StructuralFunctionEqual> parentsOfJoinComparisons;
     for (auto itr : BFSRange<LogicalFunction>(joinFunction))
     {
         /// If any child is a leaf function, we put the current function into the set

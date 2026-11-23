@@ -43,7 +43,7 @@ LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction r
 
 bool LessLogicalFunction::operator==(const LessLogicalFunction& rhs) const
 {
-    return this->left == rhs.left && this->right == rhs.right;
+    return StructuralFunctionEqual{}(this->left, rhs.left) && StructuralFunctionEqual{}(this->right, rhs.right);
 }
 
 std::string LessLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -56,11 +56,11 @@ DataType LessLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction LessLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction LessLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = copy.left.withInferredDataType(schema);
-    copy.right = copy.right.withInferredDataType(schema);
+    copy.left = context.inferType(copy.left);
+    copy.right = context.inferType(copy.right);
     if (!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric())
     {
         throw CannotInferStamp(

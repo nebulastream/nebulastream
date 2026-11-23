@@ -44,8 +44,8 @@ EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFuncti
 
 bool EqualsLogicalFunction::operator==(const EqualsLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    const bool simpleMatch = StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
+    const bool commutativeMatch = StructuralFunctionEqual{}(left, rhs.right) and StructuralFunctionEqual{}(right, rhs.left);
     return simpleMatch or commutativeMatch;
 }
 
@@ -54,11 +54,11 @@ DataType EqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction EqualsLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = copy.left.withInferredDataType(schema);
-    copy.right = copy.right.withInferredDataType(schema);
+    copy.left = context.inferType(copy.left);
+    copy.right = context.inferType(copy.right);
     if (copy.left.getDataType() != copy.right.getDataType())
     {
         if (!copy.left.getDataType().join(copy.right.getDataType()).has_value())

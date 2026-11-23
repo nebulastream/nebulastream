@@ -14,6 +14,7 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <functional>
@@ -148,7 +149,12 @@ std::unordered_map<Field, std::unordered_set<Field>> ProjectionLogicalOperator::
 
 bool ProjectionLogicalOperator::operator==(const ProjectionLogicalOperator& rhs) const
 {
-    return projections == rhs.projections && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
+    return std::ranges::equal(
+               projections,
+               rhs.projections,
+               [](const UnboundProjection& lhsProj, const UnboundProjection& rhsProj)
+               { return lhsProj.first == rhsProj.first && StructuralFunctionEqual{}(lhsProj.second, rhsProj.second); })
+        && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 };
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -200,11 +206,12 @@ void ProjectionLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     auto inputSchema = child->getOutputSchema();
+    TypeInferenceContext context{inputSchema};
     projections = projections
         | std::views::transform(
-                      [&inputSchema](const UnboundProjection& projection)
+                      [&context](const UnboundProjection& projection)
                       {
-                          auto inferredFunction = projection.second.withInferredDataType(inputSchema);
+                          auto inferredFunction = context.inferType(projection.second);
                           return UnboundProjection{projection.first, inferredFunction};
                       })
         | std::ranges::to<std::vector>();
@@ -349,8 +356,15 @@ Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const R
 
 std::size_t std::hash<NES::ProjectionLogicalOperator>::operator()(const NES::ProjectionLogicalOperator& projectionOperator) const noexcept
 {
+    struct StructuralProjectionHasher
+    {
+        std::size_t operator()(const NES::ProjectionLogicalOperator::UnboundProjection& projection) const noexcept
+        {
+            return folly::hash::hash_combine(projection.first, NES::StructuralFunctionHash{}(projection.second));
+        }
+    };
     /// NOLINTBEGIN(readability-magic-numbers)
     return folly::hash::commutative_hash_combine_range_generic(
-        13, folly::hash::StdHasher{}, projectionOperator.projections.begin(), projectionOperator.projections.end());
+        13, StructuralProjectionHasher{}, projectionOperator.projections.begin(), projectionOperator.projections.end());
     /// NOLINTEND(readability-magic-numbers)
 }

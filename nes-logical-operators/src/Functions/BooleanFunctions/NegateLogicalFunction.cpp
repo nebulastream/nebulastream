@@ -41,7 +41,7 @@ NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child) : child(std:
 
 bool NegateLogicalFunction::operator==(const NegateLogicalFunction& rhs) const
 {
-    return this->child == rhs.getChildren()[0];
+    return StructuralFunctionEqual{}(this->child, rhs.getChildren()[0]);
 }
 
 std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -49,10 +49,10 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction NegateLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (not copy.child.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", copy.child.getDataType());

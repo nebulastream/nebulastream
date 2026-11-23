@@ -45,7 +45,7 @@ public:
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] ToBase64LogicalFunction withDataType(const DataType& dataType) const;
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ToBase64LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

@@ -22,27 +22,23 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Schema/Field.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
-/// Transient scalar syntax adapter. Each construction is a distinct invocation.
+/// This class adapts the table-valued-function semantics of AsyncLogicalOperator as a scalar function.
+/// Instance identity (ptr equality) tracks distinct invocations.
 class AsyncCallLogicalFunction
 {
 public:
-    AsyncCallLogicalFunction(const std::string& name, std::vector<LogicalFunction> args);
+    AsyncCallLogicalFunction(const std::string& asyncOperatorName, std::vector<LogicalFunction> args);
 
     [[nodiscard]] std::string getOperatorName() const { return implementation.getType(); }
 
     [[nodiscard]] const AsyncOperator& getAsyncOperator() const { return implementation; }
 
     [[nodiscard]] const std::vector<LogicalFunction>& getArguments() const { return arguments; }
-
-    [[nodiscard]] AsyncInvocationId getOccurrenceId() const { return occurrence; }
 
     [[nodiscard]] Identifier getOutputName() const { return *implementation.getOutputSchema().begin()->getFullyQualifiedName().begin(); }
 
@@ -55,17 +51,16 @@ public:
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] AsyncCallLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
-    [[nodiscard]] bool operator==(const AsyncCallLogicalFunction& rhs) const { return occurrence == rhs.occurrence; }
+    [[nodiscard]] bool operator==(const AsyncCallLogicalFunction& rhs) const;
 
 private:
     friend struct Unreflector<AsyncCallLogicalFunction>;
-    AsyncCallLogicalFunction(AsyncOperator implementation, std::vector<LogicalFunction> arguments, AsyncInvocationId occurrence);
+    AsyncCallLogicalFunction(AsyncOperator implementation, std::vector<LogicalFunction> arguments);
     void validateScalar() const;
     AsyncOperator implementation;
     std::vector<LogicalFunction> arguments;
-    AsyncInvocationId occurrence;
 };
 
 namespace detail
@@ -76,7 +71,6 @@ struct ReflectedAsyncCallLogicalFunction
     std::vector<LogicalFunction> arguments;
     Identifier outputName;
     DataType dataType;
-    AsyncInvocationId occurrence;
 };
 }
 
@@ -98,8 +92,5 @@ static_assert(LogicalFunctionConcept<AsyncCallLogicalFunction>);
 template <>
 struct std::hash<NES::AsyncCallLogicalFunction>
 {
-    size_t operator()(const NES::AsyncCallLogicalFunction& function) const noexcept
-    {
-        return std::hash<NES::AsyncInvocationId>{}(function.getOccurrenceId());
-    }
+    size_t operator()(const NES::AsyncCallLogicalFunction& function) const noexcept;
 };

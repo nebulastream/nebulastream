@@ -118,6 +118,22 @@ SELECT id FROM nullableStream WHERE f64 IS NaN OR f64 IS NULL INTO idSink;
 3
 
 
+# Integer operands also propagate NULL rather than folding every row to a non-null false.
+CREATE LOGICAL SOURCE nullableIntStream(id UINT64 NOT NULL, i64 INT64);
+CREATE PHYSICAL SOURCE FOR nullableIntStream TYPE File;
+ATTACH INLINE
+1,7
+2,
+
+SELECT id AS id, ISNAN(i64) AS res FROM nullableIntStream INTO idNullableBoolSink;
+----
+1,false
+2,NULL
+
+SELECT id FROM nullableIntStream WHERE i64 IS NOT NAN INTO idSink;
+----
+1
+
 # Non-numeric input is rejected during schema inference.
 CREATE LOGICAL SOURCE nonNumericStream(id UINT64 NOT NULL, txt VARSIZED NOT NULL, flag BOOLEAN NOT NULL);
 CREATE PHYSICAL SOURCE FOR nonNumericStream TYPE File;

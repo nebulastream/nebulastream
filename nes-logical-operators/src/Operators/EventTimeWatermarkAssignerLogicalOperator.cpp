@@ -92,14 +92,16 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
 
 bool EventTimeWatermarkAssignerLogicalOperator::operator==(const EventTimeWatermarkAssignerLogicalOperator& rhs) const
 {
-    return onField == rhs.onField && unit == rhs.unit && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
+    return StructuralFunctionEqual{}(onField, rhs.onField) && unit == rhs.unit && outputSchema == rhs.outputSchema
+        && traitSet == rhs.traitSet;
 }
 
 void EventTimeWatermarkAssignerLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     const auto& inputSchema = child->getOutputSchema();
-    onField = onField.withInferredDataType(inputSchema);
+    TypeInferenceContext context{inputSchema};
+    onField = context.inferType(onField);
     outputSchema = unbind(inputSchema);
 }
 
@@ -204,5 +206,6 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::getChild() const
 uint64_t std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>::operator()(
     const NES::EventTimeWatermarkAssignerLogicalOperator& eventTimeWatermarkAssignerOperator) const noexcept
 {
-    return folly::hash::hash_combine(eventTimeWatermarkAssignerOperator.unit, eventTimeWatermarkAssignerOperator.onField);
+    return folly::hash::hash_combine(
+        eventTimeWatermarkAssignerOperator.unit, NES::StructuralFunctionHash{}(eventTimeWatermarkAssignerOperator.onField));
 }

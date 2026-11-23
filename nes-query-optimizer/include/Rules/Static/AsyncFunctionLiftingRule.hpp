@@ -25,12 +25,13 @@ namespace NES
 {
 
 /// Mandatory occurrence-based normalization after type inference and before semantic completion.
-/// Each scalar async occurrence becomes its own unary AsyncLogicalOperator, in child/source
-/// order, preserving its invocation ID. Ordinary projections materialize synchronous arguments;
-/// final projections and selection restoration hide all internal bindings (including from '*').
-/// Parser-generated IN/BETWEEN copies of one invocation ID read its produced field within
-/// one evaluation region. Distinct calls are never structurally compared or merged; sharing
-/// across regions requires an explicit bound output field.
+/// Each scalar async call node becomes its own unary AsyncLogicalOperator, in child/source
+/// order. Ordinary projections materialize synchronous arguments; final projections and
+/// selection restoration hide all internal bindings (including from '*').
+/// Shared DAG references (e.g. from IN/BETWEEN/IS NAN desugaring, preserved through
+/// TypeInferenceContext) resolve by pointer identity to their produced field within one
+/// evaluation region. Distinct call nodes are never structurally merged; sharing across
+/// regions requires an explicit bound output field.
 /// Conditional/lazy and unsupported operator expression contexts reject async calls.
 /// The historical rule name is retained for configuration compatibility.
 class AsyncFunctionLiftingRule

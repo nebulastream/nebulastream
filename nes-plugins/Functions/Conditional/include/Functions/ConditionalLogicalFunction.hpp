@@ -36,7 +36,10 @@ struct WhenThenLogicalFunction
     LogicalFunction when;
     LogicalFunction then;
 
-    [[nodiscard]] bool operator==(const WhenThenLogicalFunction& rhs) const = default;
+    [[nodiscard]] bool operator==(const WhenThenLogicalFunction& rhs) const
+    {
+        return StructuralFunctionEqual{}(when, rhs.when) and StructuralFunctionEqual{}(then, rhs.then);
+    }
 };
 
 /// Represents a CASE WHEN expression: at least one (when, then) pair followed by the default result
@@ -53,7 +56,7 @@ public:
     [[nodiscard]] bool operator==(const ConditionalLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] ConditionalLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

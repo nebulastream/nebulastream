@@ -82,10 +82,10 @@ DataType::Type inferAbsoluteResultType(const DataType::Type inputType)
 }
 }
 
-LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction AbsoluteLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     AbsoluteLogicalFunction copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (!copy.child.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply absolute function on non-numeric input function {}", copy.child);
@@ -116,7 +116,7 @@ std::string_view AbsoluteLogicalFunction::getType() const
 
 bool AbsoluteLogicalFunction::operator==(const AbsoluteLogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const

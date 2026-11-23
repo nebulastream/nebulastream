@@ -14,6 +14,7 @@
 
 #include <Functions/AsyncCallLogicalFunction.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <utility>
@@ -21,13 +22,11 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/AsyncArgumentsWithConstants.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Schema/Field.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncOperatorReflection.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/UUID.hpp>
+#include <folly/hash/Hash.h>
 #include <AsyncOperatorRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -47,17 +46,23 @@ AsyncOperator createAsyncConfig(const std::string& name, const std::vector<Logic
 }
 }
 
-AsyncCallLogicalFunction::AsyncCallLogicalFunction(const std::string& name, std::vector<LogicalFunction> args)
-    : implementation(createAsyncConfig(name, args)), arguments(std::move(args)), occurrence(AsyncInvocationId{generateUUID()})
+AsyncCallLogicalFunction::AsyncCallLogicalFunction(const std::string& asyncOperatorName, std::vector<LogicalFunction> args)
+    : implementation(createAsyncConfig(asyncOperatorName, args)), arguments(std::move(args))
 {
     validateScalar();
 }
 
-AsyncCallLogicalFunction::AsyncCallLogicalFunction(
-    AsyncOperator implementation, std::vector<LogicalFunction> arguments, AsyncInvocationId occurrence)
-    : implementation(std::move(implementation)), arguments(std::move(arguments)), occurrence(occurrence)
+AsyncCallLogicalFunction::AsyncCallLogicalFunction(AsyncOperator implementation, std::vector<LogicalFunction> arguments)
+    : implementation(std::move(implementation)), arguments(std::move(arguments))
 {
     validateScalar();
+}
+
+bool AsyncCallLogicalFunction::operator==(const AsyncCallLogicalFunction& rhs) const
+{
+    return getOperatorName() == rhs.getOperatorName() && implementation.getOutputSchema() == rhs.implementation.getOutputSchema()
+        && implementation.maxConcurrency() == rhs.implementation.maxConcurrency()
+        && std::ranges::equal(arguments, rhs.arguments, StructuralFunctionEqual{});
 }
 
 void AsyncCallLogicalFunction::validateScalar() const
@@ -81,14 +86,14 @@ AsyncCallLogicalFunction AsyncCallLogicalFunction::withChildren(const std::vecto
     return copy;
 }
 
-LogicalFunction AsyncCallLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction AsyncCallLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
     copy.arguments.clear();
     copy.arguments.reserve(arguments.size());
     for (const auto& argument : arguments)
     {
-        copy.arguments.push_back(argument.withInferredDataType(schema));
+        copy.arguments.push_back(context.inferType(argument));
     }
     copy.implementation = implementation.withInferredArguments(makeAsyncArgumentsWithConstants(copy.arguments));
     copy.validateScalar();
@@ -122,19 +127,28 @@ Reflected Reflector<AsyncCallLogicalFunction>::operator()(const AsyncCallLogical
             .implementation = function.getAsyncOperator(),
             .arguments = function.getArguments(),
             .outputName = function.getOutputName(),
-            .dataType = function.getDataType(),
-            .occurrence = function.getOccurrenceId()});
+            .dataType = function.getDataType()});
 }
 
 AsyncCallLogicalFunction
 Unreflector<AsyncCallLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto value = context.unreflect<detail::ReflectedAsyncCallLogicalFunction>(reflected);
-    AsyncCallLogicalFunction result(std::move(value.implementation), std::move(value.arguments), value.occurrence);
+    AsyncCallLogicalFunction result(std::move(value.implementation), std::move(value.arguments));
     if (result.getOutputName() != value.outputName || result.getDataType() != value.dataType)
     {
         throw CannotDeserialize("AsyncCall payload does not match the serialized signature");
     }
     return result;
 }
+}
+
+size_t std::hash<NES::AsyncCallLogicalFunction>::operator()(const NES::AsyncCallLogicalFunction& function) const noexcept
+{
+    size_t seed = folly::hash::hash_combine(function.getOperatorName(), function.getOutputName(), function.getDataType());
+    for (const auto& arg : function.getArguments())
+    {
+        seed = folly::hash::hash_combine(seed, NES::StructuralFunctionHash{}(arg));
+    }
+    return seed;
 }

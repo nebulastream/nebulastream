@@ -71,10 +71,10 @@ bool VarSizedToNumericLogicalFunction::isSupportedNumericType(const DataType::Ty
     }
 }
 
-LogicalFunction VarSizedToNumericLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction VarSizedToNumericLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (copy.child.getDataType().type != DataType::Type::UNDEFINED && copy.child.getDataType().type != DataType::Type::VARSIZED)
     {
         throw DifferentFieldTypeExpected("VarSizedToNumeric expects a VARSIZED input, but got {}", copy.child.getDataType());
@@ -110,7 +110,7 @@ std::string_view VarSizedToNumericLogicalFunction::getType() const
 
 bool VarSizedToNumericLogicalFunction::operator==(const VarSizedToNumericLogicalFunction& rhs) const
 {
-    return this->targetType == rhs.targetType && this->targetType == rhs.targetType && this->child == rhs.child;
+    return this->targetType == rhs.targetType && StructuralFunctionEqual{}(this->child, rhs.child);
 }
 
 std::string VarSizedToNumericLogicalFunction::explain(ExplainVerbosity verbosity) const

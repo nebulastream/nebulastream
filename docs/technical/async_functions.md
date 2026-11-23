@@ -30,7 +30,7 @@ call identity. With retries disabled and successful execution:
 - A subquery that computes a result once can expose that field more than once in an outer projection without another call.
 - Discarding an async result in an outer projection does not remove the invocation.
 - A filter above an async operator cannot move below it and suppress its side effects.
-- Parser-generated copies of one `IN`/`BETWEEN` left-hand expression reference the same occurrence and execute it only once.
+- Shared references introduced by `IN`/`BETWEEN` and `IS NAN` desugaring execute the referenced async call only once.
 
 This is an invocation-count contract, **not transactional exactly-once HTTP delivery**. Explicit retries can repeat a POST
 that the server already processed. Failures or cancellation can interrupt calls.
@@ -55,8 +55,11 @@ The original visible schema is captured before introducing helpers. `SELECT *` e
 fields introduced for a predicate are removed before its result is exposed to parent operators. Generated names avoid
 input fields, user aliases, and other generated names.
 
-Within one expression region, occurrence IDs resolve parser-generated references to an already produced field. This does
-not compare arguments or merge separately written calls. WHERE and SELECT are independent regions; no cross-clause reuse lookup exists.
+Within one expression region, pointer identity resolves shared function-DAG references to an already produced field.
+`TypeInferenceContext` preserves that sharing while rebuilding functions, including across all expression roots of a
+projection. It never merges separately allocated calls by comparing arguments or structure. WHERE and SELECT are independent
+regions; no cross-clause reuse lookup exists. Logical-function reflection also preserves DAG aliases through explicitly
+injected shared-pointer state; no async-specific occurrence UUID is needed.
 Nested calls initially use one
 operator/stage each. Synchronous work between calls remains an ordinary projection between operators. There is no
 structural collection/substitution pass and no EXPLAIN-derived expression key.

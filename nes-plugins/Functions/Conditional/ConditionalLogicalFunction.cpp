@@ -103,7 +103,7 @@ std::string_view ConditionalLogicalFunction::getType() const
 
 bool ConditionalLogicalFunction::operator==(const ConditionalLogicalFunction& rhs) const
 {
-    return whenThens == rhs.whenThens and elseCase == rhs.elseCase;
+    return whenThens == rhs.whenThens and StructuralFunctionEqual{}(elseCase, rhs.elseCase);
 }
 
 std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -115,18 +115,18 @@ std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("{}({})", NAME, fmt::join(explained, ", "));
 }
 
-LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction ConditionalLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     /// The default result carries the type of the whole expression.
-    const auto inferredElseCase = elseCase.withInferredDataType(schema);
+    const auto inferredElseCase = context.inferType(elseCase);
     auto resultType = inferredElseCase.getDataType();
 
     std::vector<WhenThenLogicalFunction> inferredWhenThens;
     inferredWhenThens.reserve(whenThens.size());
     for (const auto& [when, then] : whenThens)
     {
-        auto inferredWhen = when.withInferredDataType(schema);
-        auto inferredThen = then.withInferredDataType(schema);
+        auto inferredWhen = context.inferType(when);
+        auto inferredThen = context.inferType(then);
         if (not inferredWhen.getDataType().isType(DataType::Type::BOOLEAN))
         {
             throw DifferentFieldTypeExpected("CASE WHEN condition must be BOOLEAN, but got {}", inferredWhen.getDataType());

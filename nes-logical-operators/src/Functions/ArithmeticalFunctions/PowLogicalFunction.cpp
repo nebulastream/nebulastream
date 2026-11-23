@@ -42,7 +42,7 @@ PowLogicalFunction::PowLogicalFunction(LogicalFunction left, LogicalFunction rig
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
-    return left == rhs.left and right == rhs.right;
+    return StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
 }
 
 std::string PowLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -55,11 +55,11 @@ DataType PowLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction PowLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction PowLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     if ((!copy.left.getDataType().isNumeric()) || (!copy.right.getDataType().isNumeric()))
     {
         throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);

@@ -22,6 +22,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -37,6 +38,8 @@
 
 namespace NES
 {
+
+class TypeInferenceContext;
 
 namespace detail
 {
@@ -70,7 +73,7 @@ concept LogicalFunctionConcept = requires(
     ExplainVerbosity verbosity,
     std::vector<LogicalFunction> children,
     DataType dataType,
-    Schema<Field, Unordered> schema,
+    TypeInferenceContext& typeInferenceContext,
     const ReflectionContext& context,
     const T& rhs) {
     /// Returns a string representation of the function
@@ -85,8 +88,8 @@ concept LogicalFunctionConcept = requires(
     /// Creates a new function with the given children
     { thisFunction.withChildren(children) } -> std::convertible_to<T>;
 
-    /// Creates a new function with inferred data type based on input schema
-    { thisFunction.withInferredDataType(schema) } -> std::same_as<LogicalFunction>;
+    /// Creates a new function with inferred data type using the type inference context
+    { thisFunction.withInferredDataType(typeInferenceContext) } -> std::same_as<LogicalFunction>;
 
     /// Returns the type of the function
     { thisFunction.getType() } -> std::convertible_to<std::string_view>;
@@ -107,7 +110,7 @@ struct ErasedLogicalFunction
 
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual DataType getDataType() const = 0;
-    [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const = 0;
+    [[nodiscard]] virtual LogicalFunction withInferredDataType(TypeInferenceContext& context) const = 0;
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
@@ -264,14 +267,15 @@ struct TypedLogicalFunction
         std::unreachable();
     }
 
+    [[nodiscard]] explicit operator bool() const noexcept { return self != nullptr; }
+
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const { return self->explain(verbosity); };
 
     [[nodiscard]] DataType getDataType() const { return self->getDataType(); };
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const
-    {
-        return self->withInferredDataType(schema);
-    };
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
+
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren(); };
 
@@ -282,15 +286,23 @@ struct TypedLogicalFunction
 
     [[nodiscard]] std::string_view getType() const { return self->getType(); };
 
+    /// Identity comparison: two wrappers are equal if they refer to the same underlying function instance,
+    /// analogous to comparing pointers. Compare dereferenced functions (`*lhs == *rhs`) for structural equality.
     [[nodiscard]] bool operator==(const TypedLogicalFunction& other) const
     requires(!std::is_same_v<Checked, NES::detail::ErasedLogicalFunction>)
     {
-        return self->equals(*other.self);
+        return self == other.self;
     };
 
-    [[nodiscard]] bool operator==(const LogicalFunction& other) const { return self->equals(*other.self); };
+    [[nodiscard]] bool operator==(const LogicalFunction& other) const { return self == other.self; };
 
 private:
+    friend class TypeInferenceContext;
+    friend struct std::hash<TypedLogicalFunction>;
+    friend struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>;
+    friend struct Unreflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>;
+    friend struct Unreflector<std::shared_ptr<const detail::ErasedLogicalFunction>>;
+
     template <typename FriendChecked>
     friend struct TypedLogicalFunction;
 
@@ -324,18 +336,9 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] FunctionType get() const { return impl; }
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const override
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const override
     {
-        return impl.withInferredDataType(schema);
-    }
-
-    [[nodiscard]] bool operator==(const LogicalFunction& other) const
-    {
-        if (auto ptr = dynamic_cast<const FunctionModel*>(&other))
-        {
-            return impl.operator==(ptr->impl);
-        }
-        return false;
+        return impl.withInferredDataType(context);
     }
 
     [[nodiscard]] bool equals(const ErasedLogicalFunction& other) const override
@@ -370,15 +373,47 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lfn)
     return os << lfn.explain(ExplainVerbosity::Debug);
 }
 
+/// Hash/equality functors that defer to the dereferenced function, like hashing/comparing through a pointer.
+/// Structural comparison checks the function's own state and recursively compares children structurally.
+/// Use these for containers or comparisons that should deduplicate structurally-identical functions regardless of instance identity.
+struct StructuralFunctionHash
+{
+    /// TODO #1658 implement proper structural hashing for logical functions
+    std::size_t operator()(const LogicalFunction& lfn) const noexcept
+    {
+        return lfn ? std::hash<std::string_view>{}(lfn.getType()) : 0;
+    }
+};
+
+struct StructuralFunctionEqual
+{
+    bool operator()(const LogicalFunction& lhs, const LogicalFunction& rhs) const
+    {
+        if (lhs == rhs)
+        {
+            return true;
+        }
+        if (!lhs || !rhs)
+        {
+            return false;
+        }
+        return *lhs == *rhs;
+    }
+};
+
 }
 
+/// Hash is identity-based (the wrapped instance), consistent with the identity operator==.
+/// Use StructuralFunctionHash/StructuralFunctionEqual for structural container semantics.
 namespace std
 {
-/// TODO #1658 implement proper hash hashing for logical functions
 template <>
 struct hash<NES::LogicalFunction>
 {
-    std::size_t operator()(const NES::LogicalFunction& lfn) const noexcept { return std::hash<std::string_view>{}(lfn.getType()); }
+    std::size_t operator()(const NES::LogicalFunction& lfn) const noexcept
+    {
+        return std::hash<std::shared_ptr<const NES::detail::ErasedLogicalFunction>>{}(lfn.self);
+    }
 };
 
 /// NOLINTBEGIN(cert-dcl58-cpp)
@@ -387,11 +422,55 @@ struct hash<NES::TypedLogicalFunction<FunctionType>>
 {
     std::size_t operator()(const NES::TypedLogicalFunction<FunctionType>& function) const noexcept
     {
-        return std::hash<FunctionType>{}(*function);
+        return std::hash<std::shared_ptr<const NES::detail::ErasedLogicalFunction>>{}(function.self);
     }
 };
 
 /// NOLINTEND(cert-dcl58-cpp)
+}
+
+namespace NES
+{
+/// Context threaded through LogicalFunction::withInferredDataType to preserve shared DAG nodes.
+/// Caches each inferred function by pointer identity so that shared children (e.g. from BETWEEN, IN,
+/// or IS NAN desugaring) map to the same inferred LogicalFunction instance instead of being duplicated.
+class TypeInferenceContext
+{
+public:
+    explicit TypeInferenceContext(Schema<Field, Unordered> schema) : schema(std::move(schema)) { }
+
+    [[nodiscard]] const Schema<Field, Unordered>& getSchema() const { return schema; }
+
+    [[nodiscard]] LogicalFunction inferType(const LogicalFunction& function)
+    {
+        PRECONDITION(function.self != nullptr, "Cannot infer data type of an empty LogicalFunction");
+        if (const auto it = inferredFunctions.find(function); it != inferredFunctions.end())
+        {
+            return it->second;
+        }
+        auto inferred = function.self->withInferredDataType(*this);
+        inferredFunctions.emplace(function, inferred);
+        inferredFunctions.try_emplace(inferred, inferred);
+        return inferred;
+    }
+
+private:
+    Schema<Field, Unordered> schema;
+    std::unordered_map<LogicalFunction, LogicalFunction> inferredFunctions;
+};
+
+template <typename Checked>
+LogicalFunction TypedLogicalFunction<Checked>::withInferredDataType(TypeInferenceContext& context) const
+{
+    return context.inferType(*this);
+}
+
+template <typename Checked>
+LogicalFunction TypedLogicalFunction<Checked>::withInferredDataType(const Schema<Field, Unordered>& schema) const
+{
+    TypeInferenceContext context{schema};
+    return context.inferType(*this);
+}
 }
 
 FMT_OSTREAM(NES::LogicalFunction);

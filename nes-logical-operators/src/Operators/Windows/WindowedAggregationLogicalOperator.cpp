@@ -126,16 +126,16 @@ void WindowedAggregationLogicalOperator::inferLocalSchema()
     PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     const Schema<Field, Unordered>& inputSchema = child->getOutputSchema();
 
+    TypeInferenceContext context{inputSchema};
     groupingKeys = std::visit(
-        [&inputSchema](const auto& visitingGroupingKey) -> GroupingKeyType
+        [&context](const auto& visitingGroupingKey) -> GroupingKeyType
         {
             using VectorType = std::vector<std::pair<TypedLogicalFunction<FieldAccessLogicalFunction>, std::optional<Identifier>>>;
             return visitingGroupingKey
                 | std::views::transform(
                        [&](const auto& key) -> VectorType::value_type
                        {
-                           return std::make_pair(
-                               key.first.withInferredDataType(inputSchema).template getAs<FieldAccessLogicalFunction>(), key.second);
+                           return std::make_pair(context.inferType(key.first).template getAs<FieldAccessLogicalFunction>(), key.second);
                        })
                 | std::ranges::to<VectorType>();
         },
@@ -230,7 +230,7 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
                 for (uint64_t i = 0; i < thisGroupingKey.size(); i++)
                 {
                     if (thisGroupingKey[i].second != rhsGroupingKeys[i].second
-                        || !thisGroupingKey[i].first.operator==(rhsGroupingKeys[i].first))
+                        || !StructuralFunctionEqual{}(thisGroupingKey[i].first, rhsGroupingKeys[i].first))
                     {
                         return false;
                     }
@@ -451,11 +451,23 @@ TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogica
 std::size_t std::hash<NES::WindowedAggregationLogicalOperator>::operator()(
     const NES::WindowedAggregationLogicalOperator& windowedAggregationLogicalOperator) const noexcept
 {
+    const auto groupingKeysHash = std::visit(
+        [](const auto& keys) -> std::size_t
+        {
+            std::size_t seed = keys.size();
+            for (const auto& [fieldAccess, alias] : keys)
+            {
+                const auto fieldHash = fieldAccess ? std::hash<std::remove_cvref_t<decltype(*fieldAccess)>>{}(*fieldAccess) : 0;
+                seed = folly::hash::hash_combine_generic(NES::Hash{}, seed, fieldHash, alias);
+            }
+            return seed;
+        },
+        windowedAggregationLogicalOperator.groupingKeys);
     return folly::hash::hash_combine_generic(
         NES::Hash{},
         windowedAggregationLogicalOperator.windowType,
         windowedAggregationLogicalOperator.timestampField,
-        windowedAggregationLogicalOperator.groupingKeys,
+        groupingKeysHash,
         windowedAggregationLogicalOperator.aggregationFunctions);
 }
 

@@ -76,7 +76,7 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
 
 bool SelectionLogicalOperator::operator==(const SelectionLogicalOperator& rhs) const
 {
-    return predicate == rhs.predicate && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
+    return StructuralFunctionEqual{}(predicate, rhs.predicate) && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 };
 
 std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
@@ -93,7 +93,8 @@ void SelectionLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     const auto inputSchema = child->getOutputSchema();
-    predicate = predicate.withInferredDataType(inputSchema);
+    TypeInferenceContext context{inputSchema};
+    predicate = context.inferType(predicate);
     if (not predicate.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
@@ -185,5 +186,5 @@ Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Re
 
 uint64_t std::hash<NES::SelectionLogicalOperator>::operator()(const NES::SelectionLogicalOperator& op) const noexcept
 {
-    return std::hash<NES::LogicalFunction>{}(op.getPredicate());
+    return NES::StructuralFunctionHash{}(op.getPredicate());
 }

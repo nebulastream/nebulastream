@@ -42,7 +42,7 @@ SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : child(std::mov
 
 bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -59,10 +59,10 @@ DataType SqrtLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction SqrtLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (!copy.child.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply sqrt function on non-numeric input function {}", copy.child);

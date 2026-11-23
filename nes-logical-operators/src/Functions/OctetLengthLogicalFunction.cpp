@@ -40,7 +40,7 @@ OctetLengthLogicalFunction::OctetLengthLogicalFunction(LogicalFunction child) : 
 
 bool OctetLengthLogicalFunction::operator==(const OctetLengthLogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 std::string OctetLengthLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -48,10 +48,10 @@ std::string OctetLengthLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("OCTET_LENGTH({})", child.explain(verbosity));
 }
 
-LogicalFunction OctetLengthLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction OctetLengthLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (not copy.child.getDataType().isType(DataType::Type::VARSIZED))
     {
         throw DifferentFieldTypeExpected("OCTET_LENGTH expects a VARSIZED input but got {}", copy.child.getDataType());

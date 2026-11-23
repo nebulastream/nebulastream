@@ -45,7 +45,7 @@ public:
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] CastFromUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] CastFromUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

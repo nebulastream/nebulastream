@@ -16,6 +16,7 @@
 /// optimizer), the reflection round-trip, and the textual explain() form. Execution results, type inference,
 /// and argument validation are exercised by nes-systests/function/Conditional.test instead.
 
+#include <memory>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -28,6 +29,8 @@
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/SharedPointerDeserializationState.hpp>
+#include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <BaseUnitTest.hpp>
 
 namespace NES
@@ -50,9 +53,12 @@ TEST(ConditionalLogicalFunctionTest, SerializeDeserializeRoundtrip)
          constant(DataType::Type::VARSIZED, "B"),
          constant(DataType::Type::VARSIZED, "C")}}};
 
-    const auto reflected = ReflectionContext{}.reflect(original);
-    const auto deserialized = ReflectionContext{}.unreflect<LogicalFunction>(reflected);
-    EXPECT_TRUE(original == deserialized);
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
+    const auto reflected = writer.reflect(original);
+    const auto deserialized = reader.unreflect<LogicalFunction>(reflected);
+    EXPECT_NE(original, deserialized);
+    EXPECT_TRUE(*original == *deserialized);
 }
 
 /// Two functions built from identical children compare equal.

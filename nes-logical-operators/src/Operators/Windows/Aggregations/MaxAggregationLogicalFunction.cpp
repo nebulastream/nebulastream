@@ -81,7 +81,7 @@ std::string MaxAggregationLogicalFunction::explain(ExplainVerbosity verbosity) c
 
 bool MaxAggregationLogicalFunction::operator==(const MaxAggregationLogicalFunction& other) const
 {
-    return inputFunction == other.inputFunction && aggregateType == other.aggregateType;
+    return aggregationFieldAccessEqual(inputFunction, other.inputFunction) && aggregateType == other.aggregateType;
 }
 
 MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
@@ -124,5 +124,6 @@ AggregationLogicalFunctionRegistryReturnType MaxAggregationLogicalFunction::crea
 size_t
 std::hash<NES::MaxAggregationLogicalFunction>::operator()(const NES::MaxAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::MaxAggregationLogicalFunction::getName());
+    return folly::hash::hash_combine(
+        NES::aggregationFieldAccessHash(aggregationFunction.getInputFunction()), NES::MaxAggregationLogicalFunction::getName());
 }

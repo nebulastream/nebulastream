@@ -40,7 +40,7 @@ CharLengthLogicalFunction::CharLengthLogicalFunction(LogicalFunction child) : ch
 
 bool CharLengthLogicalFunction::operator==(const CharLengthLogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 std::string CharLengthLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -48,10 +48,10 @@ std::string CharLengthLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CHAR_LENGTH({})", child.explain(verbosity));
 }
 
-LogicalFunction CharLengthLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction CharLengthLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.child = child.withInferredDataType(schema);
+    copy.child = context.inferType(child);
     if (not copy.child.getDataType().isType(DataType::Type::VARSIZED))
     {
         throw DifferentFieldTypeExpected("CHAR_LENGTH expects a VARSIZED input but got {}", copy.child.getDataType());

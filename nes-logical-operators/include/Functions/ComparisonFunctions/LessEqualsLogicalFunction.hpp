@@ -41,7 +41,7 @@ public:
     [[nodiscard]] bool operator==(const LessEqualsLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(TypeInferenceContext& context) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] LessEqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

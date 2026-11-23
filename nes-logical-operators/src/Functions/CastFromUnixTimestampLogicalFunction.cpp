@@ -44,7 +44,7 @@ CastFromUnixTimestampLogicalFunction::CastFromUnixTimestampLogicalFunction(Logic
 
 bool CastFromUnixTimestampLogicalFunction::operator==(const CastFromUnixTimestampLogicalFunction& rhs) const
 {
-    return this->outputType == rhs.outputType && this->child == rhs.child;
+    return this->outputType == rhs.outputType && StructuralFunctionEqual{}(this->child, rhs.child);
 }
 
 DataType CastFromUnixTimestampLogicalFunction::getDataType() const
@@ -59,9 +59,9 @@ CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withD
     return copy;
 }
 
-LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+    const auto newChildren = getChildren() | std::views::transform([&context](const auto& child) { return context.inferType(child); })
         | std::ranges::to<std::vector>();
     INVARIANT(newChildren.size() == 1, "CeilLogicalFunction expects exactly one child function but has {}", newChildren.size());
     auto newDataType = newChildren[0].getDataType();

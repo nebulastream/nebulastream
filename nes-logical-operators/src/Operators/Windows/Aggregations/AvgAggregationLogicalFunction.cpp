@@ -77,7 +77,7 @@ std::string AvgAggregationLogicalFunction::explain(ExplainVerbosity verbosity) c
 
 bool AvgAggregationLogicalFunction::operator==(const AvgAggregationLogicalFunction& other) const
 {
-    return inputFunction == other.inputFunction;
+    return aggregationFieldAccessEqual(inputFunction, other.inputFunction);
 }
 
 AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
@@ -122,5 +122,6 @@ AggregationLogicalFunctionRegistryReturnType AvgAggregationLogicalFunction::crea
 size_t
 std::hash<NES::AvgAggregationLogicalFunction>::operator()(const NES::AvgAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::AvgAggregationLogicalFunction::getName());
+    return folly::hash::hash_combine(
+        NES::aggregationFieldAccessHash(aggregationFunction.getInputFunction()), NES::AvgAggregationLogicalFunction::getName());
 }

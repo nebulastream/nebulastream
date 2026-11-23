@@ -42,7 +42,7 @@ SubLogicalFunction::SubLogicalFunction(LogicalFunction left, LogicalFunction rig
 
 bool SubLogicalFunction::operator==(const SubLogicalFunction& rhs) const
 {
-    return left == rhs.left and right == rhs.right;
+    return StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
 }
 
 std::string SubLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -59,11 +59,11 @@ DataType SubLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction SubLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction SubLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
     if (not newDataType.has_value())
     {

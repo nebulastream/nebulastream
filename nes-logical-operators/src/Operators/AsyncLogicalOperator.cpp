@@ -37,8 +37,8 @@
 #include <Sources/AsyncOperatorReflection.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/UUID.hpp>
 #include <fmt/format.h>
+#include <folly/hash/Hash.h>
 #include <AsyncOperatorRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -49,13 +49,11 @@ AsyncLogicalOperator::AsyncLogicalOperator(
     LogicalOperator child,
     AsyncOperator implementation,
     std::vector<LogicalFunction> arguments,
-    std::vector<Identifier> outputBindings,
-    AsyncInvocationId occurrence)
+    std::vector<Identifier> outputBindings)
     : ManagedByOperator(std::move(self))
     , child(std::move(child))
     , concreteAsyncImpl(std::move(implementation))
     , arguments(std::move(arguments))
-    , occurrence(occurrence)
 {
     inferLocalSchema(std::move(outputBindings));
 }
@@ -63,7 +61,14 @@ AsyncLogicalOperator::AsyncLogicalOperator(
 TypedLogicalOperator<AsyncLogicalOperator> AsyncLogicalOperator::create(
     LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args, std::vector<Identifier> outputBindings)
 {
-    return create(std::move(child), operatorName, std::move(args), std::move(outputBindings), AsyncInvocationId{generateUUID()});
+    std::vector<DataType> types;
+    types.reserve(args.size());
+    for (const auto& argument : args)
+    {
+        types.push_back(argument.getDataType());
+    }
+    auto implementation = createAsyncOperator(operatorName, std::move(types));
+    return create(std::move(child), std::move(implementation), std::move(args), std::move(outputBindings));
 }
 
 TypedLogicalOperator<AsyncLogicalOperator>
@@ -73,27 +78,10 @@ AsyncLogicalOperator::create(LogicalOperator child, const std::string& operatorN
 }
 
 TypedLogicalOperator<AsyncLogicalOperator> AsyncLogicalOperator::create(
-    LogicalOperator child,
-    const std::string& operatorName,
-    std::vector<LogicalFunction> args,
-    std::vector<Identifier> outputBindings,
-    AsyncInvocationId occurrence)
-{
-    std::vector<DataType> types;
-    types.reserve(args.size());
-    for (const auto& argument : args)
-    {
-        types.push_back(argument.getDataType());
-    }
-    auto implementation = createAsyncOperator(operatorName, std::move(types));
-    return create(std::move(child), std::move(implementation), std::move(args), std::move(outputBindings), occurrence);
-}
-
-TypedLogicalOperator<AsyncLogicalOperator> AsyncLogicalOperator::create(
     LogicalOperator child, AsyncOperator implementation, std::vector<LogicalFunction> arguments, std::vector<Identifier> outputBindings)
 {
-    return create(
-        std::move(child), std::move(implementation), std::move(arguments), std::move(outputBindings), AsyncInvocationId{generateUUID()});
+    return TypedLogicalOperator<AsyncLogicalOperator>{
+        std::move(child), std::move(implementation), std::move(arguments), std::move(outputBindings)};
 }
 
 TypedLogicalOperator<AsyncLogicalOperator>
@@ -102,15 +90,12 @@ AsyncLogicalOperator::create(LogicalOperator child, AsyncOperator implementation
     return create(std::move(child), std::move(implementation), std::move(arguments), {});
 }
 
-TypedLogicalOperator<AsyncLogicalOperator> AsyncLogicalOperator::create(
-    LogicalOperator child,
-    AsyncOperator implementation,
-    std::vector<LogicalFunction> arguments,
-    std::vector<Identifier> outputBindings,
-    AsyncInvocationId occurrence)
+bool AsyncLogicalOperator::operator==(const AsyncLogicalOperator& rhs) const
 {
-    return TypedLogicalOperator<AsyncLogicalOperator>{
-        std::move(child), std::move(implementation), std::move(arguments), std::move(outputBindings), occurrence};
+    return getOperatorName() == rhs.getOperatorName() && concreteAsyncImpl.getOutputSchema() == rhs.concreteAsyncImpl.getOutputSchema()
+        && concreteAsyncImpl.maxConcurrency() == rhs.concreteAsyncImpl.maxConcurrency()
+        && std::ranges::equal(arguments, rhs.arguments, StructuralFunctionEqual{}) && outputs == rhs.outputs
+        && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
 }
 
 void AsyncLogicalOperator::inferLocalSchema(std::vector<Identifier> bindings)
@@ -123,9 +108,10 @@ void AsyncLogicalOperator::inferLocalSchema(std::vector<Identifier> bindings)
         }
     }
     const auto input = child.getOutputSchema();
+    TypeInferenceContext context{input};
     for (auto& argument : arguments)
     {
-        argument = argument.withInferredDataType(input);
+        argument = context.inferType(argument);
     }
     concreteAsyncImpl = concreteAsyncImpl.withInferredArguments(makeAsyncArgumentsWithConstants(arguments));
     const auto asyncOutputSchema = concreteAsyncImpl.getOutputSchema() | std::ranges::to<std::vector>();
@@ -259,8 +245,7 @@ Reflected Reflector<TypedLogicalOperator<AsyncLogicalOperator>>::operator()(
             .operatorId = op.getId(),
             .implementation = op->getAsyncOperator(),
             .arguments = op->getArguments(),
-            .outputs = op->getOutputBindings(),
-            .occurrence = op->getOccurrenceId()});
+            .outputs = op->getOutputBindings()});
 }
 
 Unreflector<TypedLogicalOperator<AsyncLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
@@ -283,11 +268,25 @@ Unreflector<TypedLogicalOperator<AsyncLogicalOperator>>::operator()(const Reflec
         bindings.push_back(output.binding);
     }
     auto result = AsyncLogicalOperator::create(
-        std::move(children.front()), std::move(value.implementation), std::move(value.arguments), std::move(bindings), value.occurrence);
+        std::move(children.front()), std::move(value.implementation), std::move(value.arguments), std::move(bindings));
     if (result->getOutputBindings() != value.outputs)
     {
         throw CannotDeserialize("Async payload does not match the serialized output signature");
     }
     return result;
 }
+}
+
+size_t std::hash<NES::AsyncLogicalOperator>::operator()(const NES::AsyncLogicalOperator& op) const noexcept
+{
+    size_t seed = std::hash<std::string>{}(op.getOperatorName());
+    for (const auto& arg : op.getArguments())
+    {
+        seed = folly::hash::hash_combine(seed, NES::StructuralFunctionHash{}(arg));
+    }
+    for (const auto& output : op.getOutputBindings())
+    {
+        seed = folly::hash::hash_combine(seed, output.binding, output.field);
+    }
+    return seed;
 }

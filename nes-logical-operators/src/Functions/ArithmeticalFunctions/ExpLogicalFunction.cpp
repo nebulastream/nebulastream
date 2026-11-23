@@ -42,7 +42,7 @@ ExpLogicalFunction::ExpLogicalFunction(LogicalFunction child) : child(std::move(
 
 bool ExpLogicalFunction::operator==(const ExpLogicalFunction& rhs) const
 {
-    return child == rhs.child;
+    return StructuralFunctionEqual{}(child, rhs.child);
 }
 
 DataType ExpLogicalFunction::getDataType() const
@@ -50,15 +50,15 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction ExpLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
-    const auto newChild = child.withInferredDataType(schema);
+    const auto newChild = context.inferType(child);
     const std::string eulerNumber = "2.7182818284590452353602874713527";
     const ConstantValueLogicalFunction expConstantValue{
         DataTypeProvider::provideDataType(
             DataType::Type::FLOAT64, newChild.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE),
         eulerNumber};
-    return PowLogicalFunction(expConstantValue, newChild).withInferredDataType(schema);
+    return PowLogicalFunction(expConstantValue, newChild).withInferredDataType(context);
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const

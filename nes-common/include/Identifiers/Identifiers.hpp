@@ -28,8 +28,6 @@ namespace NES
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
 using LocalQueryId = NESStrongUUIDType<struct LocalQueryId_>;
-/// Identity of one async invocation, preserved across planning rewrites and serialization.
-using AsyncInvocationId = NESStrongUUIDType<struct AsyncInvocationId_>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using PhysicalSourceId = NESStrongType<uint64_t, struct PhysicalSourceId_, 0, 1>;
 using SinkId = NESStrongType<int64_t, struct SinkId_, 0, 1>;

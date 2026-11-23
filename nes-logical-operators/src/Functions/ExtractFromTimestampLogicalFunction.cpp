@@ -49,7 +49,7 @@ ExtractFromTimestampLogicalFunction::ExtractFromTimestampLogicalFunction(Timesta
 
 bool ExtractFromTimestampLogicalFunction::operator==(const ExtractFromTimestampLogicalFunction& rhs) const
 {
-    return this->unit == rhs.unit && this->child == rhs.child;
+    return this->unit == rhs.unit && StructuralFunctionEqual{}(this->child, rhs.child);
 }
 
 DataType ExtractFromTimestampLogicalFunction::getDataType() const
@@ -64,9 +64,9 @@ ExtractFromTimestampLogicalFunction ExtractFromTimestampLogicalFunction::withDat
     return copy;
 }
 
-LogicalFunction ExtractFromTimestampLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction ExtractFromTimestampLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
-    auto inferredChild = child.withInferredDataType(schema);
+    auto inferredChild = context.inferType(child);
     auto childDataType = inferredChild.getDataType();
     if (childDataType.type != DataType::Type::UNDEFINED && childDataType.type != DataType::Type::UINT64)
     {

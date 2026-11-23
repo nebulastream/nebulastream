@@ -42,7 +42,7 @@ DivLogicalFunction::DivLogicalFunction(LogicalFunction left, LogicalFunction rig
 
 bool DivLogicalFunction::operator==(const DivLogicalFunction& rhs) const
 {
-    return left == rhs.left and right == rhs.right;
+    return StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
 }
 
 DataType DivLogicalFunction::getDataType() const
@@ -50,11 +50,11 @@ DataType DivLogicalFunction::getDataType() const
     return dataType;
 }
 
-LogicalFunction DivLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction DivLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
     {
         throw CannotInferStamp("Cannot apply division to non-numeric input function left: {}, right: {}", copy.left, copy.right);

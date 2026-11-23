@@ -148,8 +148,9 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 
 bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
-    return getWindowType() == rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and outputSchema == rhs.outputSchema
-        and getTraitSet() == rhs.getTraitSet() && joinType == rhs.joinType and timestampFields == rhs.timestampFields;
+    return getWindowType() == rhs.getWindowType() and StructuralFunctionEqual{}(getJoinFunction(), rhs.getJoinFunction())
+        and outputSchema == rhs.outputSchema and getTraitSet() == rhs.getTraitSet() && joinType == rhs.joinType
+        and timestampFields == rhs.timestampFields;
 }
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -213,7 +214,8 @@ void JoinLogicalOperator::inferLocalSchema()
         },
         this->timestampFields);
 
-    this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
+    TypeInferenceContext context{inputSchema};
+    this->joinFunction = context.inferType(this->joinFunction);
 
     /// For outer joins, the fields of the side that may be unmatched become nullable in the output schema.
     const bool leftNullable = (joinType == JoinType::OUTER_RIGHT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
@@ -371,7 +373,7 @@ std::size_t std::hash<NES::JoinLogicalOperator>::operator()(const NES::JoinLogic
     return folly::hash::hash_combine_generic(
         NES::Hash{},
         joinLogicalOperator.joinType,
-        joinLogicalOperator.joinFunction,
+        NES::StructuralFunctionHash{}(joinLogicalOperator.joinFunction),
         joinLogicalOperator.windowType,
         joinLogicalOperator.timestampFields,
         joinLogicalOperator.startEndFields);

@@ -79,7 +79,7 @@ std::string MedianAggregationLogicalFunction::explain(ExplainVerbosity verbosity
 
 bool MedianAggregationLogicalFunction::operator==(const MedianAggregationLogicalFunction& other) const
 {
-    return inputFunction == other.inputFunction;
+    return aggregationFieldAccessEqual(inputFunction, other.inputFunction);
 }
 
 MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
@@ -123,5 +123,6 @@ AggregationLogicalFunctionRegistryReturnType MedianAggregationLogicalFunction::c
 size_t std::hash<NES::MedianAggregationLogicalFunction>::operator()(
     const NES::MedianAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::MedianAggregationLogicalFunction::getName());
+    return folly::hash::hash_combine(
+        NES::aggregationFieldAccessHash(aggregationFunction.getInputFunction()), NES::MedianAggregationLogicalFunction::getName());
 }

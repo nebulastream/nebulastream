@@ -77,7 +77,7 @@ std::string CountAggregationLogicalFunction::explain(ExplainVerbosity verbosity)
 
 bool CountAggregationLogicalFunction::operator==(const CountAggregationLogicalFunction& other) const
 {
-    return inputFunction == other.inputFunction;
+    return aggregationFieldAccessEqual(inputFunction, other.inputFunction);
 }
 
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
@@ -133,5 +133,7 @@ size_t
 std::hash<NES::CountAggregationLogicalFunction>::operator()(const NES::CountAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(
-        aggregationFunction.getInputFunction(), aggregationFunction.getName(), aggregationFunction.shallIncludeNullValues());
+        NES::aggregationFieldAccessHash(aggregationFunction.getInputFunction()),
+        aggregationFunction.getName(),
+        aggregationFunction.shallIncludeNullValues());
 }

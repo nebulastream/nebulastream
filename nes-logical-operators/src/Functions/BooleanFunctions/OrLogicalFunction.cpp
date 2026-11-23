@@ -42,8 +42,8 @@ OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right
 
 bool OrLogicalFunction::operator==(const OrLogicalFunction& rhs) const
 {
-    const bool simpleMatch = left == rhs.left and right == rhs.right;
-    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    const bool simpleMatch = StructuralFunctionEqual{}(left, rhs.left) and StructuralFunctionEqual{}(right, rhs.right);
+    const bool commutativeMatch = StructuralFunctionEqual{}(left, rhs.right) and StructuralFunctionEqual{}(right, rhs.left);
     return simpleMatch or commutativeMatch;
 }
 
@@ -76,11 +76,11 @@ std::string_view OrLogicalFunction::getType() const
     return NAME;
 }
 
-LogicalFunction OrLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction OrLogicalFunction::withInferredDataType(TypeInferenceContext& context) const
 {
     auto copy = *this;
-    copy.left = left.withInferredDataType(schema);
-    copy.right = right.withInferredDataType(schema);
+    copy.left = context.inferType(left);
+    copy.right = context.inferType(right);
     if (!copy.left.getDataType().isType(DataType::Type::BOOLEAN) || !copy.right.getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferStamp("Can only apply or to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);

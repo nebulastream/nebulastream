@@ -115,7 +115,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(grep -c '^/occ-physical-alias$' http_received.log)" -eq 3 ]
 }
 
-@test "HTTP_CALL occurrences: IN and BETWEEN copies share only the same syntactic invocation" {
+@test "HTTP_CALL occurrences: IN, BETWEEN and IS NAN preserve shared invocation identity" {
   run_async_sql desugared_occurrences.sql
   [ "$status" -eq 0 ]
   [ "$(sink_rows in_direct.csv)" = "$(printf '1\n2')" ]
@@ -126,6 +126,9 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(grep -c '^/in-nested$' http_received.log)" -eq 3 ]
   [ "$(sink_rows between.csv)" = "$(printf '1\n2\n3')" ]
   [ "$(grep -c '^/between$' http_received.log)" -eq 3 ]
+  # Integer IS NAN must not fold away the HTTP effect or execute the shared operand twice.
+  [ -z "$(sink_rows isnan_integer.csv)" ]
+  [ "$(grep -c '^/isnan-integer$' http_received.log)" -eq 3 ]
 }
 
 @test "Async normalization: SELECT star preserves declaration and subquery order without helper fields" {
@@ -233,7 +236,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   run_async_sql failing_service.sql
   [ "$status" -eq 0 ]
 
-  grep -q "Query Failed: .*HTTP_CALL to 127.0.0.1:[0-9]*/slow?delay_ms=50&fail_after=300 got status 500" nes-repl.log
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?delay_ms=50&fail_after=300 got status 500" nes-repl.log
   # The calls stop with the failure: at most the ones already in flight reach the service after it.
   [ "$(wc -l < http_paths.log)" -lt 400 ]
   # The source would emit for ten seconds; the query ends with the failure, not when the source is done.
@@ -277,7 +280,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   run_async_sql flaky.sql --optimizer.async.max_retries=2
   [ "$status" -eq 0 ]
 
-  grep -q "Query Failed: .*HTTP_CALL to 127.0.0.1:[0-9]*/flaky?fail_first=2 got status 500" nes-repl.log
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/flaky?fail_first=2 got status 500" nes-repl.log
   [ "$(sink_rows responses.csv | wc -l)" -eq 0 ]
 }
 
@@ -300,7 +303,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   run_async_sql timeout.sql
   [ "$status" -eq 0 ]
 
-  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?delay_ms=5000 failed" nes-repl.log
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?delay_ms=5000 timed out" nes-repl.log
   # The service would answer after five seconds.
   [ $((SECONDS - start)) -lt 5 ]
 }
@@ -391,7 +394,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
   run_async_sql resend_timeout.sql --optimizer.async.max_concurrency=1
   [ "$status" -eq 0 ]
 
-  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?slow_after=1&delay_ms=3000 failed" nes-repl.log
+  grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?slow_after=1&delay_ms=3000 timed out" nes-repl.log
   # The first row's request, and the second row's once: the service received it, only its answer was too slow.
   [ "$(grep -c '^/slow?slow_after=1&delay_ms=3000$' http_received.log)" -eq 2 ]
 }
