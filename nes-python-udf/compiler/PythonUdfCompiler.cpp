@@ -617,7 +617,8 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
     static const std::unordered_set<std::string_view> BannedFunctions{
         "seq_alloc_uncollectable", "seq_alloc_atomic_uncollectable", "seq_register_finalizer"};
     /// The libc character classification and case mapping functions Codon's str methods call, and modf, which numpy's
-    /// module initialization calls and the LLVM optimizations remove elsewhere; stateless, resolved from the process.
+    /// module initialization calls and the LLVM optimizations remove elsewhere; stateless, resolved from the process. The
+    /// libm functions of the math module (NumbaProcessFunctions: asin, atan2, tanh, hypot, ...) are allowed as well.
     static const std::unordered_set<std::string_view> AllowedProcessFunctions{
         "isdigit", "isspace", "isupper", "islower", "isalpha", "isalnum", "toupper", "tolower", "modf"};
     const auto pluginFunctions = getCodonPluginNativeSymbols();
@@ -640,7 +641,8 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
                 name);
         }
         if (function.isDeclaration() && !name.starts_with("llvm.") && !AllowedProcessFunctions.contains(name)
-            && !std::ranges::contains(PythonUdfRuntimeSymbolNames, name) && !pluginFunctions.contains(std::string{name}))
+            && !std::ranges::contains(NumbaProcessFunctions, name) && !std::ranges::contains(PythonUdfRuntimeSymbolNames, name)
+            && !pluginFunctions.contains(std::string{name}))
         {
             unsupportedExternalFunctions.emplace_back(name);
         }

@@ -137,8 +137,8 @@ inline constexpr std::array<std::string_view, 69> NumbaRuntimeSymbolNames{
     "_numba_hashsecret_siphash_k1",
     "PyExc_RuntimeError"};
 
-/// The libm functions that code compiled by Numba may call besides NumbaRuntimeSymbolNames: stateless, resolved from the
-/// process like the libc functions of the Codon path.
+/// The libm functions that compiled code may call (Numba besides NumbaRuntimeSymbolNames, and Codon's math module):
+/// stateless, resolved from the process like the libc functions of the Codon path.
 inline constexpr std::array<std::string_view, 44> NumbaProcessFunctions{
     "sqrt",      "cbrt",  "exp",    "exp2",   "expm1", "log",   "log2",  "log10",    "log1p",     "pow",  "fmod",
     "remainder", "sin",   "cos",    "tan",    "asin",  "acos",  "atan",  "atan2",    "sinh",      "cosh", "tanh",
