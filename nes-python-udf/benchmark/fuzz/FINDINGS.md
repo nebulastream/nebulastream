@@ -291,7 +291,8 @@ does not use.
 With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and the scratch copy at blocker 11. With
 fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeType. With fork 3c7b9a1, it stops in
 `ipaddress` at `@classmethod` (line 427), which Codon does not define. With fork ca24f9f, it stops in `ipaddress` at
-`from functools import cached_property` (line 754).
+`from functools import cached_property` (line 754). With fork a6d0811, it stops at blocker 9: `_BaseNetwork._constants =
+_BaseConstants` (line 1131), a class attribute assigned from outside the class.
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -372,3 +373,23 @@ Results (`results/E95-*.jsonl`): real UDFs 130 ok, 2 diff, 88 reject; differenti
 repros as in E94 plus the 5 new ones ok. No change.
 
 Next urllib.parse blocker: `ipaddress` imports `functools.cached_property`.
+
+## functools.cached_property (E96, 2026-11-23, Codon fork a6d0811)
+
+`@cached_property` and `@functools.cached_property` are read as `@property`: compiled objects have no `__dict__` to keep
+the value, so the method runs at every access. The result is the same for a method that only computes from the
+object's fields, as in `ipaddress` (`hostmask`, `broadcast_address`). Repro: `min_cached_property`.
+
+Cost, measured with the `ipaddress` pattern (`benchmark/cached_property/cpbench_m.py`: `broadcast_address` reads
+`hostmask`, each builds a new address object; 200,000 rows, runner `--rounds 7 --python-compat 1`, median ns per row):
+
+| Function | Codon | CPython 3.14 |
+|---|---|---|
+| build the network only (`base`) | 19.5 | 842 |
+| and read `broadcast_address` once (`once`) | 20.1 | 2,276 |
+| and read it four times (`four`) | 19.3 | 2,566 |
+
+In Codon, the recomputation costs nothing measurable: LLVM inlines the methods and removes the temporary objects. In
+CPython, the first computation costs about 1.4 us and each cached read about 0.1 us.
+
+Results (`results/E96-*.jsonl`): no change from E95; the new repro is ok.
