@@ -84,12 +84,15 @@ BIND                     bind the config and reply with its bound schema, as for
 LOAD                     pack the input's records into buffers and create the engine, whose pool is sized for them; the reply has `n_buffers`
 START                    run a query from the harness's source into a new sink
 WRITE <n_buffers>        release the next <n_buffers> buffers to the source, and reply once the sink has taken them
+WRITE_UNTIL_BACKPRESSURE <n_buffers>
+                         the same, but reply as soon as the sink applies backpressure; the reply's `backpressure` says whether it did
 STOP                     stop the query as a user does, which drops the buffers of a WRITE that has not returned
 ```
 
 The query has the sink as its only pipeline, and `--threads` sets the engine's worker threads.
 The harness learns from the engine's statistic events when the sink has taken a buffer:
 a sink task that completes without repeating itself.
+The engine reports in the same events when the sink applies backpressure, so no step measures time.
 A failed query fails the step with the sink's error, which the engine reports unchanged.
 A session that ends without STOP destroys the engine with the query still running, as a worker that shuts down does.
 After a step timed out, an engine thread may still be in the sink, so the harness exits with code 3 when the session ends.

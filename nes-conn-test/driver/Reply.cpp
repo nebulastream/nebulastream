@@ -79,6 +79,13 @@ struct LoadReply
     std::uint64_t n_buffers = 0; /// NOLINT(readability-identifier-naming): the member name is the JSON key
 };
 
+struct WriteUntilBackpressureReply
+{
+    bool ok = true;
+    std::string phase = "write";
+    bool backpressure = false;
+};
+
 struct ErrorReply
 {
     bool ok = false;
@@ -168,6 +175,11 @@ std::string fillReply(const std::string_view phase, const bool eos, const std::v
 std::string loadReply(const std::uint64_t numberOfBuffers)
 {
     return write(LoadReply{.n_buffers = numberOfBuffers});
+}
+
+std::string writeUntilBackpressureReply(const bool backpressure)
+{
+    return write(WriteUntilBackpressureReply{.backpressure = backpressure});
 }
 
 }
