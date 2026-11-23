@@ -168,3 +168,13 @@ of the out-of-process UDF experiments E19 to E59. The reference is CPython 3.14.
 - `json.loads` of invalid non-ASCII input (`'٣٤'`) makes an error message with a lone UTF-8 byte. Formatting that error
   raises SystemError (an RPython CheckError), and the process ends. The 5 JSON repros are rejects for this reason.
 - Python version: `re.subn(r'\B', '.', '')` matches once in CPython 3.14 and not in 3.11 (a 3.14 change, not PyPy's).
+
+## Codon with PYTHON_COMPAT after the fixes (E88, 2026-11-23, Codon fork 3b8c3a9)
+
+Same cases as E85 (repros now 34). `results/E88-diff-codon-compat.jsonl`.
+
+| Group | ok | diff | reject | crash | timeout | E85 (ok, diff, reject, crash, timeout) |
+|---|---|---|---|---|---|---|
+| builtins (222) | 170 | 25 | 27 | 0 | 0 | 158, 34, 27, 0, 3 |
+| repros (34) | 9 | 25 | 0 | 0 | 0 | 0, 28, 0, 2, 1 (31 repros) |
+| programs (80) | 33 | 40 | 7 | 0 | 0 | 25, 47, 7, 1, 0 |
