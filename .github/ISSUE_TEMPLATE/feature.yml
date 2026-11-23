@@ -2,12 +2,16 @@
 name: 🔒🧩 FEATURE (Maintainers only)
 description: A template about issues that consist of more than one PR.
 title: "[FEATURE] "
+type: FEATURE
 body:
   - type: markdown
     attributes:
       value: |
         > [!IMPORTANT]
-        > - Set **Type** to FEATURE.
+        > - Set **Target date**.
+        > - Set **Priority**.
+        > - Add this issue as a **sub-issue** of its parent EPIC. If it has no parent, add the **ORPHAN** label.
+        > - Add at least two **sub-issues** (TASKs only) using GitHub's *sub-issue feature* ("Create sub-issue" / "Add existing issue"), **not as a link or checklist in this description**.
   - type: textarea
     attributes:
       label: Description
@@ -21,13 +25,13 @@ body:
         Which goal(s) of the parent EPIC does this feature address? OR
         how does this fit into the bigger picture if it is an orphan feature?
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Scope
       description: What is included in this feature?
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Out of scope
@@ -36,10 +40,12 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Done when
-      description: How will we know this feature is complete? When should it close?
+      label: Acceptance criteria
+      description: >-
+        One (ideally measurable) outcome per line, in simple yet comprehensive phrasing.
+        Outcomes should match the sub-issues of the FEATURE and its level of detail, while offering a way to quantify what is necessary for the FEATURE to be completed.
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Open questions / risks

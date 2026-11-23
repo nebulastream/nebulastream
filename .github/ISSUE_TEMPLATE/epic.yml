@@ -2,12 +2,12 @@
 name: 🔒🗺️ EPIC (Maintainers only)
 description: A template about issues of EPIC proportion.
 title: "[EPIC] "
+type: EPIC
 body:
   - type: markdown
     attributes:
       value: |
         > [!IMPORTANT]
-        > - Set **Type** to EPIC.
         > - Set **Start date** and **Target date**.
         > - Set **Priority**.
         > - Add at least two **sub-issues** (FEATURE or TASK) using GitHub's *sub-issue feature* ("Create sub-issue" / "Add existing issue"), **not as a link or checklist in this description**.
@@ -22,13 +22,13 @@ body:
       label: Roadmap context
       description: How does this fit into the bigger picture?
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Goals
       description: What do we want to achieve with this EPIC?
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Out of scope
@@ -37,10 +37,12 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Done when
-      description: How will we know this epic is complete? When should it close?
+      label: Acceptance criteria
+      description: >-
+        One (ideally measurable) outcome per line, in simple yet comprehensive phrasing.
+        Outcomes should match the sub-issues of the EPIC at a high level and should aim to offer a way to quantify what is necessary for the EPIC to be completed.
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Open questions / risks
