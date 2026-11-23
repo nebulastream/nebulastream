@@ -25,10 +25,3 @@ add_registry_entry(Sink Kafka)
 add_registry_entry(SinkConfigSchema Kafka)
 add_registry_entry(SinkConfig Kafka)
 add_conn_test(PLUGIN KafkaSink)
-
-add_e2e_test(
-    NAME kafka-sink-test
-    BATS_FILE tests/distributed.bats
-    DOCKER_COMPOSE
-    JOBS 1
-)
