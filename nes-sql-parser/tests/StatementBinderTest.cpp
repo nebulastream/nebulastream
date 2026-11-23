@@ -14,6 +14,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -25,6 +26,12 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/CastToTypeLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
@@ -1085,6 +1092,77 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, JoinOnClauseBuildsAddAndSubKeyExpressions)
+{
+    const auto joinKeyOperand = [](const std::string& expression)
+    {
+        const auto query = fmt::format(
+            "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) ON {} = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink",
+            expression);
+        const auto joins = getOperatorByType<JoinLogicalOperator>(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query));
+        if (joins.size() != 1)
+        {
+            throw std::runtime_error(fmt::format("expected exactly one join for {}", expression));
+        }
+        const auto children = joins.at(0)->getJoinFunction().getChildren();
+        if (children.size() != 2)
+        {
+            throw std::runtime_error(fmt::format("expected a binary join function for {}", expression));
+        }
+        return children.at(0);
+    };
+    EXPECT_TRUE(joinKeyOperand("s1a + s1b").tryGetAs<AddLogicalFunction>().has_value());
+    EXPECT_TRUE(joinKeyOperand("s1a - s1b").tryGetAs<SubLogicalFunction>().has_value());
+}
+
+TEST_F(StatementBinderTest, JoinOnClauseBuildsCastAndFunctionCallKeyExpressions)
+{
+    const auto joinFunction = [](const std::string& onClause)
+    {
+        const auto query = fmt::format(
+            "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) ON {} WINDOW TUMBLING(SIZE 1000 MS) INTO sink", onClause);
+        const auto joins = getOperatorByType<JoinLogicalOperator>(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query));
+        if (joins.size() != 1)
+        {
+            throw std::runtime_error(fmt::format("expected exactly one join for {}", onClause));
+        }
+        return joins.at(0)->getJoinFunction();
+    };
+
+    const auto castJoin = joinFunction("CASTTOTYPE(s1a AS INT64) = s2key");
+    ASSERT_EQ(castJoin.getChildren().size(), 2U);
+    EXPECT_TRUE(castJoin.tryGetAs<EqualsLogicalFunction>().has_value());
+    const auto cast = castJoin.getChildren().at(0).tryGetAs<CastToTypeLogicalFunction>();
+    ASSERT_TRUE(cast.has_value());
+    EXPECT_EQ(cast->get().getChildren().size(), 1U);
+
+    const auto functionJoin = joinFunction("EXP(s1a) + s1b = s2key");
+    ASSERT_EQ(functionJoin.getChildren().size(), 2U);
+    EXPECT_TRUE(functionJoin.tryGetAs<EqualsLogicalFunction>().has_value());
+    const auto sum = functionJoin.getChildren().at(0);
+    ASSERT_TRUE(sum.tryGetAs<AddLogicalFunction>().has_value());
+    ASSERT_EQ(sum.getChildren().size(), 2U);
+    EXPECT_TRUE(sum.getChildren().at(0).tryGetAs<ExpLogicalFunction>().has_value());
+
+    const auto constructorJoin = joinFunction("s1a + UINT64(1) = s2key");
+    ASSERT_EQ(constructorJoin.getChildren().size(), 2U);
+    const auto constructorSum = constructorJoin.getChildren().at(0);
+    ASSERT_TRUE(constructorSum.tryGetAs<AddLogicalFunction>().has_value());
+    ASSERT_EQ(constructorSum.getChildren().size(), 2U);
+    EXPECT_TRUE(constructorSum.getChildren().at(1).tryGetAs<ConstantValueLogicalFunction>().has_value());
+
+    const auto nestedJoin = joinFunction("CASTTOTYPE(EXP(s1a) AS INT64) = s2key");
+    ASSERT_EQ(nestedJoin.getChildren().size(), 2U);
+    const auto nestedCast = nestedJoin.getChildren().at(0).tryGetAs<CastToTypeLogicalFunction>();
+    ASSERT_TRUE(nestedCast.has_value());
+    ASSERT_EQ(nestedCast->get().getChildren().size(), 1U);
+    EXPECT_TRUE(nestedCast->get().getChildren().at(0).tryGetAs<ExpLogicalFunction>().has_value());
+
+    const auto rightHandJoin = joinFunction("s2key = CASTTOTYPE(s1a AS INT64)");
+    ASSERT_EQ(rightHandJoin.getChildren().size(), 2U);
+    EXPECT_TRUE(rightHandJoin.getChildren().at(1).tryGetAs<CastToTypeLogicalFunction>().has_value());
 }
 
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)
