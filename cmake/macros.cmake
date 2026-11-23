@@ -236,6 +236,7 @@ function(add_conn_test)
         message(FATAL_ERROR "add_conn_test(${ARG_PLUGIN}): a connector of this name is already registered")
     endif ()
     set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_CONNECTORS ${ARG_PLUGIN})
+    set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_KINDS ${_kind})
     set_property(GLOBAL APPEND PROPERTY NES_CONN_TEST_DIRS ${_conn_test_dir})
     # The connector's committed configs must bind unmodified.
     # This needs no external service, so it runs wherever the unit tests run.
@@ -255,13 +256,15 @@ function(add_conn_test)
 endfunction()
 
 # Writes the connectors that called add_conn_test to <build>/nes-conn-test/connectors.txt for the runner.
-# One line per connector, with its directory relative to the repo root: `TCPSource nes-plugins/Sources/TCPSource/conn-test`.
+# The runner takes a connector's kind from here, so that the kind is derived in one place.
+# One line per connector, with its kind and its directory relative to the repo root: `TCPSource source nes-plugins/Sources/TCPSource/conn-test`.
 function(write_conn_test_connectors)
     get_property(_names GLOBAL PROPERTY NES_CONN_TEST_CONNECTORS)
+    get_property(_kinds GLOBAL PROPERTY NES_CONN_TEST_KINDS)
     get_property(_dirs GLOBAL PROPERTY NES_CONN_TEST_DIRS)
     set(_content "")
-    foreach (_name _dir IN ZIP_LISTS _names _dirs)
-        string(APPEND _content "${_name} ${_dir}\n")
+    foreach (_name _kind _dir IN ZIP_LISTS _names _kinds _dirs)
+        string(APPEND _content "${_name} ${_kind} ${_dir}\n")
     endforeach ()
     file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/nes-conn-test/connectors.txt CONTENT "${_content}")
 endfunction()

@@ -118,6 +118,7 @@ add_conn_test(PLUGIN <Name>)
 ```
 
 The runner finds a connector only through this call, which records it in `<build>/nes-conn-test/connectors.txt`.
+The call also records whether the connector is a source or a sink, from its directory under `nes-plugins`, and the loader must subclass the matching base class.
 A loader's client library goes into `dependencies` in its `conn-test/pyproject.toml`, followed by `uv lock` at the repo root.
 The new `uv.lock` is part of the dependency hash, like a vcpkg change.
 
