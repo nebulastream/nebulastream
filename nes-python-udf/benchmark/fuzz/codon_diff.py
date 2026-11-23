@@ -403,7 +403,8 @@ def run_pypy(options, header, module, work, rows_tsv, out_path):
     """Runs the reference child of this harness in PyPy: the same calls and formatting, another interpreter."""
     command = [options.pypy, os.path.abspath(__file__), "--reference", os.path.join(work, module + ".py"), header["entry"],
                ",".join(header["args"]), header["returns"], os.path.join(work, "rows.jsonl"), out_path]
-    return subprocess.run(command, capture_output=True, text=True, timeout=options.timeout), command
+    # PyPy can write RPython tracebacks with bytes that are not UTF-8 to stderr.
+    return subprocess.run(command, capture_output=True, text=True, errors="replace", timeout=options.timeout), command
 
 
 TARGETS = {"Codon": run_nes, "Numba": run_nes, "Babelfish": run_babelfish, "LPython": run_lpython, "PyPy": run_pypy}
