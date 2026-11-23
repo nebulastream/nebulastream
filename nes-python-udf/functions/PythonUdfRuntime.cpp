@@ -29,6 +29,7 @@
 #include <cstring>
 #include <exception>
 #include <limits>
+#include <locale>
 #include <memory>
 #include <optional>
 #include <mutex>
@@ -296,6 +297,14 @@ CodonString copyCodonString(const std::string_view value)
     return {.length = static_cast<int64_t>(value.size()), .data = data};
 }
 
+/// The number punctuation of Python's ',' format option: groups of three digits separated by ',', and '.'.
+struct PythonCommaGrouping final : std::numpunct<char>
+{
+    [[nodiscard]] char do_thousands_sep() const override { return ','; }
+    [[nodiscard]] std::string do_grouping() const override { return "\3"; }
+    [[nodiscard]] char do_decimal_point() const override { return '.'; }
+};
+
 template <typename T>
 /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
 CodonString formatCodonValue(const T value, const CodonString format, bool* error, const std::string_view defaultFormat = "{}")
@@ -307,7 +316,14 @@ CodonString formatCodonValue(const T value, const CodonString format, bool* erro
         {
             return copyCodonString(fmt::vformat(defaultFormat, fmt::make_format_args(value)));
         }
-        const std::string pattern = fmt::format("{{:{}}}", std::string_view{format.data, static_cast<size_t>(format.length)});
+        const std::string_view spec{format.data, static_cast<size_t>(format.length)};
+        const std::string pattern = fmt::format("{{:{}}}", spec);
+        if (spec.find('L') != std::string_view::npos)
+        {
+            /// Codon turns Python's ',' grouping into fmt's L: digits in groups of three, separated by ','.
+            static const std::locale grouping{std::locale::classic(), new PythonCommaGrouping}; /// NOLINT(cppcoreguidelines-owning-memory)
+            return copyCodonString(fmt::vformat(grouping, pattern, fmt::make_format_args(value)));
+        }
         return copyCodonString(fmt::vformat(pattern, fmt::make_format_args(value)));
     }
     catch (const std::exception& exception)
