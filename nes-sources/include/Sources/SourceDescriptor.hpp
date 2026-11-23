@@ -22,12 +22,15 @@
 #include <functional>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
+#include <Codecs/DecoderDescriptor.hpp>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -42,6 +45,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/ReflectionFwd.hpp>
+#include <Util/Strings.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
@@ -107,6 +111,8 @@ public:
     [[nodiscard]] const Schema<UnqualifiedUnboundField, Ordered>& getSchema() const;
     ///@returns either a number greater than zero, or a nullopt, indicating that the default value should be used
     [[nodiscard]] std::optional<size_t> getMaxInflightBuffers() const;
+    /// The decoders that run on the source thread, in decoding order (SOURCE.DECODERS, resolved by the SourceCatalog).
+    [[nodiscard]] const std::vector<DecoderDescriptor>& getDecoders() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
     /// The source-defined config struct (e.g. GeneratorSourceConfig), type-erased. Produced by the
     /// source's SourceConfigRegistry entry, so the source factory can safely any_cast it back.
@@ -127,6 +133,7 @@ private:
     Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    std::vector<DecoderDescriptor> decoders;
     PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 
@@ -138,6 +145,7 @@ private:
         Schema<UnqualifiedUnboundField, Ordered> schema,
         Host host,
         std::optional<size_t> maxInflightBuffers,
+        std::vector<DecoderDescriptor> decoders,
         PluginSourceConfiguration pluginData,
         InputFormatterDescriptor inputFormatterDescriptor,
         std::optional<Identifier> logicalSourceName);
@@ -188,8 +196,41 @@ public:
         }};
     /// Optional: attached workers pass the host out of band (e.g. as a catalog argument).
 
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
+    static inline const ConfigField<std::vector<Identifier>> DECODERS{
+        Identifier::parse("DECODERS"),
+        "Comma-separated names of decoders defined with CREATE DECODER, in decoding order, e.g. 'zstd'. The decoders run on the "
+        "source thread and turn the bytes the source reads into the bytes the input formatter parses. Not set: the bytes are "
+        "passed on as they are.",
+        /// Only parses the names; the SourceCatalog resolves them and reports unknown names as UnknownDecoderName.
+        [](const ConfigLiteral& literal) -> std::expected<std::vector<Identifier>, Exception>
+        {
+            if (std::holds_alternative<std::monostate>(literal))
+            {
+                return std::vector<Identifier>{};
+            }
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .and_then(
+                    [](const std::string& names) -> std::expected<std::vector<Identifier>, Exception>
+                    {
+                        std::vector<Identifier> decoders;
+                        for (const auto name : std::views::split(names, ','))
+                        {
+                            auto identifier = Identifier::tryParse(std::string{trimWhiteSpaces(std::string_view{name})});
+                            if (not identifier.has_value())
+                            {
+                                return std::unexpected{std::move(identifier).error()};
+                            }
+                            decoders.push_back(std::move(identifier).value());
+                        }
+                        return decoders;
+                    });
+        },
+        std::vector<Identifier>{},
+        "Not set"};
+
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization) - process aborts anyway if config schema setup throws at startup
-    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA);
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SOURCE"), MAX_INFLIGHT_BUFFERS, HOST, SCHEMA, DECODERS);
 };
 
 template <>
@@ -241,6 +282,7 @@ struct ReflectedSourceDescriptor
     Schema<UnqualifiedUnboundField, Ordered> schema;
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    std::vector<DecoderDescriptor> decoders;
     PluginSourceConfiguration pluginSourceConfig;
     InputFormatterDescriptor inputFormatterDescriptor;
 

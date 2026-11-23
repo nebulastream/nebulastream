@@ -204,6 +204,44 @@ public:
             .config = {}};
     }
 
+    static CreateDecoderStatement bindCreateDecoderStatement(AntlrSQLParser::CreateDecoderDefinitionContext* decoderDefAST)
+    {
+        const auto configOptions = [&]()
+        {
+            if (decoderDefAST->optionsClause() != nullptr)
+            {
+                return bindConfigOptions(decoderDefAST->optionsClause()->options->namedConfigExpression());
+            }
+            return ConfigMap{};
+        }();
+        static const auto DecoderIdentifier = Identifier::parse("DECODER");
+        std::unordered_map<Identifier, std::string> decoderOptions;
+        for (const auto& [root, options] : configOptions)
+        {
+            if (root != DecoderIdentifier)
+            {
+                throw InvalidConfigParameter("Options of CREATE DECODER must be qualified with DECODER, but found {}", root);
+            }
+            for (const auto& [name, value] : options)
+            {
+                if (not std::holds_alternative<Literal>(value))
+                {
+                    throw InvalidConfigParameter("Option DECODER.{} of CREATE DECODER must be a literal", name);
+                }
+                const auto& literal = std::get<Literal>(value);
+                /// Strings are quoted, so that the decoder's config schema parses them as strings.
+                decoderOptions.emplace(
+                    name,
+                    std::holds_alternative<std::string>(literal) ? fmt::format("'{}'", literalToString(literal))
+                                                                 : literalToString(literal));
+            }
+        }
+        return CreateDecoderStatement{
+            .name = bindIdentifier(decoderDefAST->decoderName->strictIdentifier()),
+            .decoderType = bindIdentifier(decoderDefAST->type),
+            .decoderConfig = std::move(decoderOptions)};
+    }
+
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
@@ -308,6 +346,10 @@ public:
         {
             return bindCreateSinkStatement(sinkDefAST);
         }
+        if (auto* const decoderDefAST = createAST->createDefinition()->createDecoderDefinition(); decoderDefAST != nullptr)
+        {
+            return bindCreateDecoderStatement(decoderDefAST);
+        }
         if (auto* const workerDefAST = createAST->createDefinition()->createWorkerDefinition(); workerDefAST != nullptr)
         {
             return bindCreateWorkerStatement(workerDefAST);
@@ -392,6 +434,28 @@ public:
         return ShowSinksStatement{.name = std::nullopt, .format = format};
     }
 
+    ShowDecodersStatement
+    bindShowDecodersStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
+    {
+        const std::optional<StatementOutputFormat> format
+            = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
+        if (showFilter != nullptr)
+        {
+            const auto [attr, value] = bindShowFilter(showFilter);
+            static const auto NameIdentifier = Identifier::parse("NAME");
+            if (attr != NameIdentifier)
+            {
+                throw InvalidQuerySyntax("Filter for SHOW DECODERS must be on name attribute");
+            }
+            if (not std::holds_alternative<std::string>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for SHOW DECODERS must be a string");
+            }
+            return ShowDecodersStatement{.name = bindIdentifier(std::get<std::string>(value)), .format = format};
+        }
+        return ShowDecodersStatement{.name = std::nullopt, .format = format};
+    }
+
     ShowQueriesStatement
     bindShowQueriesStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
     {
@@ -437,6 +501,11 @@ public:
             sinksSubject != nullptr)
         {
             return bindShowSinksStatement(showFilter, showAST->showFormat());
+        }
+        if (const auto* decodersSubject = dynamic_cast<AntlrSQLParser::ShowDecodersSubjectContext*>(showAST->showSubject());
+            decodersSubject != nullptr)
+        {
+            return bindShowDecodersStatement(showFilter, showAST->showFormat());
         }
         if (const auto* modelsSubject = dynamic_cast<AntlrSQLParser::ShowModelsSubjectContext*>(showAST->showSubject());
             modelsSubject != nullptr)
@@ -504,6 +573,11 @@ public:
         return DropSinkStatement{Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SINK"))};
     }
 
+    static DropDecoderStatement bindDropDecoder(const std::pair<Identifier, Literal>& filter)
+    {
+        return DropDecoderStatement{Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP DECODER"))};
+    }
+
     static DropModelStatement bindDropModel(const std::pair<Identifier, Literal>& filter)
     {
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
@@ -534,6 +608,10 @@ public:
         if (subject->dropSink() != nullptr)
         {
             return bindDropSink(filter);
+        }
+        if (subject->dropDecoder() != nullptr)
+        {
+            return bindDropDecoder(filter);
         }
         if (subject->dropModel() != nullptr)
         {

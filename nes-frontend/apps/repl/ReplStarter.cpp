@@ -33,6 +33,7 @@
 #include <vector>
 #include <unistd.h>
 
+#include <Codecs/DecoderCatalog.hpp>
 #include <Configurations/ConfigParsing.hpp>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -271,7 +272,8 @@ int main(int argc, char** argv)
         const auto queryOptimizerConfig = workerOptimizerConfig->queryOptimizer;
 
 
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+        auto decoderCatalog = std::make_shared<NES::DecoderCatalog>();
+        auto sourceCatalog = std::make_shared<NES::SourceCatalog>(decoderCatalog);
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
@@ -325,6 +327,7 @@ int main(int argc, char** argv)
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
 #endif
+        NES::DecoderStatementHandler decoderStatementHandler{decoderCatalog};
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         auto queryOptimizer
@@ -333,6 +336,7 @@ int main(int argc, char** argv)
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),
+            std::move(decoderStatementHandler),
             std::move(topologyStatementHandler),
             std::move(modelStatementHandler),
             queryStatementHandler,

@@ -19,6 +19,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <Codecs/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
@@ -33,11 +34,12 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::unique_ptr<Decoder> decoder)
     : configuration(std::move(configuration))
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation), std::move(decoder));
 }
 
 SourceHandle::~SourceHandle() = default;

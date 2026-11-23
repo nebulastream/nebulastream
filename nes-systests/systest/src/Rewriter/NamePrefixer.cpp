@@ -256,6 +256,36 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(model->modelName);
     }
+    for (const auto* decoder : findAll<AntlrSQLParser::CreateDecoderDefinitionContext>(parse.tree()))
+    {
+        prefix(decoder->decoderName);
+    }
+    /// A source refers to decoders by name inside the string of SOURCE.DECODERS, e.g. 'zstd' AS "SOURCE"."DECODERS".
+    for (auto* option : findAll<AntlrSQLParser::NamedConfigExpressionContext>(parse.tree()))
+    {
+        auto key = option->name->getText();
+        std::erase(key, '"');
+        if (toUpperCase(key) != "SOURCE.DECODERS" or option->constant() == nullptr
+            or option->constant()->getStart() != option->constant()->getStop())
+        {
+            continue;
+        }
+        const auto literal = option->constant()->getText();
+        if (literal.size() < 2 or literal.front() != '\'' or literal.back() != '\'')
+        {
+            continue;
+        }
+        const auto decoders = std::views::split(std::string_view{literal}.substr(1, literal.size() - 2), ',')
+            | std::views::transform(
+                                  [&](const auto& part)
+                                  {
+                                      const auto name = std::string{trimWhiteSpaces(std::string_view{part})};
+                                      const auto prefixed = names.prefixed(name);
+                                      return prefixed ? std::string{prefixed->getOriginalString()} : name;
+                                  })
+            | std::ranges::to<std::vector>();
+        rewriter.replace(option->constant()->getStart(), fmt::format("'{}'", fmt::join(decoders, ", ")));
+    }
     for (auto* source : findAll<AntlrSQLParser::NamedSourceContext>(parse.tree()))
     {
         prefixParts(source->multipartIdentifier());

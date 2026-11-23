@@ -36,6 +36,11 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
             /// A physical source declares no name of its own.
             /// It references a logical source that another statement declares.
             [](const PhysicalSourceDeclaration&) { },
+            [&](const DecoderDeclaration& declaration)
+            {
+                /// Sources refer to a decoder by name in SOURCE.DECODERS, so a decoder is prefixed like a source.
+                registry.declare(declaration.definition->decoderName->getText());
+            },
             [&](const ModelDeclaration& declaration)
             {
                 /// A query that infers with a model refers to it, so a model is prefixed like a source.

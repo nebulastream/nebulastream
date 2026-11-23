@@ -75,10 +75,14 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
             std::move(*declaration.attached));
     }
 
-    const auto setClause = renderSetClauseFor(parse, declared, dataFile);
     antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
     /// The rewriter prefixes first, because the SET clause replaces what the test declared, and a later edit wins over an earlier one.
     prefixNames(parse, rewriter, names);
+    /// The declared options as prefixed, because prefixing also rewrites names inside them (decoders in SOURCE.DECODERS).
+    const auto declaredText = parse.getTextOf(declared).empty()
+        ? std::string{}
+        : rewriter.getText(antlr4::misc::Interval{declared->getStart()->getTokenIndex(), declared->getStop()->getTokenIndex()});
+    const auto setClause = renderSetClauseFor(declared, declaredText, dataFile);
     insertSetClause(rewriter, declaration.definition, setClause);
     return RewrittenSource{
         .statement = SetupStatement{.sql = rewriter.getText(), .inlineData = std::move(inlineData)}, .inputFile = std::move(dataFile)};
@@ -89,7 +93,9 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
 /// The CSV default exists because creating the source's descriptor rejects a source without an input format.
 /// The options that the test wrote come last, unchanged.
 std::string SourceRewriter::renderSetClauseFor(
-    SqlParse& parse, AntlrSQLParser::NamedConfigExpressionSeqContext* declared, const std::optional<std::filesystem::path>& dataFile) const
+    AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
+    const std::string& declaredText,
+    const std::optional<std::filesystem::path>& dataFile) const
 {
     std::vector<std::string> options;
     if (dataFile.has_value())
@@ -104,7 +110,7 @@ std::string SourceRewriter::renderSetClauseFor(
     {
         options.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
     }
-    if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())
+    if (not declaredText.empty())
     {
         options.push_back(declaredText);
     }

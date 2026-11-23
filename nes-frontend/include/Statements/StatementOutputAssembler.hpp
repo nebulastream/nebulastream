@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include <Codecs/DecoderDescriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -39,6 +40,7 @@
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <rfl/json/write.hpp>
+#include <DecoderConfigRegistry.hpp>
 #include <DistributedQuery.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <QueryStatus.hpp>
@@ -124,6 +126,30 @@ using SinkDescriptorOutputRowType = std::tuple<
     OutputFormatterDescriptor>;
 constexpr std::array<std::string_view, 6> sinkDescriptorOutputColumns{
     "sink_name", "schema", "sink_type", "sink_config", "host", "output_formatter_config"};
+
+inline std::string renderDecoderConfig(const DecoderDescriptor& descriptor)
+{
+    if (const auto entry = DecoderConfigRegistry::instance().find(descriptor.getType().asCanonicalString()))
+    {
+        const auto reflectedConfig = entry->reflect(descriptor.getConfig(), ReflectionContext{});
+        return rfl::json::write(*reflectedConfig);
+    }
+    return "{}";
+}
+
+using DecoderDescriptorOutputRowType = std::tuple<Identifier, Identifier, std::string>;
+constexpr std::array<std::string_view, 3> decoderDescriptorOutputColumns{"decoder_name", "decoder_type", "decoder_config"};
+
+inline std::vector<DecoderDescriptorOutputRowType> decoderOutputRows(const std::vector<DecoderDescriptor>& decoders)
+{
+    std::vector<DecoderDescriptorOutputRowType> output;
+    output.reserve(decoders.size());
+    for (const auto& decoder : decoders)
+    {
+        output.emplace_back(decoder.getName(), decoder.getType(), renderDecoderConfig(decoder));
+    }
+    return output;
+}
 
 using QueryIdOutputRowType = std::tuple<DistributedQueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
@@ -239,6 +265,39 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
                 source.getHost());
         }
         return std::make_pair(sourceDescriptorOutputColumns, output);
+    }
+};
+
+template <>
+struct StatementOutputAssembler<CreateDecoderStatementResult>
+{
+    using OutputRowType = DecoderDescriptorOutputRowType;
+
+    auto convert(const CreateDecoderStatementResult& result)
+    {
+        return std::make_pair(decoderDescriptorOutputColumns, decoderOutputRows({result.created}));
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowDecodersStatementResult>
+{
+    using OutputRowType = DecoderDescriptorOutputRowType;
+
+    auto convert(const ShowDecodersStatementResult& result)
+    {
+        return std::make_pair(decoderDescriptorOutputColumns, decoderOutputRows(result.decoders));
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropDecoderStatementResult>
+{
+    using OutputRowType = DecoderDescriptorOutputRowType;
+
+    auto convert(const DropDecoderStatementResult& result)
+    {
+        return std::make_pair(decoderDescriptorOutputColumns, decoderOutputRows({result.dropped}));
     }
 };
 

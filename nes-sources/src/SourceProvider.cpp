@@ -17,11 +17,13 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <Codecs/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
+#include <DecoderRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -40,13 +42,31 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
     if (const auto sourceFactory = SourceRegistry::instance().find(sourceDescriptor.getSourceType().asCanonicalString()))
     {
         auto source = (*sourceFactory)(sourceDescriptor);
+        std::unique_ptr<Decoder> decoder;
+        if (not sourceDescriptor.getDecoders().empty())
+        {
+            const auto& decoderDescriptor = sourceDescriptor.getDecoders().front();
+            const auto decoderFactory = DecoderRegistry::instance().find(decoderDescriptor.getType().asCanonicalString());
+            /// The catalog and deserialization reject unregistered codecs, and plugins register all three registries together.
+            INVARIANT(
+                decoderFactory.has_value(),
+                "No decoder is registered for the codec '{}' of decoder {}",
+                decoderDescriptor.getType(),
+                decoderDescriptor.getName());
+            decoder = (*decoderFactory)(decoderDescriptor, sourceDescriptor);
+        }
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified, we take the NodeEngine-wide configuration.
         const auto maxInflightBuffers = sourceDescriptor.getMaxInflightBuffers().value_or(defaultMaxInflightBuffers);
         const SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
         return std::make_unique<SourceHandle>(
-            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source));
+            std::move(backpressureListener),
+            std::move(originId),
+            std::move(runtimeConfig),
+            bufferPool,
+            std::move(source),
+            std::move(decoder));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }

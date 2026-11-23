@@ -33,6 +33,7 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+#include <Codecs/DecoderCatalog.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/ConfigParsing.hpp>
 #include <Configurations/Util.hpp>
@@ -104,7 +105,7 @@ NES::Identifier bindIdentifierName(std::string_view identifier)
 
 namespace NES::CLI
 {
-/// In CLI SchemaField, Sink, LogicalSource, PhysicalSource and QueryConfig are used as target for the YAML parser.
+/// In CLI SchemaField, Sink, LogicalSource, Decoder, PhysicalSource and QueryConfig are used as target for the YAML parser.
 /// These types should not be used anywhere else in NES; instead we use the bound and validated types, such as LogicalSource and SourceDescriptor.
 struct SchemaField
 {
@@ -132,11 +133,21 @@ struct LogicalSource
     std::vector<SchemaField> schema;
 };
 
+/// A decoder definition, the YAML counterpart of CREATE DECODER <name> TYPE <type> SET (... AS "DECODER".<option>).
+/// NOLINTNEXTLINE(misc-use-internal-linkage) kept with the other YAML parser targets in NES::CLI
+struct Decoder
+{
+    std::string name;
+    std::string type;
+    std::unordered_map<std::string, std::string> config;
+};
+
 struct PhysicalSource
 {
     std::string logical;
     std::string type;
     std::string host;
+    std::vector<std::string> decoders;
     std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> sourceConfig;
 };
@@ -163,6 +174,7 @@ struct QueryConfig
     std::vector<std::string> query;
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
+    std::vector<Decoder> decoders;
     std::vector<PhysicalSource> physical;
     YAML::Node optimizer;
     std::vector<WorkerConfig> workers;
@@ -371,14 +383,28 @@ struct convert<NES::CLI::LogicalSource>
 };
 
 template <>
+struct convert<NES::CLI::Decoder>
+{
+    static bool decode(const Node& node, NES::CLI::Decoder& rhs)
+    {
+        acceptKeys({"name", "type", "config"}, node);
+        rhs.name = getValue<std::string>(node, "name");
+        rhs.type = getValue<std::string>(node, "type");
+        rhs.config = getOrDefault<std::unordered_map<std::string, std::string>>(node, "config");
+        return true;
+    }
+};
+
+template <>
 struct convert<NES::CLI::PhysicalSource>
 {
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
-        acceptKeys({"logical", "type", "host", "parser_config", "source_config"}, node);
+        acceptKeys({"logical", "type", "host", "parser_config", "source_config", "decoders"}, node);
         rhs.logical = getValue<std::string>(node, "logical");
         rhs.type = getValue<std::string>(node, "type");
         rhs.host = getValue<std::string>(node, "host");
+        rhs.decoders = getListOrDefault<std::string>(node, "decoders");
         rhs.parserConfig = getValue<std::unordered_map<std::string, std::string>>(node, "parser_config");
         rhs.sourceConfig = getOrDefault<std::unordered_map<std::string, std::string>>(node, "source_config");
         return true;
@@ -417,9 +443,10 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
-        acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers", "models"}, node);
+        acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers", "models", "decoders"}, node);
         rhs.sinks = getListOrDefault<NES::CLI::Sink>(node, "sinks");
         rhs.logical = getList<NES::CLI::LogicalSource>(node, "logical");
+        rhs.decoders = getListOrDefault<NES::CLI::Decoder>(node, "decoders");
         rhs.physical = getListOrDefault<NES::CLI::PhysicalSource>(node, "physical");
 
         if (node["optimizer"].IsDefined())
@@ -582,7 +609,7 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::ve
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical, optimizer, workers, models] = topologyConfig;
+    const auto& [query, sinks, logical, decoders, physical, optimizer, workers, models] = topologyConfig;
     std::vector<NES::Statement> statements;
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
@@ -596,14 +623,32 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = bindIdentifierName(name), .schema = bindSchema(schemaFields)});
     }
 
-    for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
+    for (const auto& [name, type, config] : decoders)
     {
+        statements.emplace_back(
+            NES::CreateDecoderStatement{
+                .name = bindIdentifierName(name), .decoderType = bindIdentifierName(type), .decoderConfig = bindConfig(config)});
+    }
+
+    for (const auto& [logical, type, host, sourceDecoders, parserConfig, sourceConfig] : physical)
+    {
+        auto boundSourceConfig = bindConfig(sourceConfig);
+        if (not sourceDecoders.empty())
+        {
+            const auto decodersKey = NES::Identifier::parse("DECODERS");
+            if (boundSourceConfig.contains(decodersKey))
+            {
+                throw NES::InvalidConfigParameter(
+                    "Physical source of {} sets decoders both as a list and in source_config; use only the decoders list", logical);
+            }
+            boundSourceConfig.emplace(decodersKey, fmt::format("'{}'", fmt::join(sourceDecoders, ",")));
+        }
         statements.emplace_back(
             NES::CreatePhysicalSourceStatement{
                 .attachedTo = bindIdentifierName(logical),
                 .sourceType = bindIdentifierName(type),
                 .host = NES::Host(host),
-                .sourceConfig = bindConfig(sourceConfig),
+                .sourceConfig = std::move(boundSourceConfig),
                 .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
@@ -742,12 +787,14 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     const auto queries = state | std::views::keys | std::ranges::to<std::vector>();
 
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+    auto decoderCatalog = std::make_shared<NES::DecoderCatalog>();
+    auto sourceCatalog = std::make_shared<NES::SourceCatalog>(decoderCatalog);
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
     const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::DecoderStatementHandler decoderHandler{decoderCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
@@ -755,7 +802,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
         = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
-    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    handleStatements(loadStatements(topologyConfig), topologyHandler, decoderHandler, sourceHandler, sinkHandler, modelHandler);
 
     if (program.is_subcommand_used("stop"))
     {
@@ -783,18 +830,20 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
 
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+    auto decoderCatalog = std::make_shared<NES::DecoderCatalog>();
+    auto sourceCatalog = std::make_shared<NES::SourceCatalog>(decoderCatalog);
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
     auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::DecoderStatementHandler decoderHandler{decoderCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     auto queryOptimizer
         = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
-    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    handleStatements(statements, topologyHandler, decoderHandler, sourceHandler, sinkHandler, modelHandler);
 
     if (program.is_subcommand_used("start"))
     {

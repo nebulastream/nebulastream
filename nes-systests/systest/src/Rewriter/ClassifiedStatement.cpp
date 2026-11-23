@@ -51,6 +51,10 @@ CreateDeclaration classify(const SqlParse& parse, CreateStatement create)
     {
         return SinkDeclaration{.definition = sink};
     }
+    if (auto* decoder = findFirst<AntlrSQLParser::CreateDecoderDefinitionContext>(parse.tree()))
+    {
+        return DecoderDeclaration{.definition = decoder};
+    }
     if (auto* model = findFirst<AntlrSQLParser::CreateModelDefinitionContext>(parse.tree()))
     {
         return ModelDeclaration{.definition = model};

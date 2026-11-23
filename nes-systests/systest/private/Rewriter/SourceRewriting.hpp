@@ -53,8 +53,8 @@ public:
 
 private:
     [[nodiscard]] std::string renderSetClauseFor(
-        SqlParse& parse,
         AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
+        const std::string& declaredText,
         const std::optional<std::filesystem::path>& dataFile) const;
 
     const RewriteContext& context; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)

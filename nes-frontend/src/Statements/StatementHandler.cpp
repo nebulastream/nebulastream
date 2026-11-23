@@ -183,6 +183,38 @@ std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandl
     return std::unexpected{UnknownSourceName("Unknown physical source: {}", statement.descriptor)};
 }
 
+DecoderStatementHandler::DecoderStatementHandler(std::shared_ptr<DecoderCatalog> decoderCatalog) : decoderCatalog(std::move(decoderCatalog))
+{
+}
+
+std::expected<CreateDecoderStatementResult, Exception> DecoderStatementHandler::operator()(const CreateDecoderStatement& statement)
+{
+    return decoderCatalog->addDecoder(statement.name, statement.decoderType, statement.decoderConfig)
+        .transform([](DecoderDescriptor created) { return CreateDecoderStatementResult{std::move(created)}; });
+}
+
+std::expected<ShowDecodersStatementResult, Exception> DecoderStatementHandler::operator()(const ShowDecodersStatement& statement) const
+{
+    if (statement.name)
+    {
+        if (auto decoder = decoderCatalog->getDecoder(*statement.name))
+        {
+            return ShowDecodersStatementResult{std::vector{std::move(decoder).value()}};
+        }
+        return ShowDecodersStatementResult{{}};
+    }
+    return ShowDecodersStatementResult{decoderCatalog->getAllDecoders()};
+}
+
+std::expected<DropDecoderStatementResult, Exception> DecoderStatementHandler::operator()(const DropDecoderStatement& statement)
+{
+    if (auto dropped = decoderCatalog->removeDecoder(statement.name))
+    {
+        return DropDecoderStatementResult{std::move(dropped).value()};
+    }
+    return std::unexpected{UnknownDecoderName("Cannot drop the unknown decoder {}", statement.name)};
+}
+
 SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& sinkCatalog, HostPolicy hostPolicy)
     : sinkCatalog(sinkCatalog), hostPolicy(std::move(hostPolicy))
 {

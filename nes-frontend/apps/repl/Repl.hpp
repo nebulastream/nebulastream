@@ -39,6 +39,7 @@ public:
     explicit Repl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        DecoderStatementHandler decoderStatementHandler,
         TopologyStatementHandler topologyStatementHandler,
         ModelStatementHandler modelStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,

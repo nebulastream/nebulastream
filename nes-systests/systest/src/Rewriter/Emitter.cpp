@@ -125,6 +125,13 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                     inputFilesBySource[*source].push_back(*inputFile);
                 }
             },
+            [&](const DecoderDeclaration&)
+            {
+                /// A decoder needs only its name prefixed.
+                antlr4::TokenStreamRewriter rewriter{&create.parse->tokenStream()};
+                prefixNames(*create.parse, rewriter, declarations.names);
+                runnable.setupStatements.emplace_back(SetupStatement{.sql = rewriter.getText(), .inlineData = std::nullopt});
+            },
             [&](const ModelDeclaration& declaration) { runnable.setupStatements.emplace_back(modelStatement(*create.parse, declaration)); },
             [&](const SinkDeclaration& declaration)
             {

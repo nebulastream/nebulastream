@@ -23,6 +23,8 @@
 #include <variant>
 #include <vector>
 
+#include <Codecs/DecoderCatalog.hpp>
+#include <Codecs/DecoderDescriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -58,6 +60,21 @@ struct CreatePhysicalSourceStatementResult
 struct CreateSinkStatementResult
 {
     SinkDescriptor created;
+};
+
+struct CreateDecoderStatementResult
+{
+    DecoderDescriptor created;
+};
+
+struct ShowDecodersStatementResult
+{
+    std::vector<DecoderDescriptor> decoders;
+};
+
+struct DropDecoderStatementResult
+{
+    DecoderDescriptor dropped;
 };
 
 struct ShowLogicalSourcesStatementResult
@@ -155,6 +172,7 @@ using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
+    CreateDecoderStatementResult,
     DropWorkerStatementResult,
     CreateWorkerStatementResult,
     WorkerStatusStatementResult,
@@ -163,10 +181,12 @@ using StatementResult = std::variant<
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
+    ShowDecodersStatementResult,
     ShowModelsStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
+    DropDecoderStatementResult,
     DropModelStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
@@ -234,6 +254,18 @@ public:
     std::expected<CreateSinkStatementResult, Exception> operator()(const CreateSinkStatement& statement);
     std::expected<ShowSinksStatementResult, Exception> operator()(const ShowSinksStatement& statement) const;
     std::expected<DropSinkStatementResult, Exception> operator()(const DropSinkStatement& statement);
+};
+
+/// Applies CREATE, SHOW and DROP DECODER to the decoder catalog that the SourceCatalog resolves against.
+class DecoderStatementHandler final : public StatementHandler<DecoderStatementHandler>
+{
+    std::shared_ptr<DecoderCatalog> decoderCatalog;
+
+public:
+    explicit DecoderStatementHandler(std::shared_ptr<DecoderCatalog> decoderCatalog);
+    std::expected<CreateDecoderStatementResult, Exception> operator()(const CreateDecoderStatement& statement);
+    std::expected<ShowDecodersStatementResult, Exception> operator()(const ShowDecodersStatement& statement) const;
+    std::expected<DropDecoderStatementResult, Exception> operator()(const DropDecoderStatement& statement);
 };
 
 /// Computes the EXPLAIN output for the given statement using the provided optimizer.

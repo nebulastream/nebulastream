@@ -19,11 +19,16 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <memory>
+#include <optional>
 #include <random>
 #include <stop_token>
+#include <string>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <Codecs/DecoderCatalog.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -133,6 +138,54 @@ TEST_F(SourceCatalogTest, ConfigMapsRequireExplicitQuotingForNumericStrings)
     ASSERT_TRUE(source.has_value()) << source.error();
     EXPECT_EQ(source->getPluginData().getAs<FileSourceConfig>().filePath, "123");
     EXPECT_EQ(source->getMaxInflightBuffers(), 2);
+}
+
+namespace
+{
+std::expected<SourceDescriptor, Exception>
+addFileSource(SourceCatalog& catalog, const LogicalSource& logical, const std::optional<std::string>& decoderNames)
+{
+    std::unordered_map<Identifier, std::string> config{{Identifier::parse("FILE_PATH"), "'/dev/null'"}};
+    if (decoderNames)
+    {
+        config.emplace(Identifier::parse("DECODERS"), fmt::format("'{}'", *decoderNames));
+    }
+    return catalog.addPhysicalSource(
+        logical, Identifier::parse("FILE"), Host{"localhost:8080"}, config, {{Identifier::parse("TYPE"), "CSV"}});
+}
+
+LogicalSource addLogicalSource(SourceCatalog& catalog)
+{
+    const auto logical = catalog.addLogicalSource(
+        Identifier::parse("input"),
+        Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::INT32}});
+    if (not logical.has_value())
+    {
+        throw TestException("Cannot create the logical source");
+    }
+    return *logical;
+}
+}
+
+TEST_F(SourceCatalogTest, DecoderReferencesWithoutCodec)
+{
+    auto decoders = std::make_shared<DecoderCatalog>();
+    const auto unknownCodec = decoders->addDecoder(Identifier::parse("other"), Identifier::parse("NOT_A_CODEC"), {});
+    ASSERT_FALSE(unknownCodec.has_value());
+    EXPECT_EQ(unknownCodec.error().code(), ErrorCode::UnknownDecoderType) << unknownCodec.error().what();
+    EXPECT_THAT(unknownCodec.error().what(), ::testing::HasSubstr("NOT_A_CODEC"));
+    EXPECT_FALSE(decoders->removeDecoder(Identifier::parse("missing")).has_value());
+
+    SourceCatalog catalog{decoders};
+    const auto logical = addLogicalSource(catalog);
+    const auto withUnknownDecoder = addFileSource(catalog, logical, "missing");
+    ASSERT_FALSE(withUnknownDecoder.has_value());
+    EXPECT_EQ(withUnknownDecoder.error().code(), ErrorCode::UnknownDecoderName) << withUnknownDecoder.error().what();
+    EXPECT_THAT(withUnknownDecoder.error().what(), ::testing::HasSubstr("MISSING"));
+
+    const auto withoutDecoder = addFileSource(catalog, logical, std::nullopt);
+    ASSERT_TRUE(withoutDecoder.has_value()) << withoutDecoder.error();
+    EXPECT_TRUE(withoutDecoder->getDecoders().empty());
 }
 
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
