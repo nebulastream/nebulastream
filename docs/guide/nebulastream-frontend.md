@@ -609,7 +609,7 @@ Each function entry requires:
 - `returns` - Return type (a UDF result is always nullable)
 
 Each entry may also set:
-- `execution` - Where the function runs. `INLINE` compiles the entrypoint module into the query pipeline with Codon. In SQL, `EXECUTION INLINE COMPILER NUMBA` compiles it with Numba instead; the frontend then needs `NES_NUMBA_PYTHON`, the Python executable of an environment with Numba.
+- `execution` - Where the function runs. `INLINE` compiles the entrypoint module into the query pipeline with Codon. In SQL, `EXECUTION INLINE COMPILER NUMBA` compiles it with Numba instead; the frontend then needs `NES_NUMBA_PYTHON`, the Python executable of an environment with Numba. `EXECUTION INLINE COMPILER CODON PYTHON_COMPAT` compiles a Codon UDF with the CPython semantics that cost time (integer `//` and `%` round down, checked float math); see the design document.
   `IN_PROCESS`, the default, runs it in the CPython interpreter embedded in the worker. `OUT_OF_PROCESS` runs it
   in a separate Python process: `$NES_UDF_VENV/bin/python` if `NES_UDF_VENV` is set, `python3` otherwise. Modules are imported
   from the directories in `NES_UDF_PATH`.

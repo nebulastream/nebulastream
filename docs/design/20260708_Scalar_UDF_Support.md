@@ -345,6 +345,69 @@ OQ5: Interpreter choice per UDF — resolved. CPython is the only embedded inter
 - **Numba (prototype).** `EXECUTION INLINE COMPILER NUMBA` compiles the UDF with Numba instead of Codon (`COMPILER CODON` is the default). At CREATE FUNCTION, `NumbaUdfCompiler` runs `nes-python-udf/numba/python/nes_numba_compile.py` with the Python of `NES_NUMBA_PYTHON` (an environment with Numba). The script compiles the unchanged function through the `nes_numba_ext` front end and extensions (json, re, Counter and others, which Numba does not support), and adds an entry with the ABI of the Codon entry. A VARSIZED argument becomes a Numba string without a copy if it is ASCII; a VARSIZED result is written as UTF-8 into memory from `seq_alloc`. NES then adds the interpreter entry, internalizes and validates the bitcode as for Codon, and stores it in the catalog. The worker lowers it through `NumbaUdfLowering` to the same `PythonPhysicalFunction`, with Numba's runtime: NRT, the typed dict and list and the Unicode tables (vendored from Numba, BSD license, in `nes-python-udf/numba/runtime`), plus Numba's random state and stand-ins for the CPython functions of its error path. No Python runs in the worker. Exceptions give a generic error message. All 25 UDFBench scalar UDFs run unchanged (`StreamUDFBenchNumba.test`).
 - **Language subset.** The code is compiled by Codon, not run by an interpreter. It must stay within Codon's statically typed Python, and a `VARSIZED` value is a `str` that Codon does not validate, so it can also hold binary data and its length counts bytes. An `ENTRYPOINT` function can annotate a parameter as `bytes` or `Optional[bytes]`, and can return `bytes`. A `VARSIZED` UDF can also return a value whose type has a method `__nes_str__`, which gives the text or raises at run time: `json.Value` gives the text of a string and raises `TypeError` for any other kind, as the Python executions reject a result that is not `str` or `bytes` (`CodonJsonResult.test`). NES's Codon fork calls `obj.__isinstance__(T)` at run time when `isinstance(obj, T)` is not statically true and the class has that method. `json.Value` uses it, so `isinstance(value, list)` (also `dict`, `str`, `int`, `float`, `bool`, `NoneType`) checks the kind of a parsed value as for the objects of CPython's `json`. Codon enforces return annotations, which CPython ignores. So the fork also converts a returned value whose type does not match the annotation `T` through `value.__as__(T)`, if its class has that method. `json.Value.__as__` gives a string as `str`, an int or bool as `int`, a number or bool as `float`, and any value as `bool` by its truth, and raises `TypeError` otherwise, as the Python executions accept or reject such a result. The fork also calls `obj.__type_is__(T)` for `type(obj) == T` (also `!=`, `is`, `is not`), which `json.Value` answers exactly (a bool is not an int), and `obj.__tuple__()` for `tuple(obj)`, which gives an array itself. The `isinstance`, `type()` and `tuple()` hooks apply only to code outside the Codon standard library and its plugins, whose generic code relies on static checks to remove branches that would not compile. NES's filesystem marks modules from UDF import paths as user code (`is_library`); Codon would count them as library code, as it finds them in search paths. With these, the unchanged UDFBench `jsonparse` and `jaccard` run as `INLINE`. For `stem`, the fork also: captures transitively (a nested function that calls a sibling nested function also captures what that one captures); gives an empty list in a column of a constant table (a tuple of tuples) the element type of the other lists in that column; gives a function without return annotation that returns `None` and other values an `Optional` return type, as in Python, where Codon took the type of the first `return`; and does not bind a return type to a value type that is not known yet. A function annotated `-> T` whose body returns `None` returns `Optional[T]`: a UDF result can always be NULL, so `-> T` reads as "T or NULL" (a value of another type is still an error, as no SQL type converts it). These apply to user code only. Codon errors in a UDF now name the file, line and column of each step. `nes-systests/udf/pyudfs/portable_udfs.py` is written to be valid under CPython and Codon, which is what lets `PythonUdfBridgeComparison.test` compare both backends on one source.
 
+# Extension — Python compatibility of INLINE UDFs (PYTHON_COMPAT)
+
+A compiled UDF can give a different result than CPython for the same code. A differential test runs the same cases in
+CPython and in each compiler and compares the results row by row (`nes-python-udf/benchmark/fuzz/codon_diff.py`; the
+findings, with one minimized case each, are in `nes-python-udf/benchmark/fuzz/FINDINGS.md`).
+
+`EXECUTION INLINE COMPILER CODON PYTHON_COMPAT` compiles a Codon UDF with the CPython semantics that cost time. The
+worker keeps one persistent Codon compiler for each mode, so a query can use UDFs of both modes. PYTHON_COMPAT selects
+Codon's Python numerics (the stdlib sees it as `__py_numerics__`):
+
+- Integer `//` and `%` round toward negative infinity, as in Python. Without the flag, they truncate as in C.
+- `**` on floats raises OverflowError for a result that overflows, ZeroDivisionError for zero to a negative power, and
+  ValueError for a negative base with a fractional exponent (CPython returns a complex number there).
+- `int(x)` of a float raises for NaN, infinity and a value outside of 64 bits.
+- The functions of `math` raise ValueError or OverflowError, as in CPython, where they would give NaN or infinity.
+- A NaN element of a list matches a NaN in `in`, `index`, `count`, `remove` and `==`. CPython compares with `is` first,
+  so a list finds the NaN object that it holds; a Codon float has no identity.
+
+E83 measured the Python numerics: 1.01x on the UDFBench scalar UDFs, 3.3x on a kernel of float `//` and `%`. Without
+the flag, the UDF gets the faster C semantics.
+
+These apply in both modes, as they cost little or nothing:
+
+- A float is written as CPython's `repr` writes it (shortest digits that read back as the same value) in `str`, `repr`
+  and f-strings without a format spec. Codon wrote `%g` before (`0.333333`).
+- An integer `//` or `%` by zero raises ZeroDivisionError, and the smallest int divided by -1 wraps. Both ended the
+  worker with SIGFPE before.
+- `bin`, `hex` and `oct` of a negative int, hashing a NaN and hashing a float with Python numerics return. They did not
+  return or raised before.
+- A loop over an exhausted generator runs no iteration (it crashed), and `{**d, k: v}` compiles (it aborted).
+
+Known differences of Codon that remain, to fix when a UDF needs them:
+
+| Area | CPython | Codon |
+|---|---|---|
+| Fixed-width int | arbitrary precision | 64 bits, wraps on overflow |
+| `int ** int` with a negative exponent at run time | float (`10 ** -1` is 0.1) | 0 (the result type is int) |
+| int and float compare | exact (`float(2**53+1) == 2**53+1` is False) | the int converts to float first (True) |
+| `int / int` | correctly rounded | both convert to float first (1 ulp off above 2**53) |
+| `round(n)` on an int | int | float |
+| `round(x, n)` | correctly rounded, half to even (`round(2.675, 2)` is 2.67, `round(0.5)` is 0) | 2.68, 1 |
+| Format specs | `,` grouping, zero fill, `g` as default type, `{s:>10}` on str | no grouping, space fill, another default; `{s:>10}` does not compile |
+| `str.format`, `%` formatting, `format()` | supported | not supported |
+| `pow(a, -1, m)` | modular inverse | error |
+| `hash(-1)` | equal to `hash(-2)` | not equal |
+| Closures in a loop | late binding (`[lambda: k for k in range(3)][0]()` is 2) | early binding (0) |
+| str literals | `\U0001f600`, `\N{...}` | kept as text |
+| `int()` and `float()` parse | `+7`, `1_000`, base 0; `float('0x1f')` raises | ValueError; 31 |
+| `re` (RE2 plugin) | Python's empty-match rules, `findall` with one group gives the group, unmatched groups are `''`, `re.VERBOSE`, `re.escape` | extra empty matches, the whole match, IndexError, ignored, escapes more |
+| `json` (simdjson plugin) | last duplicate key wins, `1e400`, `NaN`, lone surrogates | all keys kept, parse errors |
+| NaN in tuples, `min`, `max` | identity first | IEEE compare only |
+
+Numba (`COMPILER NUMBA`, prototype) has no PYTHON_COMPAT. Its known limitations:
+
+- It rejects untyped containers, most str methods, and `json` and `re` beyond what `nes_numba_ext` adds (72 of 80
+  generated UDF programs did not compile).
+- `str(x)` of a float gives `<object type:float64>`.
+- `str.split(None, maxsplit)` ignores maxsplit. `str.replace` with an empty pattern inserts twice.
+- `math` functions give NaN or infinity and do not raise.
+- `str(-2**63)` throws std::bad_alloc out of the UDF and ends the worker.
+- `int(s)` rejects non-ASCII digits (`'٣٤'`). `chr(255)` gives an invalid character.
+- Fixed-width int, `10 ** -1`, int and float compare, and NaN in lists as in Codon without PYTHON_COMPAT.
+
 # Extension — Function bodies in CREATE FUNCTION
 
 Instead of `ENTRYPOINT`, a function can carry its code: `CREATE FUNCTION f (a INT64) RETURNS INT64 AS $python$ ... $python$`. The body runs as a function whose parameters have the declared argument names. `UdfDescriptor` holds it as an `InlineUdfSource`, so it travels with the plan and needs no file on the worker.

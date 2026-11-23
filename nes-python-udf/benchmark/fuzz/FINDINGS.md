@@ -1,10 +1,12 @@
 # Codon vs CPython: differential test findings
 
-Harness: `codon_diff.py` (cases with a signature header, run in CPython and with `nes-python-udf-runner`).
+Harness: `codon_diff.py` (cases with a signature header, run in CPython and with `nes-python-udf-runner`). Codon cases
+compile with PYTHON_COMPAT (`--python-compat 1`, the default); `--python-compat 0` gives Codon's C numerics.
+Campaign 1 used `NES_CODON_PY_NUMERICS=1`, which PYTHON_COMPAT replaced.
 Repros: `repros/`, one minimized case per finding. Run them all with:
 
 ```bash
-NES_CODON_PY_NUMERICS=1 python3 nes-python-udf/benchmark/fuzz/codon_diff.py nes-python-udf/benchmark/fuzz/repros --results /tmp/repros.jsonl
+python3 nes-python-udf/benchmark/fuzz/codon_diff.py nes-python-udf/benchmark/fuzz/repros --results /tmp/repros.jsonl
 ```
 
 ## Campaign 1 (2026-11-22, commits 271896acf3 to 5ed275defa)
@@ -14,28 +16,30 @@ control flow and containers). All runs use `NES_CODON_PY_NUMERICS=1` unless a ro
 
 ### Crashes and hangs (a worker stops or never returns)
 
-| Repro | Expression | Codon | Numerics |
-|---|---|---|---|
-| (smoke test) | `a // 0` (int) | SIGFPE | C only |
-| min_bin_negative.py | `bin(-5)`, `hex`, `oct` | never returns: `_int_format` loops on `b //= base` | Python only |
-| min_hash_nan.py | `len({float('nan')})`, NaN as a dict key | never returns: `float.__hash__` loops on the NaN mantissa | C |
-| min_float_hash.py | `hash(x)` of any float, float set or dict keys | ZeroDivisionError from `1.0 / 0.0` in `float.__hash__` | Python only |
-| min_gen_list_twice.py | `list(g); list(g)` on one generator | SIGSEGV | Python |
-| min_dict_unpack_crash.py | `{**d, "x": 0}` | compiler abort (SIGABRT) | both |
+Fixed on 2026-11-23 in the Codon fork (branch nes-python-compat) and in NES; the last column names the fork commit.
+
+| Repro | Expression | Codon | Numerics | Fixed |
+|---|---|---|---|---|
+| min_int_floordiv_zero.py | `a // 0` (int); smallest int `// -1` | SIGFPE | C only; both | 7164a15 |
+| min_bin_negative.py | `bin(-5)`, `hex`, `oct` | never returns: `_int_format` loops on `b //= base` | Python only | 641f329 |
+| min_hash_nan.py | `len({float('nan')})`, NaN as a dict key | never returns: `float.__hash__` loops on the NaN mantissa | C | d2796f3 |
+| min_float_hash.py | `hash(x)` of any float, float set or dict keys | ZeroDivisionError from `1.0 / 0.0` in `float.__hash__` | Python only | d2796f3 |
+| min_gen_list_twice.py | `list(g); list(g)` on one generator | SIGSEGV | both | ae5373a |
+| min_dict_unpack_crash.py | `{**d, "x": 0}` | compiler abort (SIGABRT) | both | 9dd43c0 |
 
 ### Wrong values
 
 | Area | Repro or expression | CPython | Codon |
 |---|---|---|---|
 | int division | `a // b`, `a % b` with a negative operand (C numerics) | floor | truncation |
-| float to str | `str(x)`, `repr(x)`, f-strings without a spec, json.dumps | `0.0`, `0.3333333333333333` | `0`, `0.333333` (%g) |
+| float to str (fixed: NES `seq_str_float`) | `str(x)`, `repr(x)`, f-strings without a spec, json.dumps | `0.0`, `0.3333333333333333` | `0`, `0.333333` (%g) |
 | format specs | `f'{n:,}'`, `f'{x:,.2f}'`, `f'{n:08d}'`, `f'{x:10.4}'` | grouping, zero fill, `g` default | no grouping, space fill, other default |
 | format specs | `f'{x:5.1f}%'` with inf | `  inf%` | `inf  %` |
 | round | `round(2.675, 2)`, `round(0.5)` | 2.67, 0 (correctly rounded, half even) | 2.68, 1 |
 | round | `round(n)` on an int | int | float |
 | powers | `10 ** -1`, `0 ** -1`, `pow(3, -1, 7)` | 0.1, ZeroDivisionError, 5 | 0, inf, error |
 | int and float | `float(n) == n` for 2**53+1; `n / 7` for large n | False; correctly rounded | True; 1 ulp off |
-| NaN | `x in [x]`, `(x,) == (x,)`, `min(x, nan)`, `max(nan, 0.0)` | identity first | IEEE compare only |
+| NaN | `x in [x]` (fixed with PYTHON_COMPAT, 3b8c3a9), `(x,) == (x,)`, `min(x, nan)`, `max(nan, 0.0)` | identity first | IEEE compare only |
 | closures | `[lambda: k for k in range(3)][0]()` | 2 (late binding) | 0 |
 | hash | `hash(-1) == hash(-2)` | True | False |
 | int() and float() parse | `int('+7')`, `int('1_000')`, `int('0', 0)`; `float('0x1f')` | values; ValueError | ValueError; 31 |
@@ -45,7 +49,7 @@ control flow and containers). All runs use `NES_CODON_PY_NUMERICS=1` unless a ro
 | re | `re.findall(r'(a)(b)?', 'a')` | `('a', '')` | IndexError |
 | re | `re.VERBOSE`; `(?i)` with `İ`, `ı`; `re.escape` | as Python | ignored; no match; escapes every non-alphanumeric |
 | json | duplicate keys; `[2.0]`; `1e400`, `NaN`; lone surrogates | last key wins; `[2.0]`; inf, nan; accepted | all keys kept; `[2]`; error; error |
-| float errors | `x ** 2` overflow, `(-x) ** 0.5`, `math.fmod(inf, 3)`, `int(inf)` | OverflowError, complex, ValueError | inf, nan, nan, INT64_MIN |
+| float errors (fixed with PYTHON_COMPAT, 3b8c3a9) | `x ** 2` overflow, `(-x) ** 0.5`, `math.fmod(inf, 3)`, `int(inf)` | OverflowError, complex, ValueError | inf, nan, nan, INT64_MIN |
 
 ### Clean areas
 
@@ -81,6 +85,11 @@ RE2, json on simdjson, unicode, compat). "nes_numba_ext" is `numba/python/nes_nu
 | 10 | re | zero-width matches, `findall` with one group, `(a)(b)?`, VERBOSE, `re.escape` | not checked against re_ext yet (literal patterns only) | Codon plugin (RE2); nes_numba_ext | Python's empty-match rules in the plugin's loop |
 | 11 | json | duplicate keys, `[2.0]` prints `[2]`, `1e400`/`NaN` rejected | not checked yet | Codon plugin; nes_numba_ext | Last key wins; float repr from row 2; accept the CPython extensions |
 | 12 | Language details | late-binding closures, `hash(-1)`, `\U`/`\N{}` literals | n/a | Fork | Low priority, except the str literals |
+
+Status 2026-11-23: rows 1 (Codon) and 2 (Codon) are fixed in both modes; rows 3 (Codon `**`, `int(float)`, `fmod`) and 7
+(lists) are fixed with PYTHON_COMPAT; row 5 is PYTHON_COMPAT. The other rows are documented in
+`docs/design/20260708_Scalar_UDF_Support.md` (Extension — Python compatibility of INLINE UDFs), as are the Numba
+limitations.
 
 Rows 2, 3, 6 and 7 come back in both compilers. A fix in a shared C helper (float formatting, the math domain checks)
 serves both. Rows 4 and 5 are partly design: an exact fix costs time on every operation, so measure each as E83 did.
