@@ -126,6 +126,30 @@ std::vector<std::string> pythonLibraryPaths()
     return paths;
 }
 
+/// Directories of overlays for modules of the pure-Python libraries (NES_CODON_PYTHON_OVERLAYS, ':'-separated): an
+/// overlay at the same relative path as a library module replaces some of its top-level definitions. A last resort for
+/// code that does not fit Codon's types or that is native in CPython; see nes-python-udf/codon-overlays/README.md.
+std::vector<std::string> pythonOverlayPaths()
+{
+    std::vector<std::string> paths;
+    const char* value = std::getenv("NES_CODON_PYTHON_OVERLAYS"); /// NOLINT(concurrency-mt-unsafe)
+    if (value == nullptr)
+    {
+        return paths;
+    }
+    std::string_view rest{value};
+    while (!rest.empty())
+    {
+        const auto end = rest.find(':');
+        if (const auto path = rest.substr(0, end); !path.empty())
+        {
+            paths.emplace_back(path);
+        }
+        rest = end == std::string_view::npos ? std::string_view{} : rest.substr(end + 1);
+    }
+    return paths;
+}
+
 class PythonUdfFilesystem final : public codon::ast::ResourceFilesystem
 {
 public:
@@ -144,6 +168,32 @@ public:
             add_search_path(libraryPath);
             pythonLibraryDirectories.push_back(std::filesystem::absolute(libraryPath).lexically_normal());
         }
+        for (const auto& overlayPath : pythonOverlayPaths())
+        {
+            overlayDirectories.push_back(std::filesystem::absolute(overlayPath).lexically_normal());
+        }
+    }
+
+    /// The overlay of a module of a pure-Python library: the file at the same path relative to an overlay directory.
+    [[nodiscard]] path_t overlay_for(const path_t& path) const override
+    {
+        const auto file = std::filesystem::absolute(path).lexically_normal();
+        for (const auto& library : pythonLibraryDirectories)
+        {
+            const auto relative = file.lexically_relative(library);
+            if (relative.empty() || *relative.begin() == "..")
+            {
+                continue;
+            }
+            for (const auto& overlay : overlayDirectories)
+            {
+                if (const auto candidate = overlay / relative; std::filesystem::exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+        }
+        return {};
     }
 
     [[nodiscard]] std::vector<std::string> read_lines(const path_t& path) const override
@@ -216,6 +266,7 @@ private:
 
     std::vector<std::filesystem::path> udfDirectories;
     std::vector<std::filesystem::path> pythonLibraryDirectories;
+    std::vector<std::filesystem::path> overlayDirectories;
 };
 
 /// Finds import statements inside function bodies. `from C import` declares an external C function and imports no module.

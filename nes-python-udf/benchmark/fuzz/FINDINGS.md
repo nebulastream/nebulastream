@@ -296,7 +296,10 @@ _BaseConstants` (line 1131), a class attribute assigned from outside the class. 
 `ipaddress` at `'%s has host bits set' % self` (line 1541): printf-style `%` formatting of an object. With fork
 60e11b1, it stops at `ipaddress.py:414`: a method of `_IPAddressBase` reads `self.version`, which only subclasses define. With
 fork a855d46, it stops at `ipaddress.py:1547`: `self.hosts = self.__iter__` in one branch and a lambda in another
-replace the method `hosts` per object with callables of different types (an overlay candidate).
+replace the method `hosts` per object with callables of different types (an overlay candidate). With fork 4179e11 and the
+overlay `codon-overlays/cpython-3.14/ipaddress.py`, it stops at `'IPv4Address[NoneType]' does not match expected type
+'IPv4Address[int]'`: the class infers its field `_ip`, and an instance whose field type is not inferred defaults to
+NoneType.
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -454,3 +457,18 @@ differential cases 254 ok, 80 diff, 13 reject (E97: 252, 80, 15; b118, b119). No
 - Known, not fixed: a bound virtual method as a value (`call(Sub().f, n)`, `min_bound_virtual_method`).
 
 Results (`results/E99-*.jsonl`): no change from E98; new repros as described.
+
+## Overlays for library modules (E100, 2026-11-23, Codon fork 4179e11)
+
+A last resort for library code that is native in CPython or does not fit Codon's types
+(`nes-python-udf/codon-overlays/README.md`). `NES_CODON_PYTHON_OVERLAYS` names overlay directories; a file at the
+same relative path as a library module is merged into it before type checking: a definition replaces the module's
+statement of the same name in its place, `__nes_remove__` removes statements by name, a class with `@__nes_patch__`
+replaces single members, other statements are appended. Fork: `IFilesystem::overlay_for` and the merge in
+`transformNewImport`; NES: `PythonUdfFilesystem::overlay_for`. `codon-overlays/test/check.sh` checks the merge.
+
+First overlay: `cpython-3.14/ipaddress.py`. `IPv4Network`/`IPv6Network.__init__` assign `self.hosts` per object (a
+bound method or a lambda); the overlay leaves `hosts` alone in `__init__`, and `hosts` handles one- and two-address
+networks itself.
+
+Results (`results/E100-*.jsonl`, without overlays set): no change from E99.
