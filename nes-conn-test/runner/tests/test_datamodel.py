@@ -101,6 +101,26 @@ def test_jsonl_keys_are_the_canonical_names() -> None:
 
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [b"\n", b"\n\n", b'{"id":1}\n\n', b'{"id":1}\n\n{"id":2}\n', b'{"id":1}\n \n'],
+    ids=["only-a-newline", "two-newlines", "after-the-last-record", "between-records", "whitespace"],
+)
+def test_a_blank_line_fails_as_an_empty_record(payload: bytes) -> None:
+    # A sink that writes an empty record for a buffer without tuples would otherwise pass `empty`.
+    with pytest.raises(AssertionError, match="is blank"):
+        jsonl_to_rows([("id", "INT32", False)], payload)
+
+
+@pytest.mark.parametrize(
+    ("payload", "rows"),
+    [(b"", []), (b'{"id":1}', [(1,)]), (b'{"id":1}\n', [(1,)]), (b'{"id":1}\n{"id":2}\n', [(1,), (2,)])],
+    ids=["empty", "no-final-newline", "final-newline", "two-records"],
+)
+def test_the_final_newline_starts_no_record(payload: bytes, rows: list) -> None:
+    assert jsonl_to_rows([("id", "INT32", False)], payload) == rows
+
+
 def test_source_model_rows_roundtrip() -> None:
     m = SourceModel(_SRC_ROW_SCHEMA)
     rows = m.make_rows(n_buffers=2, seed=5, buffer_size=512)
