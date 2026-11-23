@@ -307,27 +307,21 @@ public:
     }
 
 private:
+    /// Binds at the first BIND only, so a repeated BIND or a later START returns the same descriptor or the same error.
     std::string bind()
-    {
-        const auto& descriptor = ensureBound();
-        if (!descriptor)
-        {
-            return errorReply(descriptor.error());
-        }
-        /// The config's CREATE SINK statement binds to a named sink, whose schema holds the declared columns in order.
-        const auto* named = std::get_if<NamedSinkDescriptor>(&descriptor->getUnderlying());
-        INVARIANT(named != nullptr, "a CREATE SINK statement binds to a named sink");
-        return bindReply(*named->getSchema());
-    }
-
-    /// Binds on the first call only, so a repeated BIND or START returns the same descriptor or the same error.
-    const std::expected<SinkDescriptor, ErrorInfo>& ensureBound()
     {
         if (!bound)
         {
             bound.emplace(bindConfig());
         }
-        return *bound;
+        if (!*bound)
+        {
+            return errorReply(bound->error());
+        }
+        /// The config's CREATE SINK statement binds to a named sink, whose schema holds the declared columns in order.
+        const auto* named = std::get_if<NamedSinkDescriptor>(&(*bound)->getUnderlying());
+        INVARIANT(named != nullptr, "a CREATE SINK statement binds to a named sink");
+        return bindReply(*named->getSchema());
     }
 
     [[nodiscard]] std::expected<SinkDescriptor, ErrorInfo> bindConfig() const
@@ -344,7 +338,12 @@ private:
     /// Every START runs a new query in the engine, with a new sink from the once-bound descriptor and the session's source.
     std::string start()
     {
-        const auto& descriptor = ensureBound();
+        /// The runner generates its rows for the schema of the BIND reply, so a START without a BIND means that the runner skipped a step.
+        if (!bound)
+        {
+            return errorReply(harnessErrorInfo("start", "HarnessProtocol", "START before BIND"));
+        }
+        const auto& descriptor = *bound;
         if (!descriptor)
         {
             return errorReply(descriptor.error());

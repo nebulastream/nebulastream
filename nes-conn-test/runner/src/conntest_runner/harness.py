@@ -165,6 +165,8 @@ class _Stepper:
         self._server.listen(1)
         self._proc: _HarnessProc | None = None
         self._step_timeout_ms: int | None = None
+        # Whether a BIND succeeded, after which a respawned harness gets one before its first step.
+        self._bound = False
         self._deadline = threading.Timer(_TEST_DEADLINE_S, self._on_deadline)
         self._deadline.daemon = True
         self._deadline.start()
@@ -178,10 +180,15 @@ class _Stepper:
         self._proc = _HarnessProc(argv, self._server, log=self._log)
 
     def _command(self, line: str) -> Got:
-        if self._proc is None:
+        proc = self._proc
+        if proc is None:
             self._spawn()
-        assert self._proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
-        return self._proc.command(line)
+            proc = self._proc
+            assert proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
+            # A respawned harness has a new session, which fails an OPEN or START before BIND.
+            if self._bound and line != "BIND":
+                proc.command("BIND")
+        return proc.command(line)
 
     def bind(self) -> list[NativeColumn]:
         """The schema that the engine bound from the config, which the rows are generated for."""
@@ -199,6 +206,7 @@ class _Stepper:
         # Every row of an empty schema is `{}`, so every comparison would pass without checking a value.
         if not schema:
             raise HarnessError(name="HarnessProtocol", phase="bind", message="the BIND reply has no schema")
+        self._bound = True
         return schema
 
     @property

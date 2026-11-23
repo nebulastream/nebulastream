@@ -126,38 +126,39 @@ public:
     }
 
 private:
+    /// Binds at the first BIND only, so a repeated BIND or a later OPEN returns the same descriptor or the same error.
     std::string bind()
-    {
-        const auto& descriptor = ensureBound();
-        if (!descriptor)
-        {
-            return errorReply(descriptor.error());
-        }
-        return bindReply(descriptor->getSchema());
-    }
-
-    /// Binds on the first call only, so a repeated BIND or OPEN returns the same descriptor or the same error.
-    const std::expected<SourceDescriptor, ErrorInfo>& ensureBound()
     {
         if (!bound)
         {
-            if (const auto sql = slurpFile(options.configFile))
-            {
-                bound.emplace(bindSourceStatements(*sql));
-            }
-            else
-            {
-                bound.emplace(
-                    std::unexpected{
-                        harnessErrorInfo("bind", "HarnessIO", fmt::format("cannot read config file: {}", options.configFile.string()))});
-            }
+            bound.emplace(bindConfig());
         }
-        return *bound;
+        if (!*bound)
+        {
+            return errorReply(bound->error());
+        }
+        return bindReply((*bound)->getSchema());
+    }
+
+    [[nodiscard]] std::expected<SourceDescriptor, ErrorInfo> bindConfig() const
+    {
+        const auto sql = slurpFile(options.configFile);
+        if (!sql)
+        {
+            return std::unexpected{
+                harnessErrorInfo("bind", "HarnessIO", fmt::format("cannot read config file: {}", options.configFile.string()))};
+        }
+        return bindSourceStatements(*sql);
     }
 
     std::string open()
     {
-        const auto& descriptor = ensureBound();
+        /// The runner generates its rows for the schema of the BIND reply, so an OPEN without a BIND means that the runner skipped a step.
+        if (!bound)
+        {
+            return errorReply(harnessErrorInfo("open", "HarnessProtocol", "OPEN before BIND"));
+        }
+        const auto& descriptor = *bound;
         if (!descriptor)
         {
             return errorReply(descriptor.error());
