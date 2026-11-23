@@ -143,6 +143,21 @@ _FILE_CONFIGS = {
 }
 
 
+@pytest.mark.parametrize(("mode", "step"), [("source", "OPEN"), ("sink", "START")])
+def test_a_step_before_bind_fails_with_harness_protocol(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path, mode: str, step: str
+) -> None:
+    # The runner generates its rows for the schema of the BIND reply, so a step before BIND means that the runner skipped it.
+    config = tmp_path / f"{mode}.nesql"
+    config.write_text(_FILE_CONFIGS[mode], encoding="utf-8")
+    with Session(harness_binary, sock_dir, config=config, mode=mode) as session:
+        reply = session.command(step)
+        expected = (False, "harness", "HarnessProtocol", f"{step} before BIND")
+        assert (reply["ok"], reply["origin"], reply["name"], reply["message"]) == expected, reply
+        assert session.command("BIND")["ok"] is True
+        assert session.end() == _EXIT_OK
+
+
 @pytest.mark.parametrize("mode", sorted(_FILE_CONFIGS))
 def test_bind_replies_with_the_schema_that_the_engine_bound(
     harness_binary: Path, sock_dir: Path, tmp_path: Path, mode: str
@@ -231,6 +246,7 @@ def test_sink_gets_records_that_continue_in_child_buffers(harness_binary: Path, 
     records_path.write_bytes(b"".join(records))
     args = [f"--input-path={records_path}", "--buffer-size=64"]
     with Session(harness_binary, sock_dir, config=config, mode="sink", args=args) as session:
+        assert session.command("BIND")["ok"] is True
         start = session.command("START")
         assert start == {"ok": True, "phase": "start", "n_buffers": 3}, start
         assert session.command("WRITE 3")["ok"] is True

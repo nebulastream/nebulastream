@@ -67,6 +67,7 @@ measured by the harness around the connector's `fillTupleBuffer`, so a scenario 
 A failure reply has the error's origin, code, name and phase, for example
 `{"ok":false,"phase":"open","origin":"connector","code":4002,"name":"CannotOpenSource","message":"..."}`.
 A scenario may expect a connector error; a harness error, such as a config that does not bind or a step timeout, always fails it.
+A step out of order, such as an OPEN before BIND, fails with `HarnessProtocol`.
 Each step has a timeout of 30 s, and the runner kills a harness that exceeds the test's deadline of 120 s.
 The harness reports its step timeout at BIND, so that a step that the runner runs itself, such as a sink loader's read-back, waits as long without a second copy of the value.
 Neither can be configured: both only break stalls, so a longer one would only make a failing test slower.

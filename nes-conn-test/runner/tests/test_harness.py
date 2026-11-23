@@ -50,6 +50,22 @@ for _ in conn.makefile("rb"):
 """
 
 
+# Appends every command to `<config>.commands`, replies to BIND with a BIND reply and to any other command with an OK, and exits after EOF.
+_LOGS_COMMANDS = """
+import socket, sys
+args = dict(arg.split("=", 1) for arg in sys.argv[1:] if "=" in arg)
+conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+conn.connect(args["--control-sock"])
+for line in conn.makefile("rb"):
+    with open(args["--config"] + ".commands", "ab") as log:
+        log.write(line)
+    if line.startswith(b"BIND"):
+        conn.sendall(b'{"ok":true,"phase":"bind","schema":[{"name":"ID","type":"INT32","nullable":false}],"step_timeout_ms":30000}\\n')
+    else:
+        conn.sendall(b'{"ok":true,"phase":"open"}\\n')
+"""
+
+
 def _fake_harness(tmp_path: Path, script: str) -> Path:
     fake = tmp_path / "fake-harness"
     fake.write_text(f"#!{sys.executable}\n{script}", encoding="utf-8")
@@ -77,3 +93,14 @@ def test_bind_fails_when_the_harness_has_another_step_timeout(tmp_path: Path) ->
     with pytest.raises(HarnessError, match="step timeout is 60000 ms, but the runner's copy in harness.py is 30000 ms"):
         source.bind()
     source.cleanup()
+
+
+def test_a_respawned_harness_gets_a_bind_before_its_first_step(tmp_path: Path) -> None:
+    # crash_recovery kills the harness, and the new process's session fails an OPEN before BIND.
+    config = tmp_path / "unused.nesql"
+    source = harness.Source(harness=_fake_harness(tmp_path, _LOGS_COMMANDS), config=config)
+    source.bind()
+    source.kill()
+    source.open()
+    source.cleanup()
+    assert (tmp_path / "unused.nesql.commands").read_text(encoding="utf-8").split() == ["BIND", "BIND", "OPEN"]
