@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 class Kind(StrEnum):
-    """Whether a connector is a source or a sink, which its loader's base class states."""
+    """Whether a connector is a source or a sink, as add_conn_test registers it."""
 
     SOURCE = "source"
     SINK = "sink"
@@ -324,21 +324,30 @@ def binding_problems(
     return problems
 
 
-def registered_connectors(build_dir: Path, repo_root: Path) -> dict[str, Path]:
+@dataclass(frozen=True)
+class RegisteredConnector:
+    kind: Kind
+    conn_test_dir: Path
+
+
+def registered_connectors(build_dir: Path, repo_root: Path) -> dict[str, RegisteredConnector]:
     """The connectors that called add_conn_test, from the list that CMake writes into the build dir.
 
-    One line per connector, with the directory relative to the repo root: `TCPSource nes-plugins/Sources/TCPSource/conn-test`.
+    One line per connector, with its kind and its directory relative to the repo root:
+    `TCPSource source nes-plugins/Sources/TCPSource/conn-test`.
     """
     listing = build_dir / "nes-conn-test" / "connectors.txt"
     if not listing.is_file():
         raise FileNotFoundError(f"{listing} does not exist; configure the build with tests enabled")
     return {
-        name: repo_root / rel
-        for name, rel in (line.split(maxsplit=1) for line in listing.read_text(encoding="utf-8").splitlines() if line.strip())
+        name: RegisteredConnector(kind=Kind(kind), conn_test_dir=repo_root / rel)
+        for name, kind, rel in (
+            line.split(maxsplit=2) for line in listing.read_text(encoding="utf-8").splitlines() if line.strip()
+        )
     }
 
 
-def discover_plugin(name: str, conn_test_dir: Path) -> PluginEntry:
+def discover_plugin(name: str, conn_test_dir: Path, kind: Kind) -> PluginEntry:
     loader_py = conn_test_dir / "loader.py"
     if not loader_py.is_file():
         raise FileNotFoundError(f"{name}: no {loader_py}")
@@ -348,6 +357,13 @@ def discover_plugin(name: str, conn_test_dir: Path) -> PluginEntry:
         raise RuntimeError(
             f"{name}: loader.py must define exactly one concrete subclass of "
             f"conntest_runner.contracts.SourceLoader or SinkLoader, found {len(loader_classes)}"
+        )
+    # A loader of the other kind would fail every case at BIND, with an error about the config, not about the loader.
+    base = SinkLoader if kind == Kind.SINK else SourceLoader
+    if not issubclass(loader_classes[0], base):
+        raise RuntimeError(
+            f"{name}: add_conn_test registered a {kind}, so its loader must subclass conntest_runner.contracts.{base.__name__}, "
+            f"which {loader_classes[0].__name__} does not"
         )
     entry = PluginEntry(
         name=name,

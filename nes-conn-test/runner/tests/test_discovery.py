@@ -25,6 +25,7 @@ from conntest_runner.discovery import (
     Expectation,
     IsolationContractError,
     Kind,
+    RegisteredConnector,
     Scenario,
     binding_problems,
     discover_plugin,
@@ -64,18 +65,18 @@ _COMPOSE_ONE_SERVICE = 'services:\n  {service}:\n    image: busybox:1.36\n    ex
 
 
 @pytest.fixture
-def registered(request: pytest.FixtureRequest, repo_root: Path) -> dict[str, Path]:
+def registered(request: pytest.FixtureRequest, repo_root: Path) -> dict[str, RegisteredConnector]:
     build_dir = request.config.getoption("--build-dir")
     if build_dir is None:
         pytest.skip("no --build-dir given")
     return registered_connectors(Path(build_dir), repo_root)
 
 
-def test_every_registered_connector_loads(registered: dict[str, Path]) -> None:
+def test_every_registered_connector_loads(registered: dict[str, RegisteredConnector]) -> None:
     # Loading raises on a compose.yaml without exactly one exposed service,
-    # so a clean load also checks every connector's topology.
-    for name, conn_test_dir in registered.items():
-        p = discover_plugin(name, conn_test_dir)
+    # so a clean load also checks every connector's topology and that its loader is of its registered kind.
+    for name, connector in registered.items():
+        p = discover_plugin(name, connector.conn_test_dir, connector.kind)
         assert p.scenarios, name
         assert all(isinstance(s, Scenario) and s.name for s in p.scenarios), name
 
@@ -86,7 +87,7 @@ def test_missing_scenarios_raises(tmp_path: Path) -> None:
     (ct / "loader.py").write_text(_LOADER, encoding="utf-8")
     (ct / "compose.yaml").write_text(_COMPOSE_ONE_SERVICE.format(service="svc"), encoding="utf-8")
     with pytest.raises(FileNotFoundError, match="scenarios.py"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 _LOADER_NOT_A_SUBCLASS = (
@@ -105,7 +106,7 @@ def test_loader_not_subclassing_base_is_not_discovered(tmp_path: Path) -> None:
     (ct / "loader.py").write_text(_LOADER_NOT_A_SUBCLASS, encoding="utf-8")
     (ct / "compose.yaml").write_text(_COMPOSE_ONE_SERVICE.format(service="svc"), encoding="utf-8")
     with pytest.raises(RuntimeError, match="SourceLoader"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 def _write_fake_broker_plugin(tmp_path: Path, *, compose: str) -> Path:
@@ -119,17 +120,17 @@ def _write_fake_broker_plugin(tmp_path: Path, *, compose: str) -> Path:
 
 def test_topology_derived_from_compose(tmp_path: Path) -> None:
     ct = _write_fake_broker_plugin(tmp_path, compose=_COMPOSE_ONE_SERVICE.format(service="svc"))
-    assert discover_plugin("FakeSource", ct).endpoint == "svc:1234"
+    assert discover_plugin("FakeSource", ct, Kind.SOURCE).endpoint == "svc:1234"
     # Without a compose.yaml, the loader starts the server itself.
     (ct / "compose.yaml").unlink()
-    assert discover_plugin("FakeSource", ct).endpoint is None
+    assert discover_plugin("FakeSource", ct, Kind.SOURCE).endpoint is None
 
 
 def test_missing_expose_port_fails_fast(tmp_path: Path) -> None:
     """The error is reported at discovery, not as a later connect timeout."""
     ct = _write_fake_broker_plugin(tmp_path, compose="services:\n  svc:\n    image: busybox\n")
     with pytest.raises(IsolationContractError, match="expose"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 def test_multiple_services_fails_fast(tmp_path: Path) -> None:
@@ -138,7 +139,7 @@ def test_multiple_services_fails_fast(tmp_path: Path) -> None:
     )
     ct = _write_fake_broker_plugin(tmp_path, compose=two_services)
     with pytest.raises(IsolationContractError, match="exactly one service"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 @pytest.mark.parametrize(
@@ -188,6 +189,7 @@ def _discover_with(
     configs: tuple[str, ...] = (),
     data_files: tuple[str, ...] = (),
     loader: str = _LOADER,
+    kind: Kind = Kind.SOURCE,
 ):
     """Loads the plugin even for a malformed binding, as long as scenarios.py imports."""
     ct = tmp_path / "conn-test"
@@ -205,7 +207,7 @@ def _discover_with(
         f = ct / rel
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text("x\n", encoding="utf-8")
-    return discover_plugin("FakeSource", ct)
+    return discover_plugin("FakeSource", ct, kind)
 
 
 def test_clean_bindings_have_no_problems(tmp_path: Path) -> None:
@@ -229,8 +231,29 @@ def test_unknown_scenario_reported(tmp_path: Path) -> None:
 
 def test_loader_base_class_sets_the_kind(tmp_path: Path) -> None:
     source = _discover_with(tmp_path / "source", scenarios_py=_SCN.format(""))
-    sink = _discover_with(tmp_path / "sink", scenarios_py=_SCN.format(""), loader=_SINK_LOADER)
+    sink = _discover_with(tmp_path / "sink", scenarios_py=_SCN.format(""), loader=_SINK_LOADER, kind=Kind.SINK)
     assert (source.kind, sink.kind) == (Kind.SOURCE, Kind.SINK)
+
+
+@pytest.mark.parametrize(
+    ("loader", "kind", "base"),
+    [
+        pytest.param(_SINK_LOADER, Kind.SOURCE, "SourceLoader", id="sink-loader-of-a-source"),
+        pytest.param(_LOADER, Kind.SINK, "SinkLoader", id="source-loader-of-a-sink"),
+    ],
+)
+def test_a_loader_of_the_other_kind_fails_discovery(tmp_path: Path, loader: str, kind: Kind, base: str) -> None:
+    # Otherwise the harness would run in the other mode, and every case would fail at BIND with an error about the config.
+    with pytest.raises(RuntimeError, match=rf"registered a {kind}, so its loader must subclass conntest_runner\.contracts\.{base}"):
+        _discover_with(tmp_path, scenarios_py=_SCN.format(""), loader=loader, kind=kind)
+
+
+def test_registered_connectors_have_the_kind_that_cmake_wrote(tmp_path: Path) -> None:
+    listing = tmp_path / "nes-conn-test" / "connectors.txt"
+    listing.parent.mkdir()
+    listing.write_text("TCPSink sink nes-plugins/Sinks/TCPSink/conn-test\n", encoding="utf-8")
+    connector = registered_connectors(tmp_path, Path("/repo"))["TCPSink"]
+    assert (connector.kind, connector.conn_test_dir) == (Kind.SINK, Path("/repo/nes-plugins/Sinks/TCPSink/conn-test"))
 
 
 def _constructors(module: ModuleType) -> set[str]:
@@ -266,6 +289,7 @@ def test_source_only_scenario_in_a_sink_fails_discovery(tmp_path: Path) -> None:
             ),
             configs=("basic.nesql",),
             loader=_SINK_LOADER,
+            kind=Kind.SINK,
         )
 
 

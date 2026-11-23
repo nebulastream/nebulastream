@@ -36,9 +36,9 @@ from conntest_runner.scenarios import (
     scenario_names,
 )
 
-if "CONNTEST_PLUGIN" not in os.environ or "CONNTEST_DIR" not in os.environ:
-    raise RuntimeError("run the battery through `conntest run`, which sets CONNTEST_PLUGIN and CONNTEST_DIR")
-_PLUGINS = [discover_plugin(os.environ["CONNTEST_PLUGIN"], Path(os.environ["CONNTEST_DIR"]))]
+if any(variable not in os.environ for variable in ("CONNTEST_PLUGIN", "CONNTEST_DIR", "CONNTEST_KIND")):
+    raise RuntimeError("run the battery through `conntest run`, which sets CONNTEST_PLUGIN, CONNTEST_DIR and CONNTEST_KIND")
+_PLUGINS = [discover_plugin(os.environ["CONNTEST_PLUGIN"], Path(os.environ["CONNTEST_DIR"]), Kind(os.environ["CONNTEST_KIND"]))]
 
 # Each binding defect fails once in its own test, and the defective scenario is left out of the cases.
 _BINDING_PROBLEMS = [
