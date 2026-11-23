@@ -113,3 +113,25 @@ difference is Codon's own.
   `round(-45.9, -2)` is 0.0, not -0.0; `math.log(0, 3)` is -inf without an error; `math.frexp(nan)[1]` is -1.
 - math functions differ from CPython by 1 ulp (log10, sin, erf, asinh, atan2, hypot and more).
 - The recursion limit is lower (RecursionError where CPython returns).
+
+## The same cases in PyPy (E86, 2026-11-23, commit ebaa7360f6)
+
+`--compiler PyPy` runs the reference child of the harness in PyPy 7.3.20 (Python 3.11, `/usr/bin/pypy3`), the interpreter
+of the out-of-process UDF experiments E19 to E59. The reference is CPython 3.14. Results: `results/E86-diff-pypy.jsonl`.
+
+| Group | ok | diff | reject | crash | timeout |
+|---|---|---|---|---|---|
+| builtins (222) | 202 | 20 | 0 | 0 | 0 |
+| repros (32) | 27 | 0 | 5 | 0 | 0 |
+| programs (80) | 69 | 11 | 0 | 0 | 0 |
+
+- `str.split()` without a separator does not split at `\x1c`-`\x1f`, but `'\x1c'.isspace()` is True. This one cause gives
+  most of the differences (11 builtins, 8 programs).
+- `s.count('')` counts UTF-8 bytes: `'Ångström'.count('')` is 11, CPython gives 9.
+- `'%.3f' % x` for x of 1e50 or more gives the `%g` form (`1e+308`), as Python 2 did; `f'{x:.3f}'` is correct.
+- `round(-0.0, 2)` and `math.gamma` of a large negative non-integer give 0.0, not -0.0.
+- `x ** 2` overflow gives inf, not OverflowError.
+- `math.log2` and `math.erf` differ by 1 ulp.
+- `json.loads` of invalid non-ASCII input (`'٣٤'`) makes an error message with a lone UTF-8 byte. Formatting that error
+  raises SystemError (an RPython CheckError), and the process ends. The 5 JSON repros are rejects for this reason.
+- Python version: `re.subn(r'\B', '.', '')` matches once in CPython 3.14 and not in 3.11 (a 3.14 change, not PyPy's).
