@@ -55,6 +55,18 @@ nes_require_env() {
   fi
 }
 
+# GNU tail exits as soon as the reader of its output is gone. uutils' tail, the default
+# since Ubuntu 25.10 (which installs GNU tail as gnutail), checks that only after a second
+# without events on the followed file, and every open of or write to the file is an event.
+nes_require_gnu_tail() {
+  NES_GNU_TAIL=$(command -v gnutail || command -v tail)
+  if ! "$NES_GNU_TAIL" --version 2>/dev/null | grep -q "GNU coreutils"; then
+    echo "ERROR: the tests need GNU tail (gnutail or tail), found: $("$NES_GNU_TAIL" --version 2>&1 | head -1)" >&2
+    exit 1
+  fi
+  export NES_GNU_TAIL
+}
+
 nes_require_executable() {
   local path="$1"
   if [ ! -f "$path" ]; then
@@ -293,6 +305,7 @@ nes_distributed_setup_file() {
   nes_require_env NES_RUNTIME_BASE_IMAGE
   nes_require_executable "$NES_WORKER"
   nes_require_executable "$bin_path"
+  nes_require_gnu_tail
 
   # Per-test images use random suffixes so parallel checkouts don't collide.
   # Docker's COPY layer is content-addressed, so unchanged binaries hit cache.
@@ -372,11 +385,19 @@ setup_distributed() {
   nes_distributed_start
 }
 
+# docker compose exec ends the session when its stdin reaches EOF, even while the command
+# still runs (docker/compose#10418), and stdin is closed in bats subshells. So stdin stays
+# open, without input, until the command exits: a command cannot read input from stdin.
+nes_compose_exec() {
+  "$NES_GNU_TAIL" -f /dev/null | docker compose exec "$@"
+}
+
 docker_nes_cli() {
-  # docker compose exec v2 disconnects the session when its stdin reaches EOF
-  # (docker/compose#10418). In bats subshells stdin is closed, so we pipe from
-  # tail to keep the connection alive.
-  tail -f /dev/null | docker compose exec -T nes-cli nes-cli "$@"
+  nes_compose_exec -T nes-cli nes-cli "$@"
+}
+
+docker_nes_repl() {
+  nes_compose_exec nes-repl bash -c "nes-repl -f JSON ${ADDITIONAL_NEBULI_FLAGS} </workdir/$1"
 }
 
 wait_until_status() {
