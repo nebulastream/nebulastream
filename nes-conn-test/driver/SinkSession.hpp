@@ -23,15 +23,16 @@
 /// STOP stops the query, and the engine stops the sink.
 /// The reply shapes are defined in `conntest_runner/protocol.py`.
 
-#include <cstddef>
 #include <filesystem>
 #include <optional>
+
+#include <SessionOptions.hpp>
 
 namespace NES::ConnTest
 {
 
-inline constexpr std::size_t DEFAULT_SINK_THREADS = 4;
-inline constexpr std::size_t DEFAULT_SINK_BUFFER_SIZE = 4096;
+inline constexpr WorkerThreads DEFAULT_SINK_THREADS{4U};
+inline constexpr BufferSize DEFAULT_SINK_BUFFER_SIZE{4096U};
 
 class ControlChannel;
 
@@ -42,8 +43,8 @@ struct SinkSessionOptions
     /// The harness covers sinks with the JSON output format, for which the engine compiles the output formatter into the query.
     /// Such a sink receives formatted bytes, and these are the bytes.
     std::optional<std::filesystem::path> inputPath;
-    std::size_t threads{DEFAULT_SINK_THREADS}; ///< --threads=: the engine's worker threads
-    std::size_t bufferSize{DEFAULT_SINK_BUFFER_SIZE}; ///< --buffer-size=
+    WorkerThreads threads{DEFAULT_SINK_THREADS}; ///< --threads=: the engine's worker threads
+    BufferSize bufferSize{DEFAULT_SINK_BUFFER_SIZE}; ///< --buffer-size=
 };
 
 /// Returns false on a channel error and true when the channel reaches EOF.

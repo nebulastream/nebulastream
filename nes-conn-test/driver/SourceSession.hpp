@@ -21,23 +21,24 @@
 /// so CLOSE then OPEN never relies on reopening in place.
 /// The reply shapes are defined in `conntest_runner/protocol.py`.
 
-#include <cstddef>
 #include <filesystem>
 #include <optional>
+
+#include <SessionOptions.hpp>
 
 namespace NES::ConnTest
 {
 
-inline constexpr std::size_t DEFAULT_SOURCE_BUFFER_SIZE = 4096;
-inline constexpr std::size_t DEFAULT_SOURCE_BUFFER_COUNT = 8;
+inline constexpr BufferSize DEFAULT_SOURCE_BUFFER_SIZE{4096U};
+inline constexpr BufferCount DEFAULT_SOURCE_BUFFER_COUNT{8U};
 
 class ControlChannel;
 
 struct SourceSessionOptions
 {
     std::filesystem::path configFile; ///< --config=
-    std::size_t bufferSize{DEFAULT_SOURCE_BUFFER_SIZE}; ///< --buffer-size=
-    std::size_t bufferCount{DEFAULT_SOURCE_BUFFER_COUNT}; ///< --buffer-count=
+    BufferSize bufferSize{DEFAULT_SOURCE_BUFFER_SIZE}; ///< --buffer-size=
+    BufferCount bufferCount{DEFAULT_SOURCE_BUFFER_COUNT}; ///< --buffer-count=
     /// --observed-path=: each FILL overwrites this file with the bytes that the source delivered during that step.
     /// The runner reads it back and compares the rows with the ones it seeded.
     std::optional<std::filesystem::path> observedPath;
