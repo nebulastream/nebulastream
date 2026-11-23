@@ -268,22 +268,22 @@ Codon UDFs: Codon's stdlib and the NES plugins come first, a library module fill
 imports are not implicitly relative (Python 3), and NES's compat import (bytes, bytearray, frozenset) is prepended as in
 UDF modules. Off unless the variable is set.
 
-Blockers met while compiling  for the real UDF redshift_periscope_url_domain (a scratch copy of the module
+Blockers met while compiling `urllib.parse` for the real UDF redshift_periscope_url_domain (a scratch copy of the module
 was patched past each one to find the next). Every top-level statement of the module must compile, also those the UDF
 does not use.
 
 | # | Blocker | Status / root-fix cost |
 |---|---|---|
-| 0 | ,  | fixed (fork 0bbf260) |
+| 0 | `def f(a, *, b)`, `def f(a, /, b)` | fixed (fork 0bbf260) |
 | 1 | a nested def of the same name in both branches of an if/else (scoping: cannot bind) | medium-hard: the branch is static for a concrete type, but scoping runs before types |
-| 2 | :  (C module) with an introspection fallback | try-import fallback: small-medium;  needs a Codon shim |
-| 3 | :  (registry, filters, class tricks) | shim (warn as a no-op or log): small |
-| 4 | :  class decorator | compile-time total_ordering: about half a day; ipaddress may hit more |
-| 5 | : compiler crash on the string form | fixed (fork 465e7e2) |
-| 6 |  | fixed (fork abc8b30) |
-| 7 | : reference class from a tuple class | tuple-ness from the bases in type checking: half a day to a day |
+| 2 | `import types`: `try: from _types import *` (C module) with an introspection fallback | try-import fallback: small-medium; `types` needs a Codon shim |
+| 3 | `import warnings`: `_py_warnings` (registry, filters, class tricks) | shim (warn as a no-op or log): small |
+| 4 | `import ipaddress`: `@functools.total_ordering` class decorator | compile-time total_ordering: about half a day; ipaddress may hit more |
+| 5 | `namedtuple('X', 'a b')`: compiler crash on the string form | fixed (fork 465e7e2) |
+| 6 | `X.__doc__ = ...` | fixed (fork abc8b30) |
+| 7 | `class R(_NamedTupleBase, _Mixin)`: reference class from a tuple class | tuple-ness from the bases in type checking: half a day to a day |
 | 8 | a class with inferred fields as a base class: unbound generics, compiler assertion | medium-large; same root as the 6 Babelfish rejects |
-| 9 | : class attributes assigned from outside at import time | dynamic; needs a source change or class variables |
-| 10 |  not defined in library modules | fixed in NES (compat import also for library modules) |
-| 11 | : NES compat bytes iterates as str, not int | compat bytes as Python's: medium |
-| ... | not reached yet:  (str/bytes), ,  with  | unknown |
+| 9 | `_fix_result_transcoding`: class attributes assigned from outside at import time | dynamic; needs a source change or class variables |
+| 10 | `bytes` not defined in library modules | fixed in NES (compat import also for library modules) |
+| 11 | `bytes(frozenset(b'...'))`: NES compat bytes iterates as str, not int | compat bytes as Python's: medium |
+| ... | not reached yet: `_coerce_args` (str/bytes), `functools.lru_cache`, `Quoter(defaultdict)` with `__missing__` | unknown |
