@@ -275,7 +275,7 @@ does not use.
 | # | Blocker | Status / root-fix cost |
 |---|---|---|
 | 0 | `def f(a, *, b)`, `def f(a, /, b)` | fixed (fork 0bbf260) |
-| 1 | a nested def of the same name in both branches of an if/else (scoping: cannot bind) | medium-hard: the branch is static for a concrete type, but scoping runs before types |
+| 1 | a nested def of the same name in both branches of an if/else (scoping: cannot bind) | fixed (fork 8c4be42) when the condition is static, as `isinstance(qs, str)` here |
 | 2 | `import types`: `try: from _types import *` (C module) with an introspection fallback | try-import fallback fixed (fork 683b2fd); the fallback code of `types` (introspection) still needs a Codon shim |
 | 3 | `import warnings`: `_py_warnings` (registry, filters, class tricks) | shim (warn as a no-op or log): small |
 | 4 | `import ipaddress`: `@functools.total_ordering` class decorator | fixed (fork 39010f8); ipaddress itself not tried yet |
@@ -288,7 +288,8 @@ does not use.
 | 11 | `bytes(frozenset(b'...'))`: NES compat bytes iterates as str, not int | compat bytes as Python's: medium |
 | ... | not reached yet: `_coerce_args` (str/bytes), `Quoter(defaultdict)` with `__missing__` (`functools.lru_cache` is in fork 39010f8) | unknown |
 
-With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and the scratch copy at blocker 11.
+With fork 7145bd8, the unmodified CPython `urllib.parse` stops at blocker 1, and the scratch copy at blocker 11. With
+fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeType.
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -313,3 +314,23 @@ are Babelfish UDFs with annotated `__init__` parameters); differential cases 252
 Known, not fixed: a nested def of the same name in both branches of an if (urllib.parse blocker 1). The import rule
 applies only to a `try` body of imports; in a body with other statements, a missing module is still a compile-time
 error.
+
+## A function defined on several paths (E93, 2026-11-23, Codon fork 8c4be42)
+
+Python code defines a nested function of the same name in both branches of an if (urllib.parse `parse_qsl`:
+`_unquote` for str and for bytes). Scoping must treat the name as a variable that each path updates, and Codon did not
+allow that for a def ("cannot bind ... to global or nonlocal name").
+
+Fix: a name with two or more defs in one scope, one of them inside an if, loop, try or with, gets each def renamed to
+`_nes_def_<name>_<n>` followed by `<name> = _nes_def_<name>_<n>`. A recursive call uses the new name. The type checker
+keeps only the taken branch of a static condition, so the variable has one function type. The IR translation crashed on
+such a variable also without the rewrite (`if isinstance(s, str): g = f else: g = h`): its declaration has no right
+side, and an update stores a function, which has no IR value. Both are skipped now, because calls through the
+variable resolve to the function at compile time. Repros: `min_conditional_def_static`, `min_conditional_def_recursive`,
+`min_conditional_function_alias`.
+
+Limit: two defs on paths that can both run (a condition known only at run time) are different types. This gives the
+error "function 'f' is defined differently on two paths that can run" (`min_conditional_def_dynamic`).
+
+Results (`results/E93-*.jsonl`, E92 cases plus the repros): real UDFs 130 ok, 2 diff, 88 reject; differential cases
+252 ok, 80 diff, 15 reject. No change from E92.
