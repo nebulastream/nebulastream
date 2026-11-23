@@ -166,6 +166,8 @@ LoweringRuleResultSubgraph LowerToPhysicalUDF::apply(LogicalOperator logicalOper
                 return UdfInterpreter::SUBINTERPRETER;
             case InProcessUdfInterpreter::DLMOPEN:
                 return UdfInterpreter::DLMOPEN;
+            case InProcessUdfInterpreter::FREE_THREADED:
+                return UdfInterpreter::FREE_THREADED;
         }
         std::unreachable();
     }();

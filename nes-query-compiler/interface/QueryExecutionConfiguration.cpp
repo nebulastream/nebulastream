@@ -138,7 +138,7 @@ const ConfigField<InProcessUdfCalls> IN_PROCESS_UDF_CALLS{
 
 const ConfigField<InProcessUdfInterpreter> IN_PROCESS_UDF_INTERPRETER{
     Identifier::parse("in_process_udf_interpreter"),
-    fmt::format("Which interpreter a worker thread runs IN_PROCESS UDFs in: the shared one with its one GIL (SHARED), a subinterpreter of the thread with its own GIL, for UDFs without extension modules (SUBINTERPRETER), or a copy of the bridge and interpreter in a link namespace of the thread (DLMOPEN): {}", enumPipeList<InProcessUdfInterpreter>()),
+    fmt::format("Which interpreter a worker thread runs IN_PROCESS UDFs in: the shared one with its one GIL (SHARED), a subinterpreter of the thread with its own GIL, for UDFs without extension modules (SUBINTERPRETER), a copy of the bridge and interpreter in a link namespace of the thread (DLMOPEN), or the one interpreter of a free-threaded CPython without a GIL (FREE_THREADED): {}", enumPipeList<InProcessUdfInterpreter>()),
     [](const ConfigLiteral& literal)
     {
         return tryGetOr<std::string>(literal, expectedType<std::string>())

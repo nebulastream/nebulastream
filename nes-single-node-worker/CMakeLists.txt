@@ -45,6 +45,12 @@ if (TARGET nes-cpython-udf-bridge)
             COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
             COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
 endif ()
+if (TARGET nes-cpython-udf-bridge-ft)
+    add_dependencies(nes-single-node-worker nes-cpython-udf-bridge-ft)
+    add_custom_command(TARGET nes-single-node-worker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge-ft>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge-ft>")
+endif ()
 
 if (ENABLE_BATS_TESTS)
     add_test(

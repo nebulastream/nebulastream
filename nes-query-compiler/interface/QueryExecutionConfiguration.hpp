@@ -47,6 +47,7 @@ enum class InProcessUdfInterpreter : uint8_t
     SHARED,
     SUBINTERPRETER,
     DLMOPEN,
+    FREE_THREADED,
 };
 
 struct QueryExecutionConfiguration

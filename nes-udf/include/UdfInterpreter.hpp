@@ -30,6 +30,9 @@ enum class UdfInterpreter : uint8_t
     /// A copy of the bridge and its interpreter in a link namespace of the thread (dlmopen), with its own GIL and copies of every
     /// module. glibc has room for about a dozen such namespaces.
     DLMOPEN,
+    /// The one interpreter of the process, from the bridge built against a free-threaded CPython (PEP 703), which has no GIL.
+    /// Extension modules load if they have a free-threaded build. One that does not turns the GIL on again when it is imported.
+    FREE_THREADED,
 };
 
 }

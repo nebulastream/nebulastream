@@ -103,6 +103,21 @@ int toUdfTypeCode(const DataType::Type type)
     throw CannotLoadUdf("UDF type (code {}) cannot be represented in the UDF ABI", static_cast<int>(type));
 }
 
+/// The free-threaded build of a bridge, next to it with the suffix "-ft": libnes-cpython-udf-bridge-ft.so.
+std::filesystem::path freeThreadedBridge(const std::filesystem::path& bridgePath)
+{
+    auto path = bridgePath;
+    path.replace_filename(fmt::format("{}-ft{}", bridgePath.stem().string(), bridgePath.extension().string()));
+    if (!std::filesystem::exists(path))
+    {
+        throw CannotLoadUdf(
+            "in_process_udf_interpreter=FREE_THREADED needs the free-threaded build of the UDF bridge '{}', which this build does not ship "
+            "(configure with NES_CPYTHON_FREE_THREADED_EXECUTABLE set to a free-threaded python, e.g. python3.14t)",
+            path.string());
+    }
+    return path;
+}
+
 /// Resolves the entry points of a loaded bridge. Throws CannotLoadUdf if a required one is missing.
 BridgeLibrary resolve(void* handle, const std::filesystem::path& bridgePath)
 {
@@ -258,6 +273,10 @@ std::string takeMessage(const BridgeLibrary& library, char* message)
 InProcessBackend::InProcessBackend(Definition definition, const UdfInterpreter interpreter)
     : definition(std::move(definition)), interpreter(interpreter), id(nextBackendId++)
 {
+    if (interpreter == UdfInterpreter::FREE_THREADED)
+    {
+        this->definition.bridgePath = freeThreadedBridge(this->definition.bridgePath);
+    }
     if (interpreter == UdfInterpreter::DLMOPEN)
     {
         /// Fails the query now if the UDF cannot load, rather than on its first record.

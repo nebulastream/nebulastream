@@ -137,6 +137,12 @@ if (TARGET nes-cpython-udf-bridge)
             COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
             COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
 endif ()
+if (TARGET nes-cpython-udf-bridge-ft)
+    add_dependencies(systest nes-cpython-udf-bridge-ft)
+    add_custom_command(TARGET systest POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge-ft>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge-ft>")
+endif ()
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)

@@ -183,6 +183,44 @@ bool g_pyReady = false;
 /* The namespace of BatchSource, created with the first UDF under the GIL; nullptr until then or if pyarrow is missing. */
 PyObject* g_batchNamespace = nullptr;
 
+/* Batch objects of a UDF or stage are created with its first batch. With the GIL, the calls that create them may let another thread
+ * do the same, which the creation tolerates. A free-threaded build (Py_GIL_DISABLED) runs these threads at the same time, so the
+ * creation takes a lock, and a thread that finds the objects reads them only after the pointer published last. PyMutex lets other
+ * threads stop the world (garbage collection) while a thread waits for it, which a std::mutex would block. */
+class PrepareLock
+{
+public:
+#ifdef Py_GIL_DISABLED
+    PrepareLock() { PyMutex_Lock(&mutex); }
+
+    ~PrepareLock() { PyMutex_Unlock(&mutex); }
+#else
+    PrepareLock() = default;
+    ~PrepareLock() = default;
+#endif
+    PrepareLock(const PrepareLock&) = delete;
+    PrepareLock& operator=(const PrepareLock&) = delete;
+    PrepareLock(PrepareLock&&) = delete;
+    PrepareLock& operator=(PrepareLock&&) = delete;
+
+private:
+#ifdef Py_GIL_DISABLED
+    static inline PyMutex mutex{};
+#endif
+};
+
+/* Whether the batch objects whose last pointer is `last` exist. */
+bool prepared(PyObject*& last)
+{
+    return std::atomic_ref(last).load(std::memory_order_acquire) != nullptr;
+}
+
+/* Stores the last pointer of the batch objects, after all others. */
+void publish(PyObject*& last, PyObject* value)
+{
+    std::atomic_ref(last).store(value, std::memory_order_release);
+}
+
 char* dupString(const std::string& text)
 {
     char* copy = static_cast<char*>(std::malloc(text.size() + 1));
@@ -238,6 +276,47 @@ void addSearchPaths()
     }
 }
 
+/* The prefix of the Python installation whose libpython is `library`, if its standard library lies next to it: <prefix>/lib/libpython3.14t.so
+ * with <prefix>/lib/python3.14t/os.py, as in a free-threaded build from uv. Python looks for its standard library relative to the
+ * executable, which is the worker here, and would otherwise find the system's, built for the other ABI. Empty if the library lies
+ * elsewhere, as the system's /usr/lib/x86_64-linux-gnu/libpython3.14.so, whose prefix Python finds by itself. */
+std::string prefixOf(const char* library)
+{
+#ifdef Py_GIL_DISABLED
+    constexpr const char* abiFlags = "t";
+#else
+    constexpr const char* abiFlags = "";
+#endif
+    std::error_code error;
+    const auto libraryDirectory = std::filesystem::canonical(library, error).parent_path();
+    const auto standardLibrary
+        = libraryDirectory / ("python" + std::to_string(PY_MAJOR_VERSION) + "." + std::to_string(PY_MINOR_VERSION) + abiFlags) / "os.py";
+    if (error || !std::filesystem::exists(standardLibrary, error))
+    {
+        return {};
+    }
+    return libraryDirectory.parent_path().string();
+}
+
+/* Starts the interpreter, with the prefix of `library` as its home if the standard library lies next to it, see prefixOf. */
+void startPython(const char* library)
+{
+    const std::string prefix = (library != nullptr && std::getenv("PYTHONHOME") == nullptr) ? prefixOf(library) : std::string{};
+    if (prefix.empty())
+    {
+        Py_InitializeEx(0);
+        return;
+    }
+    PyConfig config;
+    PyConfig_InitPythonConfig(&config);
+    config.install_signal_handlers = 0;
+    if (PyStatus_Exception(PyConfig_SetBytesString(&config, &config.home, prefix.c_str())) == 0)
+    {
+        static_cast<void>(Py_InitializeFromConfig(&config));
+    }
+    PyConfig_Clear(&config);
+}
+
 void initPythonOnce()
 {
     /* The catalog API can name this bridge by a path other than the shipped one, which loads a second copy of this
@@ -249,8 +328,10 @@ void initPythonOnce()
         /* The worker dlopens this bridge RTLD_LOCAL, and libpython with it, so the symbols of libpython are not global, and compiled
          * extension modules such as pyarrow's, which expect them from the process, fail to load. Promote the loaded libpython. */
         /* Only in the base namespace: in a namespace of its own (dlmopen), libpython already serves the extension modules. */
+        const char* library = nullptr;
         if (Dl_info info{}; dladdr(reinterpret_cast<void*>(&Py_InitializeEx), &info) != 0 && info.dli_fname != nullptr)
         {
+            library = info.dli_fname;
             Lmid_t namespaceId = LM_ID_BASE;
             if (void* self = dlopen(info.dli_fname, RTLD_NOW | RTLD_NOLOAD); self != nullptr)
             {
@@ -261,7 +342,7 @@ void initPythonOnce()
                 }
             }
         }
-        Py_InitializeEx(0);
+        startPython(library);
         /* Py_InitializeEx reports a failed start-up (e.g. a stdlib it cannot locate) by leaving the interpreter
          * uninitialized rather than by returning, and every later C API call on that state segfaults. Record the
          * outcome so the UDF entry points can fail the query instead of taking the process down with them. */
@@ -582,6 +663,11 @@ PyObject* callableFor(const UdfCtx& ctx)
  * pyarrow. GIL of the main interpreter held. */
 bool prepareBatches(UdfCtx& ctx)
 {
+    if (prepared(ctx.argumentSchema))
+    {
+        return true;
+    }
+    const PrepareLock lock;
     if (ctx.argumentSchema != nullptr)
     {
         return true;
@@ -607,7 +693,7 @@ bool prepareBatches(UdfCtx& ctx)
     }
     ctx.argumentTypeList = types;
     ctx.bytesParameterList = bytes;
-    ctx.argumentSchema = schema;
+    publish(ctx.argumentSchema, schema);
     return true;
 }
 
@@ -1195,6 +1281,11 @@ PyObject* fusedFor(const StageCtx& stage)
 /* Creates the batch objects of `stage` with its first batch, like prepareBatches. GIL of the main interpreter held. */
 bool prepareStageBatches(StageCtx& stage)
 {
+    if (prepared(stage.argumentSchema))
+    {
+        return true;
+    }
+    const PrepareLock lock;
     if (stage.argumentSchema != nullptr)
     {
         return true;
@@ -1237,7 +1328,7 @@ bool prepareStageBatches(StageCtx& stage)
     stage.argumentTypeList = types;
     stage.resultTypeList = results;
     stage.bytesParameterList = bytes;
-    stage.argumentSchema = schema;
+    publish(stage.argumentSchema, schema);
     return true;
 }
 }
