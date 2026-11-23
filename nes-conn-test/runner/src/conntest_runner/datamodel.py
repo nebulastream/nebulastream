@@ -114,10 +114,19 @@ def rows_to_jsonl(schema: list[NativeColumn], rows: Iterable[tuple[Any, ...]]) -
 
 
 def jsonl_to_rows(schema: list[NativeColumn], payload: bytes) -> list[tuple[Any, ...]]:
+    """One row for each line of ``payload``.
+
+    A blank line fails, because it is an empty record, which a connector must not deliver.
+    The newline after the last record ends that record and starts no new one.
+    For example, `{"id":1}\\n` is one row, and `{"id":1}\\n\\n` fails.
+    """
+    lines = payload.split(b"\n")
+    if lines[-1] == b"":
+        lines.pop()
     rows: list[tuple[Any, ...]] = []
-    for line in payload.split(b"\n"):
+    for number, line in enumerate(lines, start=1):
         if not line.strip():
-            continue
+            raise AssertionError(f"line {number} of {len(lines)} is blank, which is an empty record")
         obj = json.loads(line)
         rows.append(tuple(obj[name] for name, _typ, _x in schema))
     return rows
