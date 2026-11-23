@@ -294,7 +294,9 @@ fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeT
 `from functools import cached_property` (line 754). With fork a6d0811, it stops at blocker 9: `_BaseNetwork._constants =
 _BaseConstants` (line 1131), a class attribute assigned from outside the class. With fork 5f95c6f, it stops in
 `ipaddress` at `'%s has host bits set' % self` (line 1541): printf-style `%` formatting of an object. With fork
-60e11b1, it stops at `ipaddress.py:414`: a method of `_IPAddressBase` reads `self.version`, which only subclasses define.
+60e11b1, it stops at `ipaddress.py:414`: a method of `_IPAddressBase` reads `self.version`, which only subclasses define. With
+fork a855d46, it stops at `ipaddress.py:1547`: `self.hosts = self.__iter__` in one branch and a lambda in another
+replace the method `hosts` per object with callables of different types (an overlay candidate).
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -433,3 +435,22 @@ format string at compile time would remove most of the difference.
 
 Results (`results/E98-*.jsonl`): real UDFs 131 ok, 2 diff, 87 reject (E97: 130, 2, 88; `tuplex_zillow_zipcode`);
 differential cases 254 ok, 80 diff, 13 reject (E97: 252, 80, 15; b118, b119). No regressions.
+
+## Abstract attributes, unannotated overrides, exception subclasses (E99, 2026-11-23, Codon fork a855d46)
+
+- Abstract attributes (fork bdc0fcc): a base-class method that reads through `self` an attribute only subclasses have
+  (a class variable of a mixin, as `version = 4` in `ipaddress._BaseV4`; a method; a property) is copied into each
+  subclass that has it, and so is every inherited method that calls a copied one through `self`
+  (`min_abstract_mixin_constants`, `min_abstract_method_property`).
+- Unannotated overrides (fork 1526539): a method with an unannotated parameter (`def check(self, a)`) that a subclass
+  overrides made every call of it fail to type-check: a virtual call passes the method to `RTTIType._thunk_dispatch`
+  as a type parameter, which cannot have open parameter types. A call is now direct when no subclass of the
+  receiver's class overrides the method (`min_generic_override_leaf`). A call through a base class whose subclass
+  overrides it gives the error "... has parameters without type annotations: a call through 'Base' needs dynamic
+  dispatch, which Codon supports only for annotated parameters" (`min_generic_override_base_call`).
+- Exception subclasses (fork a855d46): `class MyError(ValueError): pass` got a generated `__init__` with every
+  inherited field, so `MyError("msg")` failed (missing argument 'func'). A subclass without fields and `__init__` of
+  its own now uses its base class's `__init__` (`min_exception_subclass`).
+- Known, not fixed: a bound virtual method as a value (`call(Sub().f, n)`, `min_bound_virtual_method`).
+
+Results (`results/E99-*.jsonl`): no change from E98; new repros as described.
