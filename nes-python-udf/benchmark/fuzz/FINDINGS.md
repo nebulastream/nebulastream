@@ -293,7 +293,8 @@ fork 8c4be42, it stops at blocker 2: `types.py` reads `_f.__code__` to get CodeT
 `ipaddress` at `@classmethod` (line 427), which Codon does not define. With fork ca24f9f, it stops in `ipaddress` at
 `from functools import cached_property` (line 754). With fork a6d0811, it stops at blocker 9: `_BaseNetwork._constants =
 _BaseConstants` (line 1131), a class attribute assigned from outside the class. With fork 5f95c6f, it stops in
-`ipaddress` at `'%s has host bits set' % self` (line 1541): printf-style `%` formatting of an object.
+`ipaddress` at `'%s has host bits set' % self` (line 1541): printf-style `%` formatting of an object. With fork
+60e11b1, it stops at `ipaddress.py:414`: a method of `_IPAddressBase` reads `self.version`, which only subclasses define.
 
 ## General Codon gaps (E92, 2026-11-23, Codon fork 7145bd8)
 
@@ -415,3 +416,20 @@ Results (`results/E97-*.jsonl`): no change from E96; the 6 new repros ok, `min_i
 
 Next urllib.parse blocker: `'%s has host bits set' % self` in `ipaddress` (printf-style formatting of an object). The
 real UDFs have more `%` rejects (E89 table: `'%05d'`, `'%d|%s'`, `'%.3f'`).
+
+## printf-style formatting (E98, 2026-11-23, Codon fork 60e11b1)
+
+`str % args` as Python's `str.__mod__` (in `stdlib/internal/format.codon`): conversions `d i u o x X e E f F g G c r s
+a` and `%%`, flags `- + space # 0`, width, precision, mapping keys (`%(name)s` with a dict), a tuple of arguments of
+different types (a static loop), and CPython's error messages. Integer conversions are built by hand (precision, sign,
+`#` prefix, zero padding differ from `format()`); float conversions use `format()`. New builtin `ascii()`. Not
+supported: `*` as width or precision, a namedtuple as the argument tuple. Repros: `min_printf_*`, `min_ascii`.
+
+Known difference: `"%d" % 1e300` raises (Codon's int is 64 bits; `min_printf_floats`).
+
+Cost: the format string is parsed at every call. `"%05d|%s" % (n, "x")` takes 406 ns per row, the same f-string 315 ns
+(`benchmark/printf/pfbench_m.py`, 200,000 rows, runner `--rounds 7 --python-compat 1`, median). Parsing a literal
+format string at compile time would remove most of the difference.
+
+Results (`results/E98-*.jsonl`): real UDFs 131 ok, 2 diff, 87 reject (E97: 130, 2, 88; `tuplex_zillow_zipcode`);
+differential cases 254 ok, 80 diff, 13 reject (E97: 252, 80, 15; b118, b119). No regressions.
