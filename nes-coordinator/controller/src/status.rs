@@ -82,11 +82,7 @@ impl From<&Error> for QueryFragmentError {
     fn from(err: &Error) -> Self {
         let code =
             u16::try_from(err.code).map_or(ErrorCode::UnknownException, ErrorCode::from_code);
-        Self::Internal(CodedError::relayed(
-            code,
-            err.message.clone(),
-            err.stack_trace.clone(),
-        ))
+        Self::Internal(CodedError::new(code, &err.message))
     }
 }
 

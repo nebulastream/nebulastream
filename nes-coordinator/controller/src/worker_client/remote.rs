@@ -124,10 +124,9 @@ fn classify(addr: &NetworkAddr, status: &Status) -> CallError {
         code if is_retryable(code) => CallError::Transient(QueryFragmentError::Transport {
             msg: format!("gRPC error at '{addr}': {status}"),
         }),
-        _ => CallError::Permanent(QueryFragmentError::Internal(CodedError::relayed(
+        _ => CallError::Permanent(QueryFragmentError::Internal(CodedError::new(
             get_reported_code(status).unwrap_or(ErrorCode::UnknownException),
-            status.message().to_string(),
-            get_metadata(status, "trace"),
+            status.message(),
         ))),
     }
 }
