@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -34,6 +35,7 @@
 #include <gtest/gtest.h>
 #include <Arena.hpp>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
@@ -112,8 +114,14 @@ TEST_F(CosSimPhysicalFunctionTest, RawBufferEdgeCases)
         Record record{std::unordered_map<Record::RecordFieldIdentifier, VarVal>{
             {Identifier::parse("v1"), makeVarSizedVal(subFourByteBuf, false, false)},
             {Identifier::parse("v2"), makeVarSizedVal(fourByteZeroBuf, false, false)}}};
-        const auto result = cosSim.execute(record, arenaRef);
-        EXPECT_EQ(result.getRawValueAs<nautilus::val<double>>(), 0.0);
+        ASSERT_EXCEPTION_ERRORCODE((std::ignore = cosSim.execute(record, arenaRef)), ErrorCode::FormattingError);
+    }
+
+    {
+        Record record{std::unordered_map<Record::RecordFieldIdentifier, VarVal>{
+            {Identifier::parse("v1"), makeVarSizedVal(fourByteZeroBuf, false, false)},
+            {Identifier::parse("v2"), makeVarSizedVal(subFourByteBuf, false, false)}}};
+        ASSERT_EXCEPTION_ERRORCODE((std::ignore = cosSim.execute(record, arenaRef)), ErrorCode::FormattingError);
     }
 
     {

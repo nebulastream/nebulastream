@@ -41,9 +41,19 @@ CosSimPhysicalFunction::CosSimPhysicalFunction(
 
 namespace
 {
-/// Takes raw pointers and byte lengths for a pair of vectors.
-double computeCosineSimilarity(const int8_t* inputPtrLeft, const uint64_t inputSizeLeft, const int8_t* inputPtrRight, const uint64_t inputSizeRight)
+/// Takes raw pointers and byte lengths for a pair of float32 vectors.
+double computeCosineSimilarity(
+    const int8_t* inputPtrLeft, const uint64_t inputSizeLeft, const int8_t* inputPtrRight, const uint64_t inputSizeRight)
 {
+    if (inputSizeLeft % sizeof(float) != 0 || inputSizeRight % sizeof(float) != 0)
+    {
+        throw FormattingError(
+            "CosSim inputs must have byte sizes that are multiples of sizeof(float) ({}), but got left: {} bytes, right: {} bytes",
+            sizeof(float),
+            inputSizeLeft,
+            inputSizeRight);
+    }
+
     const auto* vectorLeft = reinterpret_cast<const float*>(inputPtrLeft);
     const auto* vectorRight = reinterpret_cast<const float*>(inputPtrRight);
     const uint64_t dimLeft = inputSizeLeft / sizeof(float);
