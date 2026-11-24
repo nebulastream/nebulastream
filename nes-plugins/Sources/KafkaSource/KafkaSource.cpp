@@ -631,17 +631,28 @@ void KafkaSource::handleConsumeError(const RdKafka::Message& message)
     {
         NES_WARNING("Kafka source: {} ({}), waiting for the brokers", message.errstr(), RdKafka::err2str(code));
     }
-    const bool coordinatorNotReady = code == RdKafka::ERR_NOT_COORDINATOR || code == RdKafka::ERR_COORDINATOR_NOT_AVAILABLE
-        || code == RdKafka::ERR_GROUP_LOAD_IN_PROGRESS;
-    if (coordinatorNotReady && std::chrono::steady_clock::now() - lastAssignment >= REASSIGN_INTERVAL)
+    if (code == RdKafka::ERR_NOT_COORDINATOR || code == RdKafka::ERR_COORDINATOR_NOT_AVAILABLE
+        || code == RdKafka::ERR_GROUP_LOAD_IN_PROGRESS)
     {
         /// A broker that has just started answers the lookup of the committed offsets with "not coordinator" while it still creates
-        /// the offsets topic. With a static assignment librdkafka then leaves the partitions without a start offset and never asks
-        /// again, so the source would stay idle forever. Assigning again repeats the lookup.
-        if (const auto error = assignPartitions(); error != RdKafka::ERR_NO_ERROR)
-        {
-            NES_WARNING("Kafka source: cannot re-assign partitions of '{}': {}", topic, RdKafka::err2str(error));
-        }
+        /// the offsets topic. librdkafka reports that once and leaves the partitions without a start offset: with a static
+        /// assignment it never asks again, so the source would stay idle forever. The error is not repeated, hence the retry is
+        /// remembered here and done by retryAssignmentIfDue(), which waits REASSIGN_INTERVAL after the last assignment.
+        assignmentRetryPending = true;
+    }
+}
+
+void KafkaSource::retryAssignmentIfDue()
+{
+    if (!assignmentRetryPending || std::chrono::steady_clock::now() - lastAssignment < REASSIGN_INTERVAL)
+    {
+        return;
+    }
+    assignmentRetryPending = false;
+    /// assign() replaces the current assignment, so the committed offsets are looked up again.
+    if (const auto error = assignPartitions(); error != RdKafka::ERR_NO_ERROR)
+    {
+        NES_WARNING("Kafka source: cannot re-assign partitions of '{}': {}", topic, RdKafka::err2str(error));
     }
 }
 
@@ -673,6 +684,7 @@ Source::FillTupleBufferResult KafkaSource::fillTupleBuffer(TupleBuffer& tupleBuf
     }
     while (offset < bufferSize && !stopToken.stop_requested())
     {
+        retryAssignmentIfDue();
         auto pollTimeout = POLL_TIMEOUT;
         if (flushAt)
         {

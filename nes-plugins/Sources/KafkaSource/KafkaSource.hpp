@@ -146,6 +146,8 @@ private:
     void closeConsumer();
     /// (Re-)assigns every partition of the topic, starting at the committed offset of GROUP_ID (else AUTO_OFFSET_RESET).
     [[nodiscard]] RdKafka::ErrorCode assignPartitions();
+    /// Assigns again once REASSIGN_INTERVAL passed since the last assignment, if handleConsumeError asked for it.
+    void retryAssignmentIfDue();
     /// Moves the offsets of the last filled buffer to the committable set if SourceThread emitted it.
     void takeEmittedOffsets();
     /// Records that the current buffer fully contains `offset` of `partition`.
@@ -167,6 +169,7 @@ private:
     PayloadStash payloadStash;
     std::vector<int32_t> partitionIds;
     std::chrono::steady_clock::time_point lastAssignment;
+    bool assignmentRetryPending = false;
 
     /// The message whose record did not fit and is (partly) in the stash; complete once the stash drains.
     std::optional<std::pair<int32_t, int64_t>> stashedMessage;
