@@ -111,7 +111,7 @@ LogicalFunctionRegistryReturnType CosSimLogicalFunction::createCosSim(LogicalFun
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
     }
-    return CosSimLogicalFunction(arguments.children[0], arguments.children[1]);
+    return CosSimLogicalFunction{arguments.children[0], arguments.children[1]};
 }
 
 }
