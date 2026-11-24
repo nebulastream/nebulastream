@@ -33,6 +33,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
 #include <Util/Variant.hpp>
@@ -219,6 +220,14 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
     {
         throw CannotWriteToSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
+    }
+
+    /// A query also emits buffers without tuples, for example for the final watermark.
+    /// A subscriber would receive an empty message as an empty record.
+    /// A retained empty message would also delete the topic's retained message (MQTT 3.1.1, MQTT-3.3.1-10).
+    if (getTotalContentLength(inputTupleBuffer) == 0)
+    {
+        return;
     }
 
     auto currentBuffer = std::optional(inputTupleBuffer);
