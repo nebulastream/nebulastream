@@ -12,7 +12,7 @@
 
 """A connection between the connector and its backend that a fault scenario can sever, slow down or silence.
 
-The connector's config points at ``toxiproxy:<port>``, and toxiproxy forwards to the backend.
+The connector's config points at the proxy, ``toxiproxy:<port>`` with a port that toxiproxy chooses, and toxiproxy forwards to the backend.
 The loader seeds the backend directly, so a fault affects only the connector's side.
 toxiproxy is controlled over HTTP at ``toxiproxy:8474`` by compose DNS, with the stdlib only.
 """
@@ -26,6 +26,8 @@ import urllib.error
 import urllib.request
 from http import HTTPStatus
 
+from conntest_runner.endpoint import split_endpoint
+
 _CONTROL = "toxiproxy:8474"
 _READY_TIMEOUT_S = 15.0
 _REQUEST_TIMEOUT_S = 10.0
@@ -36,19 +38,27 @@ _DIRECTIONS = ("upstream", "downstream")
 
 
 class Link:
-    def __init__(self, *, name: str, listen_port: int, upstream: str, control: str = _CONTROL) -> None:
+    def __init__(self, *, name: str, upstream: str, control: str = _CONTROL) -> None:
         self._base = f"http://{control}"
+        self._host, _ = split_endpoint(control)
         self._name = name
-        self._listen = f"0.0.0.0:{listen_port}"
         self._upstream = upstream
+        self._port: int | None = None
 
-    def _request(self, method: str, path: str, body: dict[str, object] | None = None) -> None:
+    @property
+    def endpoint(self) -> str:
+        """The proxy's address, which the connector's config points at."""
+        if self._port is None:
+            raise RuntimeError(f"the proxy {self._name!r} has no port before create()")
+        return f"{self._host}:{self._port}"
+
+    def _request(self, method: str, path: str, body: dict[str, object] | None = None) -> bytes:
         data = json.dumps(body).encode("utf-8") if body is not None else None
         req = urllib.request.Request(  # noqa: S310  # the URL is the compose network's toxiproxy
             self._base + path, data=data, method=method, headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT_S):  # noqa: S310  # see above
-            pass
+        with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT_S) as reply:  # noqa: S310  # see above
+            return reply.read()
 
     def _wait_ready(self) -> None:
         """The toxiproxy image has no shell for a compose healthcheck, so readiness is polled here."""
@@ -64,7 +74,11 @@ class Link:
                 return
 
     def create(self) -> Link:
-        """A proxy of the same name left by an earlier run is replaced."""
+        """A proxy of the same name left by an earlier run is replaced.
+
+        toxiproxy chooses the proxy's port, because a fixed one can be in use in the toxiproxy container.
+        A backend's port is an example: a loader that listens on an ephemeral port shares that range with toxiproxy's own connections.
+        """
         self._wait_ready()
         try:
             self._request("DELETE", f"/proxies/{self._name}")
@@ -73,9 +87,12 @@ class Link:
             e.close()
             if e.code != HTTPStatus.NOT_FOUND:
                 raise
-        self._request(
-            "POST", "/proxies", {"name": self._name, "listen": self._listen, "upstream": self._upstream, "enabled": True}
+        reply = self._request(
+            "POST", "/proxies", {"name": self._name, "listen": "0.0.0.0:0", "upstream": self._upstream, "enabled": True}
         )
+        # The reply holds the address that the proxy listens on, such as `[::]:42267`.
+        # A cut and a restore keep this port, so a connector that reconnects finds the proxy again.
+        _, self._port = split_endpoint(json.loads(reply)["listen"])
         return self
 
     def cut(self) -> None:
