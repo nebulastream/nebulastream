@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-//! Starting a coordinator and operating it.
-//! A Rust caller keeps it and sends parsed or SQL statements over it.
-//! A C++ frontend owns one through the bridge, submits SQL, and reads a typed outcome back.
+//! Starting and operating a coordinator.
+//! A frontend starts a coordinator through the functions defined here.
+//! The frontend submits either raw SQL text or already parsed statements, and the coordinator replies.
 
 use std::sync::Arc;
 use std::time::Duration;

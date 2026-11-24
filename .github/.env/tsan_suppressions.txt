@@ -19,3 +19,8 @@ race:__shared_weak_count
 race:__assoc_state
 race:__assoc_sub_state
 
+# Suppress the reports on the state that tokio keeps for a new socket.
+# tokio initializes the state before it registers the socket with epoll, and its I/O driver thread reads the state only after
+# epoll returns an event for that socket.
+# TSan reports the initialization and that read as a race.
+race:tokio::runtime::io::registration_set::RegistrationSet*allocate
