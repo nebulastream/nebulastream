@@ -33,7 +33,6 @@
 #include <stop_token>
 #include <string>
 #include <thread>
-#include <utility>
 #include <fcntl.h>
 #include <poll.h>
 #include <spawn.h>
@@ -43,11 +42,13 @@
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <sys/poll.h>
 #include <sys/wait.h>
 #include <ErrorHandling.hpp>
@@ -58,6 +59,7 @@ namespace
 {
 constexpr auto STOP_POLL_INTERVAL = std::chrono::milliseconds{25};
 constexpr auto TERMINATION_GRACE_PERIOD = std::chrono::milliseconds{250};
+constexpr auto TERMINATION_POLL_INTERVAL = std::chrono::milliseconds{5};
 constexpr auto BASH_COMMAND_WRAPPER = "PID=$1; pid=$1; WORKER_PID=$1; SOURCE_ID=$2; INVOCATION=$3; TIMESTAMP_MS=$4; "
                                       "export PID pid WORKER_PID SOURCE_ID INVOCATION TIMESTAMP_MS; "
                                       "__NES_PROCESS_SOURCE_COMMAND=$5; shift 5; eval \"$__NES_PROCESS_SOURCE_COMMAND\"";
@@ -289,7 +291,7 @@ void ProcessSource::terminateProcess() noexcept
             childPid = -1;
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds{5});
+        std::this_thread::sleep_for(TERMINATION_POLL_INTERVAL);
     }
 
     if (processGroupId > 0)

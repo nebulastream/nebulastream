@@ -19,13 +19,11 @@
 #include <cstdint>
 #include <expected>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <span>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <time.h>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -34,6 +32,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <sys/types.h>
 #include <ErrorHandling.hpp>
 
 namespace NES

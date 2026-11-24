@@ -13,7 +13,6 @@
 */
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <stop_token>
@@ -24,7 +23,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ProcessSource.hpp>
@@ -52,7 +51,9 @@ public:
     }
 
     /// Fills one buffer and returns its content. Returns an empty string on end of stream.
-    std::string fill(ProcessSource& source, const std::stop_token& stopToken = {}) const
+    std::string fill(ProcessSource& source) const { return fill(source, std::stop_token{}); }
+
+    std::string fill(ProcessSource& source, const std::stop_token& stopToken) const
     {
         auto buffer = bufferManager->getBufferBlocking();
         const auto result = source.fillTupleBuffer(buffer, stopToken);
@@ -121,11 +122,11 @@ TEST_F(ProcessSourceTest, StopRequestTerminatesRunningCommand)
     ProcessSource source{{.command = "sleep 60", .refreshIntervalMs = 1000, .flushIntervalMs = 10}, SOURCE_ID};
     source.open(bufferManager);
     std::stop_source stopSource;
-    std::jthread stopper{[&stopSource]
-                         {
-                             std::this_thread::sleep_for(std::chrono::milliseconds{100});
-                             stopSource.request_stop();
-                         }};
+    const std::jthread stopper{[&stopSource]
+                               {
+                                   std::this_thread::sleep_for(std::chrono::milliseconds{100});
+                                   stopSource.request_stop();
+                               }};
     const auto start = std::chrono::steady_clock::now();
     EXPECT_EQ(fill(source, stopSource.get_token()), "");
     EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds{10});
