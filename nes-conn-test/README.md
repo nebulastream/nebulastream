@@ -60,6 +60,7 @@ for a config whose data the loader must seed or read back differently from the c
 | `transfer_1_buffer` | both | Deliver less data than one buffer completely. A source must emit a partly filled buffer, and a sink must deliver one. |
 | `transfer_n_buffers` | both | Deliver many buffers of data (100 by default, `n_buffers=N` changes it) completely and exactly once. A source must wait while the harness's pool is used up. A sink is called from several worker threads at once, gets records that continue in child buffers, and may have a buffer retried that it could not take yet. |
 | `empty` | both | Open and close without data. A source must close while it waits, and a sink must deliver nothing, not even an empty record. |
+| `buffer_without_tuples` | sink | Deliver nothing, not even an empty record, for a buffer without tuples, which a query's operators emit when a filter drops every tuple of a buffer. |
 | `bad_endpoint` | both | Fail with the declared error when the endpoint is unreachable. A sink that connects in the background, such as `TCPSink`, accepts the buffer that the scenario writes and fails once its connect times out, at the latest when it stops. |
 | `close_while_reading` | source | End a read that waits for data that never comes, when the harness closes the source, within the step timeout. |
 | `full_buffer_not_held` | source | Emit a full buffer at once, even with a flush interval that never ends during the test, and hold back the partly filled rest. |

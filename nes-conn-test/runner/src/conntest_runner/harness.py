@@ -290,5 +290,9 @@ class Sink(_Stepper):
         """Hands the next ``n_buffers`` buffers to the sink, or as many as are left."""
         return self._command(f"WRITE {n_buffers}")
 
+    def write_empty(self) -> Got:
+        """Hands the sink one buffer without tuples."""
+        return self._command("WRITE_EMPTY")
+
     def stop(self) -> Got:
         return self._command("STOP")

@@ -219,6 +219,9 @@ class SinkCtx(Ctx):
         )
         self.data.compare_read_back(self.rows, received=received)
 
+    def write_empty(self) -> None:
+        self.sink.write_empty()
+
     def _write(self, n_buffers: int) -> None:
         self._written += n_buffers
         self.sink.write(n_buffers)
@@ -255,6 +258,20 @@ def empty(ctx: Ctx) -> None:
     """A sink that is started and stopped without data must deliver nothing, not even an empty record."""
     ctx.setup()
     ctx.connect()
+    ctx.disconnect()
+    ctx.check_delivered()
+
+
+@scenario("buffer_without_tuples")
+def buffer_without_tuples(ctx: SinkCtx) -> None:
+    """A buffer without tuples holds no record, so a sink must deliver nothing for it, not even an empty record.
+
+    A query's operators emit one when a filter drops every tuple of a buffer,
+    and a source that ends its stream sends one with the final watermark.
+    """
+    ctx.setup()
+    ctx.connect()
+    ctx.write_empty()
     ctx.disconnect()
     ctx.check_delivered()
 

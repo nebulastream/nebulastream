@@ -168,11 +168,13 @@ private:
 struct RunningQuery
 {
     QueryId id;
-    /// The batches that WRITE releases to the query's source.
+    /// The batches that WRITE and WRITE_EMPTY release to the query's source.
     std::shared_ptr<BatchFeed> feed = std::make_shared<BatchFeed>();
     /// The batches that WRITE has not released yet.
     /// Every START writes the session's batches from the first one again.
     std::span<const std::string> remaining;
+    /// The buffers released since START, all of which the sink has taken once a WRITE or WRITE_EMPTY replies ok.
+    std::uint64_t released = 0;
 };
 
 /// Follows the session's query through the engine's listeners, so that a step can wait until the engine has done its work.
@@ -304,6 +306,10 @@ public:
                 return errorReply(harnessErrorInfo("write", "HarnessProtocol", fmt::format("WRITE needs <n_buffers>: {}", line)));
             }
             return write(*count);
+        }
+        if (verb == "WRITE_EMPTY")
+        {
+            return writeEmpty();
         }
         if (verb == "STOP")
         {
@@ -450,6 +456,7 @@ private:
         {
             /// A worker's pool is far larger than one test's data, so the source never waits for a buffer that the sink still holds.
             /// A batch takes its main buffer and a child for each further buffer size of bytes.
+            /// One more buffer is for the buffer without tuples of a WRITE_EMPTY.
             /// An input that needs more buffers than the pool can count fails here, as a harness error of LOAD.
             const std::size_t bufferSize = options.bufferSize.getRawValue();
             std::size_t bufferCount = 0;
@@ -457,7 +464,7 @@ private:
             {
                 bufferCount += (batch.size() + bufferSize - 1) / bufferSize;
             }
-            pool = makeBufferPool(options.bufferSize, BufferCount{std::max<std::size_t>(bufferCount, 1)});
+            pool = makeBufferPool(options.bufferSize, BufferCount{bufferCount + 1});
             engine = std::make_unique<QueryEngine>(
                 QueryEngineConfiguration{options.threads.getRawValue(), workerDefaults.queryEngine.admissionQueueSize},
                 observer,
@@ -492,7 +499,7 @@ private:
         }
     }
 
-    /// Releases the next batches that LOAD made, or as many as are left, and returns once the sink has taken them.
+    /// Releases the next batches that LOAD made, or as many as are left.
     std::string write(const std::uint64_t numberOfBuffers)
     {
         if (!query)
@@ -502,13 +509,31 @@ private:
         auto& running = *query;
         const auto step = running.remaining.first(std::min<std::size_t>(numberOfBuffers, running.remaining.size()));
         running.remaining = running.remaining.subspan(step.size());
-        running.feed->release(std::vector<std::string>(step.begin(), step.end()));
-        const auto released = batches.size() - running.remaining.size();
-        if (auto error = awaitStep("write", [released](const QueryObserver::State& state) { return state.takenBuffers() >= released; }))
+        return releaseAndAwait(running, "write", std::vector<std::string>(step.begin(), step.end()));
+    }
+
+    /// Releases a batch without bytes, for which the engine passes the sink a buffer without tuples.
+    std::string writeEmpty()
+    {
+        if (!query)
+        {
+            return errorReply(harnessErrorInfo("write_empty", "HarnessProtocol", "WRITE_EMPTY without a started sink"));
+        }
+        return releaseAndAwait(*query, "write_empty", {std::string{}});
+    }
+
+    /// Releases the batches and waits until the sink has taken every buffer released since START.
+    /// Replies with an error if the query fails or the step times out.
+    std::string releaseAndAwait(RunningQuery& running, const std::string_view phase, std::vector<std::string> step)
+    {
+        running.released += step.size();
+        running.feed->release(std::move(step));
+        if (auto error = awaitStep(
+                phase, [released = running.released](const QueryObserver::State& state) { return state.takenBuffers() >= released; }))
         {
             return errorReply(*error);
         }
-        return okReply("write");
+        return okReply(phase);
     }
 
     /// Stops the query as a user does, which drops the buffers of a WRITE that has not returned.

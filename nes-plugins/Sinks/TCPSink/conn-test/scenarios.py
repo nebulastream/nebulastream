@@ -17,6 +17,7 @@ The host reads this module without the loader, so the module holds only data.
 
 from conntest_runner.scenario_bindings.sink import (
     bad_endpoint,
+    buffer_without_tuples,
     empty,
     silent_link,
     slow_link,
@@ -29,6 +30,7 @@ SCENARIOS = [
     # More buffers than the sink queues by default, so it must also retry the buffers that it could not queue.
     transfer_n_buffers("basic.nesql", "multicol.nesql"),
     empty("basic.nesql"),
+    buffer_without_tuples("basic.nesql"),
     # The sink connects in the background, so an unreachable endpoint fails it with CannotOpenSink (4004) at STOP, not at START.
     bad_endpoint("short_connect_timeout.nesql", error=4004),
     # The sink has no idle timeout, so it must deliver every row over a slow link and after a silent one.

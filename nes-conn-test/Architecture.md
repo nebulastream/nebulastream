@@ -84,6 +84,7 @@ BIND                     bind the config and reply with its bound schema, as for
 LOAD                     pack the input's records into buffers and create the engine, whose pool is sized for them; the reply has `n_buffers`
 START                    run a query from the harness's source into a new sink
 WRITE <n_buffers>        release the next <n_buffers> buffers to the source, and reply once the sink has taken them
+WRITE_EMPTY              release one buffer without tuples to the source, and reply once the sink has taken it
 STOP                     stop the query as a user does, which drops the buffers of a WRITE that has not returned
 ```
 
@@ -100,6 +101,7 @@ a buffer takes records until its main buffer is full, and the record that crosse
 With 4096-byte buffers and records of 1000 bytes, a buffer holds four records and 96 bytes of the fifth, whose other 904 bytes are in a child.
 The harness writes the bytes with the formatter's own function, so a sink that ignores child buffers loses data here as it does in a query.
 The source reads the buffers in order, so the source thread gives each its own sequence number, as for any source.
+A query's operators also emit a buffer without tuples, for example when a filter drops every tuple of a buffer, and WRITE_EMPTY gives the sink one.
 BIND rejects a sink config whose output format is not JSON, since the records are JSON.
 
 ## One test

@@ -21,6 +21,7 @@ import json
 import socket
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, cast
 
@@ -93,6 +94,10 @@ class Session:
         if self.proc.poll() is None:
             self.proc.kill()
             self.proc.communicate(timeout=_TIMEOUT_S)
+        # A test that does not end the session, or fails before it does, still closes the sockets.
+        self._reader.close()
+        self._conn.close()
+        self._listener.close()
 
 
 _MAX_UINT32 = 2**32 - 1
@@ -230,7 +235,7 @@ def test_sink_rejects_a_step_out_of_order(harness_binary: Path, sock_dir: Path, 
     config = tmp_path / "unused.nesql"
     config.write_text("-- not read\n", encoding="utf-8")
     with Session(harness_binary, sock_dir, config=config, mode="sink") as session:
-        for line, phase in (("WRITE 1", "write"), ("WRITE", "write"), ("STOP", "stop")):
+        for line, phase in (("WRITE 1", "write"), ("WRITE", "write"), ("WRITE_EMPTY", "write_empty"), ("STOP", "stop")):
             reply = session.command(line)
             assert reply["ok"] is False, reply
             assert (reply["origin"], reply["name"], reply["phase"]) == ("harness", "HarnessProtocol", phase), reply
@@ -266,6 +271,44 @@ def test_sink_gets_records_that_continue_in_child_buffers(harness_binary: Path, 
     # The file sink writes a header line, and the worker threads may write the buffers in any order.
     _, written = output.read_bytes().split(b"\n", 1)
     assert sorted(written.splitlines(keepends=True)) == records
+
+
+def test_sink_takes_a_buffer_without_tuples(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    # WRITE_EMPTY returns only once the sink has taken the buffer, so a STOP after it cannot drop the buffer.
+    # A sink writes nothing for a buffer without tuples, so its output cannot show that it received the buffer.
+    # The print sink waits after every buffer, so the time that WRITE_EMPTY takes shows it.
+    ingestion_ms = 500
+    config = tmp_path / "print.nesql"
+    config.write_text(
+        f"CREATE SINK s (id INTEGER NOT NULL) TYPE Print SET ({ingestion_ms} AS \"SINK\".INGESTION, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+        encoding="utf-8",
+    )
+    with Session(harness_binary, sock_dir, config=config, mode="sink") as session:
+        assert session.command("BIND")["ok"] is True
+        assert session.command("LOAD") == {"ok": True, "phase": "load", "n_buffers": 0}
+        assert session.command("START")["ok"] is True
+        begin = time.monotonic()
+        assert session.command("WRITE_EMPTY") == {"ok": True, "phase": "write_empty"}
+        assert time.monotonic() - begin >= ingestion_ms / 1000
+        assert session.command("STOP")["ok"] is True
+        assert session.end() == _EXIT_OK
+
+
+def test_write_empty_does_not_wait_for_a_held_buffer(harness_binary: Path, sock_dir: Path, tmp_path: Path) -> None:
+    # The TCP sink keeps a buffer in its queue until it has sent it, and nothing listens on port 1, so the sink holds the data's buffer.
+    # The source must still get a buffer for WRITE_EMPTY.
+    config = tmp_path / "tcp.nesql"
+    config.write_text(
+        "CREATE SINK s (id INTEGER NOT NULL) TYPE TCP SET ('127.0.0.1' AS \"SINK\".SOCKET_HOST, 1 AS \"SINK\".SOCKET_PORT, "
+        "90000 AS \"SINK\".CONNECT_TIMEOUT_MS, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+        encoding="utf-8",
+    )
+    records = tmp_path / "records.jsonl"
+    records.write_bytes(b'{"ID":1}\n')
+    with Session(harness_binary, sock_dir, config=config, mode="sink", args=[f"--input-path={records}"]) as session:
+        for line in ("BIND", "LOAD", "START", "WRITE 1", "WRITE_EMPTY"):
+            reply = session.command(line)
+            assert reply["ok"] is True, reply
 
 
 _JSON_FILE_SINK_STATEMENT = (
