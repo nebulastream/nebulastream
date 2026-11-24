@@ -218,6 +218,7 @@ Supported physical source types:
 - `TCP`
 - `MQTT` — Source MQTT documentation coming soon.
 - `Generator` — Source Generator documentation coming soon.
+- `Process`
 
 In our example, we define two physical sources that both feed the `lrb` logical source:
 ```sql
@@ -240,6 +241,30 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
 ```
 As you can see, one source reads CSV-formatted data from a TCP socket, while the other reads JSON-formatted data from a file.
 Both produce tuples that conform to the `lrb` schema.
+
+To ingest the output of a periodically executed shell command, use a `Process` source. The command
+is passed to `/bin/bash -c`, so pipelines, redirections, shell expansion, and tools such as `jq` are
+supported. Only standard output is ingested; standard error remains available for diagnostics.
+
+```sql
+CREATE PHYSICAL SOURCE FOR metrics TYPE Process SET(
+  'localhost:8080' AS "SOURCE"."HOST",
+  'grep -E "^(Rss|Pss):" "/proc/$pid/smaps_rollup" | tr -s " :" "," | cut -d, -f1,2' AS "SOURCE".COMMAND,
+  1000 AS "SOURCE".REFRESH_INTERVAL_MS,
+  100 AS "SOURCE".FLUSH_INTERVAL_MS,
+  'CSV' AS INPUT_FORMATTER."TYPE"
+);
+```
+
+`REFRESH_INTERVAL_MS` controls how often the command starts. Invocations never overlap; if a command
+runs longer than the refresh interval, the next invocation starts after it exits. `FLUSH_INTERVAL_MS`
+limits how long a partially filled tuple buffer is retained after the first output byte arrives.
+Each invocation also receives the following exported environment variables:
+
+- `PID`, `pid`, and `WORKER_PID`: the PID of the NebulaStream worker process
+- `SOURCE_ID`: the physical source ID
+- `INVOCATION`: a one-based invocation counter
+- `TIMESTAMP_MS`: the invocation time as Unix epoch milliseconds
 
 The CSV file might look like this:
 ```
