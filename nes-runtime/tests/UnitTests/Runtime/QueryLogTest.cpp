@@ -321,7 +321,7 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
     queryIds.reserve(numQueries);
     for (uint64_t i = 0; i < numQueries; ++i)
     {
-        queryIds.push_back(QueryId{static_cast<int64_t>(i + 1)});
+        queryIds.emplace_back(static_cast<int64_t>(i + 1));
     }
 
     std::barrier barrier{numThreads};

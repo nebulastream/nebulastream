@@ -156,6 +156,8 @@ std::vector<ReportEntry> TestRunner::submitAll(const size_t concurrency, const O
     }
 
     const auto threads = std::max(concurrency, size_t{1});
+    /// The analyzer reports a pointer subtraction inside the queue's constructor, which is third-party code.
+    /// NOLINTNEXTLINE(clang-analyzer-security.PointerSub)
     folly::MPMCQueue<const Job*> toSubmit{jobs.size() + threads};
     folly::MPMCQueue<Submitted> answered{jobs.size() + threads};
 
