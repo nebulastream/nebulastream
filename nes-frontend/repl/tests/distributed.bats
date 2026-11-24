@@ -202,8 +202,8 @@ docker_nes_repl() {
   results=$(printf '%s' "$output" | jq -s '.')
   assert_json_contains '{"id":1}' "$(echo "$results" | jq '.[3].CreatedQuery.query')"
 
-  # The worker logs the stop with the id of the fragment, which is 1 for the only fragment of the first query.
-  wait_until grep -qE "Stop 1([^0-9]|$)" worker-node/singleNodeWorker.log
+  # The REPL stops the query right after it creates it, so the coordinator never sends the query to the worker.
+  ! grep "Starting source with originId" worker-node/singleNodeWorker.log
 }
 
 @test "default on-exit behavior should keep queries alive" {
