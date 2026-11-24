@@ -84,13 +84,12 @@ double computeCosineSimilarity(
         normLeft += vectorElementLeft * vectorElementLeft;
     }
 
-    /// This is more numerically stable than sqrt(norm1 * norm2).
-    const double denom = std::sqrt(normLeft) * std::sqrt(normRight);
+    const double denom = std::sqrt(normLeft * normRight);
     if (denom <= 0.0)
     {
         return 0.0;
     }
-    /// To even out numerical errors, the result is clamped.
+    /// Rounding can push the result for nearly parallel vectors past -1 or 1.
     return std::clamp(dot / denom, -1.0, 1.0);
 }
 }
