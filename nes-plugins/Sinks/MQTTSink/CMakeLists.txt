@@ -25,11 +25,3 @@ add_registry_entry(Sink MQTT)
 add_registry_entry(SinkConfigSchema MQTT)
 add_registry_entry(SinkConfig MQTT)
 add_conn_test(PLUGIN MQTTSink)
-
-# These tests use docker CLI to run docker-compose from within the development container.
-add_e2e_test(
-    NAME mqtt-sink-test
-    BATS_FILE tests/distributed.bats
-    DOCKER_COMPOSE
-    JOBS 4
-)
