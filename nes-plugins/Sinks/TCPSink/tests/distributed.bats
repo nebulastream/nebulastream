@@ -132,7 +132,9 @@ EOF
   query_id=$output
 
   wait_until test -s results.csv
-  docker compose kill tcp-client
+  # A forced kill can remove the network before nc closes its socket, so the sink retransmits instead of seeing a disconnect.
+  # Stopping with a 1 s timeout lets nc exit on SIGTERM and reset the connection (see the reconnect test).
+  docker compose stop -t 1 tcp-client
 
   wait_until grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
   wait_until_status tests/good/example.yaml "Failed" "$query_id" --require-healthy "worker-1"

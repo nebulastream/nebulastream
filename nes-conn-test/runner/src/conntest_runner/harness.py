@@ -12,7 +12,7 @@
 
 """Runs the C++ harness and its command session over a unix-domain control socket.
 
-A global deadline per scenario kills a harness that is too stuck to honor its own step timeout.
+A deadline per test kills a harness that is too stuck to honor its own step timeout.
 It is the only timer outside the harness.
 """
 
@@ -28,13 +28,23 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import IO, Any, Self
+from typing import IO, TYPE_CHECKING, Any, Self
 
 from conntest_runner.protocol import Got, HarnessError, read_reply
 
+if TYPE_CHECKING:
+    from conntest_runner.datamodel import NativeColumn
+
 _ACCEPT_TIMEOUT_S = 30.0
 _ACCEPT_POLL_S = 0.1
-_DEFAULT_GLOBAL_DEADLINE_S = 120.0
+# The harness's step timeout, a constant in nes-conn-test/driver/SourceSession.hpp, from which the timeouts below are derived.
+# Change both together, or a stuck step is reported as a killed harness, not as the step that hung.
+_HARNESS_STEP_TIMEOUT_S = 30.0
+# Four times the step timeout, because a stuck OPEN takes twice the step timeout.
+# So a stuck step replies with the harness's StepTimeout, which says which step, before the deadline kills the harness.
+_TEST_DEADLINE_S = 4 * _HARNESS_STEP_TIMEOUT_S
+# Above the step timeout, because on EOF the harness stops a running source with that timeout.
+_END_SESSION_TIMEOUT_S = _HARNESS_STEP_TIMEOUT_S + 10.0
 
 
 @dataclass(frozen=True)
@@ -109,10 +119,22 @@ class _HarnessProc:
         self.proc.wait(timeout=10)
 
     def end_session(self) -> None:
-        """The harness's session loop returns on EOF, so the harness shuts down gracefully."""
+        """The harness's session loop returns on EOF, so the harness shuts down gracefully.
+
+        A harness that is still running after the timeout is killed, and the error says so.
+        """
         with contextlib.suppress(OSError):
             self.conn.close()
-        self.proc.wait(timeout=10)
+        try:
+            self.proc.wait(timeout=_END_SESSION_TIMEOUT_S)
+        except subprocess.TimeoutExpired as e:
+            self.proc.kill()
+            self.proc.wait()
+            raise HarnessError(
+                name="ExitTimeout",
+                phase="end",
+                message=f"the harness did not exit within {_END_SESSION_TIMEOUT_S} s after EOF and was killed",
+            ) from e
 
 
 class _Stepper:
@@ -123,7 +145,6 @@ class _Stepper:
         mode: str,
         config: Path,
         extra_args: list[str] | None = None,
-        global_deadline_s: float = _DEFAULT_GLOBAL_DEADLINE_S,
         log_path: Path | None = None,
     ) -> None:
         """``log_path`` collects the output of every harness process of the case, a respawned one included."""
@@ -142,7 +163,7 @@ class _Stepper:
         self._server.bind(str(self._sock_path))
         self._server.listen(1)
         self._proc: _HarnessProc | None = None
-        self._deadline = threading.Timer(global_deadline_s, self._on_deadline)
+        self._deadline = threading.Timer(_TEST_DEADLINE_S, self._on_deadline)
         self._deadline.daemon = True
         self._deadline.start()
 
@@ -160,6 +181,14 @@ class _Stepper:
         assert self._proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
         return self._proc.command(line)
 
+    def bind(self) -> list[NativeColumn]:
+        """The schema that the engine bound from the config, which the rows are generated for."""
+        schema = list(self._command("BIND").schema)
+        # Every row of an empty schema is `{}`, so every comparison would pass without checking a value.
+        if not schema:
+            raise HarnessError(name="HarnessProtocol", phase="bind", message="the BIND reply has no schema")
+        return schema
+
     def kill(self) -> None:
         """Models an ungraceful worker death: the backend sees the connection drop without a CLOSE.
 
@@ -171,14 +200,16 @@ class _Stepper:
 
     def cleanup(self) -> None:
         self._deadline.cancel()
-        if self._proc is not None:
-            self._proc.end_session()
+        try:
+            if self._proc is not None:
+                self._proc.end_session()
+        finally:
             self._proc = None
-        with contextlib.suppress(OSError):
-            self._server.close()
-        shutil.rmtree(self._dir, ignore_errors=True)
-        if self._log is not None:
-            self._log.close()
+            with contextlib.suppress(OSError):
+                self._server.close()
+            shutil.rmtree(self._dir, ignore_errors=True)
+            if self._log is not None:
+                self._log.close()
 
     def __enter__(self) -> Self:
         return self

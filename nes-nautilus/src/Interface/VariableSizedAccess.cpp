@@ -19,28 +19,13 @@
 
 namespace NES
 {
-VariableSizedAccess::Offset::Offset(const uint64_t offset) : offset(offset)
-{
-}
-
-VariableSizedAccess::Offset::Underlying VariableSizedAccess::Offset::getRawOffset() const
-{
-    return offset;
-}
-
 std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Offset& offset)
 {
     return os << offset.offset;
 }
 
-VariableSizedAccess::Size::Size(uint64_t size) : size(size)
+std::ostream& operator<<(std::ostream& os, const VariableSizedAccess::Size& size)
 {
+    return os << size.size;
 }
-
-VariableSizedAccess::Size::Underlying VariableSizedAccess::Size::getRawSize() const
-{
-    return size;
-}
-
-
 }

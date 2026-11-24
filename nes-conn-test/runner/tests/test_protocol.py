@@ -94,9 +94,20 @@ def test_read_reply_ok_fill() -> None:
     assert got == Got(eos=False)
 
 
-def test_read_reply_ok_bind_defaults() -> None:
-    got = read_reply(json.dumps({"ok": True, "phase": "bind"}))
-    assert got == Got(eos=False)
+def test_read_reply_ok_bind() -> None:
+    got = read_reply(
+        json.dumps(
+            {
+                "ok": True,
+                "phase": "bind",
+                "schema": [
+                    {"name": "ID", "type": "INT32", "nullable": False},
+                    {"name": "Label", "type": "VARSIZED", "nullable": True},
+                ],
+            }
+        )
+    )
+    assert got == Got(schema=(("ID", "INT32", False), ("Label", "VARSIZED", True)))
 
 
 def test_read_reply_connector_error() -> None:

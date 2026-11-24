@@ -7,7 +7,7 @@ battery. If a change fights one of these, it is usually wrong.
 ### generator-is-truth — the data generator
 
 One seeded generator (`generate_rows`) is the **single source of all test data**. It adapts
-to whatever schema the config under test declares (`parse_source_schema`) —
+to whatever schema the config under test declares, as the engine binds it (the harness's `BIND` reply) —
 never hardcoding column names, types, counts, or data
 characteristics (value size, nullability, the absence of delimiters) — so a new
 valid config just works. The rows it generates are *both* the input the connector
@@ -95,8 +95,8 @@ sleeping**: each control step is one request/reply with the C++ harness, and eac
 side effect is acked by its component (a broker ack, a completed write, a
 readiness probe). The source stop is a deterministic quota (see
 `externally-bounded`). The layered timeouts — a per-step harness watchdog
-(`--step-timeout-ms`), a global framework deadline (`_GLOBAL_DEADLINE_S`), and
-bounded loader waits — exist **only as stall-breakers**; a firing timeout is always
+(30 s), a global framework deadline per test (120 s), and
+bounded loader waits — exist **only as stall-breakers**, so they are constants, not settings; a firing timeout is always
 a *failure*, never an expected outcome or a synchronization mechanism. Where an
 external system has no completion signal, a bounded wait is the backstop, but
 correctness is decided by the **content compare, not the clock**.

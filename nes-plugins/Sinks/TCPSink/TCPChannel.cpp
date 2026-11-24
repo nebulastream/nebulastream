@@ -45,6 +45,8 @@
 #include <cpptrace/from_current_macros.hpp> ///NOLINT(misc-include-cleaner)
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -446,6 +448,14 @@ std::optional<TCPChannel::Socket> TCPChannel::connectUntil(const std::chrono::mi
                 auto result = tryConnect(address, std::min(addressBudget, timeLeft), stopToken);
                 if (auto* connected = std::get_if<Ok>(&result))
                 {
+                    /// A peer whose host or network disappears sends no reset, so the kernel would retransmit to it for minutes.
+                    /// The user timeout aborts the connection once sent data stays unacknowledged for the close timeout.
+                    const auto userTimeoutMs = static_cast<unsigned int>(closeTimeout.count());
+                    if (setsockopt(connected->socket.get(), IPPROTO_TCP, TCP_USER_TIMEOUT, &userTimeoutMs, sizeof(userTimeoutMs)) != 0)
+                    {
+                        NES_WARNING(
+                            "Failed to set the TCP user timeout of TCPChannel to {}:{}: {}", host, port, getErrorMessageFromERRNO());
+                    }
                     return std::move(connected->socket);
                 }
                 if (std::holds_alternative<Stopped>(result))
