@@ -561,3 +561,23 @@ At one thread (unpinned), `x + 1`: PROCESSES 2.09, THREADS_FT 2.19, FREE_THREADE
   and at one thread. This is the build of libpython: an embedded test program (one CPU, best of 5) gives per call
   `x + 1` 116 / 97 / 91 ns and LCG 8.2 / 6.7 / 6.5 µs for Debian 3.14.4 / uv 3.14.9 / uv 3.14.9t. Debian's shared
   libpython is slower than its static python3.14 executable (73 ns, 5.0 µs). Free-threading itself costs nothing here.
+
+## Why the E107 pinning made LCG slower (E108, 2026-11-24, NES 26295b6a12)
+
+The E59 layout of E107 pins the 16 UDF processes to CPUs 64-79. These are only 8 physical cores (CPUs 2n and 2n+1 are
+the two SMT threads of one core) on socket 1, while the worker threads run on socket 0. E108 changes one factor at a
+time. PROCESSES (GIL), 16 worker threads, M rows/s for the whole query:
+
+| Layout | `x + 1` (30M) | LCG (3M) |
+|---|---|---|
+| E107 unpinned, ARROW | 9.18 | 1.70 |
+| E107 pinned: processes on 64-79 (8 cores, SMT), HYBRID | 8.77 | 1.34 |
+| C: processes on 64-79 (8 cores, SMT), ARROW | 8.86 | 1.36 |
+| A: processes on 64,66,..,94 (16 cores, socket 1), HYBRID | 9.05 | 2.11 |
+| B: workers on 0,2,..,30, processes on 32,34,..,62 (16 cores, socket 0), HYBRID | 9.15 | 2.05 |
+| B with ARROW | 9.11 | 2.11 |
+
+- The cause is SMT: two Python processes share each core. LCG is compute-bound, so it loses about 35%.
+- The HYBRID layout and the socket of the processes make no difference here.
+- With one full core per process, pinning makes LCG 25% faster than unpinned (2.11 against 1.70). `x + 1` stays at
+  about 9 M rows/s with every layout.
