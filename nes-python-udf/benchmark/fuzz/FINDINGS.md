@@ -529,3 +529,35 @@ CPython 3.14.9 with GIL (`udf-gil-venv`) and free-threaded (`udf-ft-venv`). M ro
 - At one thread, OUT_OF_PROCESS is faster than IN_PROCESS ROW calls (`x + 1`: 1.94 vs 0.94 M rows/s), as the process
   calls the UDF in a loop over a batch, not once per row through the C API. At 16 threads, IN_PROCESS FREE_THREADED is
   faster (9.78 vs 4.49), as it has no handoff between processes.
+
+## Control: longer inputs, CPU pinning, the build of libpython (E107, 2026-11-24, NES 31ed45e40f)
+
+E106 seemed to contradict E58/E59, where OUT_OF_PROCESS came close to IN_PROCESS. E107 repeats E105/E106 with
+`x + 1` on 1M and 30M rows and LCG on 1M and 3M rows (`benchmark/PythonUdf{Interpreters,ProcessThreads}Long.test`). The
+difference between the two input sizes separates the fixed cost of a query from the rate per row. Each variant ran
+once unpinned (ARROW layout) and once pinned as in E59 (worker threads on 0,2,..,38, UDF processes or threads on 64-79,
+HYBRID layout). 31ed45e40f pins the threads of the threaded host as the processes are pinned.
+
+M rows/s at 16 worker threads: on the long input / rate without the fixed cost; fixed cost per query in s:
+
+| Variant | `x + 1` unpinned | `x + 1` pinned | LCG unpinned | LCG pinned | fixed cost |
+|---|---|---|---|---|---|
+| PROCESSES (GIL) | 9.18 / 11.0 | 8.77 / 10.4 | 1.70 / 2.41 | 1.34 / 1.76 | 0.5 |
+| THREADS_FT | 8.79 / 10.2 | 8.43 / 9.8 | 1.73 / 2.55 | 1.39 / 1.78 | 0.5 |
+| IN_PROCESS FREE_THREADED | 12.70 / 13.3 | 15.44 / 16.4 | 1.96 / 2.16 | 2.04 / 2.23 | 0.1 |
+| IN_PROCESS SUBINTERPRETER | 12.48 / 13.3 | 13.17 / 14.0 | 1.50 / 1.70 | 1.60 / 1.71 | 0.15 |
+
+At one thread (unpinned), `x + 1`: PROCESSES 2.09, THREADS_FT 2.19, FREE_THREADED 1.34, SUBINTERPRETER 1.02.
+
+- E106 was not fair to OUT_OF_PROCESS: starting 16 UDF processes or threads costs about 0.5 s per query, which is most
+  of a query on 3M rows. Without it, OUT_OF_PROCESS reaches 75–85% of IN_PROCESS for `x + 1` and about the same rate
+  for LCG. This agrees with E59.
+- The 5 M rows/s limit of E106 was this fixed cost, not the worker side.
+- Threads (3.14t) and processes stay within 10% of each other, pinned and unpinned. Each thread spins on the rings of
+  its own operator, as a process does, so reading the shared memory is the same for both.
+- Pinning and the HYBRID layout do not help OUT_OF_PROCESS here; LCG gets slower (2.4 to 1.8). E59 also used PyPy and
+  300M rows, so its absolute numbers do not compare.
+- With the same input, FREE_THREADED and SUBINTERPRETER are equal for `x + 1`. FREE_THREADED is 1.3x faster for LCG
+  and at one thread. This is the build of libpython: an embedded test program (one CPU, best of 5) gives per call
+  `x + 1` 116 / 97 / 91 ns and LCG 8.2 / 6.7 / 6.5 µs for Debian 3.14.4 / uv 3.14.9 / uv 3.14.9t. Debian's shared
+  libpython is slower than its static python3.14 executable (73 ns, 5.0 µs). Free-threading itself costs nothing here.
