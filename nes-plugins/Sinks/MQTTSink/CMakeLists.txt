@@ -24,6 +24,7 @@ link_plugin_library(nes-sinks mqtt_sink_plugin_library)
 add_registry_entry(Sink MQTT)
 add_registry_entry(SinkConfigSchema MQTT)
 add_registry_entry(SinkConfig MQTT)
+add_conn_test(PLUGIN MQTTSink)
 
 # These tests use docker CLI to run docker-compose from within the development container.
 add_e2e_test(

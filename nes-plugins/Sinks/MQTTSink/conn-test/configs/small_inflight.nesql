@@ -1,0 +1,11 @@
+-- An MQTT sink that publishes with QoS 2.
+-- The limits are small, so the client rejects messages, and the sink has to retry their buffers and apply backpressure.
+CREATE SINK mqtt_small_inflight_output (data UINT8) TYPE MQTT SET (
+    'tcp://localhost:1883' AS "SINK".SERVER_URI,
+    'conntest'             AS "SINK".TOPIC,
+    'JSON'                 AS "SINK".OUTPUT_FORMAT,
+    2                      AS "SINK".QOS,
+    4                      AS "SINK".MAX_OUTSTANDING_MESSAGES,
+    4                      AS "SINK".BACKPRESSURE_UPPER_THRESHOLD,
+    2                      AS "SINK".BACKPRESSURE_LOWER_THRESHOLD
+);
