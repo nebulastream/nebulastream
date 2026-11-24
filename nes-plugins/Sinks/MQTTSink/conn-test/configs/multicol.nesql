@@ -1,0 +1,6 @@
+-- An MQTT sink with several columns, so the tests compare rows with an integer, a string and a float.
+CREATE SINK mqtt_multi_output (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL) TYPE MQTT SET (
+    'tcp://localhost:1883' AS "SINK".SERVER_URI,
+    'conntest'             AS "SINK".TOPIC,
+    'JSON'                 AS "SINK".OUTPUT_FORMAT
+);

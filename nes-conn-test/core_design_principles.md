@@ -120,7 +120,8 @@ only data).
 
 A sink's end is its stop: `STOP` returns once the sink has delivered what it holds,
 and the loader reads back only after that, so no marker in the data is needed there either.
-A loader whose backend cannot tell when the last record has arrived bounds its wait by the number of rows the sink was given.
+A loader whose backend cannot tell when the last record has arrived writes its own end marker to the backend after `STOP`, outside the generated data, and reads up to it.
+A row count cannot end the read-back, because it would end a case without rows at once, and a record that the sink must not deliver would go unseen.
 
 > Anti-pattern: "fixing" a never-ending source by injecting an EoS/sentinel into
 > the generated data and waiting for it in `SourceSession`; making a test pass by

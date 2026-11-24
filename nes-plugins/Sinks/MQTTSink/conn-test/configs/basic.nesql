@@ -1,0 +1,8 @@
+-- A minimal MQTT sink, which publishes with the default QoS 1.
+-- The connection tests replace SERVER_URI and TOPIC with the broker and the topic of each test.
+-- The connection tests accept only 'JSON', because the harness gives the sink JSONL records.
+CREATE SINK mqtt_output (data UINT8) TYPE MQTT SET (
+    'tcp://localhost:1883' AS "SINK".SERVER_URI,
+    'conntest'             AS "SINK".TOPIC,
+    'JSON'                 AS "SINK".OUTPUT_FORMAT
+);
