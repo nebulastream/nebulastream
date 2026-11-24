@@ -96,7 +96,7 @@ public:
             "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
             "----\n"
             "1\n");
-        const auto placement = placementIn(Testing::singleWorkerTopology());
+        const auto placement = choosePlacement(Testing::singleWorkerTopology());
         const auto testFile = workingDir / (name + ".test");
         const auto key = TestFileKeyFactory{workingDir}.deriveKeyOf(testFile, 0, 1);
         return TestFilePreparer::rewritePartition(
@@ -244,12 +244,12 @@ TEST_F(RunnerTest, PlacesSourcesAndSinksOnTheFirstAllowedHosts)
         .allowSourcePlacement = {source, sink},
         .allowSinkPlacement = {sink}};
 
-    const auto placement = placementIn(topology);
+    const auto placement = choosePlacement(topology);
     EXPECT_EQ(placement.sources, source);
     EXPECT_EQ(placement.sinks, sink);
 
     topology.allowSinkPlacement.clear();
-    EXPECT_THROW(std::ignore = placementIn(topology), Exception);
+    EXPECT_THROW(std::ignore = choosePlacement(topology), Exception);
 }
 
 }

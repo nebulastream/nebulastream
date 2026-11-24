@@ -70,7 +70,7 @@ TestFilePreparer::TestFilePreparer(const SystestConfiguration& config)
     , testDataDir{config.testDataDir}
     , configDir{config.configDir}
     , keyFactory{config.testDiscoverRoot}
-    , placement{placementIn(config.clusterConfig)}
+    , placement{choosePlacement(config.clusterConfig)}
 {
 }
 

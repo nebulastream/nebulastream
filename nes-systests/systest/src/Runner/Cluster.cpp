@@ -103,7 +103,7 @@ void registerWorkers(const Bridge::Coordinator& coordinator, const Cluster::Conf
 
 }
 
-Placement placementIn(const ClusterConfiguration& topology)
+Placement choosePlacement(const ClusterConfiguration& topology)
 {
     if (topology.workers.empty() or topology.allowSourcePlacement.empty() or topology.allowSinkPlacement.empty())
     {

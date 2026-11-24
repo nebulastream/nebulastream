@@ -190,9 +190,8 @@ struct GroupsOutcome
 };
 
 /// Runs the settings groups one after another, each on its own cluster.
-/// A worker reserves its whole memory budget when it starts, so this function destroys the cluster of one group before it starts the next.
+/// A worker allocates its whole memory budget when it starts, so this function destroys the cluster of one group before it starts the next.
 /// `onRejected` receives the number of test cases that a group does not run, because the setup of their files failed.
-/// The function skips an empty `onRejected`.
 GroupsOutcome runGroups(
     const SystestConfiguration& config,
     const Cluster::Config& baseCluster,
@@ -206,7 +205,7 @@ GroupsOutcome runGroups(
     for (const auto& group : groups)
     {
         /// A file has at most one partition per set of overrides, so within a group the file identifies the partition.
-        const auto positionOf = [&group](const ReportEntry& entry)
+        const auto findPosition = [&group](const ReportEntry& entry)
         {
             const auto partition = std::ranges::find(
                 group.partitions,
@@ -222,7 +221,7 @@ GroupsOutcome runGroups(
         TestRunner runner{config, cluster, group.partitions};
         for (const auto& entry : runner.getRejected())
         {
-            rejected.push_back(PositionedEntry{.position = positionOf(entry), .entry = entry});
+            rejected.push_back(PositionedEntry{.position = findPosition(entry), .entry = entry});
         }
         if (onRejected)
         {
@@ -230,7 +229,7 @@ GroupsOutcome runGroups(
         }
         for (auto& entry : runner.submitAll(concurrency, observe))
         {
-            const auto position = positionOf(entry);
+            const auto position = findPosition(entry);
             checked.push_back(PositionedEntry{.position = position, .entry = std::move(entry)});
         }
     }
@@ -247,7 +246,7 @@ RunOutcome runOnce(const SystestConfiguration& config, const Cluster::Config& ba
     const TestRunner::Observer observe
         = [&](const ReportEntry& entry, const RewrittenTestCase&, const std::span<const StatementTiming> timings)
     { printProgress(++checkedSoFar, totalTestCases, entry, timings); };
-    /// The test cases of a rejected file are never checked, so the progress counts them here.
+    /// The runner never checks the test cases of a rejected file, so the progress counts them here.
     const auto countRejected = [&](const size_t rejectedTestCases) { checkedSoFar += rejectedTestCases; };
 
     auto [rejected, checked] = runGroups(config, baseCluster, policy.concurrency, groups, observe, countRejected);
