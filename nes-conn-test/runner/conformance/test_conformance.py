@@ -22,7 +22,6 @@ import pytest
 from conntest_runner.config_rewrite import apply_overrides
 from conntest_runner.datamodel import SinkModel, SourceModel
 from conntest_runner.discovery import Kind, PluginEntry, binding_problems, discover_plugin, resolve_configs
-from conntest_runner.endpoint import split_endpoint
 from conntest_runner.harness import Sink, Source
 from conntest_runner.link import Link
 from conntest_runner.naming import unique_token
@@ -125,11 +124,8 @@ def test_scenario(
         pytest.fail(f"{plugin.name} has no compose service, so its loader must set its endpoint")
     link = None
     if scenario_needs_link(scenario.name):
-        # The proxy listens on the backend's port number in the stack's only toxiproxy container.
-        # Parallel pytest workers would all bind that port, so this relies on the runner running one test at a time.
-        _, port = split_endpoint(connector_endpoint)
-        link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), listen_port=port, upstream=connector_endpoint).create()
-        connector_endpoint = f"toxiproxy:{port}"
+        link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), upstream=connector_endpoint).create()
+        connector_endpoint = link.endpoint
     cfg_file = _render_config(loader, config_path, endpoint=connector_endpoint, target=target, out_dir=tmp_path)
     n_buffers = _buffers(scenario)
     # Kept next to the config and the data, so a failed case has all of its artifacts in one place.
