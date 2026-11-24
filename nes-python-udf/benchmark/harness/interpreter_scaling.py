@@ -29,7 +29,7 @@ import time
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 REPOSITORY = os.path.abspath(os.path.join(HARNESS, "../../.."))
 TEST = os.path.join(REPOSITORY, "nes-systests/benchmark/PythonUdfInterpreters.test")
-ROWS = {"rows30m": 30_000_000, "rows3m": 3_000_000, "rows1m": 1_000_000}
+ROWS = {"rows300m": 300_000_000, "rows30m": 30_000_000, "rows3m": 3_000_000, "rows1m": 1_000_000}
 
 
 def git(*arguments):
@@ -76,6 +76,8 @@ def main():
     parser.add_argument("--data", default="/dev/shm/nes-udf-bench")
     parser.add_argument("--scratch", default="/tmp/nes-udf-experiments")
     parser.add_argument("--environment", action="append", default=[], metavar="NAME=VALUE")
+    parser.add_argument("--worker-argument", action="append", default=[], metavar="--NAME=VALUE",
+                        help="more arguments of the worker, e.g. --worker.python_udf.process_cpus=64-79")
     parser.add_argument("--note", default="")
     arguments = parser.parse_args()
     if git("status", "--porcelain", "--untracked-files=no"):
@@ -96,6 +98,7 @@ def main():
                 f"--worker.query_engine.number_of_worker_threads={threads}",
                 f"--worker.default_query_execution.in_process_udf_calls={arguments.calls}",
                 *variant_arguments,
+                *arguments.worker_argument,
             ]
             command = [
                 os.path.join(arguments.build, "nes-systests/systest/systest"),

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include <poll.h>
+#include <sched.h>
 #include <signal.h> /// NOLINT(modernize-deprecated-headers) kill
 #include <spawn.h>
 #include <unistd.h>
@@ -90,6 +91,26 @@ _SPIN_SECONDS = 1e-4
 _SLEEP_SECONDS = 1e-3
 _operators = []
 _pools = {}
+
+
+def _cpu_list():
+    # The CPUs of worker.python_udf.process_cpus, e.g. 64-79,96; each operator thread pins itself to the next one, as a process does
+    cpus = []
+    for part in os.environ.get("NES_UDF_PROCESS_CPUS", "").split(","):
+        if part:
+            first, _, last = part.partition("-")
+            cpus.extend(range(int(first), int(last or first) + 1))
+    return cpus
+
+
+_CPUS = _cpu_list()
+_threads_started = 0
+
+
+def _run(operator, cpu):
+    if cpu is not None:
+        os.sched_setaffinity(0, {cpu})
+    operator._main()
 
 
 def _read(size):
@@ -151,7 +172,10 @@ def _attach():
     _attached(operator)
     if _THREADED:
         # The thread waits for requests and handles them as a process of its own would, see SHARED_MEMORY_START
-        threading.Thread(target=operator._main, daemon=True).start()
+        global _threads_started
+        cpu = _CPUS[_threads_started % len(_CPUS)] if _CPUS else None
+        _threads_started += 1
+        threading.Thread(target=_run, args=(operator, cpu), daemon=True).start()
         return True
     _operators.append(operator)
     return True
@@ -241,11 +265,26 @@ std::string pythonExecutable()
 
 /// Pins a process to the next CPU of NES_UDF_PROCESS_CPUS, which the worker sets from worker.python_udf.process_cpus. Without it, the
 /// process gets the CPUs of the worker back, as it starts with the ones of the source thread that started it.
+/// The host process of NES_UDF_SHARED_PROCESSES=threads may run on all of these CPUs, as each of its operator threads pins itself to
+/// one of them, see HOST.
 void pin(const pid_t pid)
 {
     static std::atomic<size_t> started{0};
     const auto* const list = std::getenv("NES_UDF_PROCESS_CPUS"); /// NOLINT(concurrency-mt-unsafe)
     const auto cpus = CpuPinning::parseCpuList(list == nullptr ? "" : list).value_or(std::vector<int>{});
+    if (!cpus.empty() && threadedProcess())
+    {
+        cpu_set_t set;
+        CPU_ZERO(&set);
+        for (const auto cpu : cpus)
+        {
+            CPU_SET(cpu, &set);
+        }
+        if (sched_setaffinity(pid, sizeof(set), &set) == 0)
+        {
+            return;
+        }
+    }
     if (cpus.empty() || !CpuPinning::pinProcess(pid, cpus[started.fetch_add(1) % cpus.size()]))
     {
         CpuPinning::unpinProcess(pid);

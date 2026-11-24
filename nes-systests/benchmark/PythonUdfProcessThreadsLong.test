@@ -1,0 +1,46 @@
+# name: benchmark/PythonUdfProcessThreadsLong.test
+# description: The OUT_OF_PROCESS variants (benchmark/PythonUdfProcessThreads.test) on inputs 10 times longer, so that the time to start the
+# Python processes or interpreters counts less, and with one UDF on two input sizes, which shows that fixed cost. The same queries as
+# benchmark/PythonUdfInterpretersLong.test and benchmark/PythonUdfProcessThreadsLong.test, see
+# nes-python-udf/benchmark/harness/interpreter_scaling.py. Uses the inputs of benchmark/PythonUdf.test.
+# groups: [benchmark, large, PythonUdfProcess]
+
+
+CREATE LOGICAL SOURCE rows30m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows30m TYPE File;
+ATTACH FILE udf/udf_bench.csv
+
+CREATE LOGICAL SOURCE rows3m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows3m TYPE File;
+ATTACH FILE udf/udf_bench_3m.csv
+
+CREATE LOGICAL SOURCE rows1m(id INT64 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR rows1m TYPE File;
+ATTACH FILE udf/udf_bench_1m.csv
+
+CREATE FUNCTION inc_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    return x + 1
+$python$;
+
+CREATE FUNCTION lcg_oop (x INT64) RETURNS INT64 EXECUTION OUT_OF_PROCESS AS $python$
+    h = x
+    for _ in range(20):
+        h = (h * 1103515245 + 12345) % 2147483648
+    return h
+$python$;
+
+# Scanning the input without a UDF
+SELECT *, id + INT64(1) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, inc_oop(id) AS r FROM rows1m INTO Void();
+----
+
+SELECT *, inc_oop(id) AS r FROM rows30m INTO Void();
+----
+
+SELECT *, lcg_oop(id) AS r FROM rows1m INTO Void();
+----
+
+SELECT *, lcg_oop(id) AS r FROM rows3m INTO Void();
+----
