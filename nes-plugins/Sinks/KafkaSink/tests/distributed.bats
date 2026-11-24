@@ -88,7 +88,8 @@ EOF
         'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
         'SEQUENCE UINT64 0 400000 1' AS "SOURCE"."GENERATOR_SCHEMA",
         2 AS "SOURCE"."FLUSH_INTERVAL_MS",
-        'EMIT_RATE 100000' AS "SOURCE"."GENERATOR_RATE_CONFIG",
+        -- slow enough that the query still runs when the broker pauses
+        'EMIT_RATE 20000' AS "SOURCE"."GENERATOR_RATE_CONFIG",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
     ) INTO KAFKA(
         'worker-1:8080' AS "SINK"."HOST",
@@ -109,7 +110,7 @@ EOF
 
   # A paused broker acknowledges nothing, so backpressure cannot be released while it is paused. Requiring it to be
   # held rather than merely logged rules out backpressure that came and went before the pause.
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id"
+  # `start` returns once the query runs, so the test pauses the broker without a further wait.
   docker compose pause kafka-broker
   wait_until backpressure_is_held
   docker compose unpause kafka-broker
@@ -163,6 +164,8 @@ EOF
     )
 EOF
 )"
-  assert_success
+  # `start` returns once the query runs, so it fails for a query whose sink cannot connect.
+  assert_failure
+  assert_output --partial "ended with state Failed before it reached Running"
   wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$(newest_query_id)" --require-healthy "worker-1"
 }

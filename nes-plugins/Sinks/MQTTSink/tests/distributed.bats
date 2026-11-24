@@ -153,6 +153,8 @@ EOF
     )
 EOF
 )"
-  assert_success
+  # `start` returns once the query runs, so it fails for a query whose sink cannot connect.
+  assert_failure
+  assert_output --partial "ended with state Failed before it reached Running"
   wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$(newest_query_id)" --require-healthy "worker-1"
 }
