@@ -19,17 +19,15 @@
 #include <future>
 #include <limits>
 #include <memory>
-#include <optional>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/RuntimeValue.hpp>
-#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/OperatorCallLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -71,16 +69,6 @@ namespace
 const DataType text{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
 const DataType integer{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
 
-RuntimeValue textValue(const std::string& value)
-{
-    return *RuntimeValue::fromLiteral(text, value);
-}
-
-RuntimeValue integerValue(const std::string& value)
-{
-    return *RuntimeValue::fromLiteral(integer, value);
-}
-
 LogicalFunction constant(DataType type, std::string value)
 {
     return ConstantValueLogicalFunction{type, std::move(value)};
@@ -94,63 +82,58 @@ LogicalFunction httpCall(std::vector<LogicalFunction> args)
 
 TEST(HttpCallFunctionTest, NativeConfigurationHasStableScalarOutputAndValidatesArity)
 {
-    const auto op = HttpCallAsyncOperator::create({.argumentTypes = {text, text}});
+    const auto op = HttpCallAsyncOperator::create({.inputs = AsyncInputAccessors{{text, text}}});
     EXPECT_EQ(op.getType(), "HTTP_CALL");
     ASSERT_EQ(op.getOutputSchema().size(), 1);
     EXPECT_EQ(op.getOutputSchema().begin()->getDataType(), text);
     EXPECT_EQ(static_cast<const Identifier&>(op.getOutputSchema().begin()->getFullyQualifiedName()), Identifier::parse("response"));
-    EXPECT_THROW(HttpCallAsyncOperator::create({.argumentTypes = {text}}), Exception);
-    EXPECT_THROW(HttpCallAsyncOperator::create({.argumentTypes = {text, text, integer, integer, integer}}), Exception);
+    EXPECT_THROW(HttpCallAsyncOperator::create({.inputs = AsyncInputAccessors{{text}}}), Exception);
+    EXPECT_THROW(HttpCallAsyncOperator::create({.inputs = AsyncInputAccessors{{text, text, integer, integer, integer}}}), Exception);
 }
 
-TEST(HttpCallFunctionTest, NativeInferenceValidatesTypesAndConstantOptions)
+TEST(HttpCallFunctionTest, NamedLogicalInputsValidateTypesAndConstantOptions)
 {
-    const HttpCallAsyncOperator config;
+    const auto infer
+        = [](std::vector<LogicalFunction> args) { return httpCall(std::move(args)).withInferredDataType(Schema<Field, Unordered>{}); };
     EXPECT_NO_THROW(
-        static_cast<void>(config.withInferredArguments(
-            {{text, textValue("body")},
-             {text, textValue("http://localhost")},
-             {integer, integerValue("100")},
-             {integer, integerValue("0")}})));
+        static_cast<void>(
+            infer({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "100"), constant(integer, "0")})));
     for (const auto& invalid : {std::string{"not a URL"}, std::string{"https://localhost"}, std::string{"http:/no-host"}})
     {
-        EXPECT_THROW(static_cast<void>(config.withInferredArguments({{text, textValue("body")}, {text, textValue(invalid)}})), Exception);
+        EXPECT_THROW(static_cast<void>(infer({constant(text, "body"), constant(text, invalid)})), Exception);
     }
+    EXPECT_THROW(static_cast<void>(infer({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "0")})), Exception);
     EXPECT_THROW(
-        static_cast<void>(
-            config.withInferredArguments({{text, textValue("body")}, {text, textValue("http://localhost")}, {integer, integerValue("0")}})),
+        static_cast<void>(infer({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "18446744073709551615")})),
         Exception);
     EXPECT_THROW(
-        static_cast<void>(config.withInferredArguments(
-            {{text, textValue("body")}, {text, textValue("http://localhost")}, {integer, integerValue("18446744073709551615")}})),
+        static_cast<void>(infer(
+            {constant(text, "body"),
+             constant(text, "http://localhost"),
+             constant(integer, "10"),
+             constant(integer, "18446744073709551615")})),
         Exception);
     EXPECT_THROW(
-        static_cast<void>(config.withInferredArguments(
-            {{text, textValue("body")},
-             {text, textValue("http://localhost")},
-             {integer, integerValue("10")},
-             {integer, integerValue("18446744073709551615")}})),
+        static_cast<void>(infer(
+            {constant(text, "body"),
+             constant(text, "http://localhost"),
+             constant(DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}, "-1")})),
         Exception);
-    const DataType signedInteger{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto negative = RuntimeValue::fromLiteral(signedInteger, "-1");
-    ASSERT_TRUE(negative);
     EXPECT_THROW(
-        static_cast<void>(
-            config.withInferredArguments({{text, textValue("body")}, {text, textValue("http://localhost")}, {signedInteger, *negative}})),
+        static_cast<void>(infer(
+            {constant(DataType{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE}, "body"), constant(text, "http://localhost")})),
         Exception);
-    const DataType floatType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE};
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(
-            config.withInferredArguments({{text, std::nullopt}, {text, std::nullopt}, {integer, std::nullopt}, {floatType, std::nullopt}})),
-        ErrorCode::DifferentFieldTypeExpected);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(
-            config.withInferredArguments({{text, textValue("body")}, {text, textValue("http://localhost")}, {integer, integerValue("0")}})),
-        ErrorCode::CannotInferSchema);
-    const auto nullableInteger = DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE};
     EXPECT_THROW(
-        static_cast<void>(config.withInferredArguments(
-            {{text, textValue("body")}, {text, textValue("http://localhost")}, {nullableInteger, std::nullopt}})),
+        static_cast<void>(infer(
+            {constant(text, "body"),
+             constant(text, "http://localhost"),
+             constant(DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "1")})),
+        Exception);
+    EXPECT_THROW(
+        static_cast<void>(infer(
+            {constant(text, "body"),
+             constant(text, "http://localhost"),
+             constant(DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "3.0")})),
         Exception);
 }
 
@@ -166,11 +149,14 @@ TEST(HttpCallFunctionTest, LogicalInferenceAndChildRewritePreserveCallArguments)
         const auto scalar = httpCall(std::vector<LogicalFunction>(originalArguments.begin(), originalArguments.begin() + count))
                                 .withInferredDataType(Schema<Field, Unordered>{});
         EXPECT_EQ(scalar.getDataType(), text);
-        EXPECT_EQ(scalar.getAs<AsyncCallLogicalFunction>()->getOutputName(), Identifier::parse("response"));
+        EXPECT_EQ(scalar.getAs<OperatorCallLogicalFunction>()->getOutputName(), Identifier::parse("response"));
     }
-    const auto asyncCall = inferred.getAs<AsyncCallLogicalFunction>();
-    ASSERT_EQ(asyncCall->getArguments().size(), 4);
-    EXPECT_EQ(asyncCall->getOutputName(), Identifier::parse("response"));
+    const auto configured = inferred.getAs<OperatorCallLogicalFunction>();
+    const auto& arguments = configured->getArguments();
+    EXPECT_EQ(arguments.at(0).getDataType(), text);
+    EXPECT_EQ(arguments.at(1).getDataType(), text);
+    ASSERT_EQ(arguments.size(), 4U);
+    EXPECT_EQ(inferred.getAs<OperatorCallLogicalFunction>()->getOutputName(), Identifier::parse("response"));
     EXPECT_TRUE(
         std::ranges::equal(
             inferred.withChildren(call.getChildren()).withInferredDataType(Schema<Field, Unordered>{}).getChildren(),
@@ -257,12 +243,15 @@ TEST(HttpCallFunctionTest, LogicalInferenceAndChildRewritePreserveCallArguments)
                                     constant(DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}, "2.0")})
                               .withInferredDataType(schema)),
         Exception);
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(LogicalFunctionProvider::provide("HTTP_CALL", {})), ErrorCode::InvalidQuerySyntax);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(LogicalFunctionProvider::provide("HTTP_CALL", {}).withInferredDataType(schema)), ErrorCode::InvalidQuerySyntax);
     auto tooMany
         = httpCall({constant(text, "body"), constant(text, "http://localhost"), constant(integer, "30000"), constant(integer, "0")})
               .getChildren();
     tooMany.push_back(constant(integer, "1"));
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(LogicalFunctionProvider::provide("HTTP_CALL", tooMany)), ErrorCode::InvalidQuerySyntax);
+    ASSERT_EXCEPTION_ERRORCODE(
+        static_cast<void>(LogicalFunctionProvider::provide("HTTP_CALL", tooMany).withInferredDataType(schema)),
+        ErrorCode::InvalidQuerySyntax);
 }
 
 TEST(HttpCallFunctionTest, RetryDefaultsAndExplicitCountsAreFixedAtPreparation)

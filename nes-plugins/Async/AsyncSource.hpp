@@ -132,10 +132,9 @@ private:
     };
 
     static std::unordered_map<AsyncCall::Ptr, CallState> createCallStates(const AsyncCallGraph& graph);
-    RuntimeValue readInput(const InputFieldReference& field, const TupleBuffer& input, size_t row) const;
+    static RuntimeValue readInput(const TupleBufferRef& layout, const InputFieldReference& field, const TupleBuffer& input, size_t row);
     /// Service retries belong to the shared producer invocation, never to its subscribers.
-    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
-    callWithRetries(AsyncCall::Ptr node, size_t slot, SharedRuntimeValues arguments);
+    boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> callWithRetries(AsyncCall::Ptr node, size_t slot, AsyncRowHandle row);
     /// Borrows a deque element until finishRow publishes completion; the in-flight state outlives every row.
     boost::asio::awaitable<AsyncResult<void>> processRow(size_t slot, InFlightBuffer& buffer, size_t row);
 

@@ -29,7 +29,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Operators/AsyncLogicalOperator.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Reprojecter.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -187,7 +187,7 @@ PlanVisitor<>::UpResult decideFieldMappings(const LogicalOperator& logicalOperat
         {
             return reprojecterMapping((*reprojecter.value())->getAccessedFieldsForOutput(), logicalOperator.getOutputSchema());
         }
-        if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>() || logicalOperator.tryGetAs<AsyncLogicalOperator>())
+        if (logicalOperator.tryGetAs<SourceDescriptorLogicalOperator>() || logicalOperator.tryGetAs<AsynchronousOperator>())
         {
             /// Async operators materialize a new row, rather than forwarding a child's physical aliases.
             return materializedMapping(logicalOperator);

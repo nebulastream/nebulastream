@@ -1,5 +1,5 @@
 # name: explain/AsyncFunctionLifting.test
-# description: Each async occurrence becomes an append operator; equal calls are not merged.
+# description: Generic operator-function expansion keeps separate written calls and uses ordinary projections.
 # groups: [explain, async]
 
 CREATE LOGICAL SOURCE textStream(id UINT64 NOT NULL, data VARSIZED NOT NULL);
@@ -10,55 +10,59 @@ ATTACH INLINE
 CREATE SINK callSink(id UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File;
 CREATE SINK filterSink(id UINT64 NOT NULL, data VARSIZED NOT NULL) TYPE File;
 
-# Logical operators append named results. Padding is deferred to decomposition.
+# Logical operators append declared results. Padding is deferred to decomposition.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream INTO callSink;
 ----
 == Optimized Global Plan ==
 SINK(CALLSINK)
-  PROJECTION(fields: [ID, __ASYNC_CALL_0 as RESPONSE])
-    ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_0])
+  PROJECTION(fields: [ID, RESPONSE])
+    ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
       SOURCE(TEXTSTREAM)
 ==END==
 
-# A synchronous argument is computed before its async operator.
+# A synchronous argument is computed before its operator.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, CONCAT(HTTP_CALL(CONCAT(data, '!'), 'http://localhost/echo'), '?') AS response FROM textStream INTO callSink;
 ----
 == Optimized Global Plan ==
 SINK(CALLSINK)
-  PROJECTION(fields: [ID, CONCAT(__ASYNC_CALL_1, ?) as RESPONSE])
-    ASYNC HTTP_CALL(args: [__ASYNC_ARG_0, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_1])
-      PROJECTION(fields: [DATA, ID, CONCAT(DATA, !) as __ASYNC_ARG_0])
-        SOURCE(TEXTSTREAM)
+  PROJECTION(fields: [ID, CONCAT(__OPERATOR_CALL_1, ?) as RESPONSE])
+    PROJECTION(fields: [ID, RESPONSE as __OPERATOR_CALL_1])
+      ASYNC HTTP_CALL(args: [__OPERATOR_ARG_0, http://localhost/echo], outputs: [RESPONSE])
+        PROJECTION(fields: [DATA, ID, CONCAT(DATA, !) as __OPERATOR_ARG_0])
+          SOURCE(TEXTSTREAM)
 ==END==
 
-# Synchronous work between calls remains between their operators.
+# Synchronous work between calls remains an ordinary projection.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http://localhost/b') AS response FROM textStream INTO callSink;
 ----
 == Optimized Global Plan ==
 SINK(CALLSINK)
-  PROJECTION(fields: [ID, __ASYNC_CALL_2 as RESPONSE])
-    ASYNC HTTP_CALL(args: [__ASYNC_ARG_1, http://localhost/b], outputs: [RESPONSE as __ASYNC_CALL_2])
-      PROJECTION(fields: [DATA, ID, CONCAT(__ASYNC_CALL_0, DATA) as __ASYNC_ARG_1, __ASYNC_CALL_0])
-        ASYNC HTTP_CALL(args: [DATA, http://localhost/a], outputs: [RESPONSE as __ASYNC_CALL_0])
-          SOURCE(TEXTSTREAM)
+  PROJECTION(fields: [ID, RESPONSE])
+    ASYNC HTTP_CALL(args: [__OPERATOR_ARG_1, http://localhost/b], outputs: [RESPONSE])
+      PROJECTION(fields: [DATA, ID, CONCAT(__OPERATOR_CALL_0, DATA) as __OPERATOR_ARG_1, __OPERATOR_CALL_0])
+        PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_0])
+          ASYNC HTTP_CALL(args: [DATA, http://localhost/a], outputs: [RESPONSE])
+            SOURCE(TEXTSTREAM)
 ==END==
 
-# Identical written calls are distinct occurrences, with distinct result fields.
+# Identical written calls remain distinct, with distinct temporary result fields.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, CONCAT(HTTP_CALL(data, 'http://localhost/echo'), HTTP_CALL(data, 'http://localhost/echo')) AS response FROM textStream INTO callSink;
 ----
 == Optimized Global Plan ==
 SINK(CALLSINK)
-  PROJECTION(fields: [ID, CONCAT(__ASYNC_CALL_0, __ASYNC_CALL_1) as RESPONSE])
-    ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_1])
-      ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_0])
-        SOURCE(TEXTSTREAM)
+  PROJECTION(fields: [ID, CONCAT(__OPERATOR_CALL_0, __OPERATOR_CALL_1) as RESPONSE])
+    PROJECTION(fields: [ID, __OPERATOR_CALL_0, RESPONSE as __OPERATOR_CALL_1])
+      ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
+        PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_0])
+          ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
+            SOURCE(TEXTSTREAM)
 ==END==
 
-# A physical padding projection supplies the slots required by the handoff buffer layout.
+# Physical padding supplies the declared result slot; ordinary projections do aliases.
 # Placement varies by topology; each sender/receiver pair still shares a worker.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT
 SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream INTO callSink;
@@ -66,11 +70,11 @@ SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream 
 <REGEX>
 -- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
 (?:(?!--).*\n)*SINK\(HANDOFF\)
-  PROJECTION\(fields: \[ID, DATA,  as __ASYNC_CALL_0\]\)
+  PROJECTION\(fields: \[ID, DATA,  as RESPONSE\]\)
     SOURCE\((?:TEXTSTREAM|NETWORK)\)
 (?:(?!--).*\n)*.*SOURCE\(ASYNC\)
 </REGEX>
-<REGEX>PROJECTION\(fields: \[ID, __ASYNC_CALL_0 as RESPONSE\]\)</REGEX>
+<REGEX>PROJECTION\(fields: \[ID, RESPONSE\]\)</REGEX>
 <REGEX>SINK\(CALLSINK\)</REGEX>
 <!REGEX>HTTP_CALL</!REGEX>
 ==END==
@@ -82,26 +86,28 @@ SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http:
 <REGEX>
 -- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
 (?:(?!--).*\n)*SINK\(HANDOFF\)
-  PROJECTION\(fields: \[ID, DATA,  as __ASYNC_CALL_0\]\)
+  PROJECTION\(fields: \[ID, DATA,  as RESPONSE\]\)
     SOURCE\((?:TEXTSTREAM|NETWORK)\)
 (?:(?!--).*\n)*.*SOURCE\(ASYNC\)
 </REGEX>
-<REGEX>PROJECTION\(fields: \[DATA, ID, __ASYNC_ARG_1, __ASYNC_CALL_0,  as __ASYNC_CALL_2\]\)</REGEX>
-<REGEX>PROJECTION\(fields: \[ID, __ASYNC_CALL_2 as RESPONSE\]\)</REGEX>
+<REGEX>PROJECTION\(fields: \[DATA, ID, __OPERATOR_ARG_1, __OPERATOR_CALL_0,  as RESPONSE\]\)</REGEX>
+<REGEX>PROJECTION\(fields: \[DATA, ID, RESPONSE as __OPERATOR_CALL_0\]\)</REGEX>
+<REGEX>PROJECTION\(fields: \[ID, RESPONSE\]\)</REGEX>
 <REGEX>SINK\(CALLSINK\)</REGEX>
 <!REGEX>HTTP_CALL</!REGEX>
 ==END==
 
-# Predicate calls run below their selection; helper fields are not visible above it.
+# Predicate calls run below their selection; helper fields are hidden above it.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, data FROM textStream WHERE HTTP_CALL(data, 'http://localhost/echo') = 'echo:Hello' INTO filterSink;
 ----
 == Optimized Global Plan ==
 SINK(FILTERSINK)
   PROJECTION(fields: [DATA, ID])
-    SELECTION(__ASYNC_CALL_0 = echo:Hello)
-      ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_0])
-        SOURCE(TEXTSTREAM)
+    SELECTION(__OPERATOR_CALL_0 = echo:Hello)
+      PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_0])
+        ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
+          SOURCE(TEXTSTREAM)
 ==END==
 
 EXPLAIN (OPTIMIZED) FORMAT TEXT
@@ -110,10 +116,12 @@ SELECT id, data FROM textStream WHERE HTTP_CALL(HTTP_CALL(data, 'http://localhos
 == Optimized Global Plan ==
 SINK(FILTERSINK)
   PROJECTION(fields: [DATA, ID])
-    SELECTION(__ASYNC_CALL_1 = echo:Hello)
-      ASYNC HTTP_CALL(args: [__ASYNC_CALL_0, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_1])
-        ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_0])
-          SOURCE(TEXTSTREAM)
+    SELECTION(__OPERATOR_CALL_1 = echo:Hello)
+      PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_1])
+        ASYNC HTTP_CALL(args: [__OPERATOR_CALL_0, http://localhost/echo], outputs: [RESPONSE])
+          PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_0])
+            ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
+              SOURCE(TEXTSTREAM)
 ==END==
 
 # WHERE and SELECT contain four occurrences, not two shared calls.
@@ -125,24 +133,28 @@ INTO callSink;
 ----
 == Optimized Global Plan ==
 SINK(CALLSINK)
-  PROJECTION(fields: [ID, __ASYNC_CALL_3 as RESPONSE])
-    ASYNC HTTP_CALL(args: [__ASYNC_CALL_2, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_3])
-      ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_2])
-        PROJECTION(fields: [DATA, ID])
-          SELECTION(__ASYNC_CALL_1 = echo:Hello)
-            ASYNC HTTP_CALL(args: [__ASYNC_CALL_0, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_1])
-              ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE as __ASYNC_CALL_0])
-                SOURCE(TEXTSTREAM)
+  PROJECTION(fields: [ID, RESPONSE])
+    ASYNC HTTP_CALL(args: [__OPERATOR_CALL_2, http://localhost/echo], outputs: [RESPONSE])
+      PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_2])
+        ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
+          PROJECTION(fields: [DATA, ID])
+            SELECTION(__OPERATOR_CALL_1 = echo:Hello)
+              PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_1])
+                ASYNC HTTP_CALL(args: [__OPERATOR_CALL_0, http://localhost/echo], outputs: [RESPONSE])
+                  PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_0])
+                    ASYNC HTTP_CALL(args: [DATA, http://localhost/echo], outputs: [RESPONSE])
+                      SOURCE(TEXTSTREAM)
 ==END==
 
-# Directly nested calls also remain separate operators.
+# Directly nested calls remain separate operators.
 EXPLAIN (OPTIMIZED) FORMAT TEXT
 SELECT id, HTTP_CALL(HTTP_CALL(data, 'http://localhost/a'), 'http://localhost/b') AS response FROM textStream INTO callSink;
 ----
 == Optimized Global Plan ==
 SINK(CALLSINK)
-  PROJECTION(fields: [ID, __ASYNC_CALL_1 as RESPONSE])
-    ASYNC HTTP_CALL(args: [__ASYNC_CALL_0, http://localhost/b], outputs: [RESPONSE as __ASYNC_CALL_1])
-      ASYNC HTTP_CALL(args: [DATA, http://localhost/a], outputs: [RESPONSE as __ASYNC_CALL_0])
-        SOURCE(TEXTSTREAM)
+  PROJECTION(fields: [ID, RESPONSE])
+    ASYNC HTTP_CALL(args: [__OPERATOR_CALL_0, http://localhost/b], outputs: [RESPONSE])
+      PROJECTION(fields: [DATA, ID, RESPONSE as __OPERATOR_CALL_0])
+        ASYNC HTTP_CALL(args: [DATA, http://localhost/a], outputs: [RESPONSE])
+          SOURCE(TEXTSTREAM)
 ==END==

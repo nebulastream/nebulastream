@@ -35,6 +35,6 @@ AsyncOperator createAsyncOperator(const std::string& name, std::vector<DataType>
     {
         throw InvalidQuerySyntax("'{}' is not a registered async operator", name);
     }
-    return (*factory)(AsyncOperatorRegistryArguments{std::move(argumentTypes)});
+    return (*factory)(AsyncOperatorRegistryArguments{.inputs = AsyncInputAccessors{std::move(argumentTypes)}});
 }
 }

@@ -29,6 +29,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
@@ -54,13 +55,12 @@ void validateArity(const size_t argumentCount)
     }
 }
 
-void validateIntegerOptionType(const DataType& type, std::string_view option)
+struct ReflectedDelayConfiguration
 {
-    if (!type.isInteger() || type.nullable)
-    {
-        throw DifferentFieldTypeExpected("ASYNC_DELAY expects a non-nullable integer {}", option);
-    }
-}
+    DataType valueType;
+    std::optional<size_t> concurrencyLimit;
+    AsyncInputAccessors inputs;
+};
 
 class PreparedDelayCall final : public PreparedAsyncCall
 {
@@ -112,71 +112,49 @@ Schema<UnqualifiedUnboundField, Ordered> AsyncDelayAsyncOperator::getOutputSchem
 /// NOLINTNEXTLINE(misc-include-cleaner) Registry arguments are declared by the directly included public AsyncOperator.hpp.
 AsyncOperator AsyncDelayAsyncOperator::create(AsyncOperatorRegistryArguments arguments)
 {
-    validateArity(arguments.argumentTypes.size());
-    return AsyncDelayAsyncOperator{.valueType = arguments.argumentTypes.front(), .concurrencyLimit = std::nullopt};
+    return create(std::move(arguments), std::nullopt);
 }
 
-AsyncDelayAsyncOperator AsyncDelayAsyncOperator::withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+AsyncOperator AsyncDelayAsyncOperator::create(AsyncOperatorRegistryArguments arguments, std::optional<size_t> concurrencyLimit)
 {
-    validateArity(binding.size());
-    auto inferred = *this;
-    inferred.valueType = binding.front().first;
-    if (inferred.valueType.isType(DataType::Type::UNDEFINED))
-    {
-        throw CannotInferSchema("ASYNC_DELAY value type is unresolved");
-    }
-
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) arity validated above
-    const auto& [millisType, millisConstant] = binding[1];
-    validateIntegerOptionType(millisType, "delay in milliseconds");
-    if (millisConstant)
-    {
-        const auto millis = checkedUnsignedIntegerOption(millisConstant->view(), "ASYNC_DELAY millis");
-        if (!millis || !checkedSteadyDeadline(*millis, "ASYNC_DELAY"))
-        {
-            throw CannotInferSchema("ASYNC_DELAY constant delay must be a representable non-negative integer");
-        }
-    }
-
-    inferred.concurrencyLimit.reset();
-    if (binding.size() == 3)
-    {
-        const auto& [concurrencyType, concurrencyConstant] = binding[2];
-        validateIntegerOptionType(concurrencyType, "concurrency limit");
-        if (!concurrencyConstant)
-        {
-            throw CannotInferSchema("ASYNC_DELAY requires a constant concurrency limit");
-        }
-        const auto limit = checkedUnsignedIntegerOption(concurrencyConstant->view(), "ASYNC_DELAY concurrency");
-        if (!limit || *limit == 0 || !std::in_range<size_t>(*limit))
-        {
-            throw CannotInferSchema("ASYNC_DELAY constant concurrency must be positive and representable");
-        }
-        inferred.concurrencyLimit = static_cast<size_t>(*limit);
-    }
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-    return inferred;
+    validateArity(arguments.inputs.size());
+    const auto valueType = arguments.inputs[0].getDataType();
+    return AsyncDelayAsyncOperator{.valueType = valueType, .concurrencyLimit = concurrencyLimit}.withInputAccessors(
+        std::move(arguments.inputs));
 }
 
-AsyncResult<std::unique_ptr<PreparedAsyncCall>> AsyncDelayAsyncOperator::prepare(AsyncExecutionContext&, SharedRuntimeValues values) const
+Reflected Reflector<AsyncDelayAsyncOperator>::operator()(const AsyncDelayAsyncOperator& op, const ReflectionContext& context) const
 {
-    if (values.size() != 2 && values.size() != 3)
+    return context.reflect(ReflectedDelayConfiguration{op.valueType, op.concurrencyLimit, op.getInputAccessors()});
+}
+
+AsyncDelayAsyncOperator Unreflector<AsyncDelayAsyncOperator>::operator()(const Reflected& data, const ReflectionContext& context) const
+{
+    auto configuration = context.unreflect<ReflectedDelayConfiguration>(data);
+    return AsyncDelayAsyncOperator{.valueType = configuration.valueType, .concurrencyLimit = configuration.concurrencyLimit}
+        .withInputAccessors(std::move(configuration.inputs));
+}
+
+AsyncResult<std::unique_ptr<PreparedAsyncCall>> AsyncDelayAsyncOperator::prepare(AsyncExecutionContext&, const AsyncRowHandle& row) const
+{
+    if (row.size() != 2 && row.size() != 3)
     {
         return std::unexpected(
             AsyncError{
                 .exception = InvalidQuerySyntax("ASYNC_DELAY takes (value, millis[, max_concurrency])"),
                 .kind = AsyncError::Type::Permanent});
     }
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) values has two or three entries as checked above
-    if (values[0].getDataType() != valueType)
+    PRECONDITION(valueInput && millisInput, "ASYNC_DELAY input accessors are not configured");
+    auto value = (*valueInput)(row);
+    if (value.getDataType() != valueType)
     {
         return std::unexpected(
             AsyncError{
                 .exception = DifferentFieldTypeExpected(
-                    "ASYNC_DELAY value type {} does not match its declared output {}", values[0].getDataType(), valueType),
+                    "ASYNC_DELAY value type {} does not match its declared output {}", value.getDataType(), valueType),
                 .kind = AsyncError::Type::Permanent});
     }
-    const auto& millisValue = values[1];
+    const auto millisValue = (*millisInput)(row);
     if (!millisValue.getDataType().isInteger() || millisValue.getDataType().nullable)
     {
         return std::unexpected(
@@ -184,14 +162,18 @@ AsyncResult<std::unique_ptr<PreparedAsyncCall>> AsyncDelayAsyncOperator::prepare
                 .exception = DifferentFieldTypeExpected("ASYNC_DELAY expects a non-nullable integer delay in milliseconds"),
                 .kind = AsyncError::Type::Permanent});
     }
-    if (values.size() == 3 && (!values[2].getDataType().isInteger() || values[2].getDataType().nullable))
+    if (concurrencyInput)
     {
-        return std::unexpected(
-            AsyncError{
-                .exception = DifferentFieldTypeExpected("ASYNC_DELAY expects a non-nullable integer concurrency limit"),
-                .kind = AsyncError::Type::Permanent});
+        const auto concurrencyValue = (*concurrencyInput)(row);
+        if (!concurrencyValue.getDataType().isInteger() || concurrencyValue.getDataType().nullable)
+        {
+            return std::unexpected(
+                AsyncError{
+                    .exception = DifferentFieldTypeExpected("ASYNC_DELAY expects a non-nullable integer concurrency limit"),
+                    .kind = AsyncError::Type::Permanent});
+        }
     }
-    const auto millis = checkedUnsignedIntegerOption(millisValue, "ASYNC_DELAY millis");
+    const auto millis = checkedUnsignedIntegerOption(millisValue.view(), "ASYNC_DELAY millis");
     if (!millis)
     {
         return std::unexpected(AsyncError{.exception = millis.error(), .kind = AsyncError::Type::Permanent});
@@ -201,7 +183,6 @@ AsyncResult<std::unique_ptr<PreparedAsyncCall>> AsyncDelayAsyncOperator::prepare
     {
         return std::unexpected(AsyncError{.exception = deadline.error(), .kind = AsyncError::Type::Permanent});
     }
-    return std::unique_ptr<PreparedAsyncCall>{std::make_unique<PreparedDelayCall>(values[0].toOwned(), *millis)};
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    return std::unique_ptr<PreparedAsyncCall>{std::make_unique<PreparedDelayCall>(std::move(value), *millis)};
 }
 }

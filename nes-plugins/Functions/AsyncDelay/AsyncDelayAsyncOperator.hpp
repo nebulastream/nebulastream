@@ -17,6 +17,7 @@
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
@@ -35,15 +36,43 @@ struct AsyncDelayAsyncOperator
 {
     DataType valueType{DataType::Type::UNDEFINED, DataType::NULLABLE::NOT_NULLABLE};
     std::optional<size_t> concurrencyLimit;
+    AsyncInputAccessors inputs{};
+    std::optional<AsyncInputAccessor> valueInput{};
+    std::optional<AsyncInputAccessor> millisInput{};
+    std::optional<AsyncInputAccessor> concurrencyInput{};
+
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] AsyncDelayAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
+    {
+        auto copy = *this;
+        copy.inputs = std::move(accessors);
+        copy.valueInput = copy.inputs.size() >= 1 ? std::optional{copy.inputs[0]} : std::nullopt;
+        copy.millisInput = copy.inputs.size() >= 2 ? std::optional{copy.inputs[1]} : std::nullopt;
+        copy.concurrencyInput = copy.inputs.size() >= 3 ? std::optional{copy.inputs[2]} : std::nullopt;
+        return copy;
+    }
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const;
-    [[nodiscard]] AsyncDelayAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const;
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, SharedRuntimeValues values) const;
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const;
 
     [[nodiscard]] std::optional<size_t> maxConcurrency() const { return concurrencyLimit; }
 
     static AsyncOperator create(AsyncOperatorRegistryArguments arguments);
+    static AsyncOperator create(AsyncOperatorRegistryArguments arguments, std::optional<size_t> concurrencyLimit);
+};
+
+template <>
+struct Reflector<AsyncDelayAsyncOperator>
+{
+    Reflected operator()(const AsyncDelayAsyncOperator& op, const ReflectionContext& context) const;
+};
+
+template <>
+struct Unreflector<AsyncDelayAsyncOperator>
+{
+    AsyncDelayAsyncOperator operator()(const Reflected& data, const ReflectionContext& context) const;
 };
 
 static_assert(AsyncOperatorConcept<AsyncDelayAsyncOperator>);

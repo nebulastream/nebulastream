@@ -13,6 +13,7 @@
 */
 
 #include <HttpCallAsyncOperator.hpp>
+#include <HttpCallDefaults.hpp>
 
 #include <cerrno> /// NOLINT(misc-include-cleaner) EHOSTDOWN is provided by the platform errno declarations.
 #include <chrono>
@@ -22,11 +23,9 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 #include <DataTypes/CheckedInteger.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -35,6 +34,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
@@ -67,7 +67,7 @@ namespace NES
 namespace
 {
 namespace http = boost::beast::http;
-constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::seconds(30);
+constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{HTTP_CALL_DEFAULT_TIMEOUT_MILLIS};
 
 AsyncError permanent(const Exception& error)
 {
@@ -77,25 +77,11 @@ AsyncError permanent(const Exception& error)
 
 AsyncOperator HttpCallAsyncOperator::create(AsyncOperatorRegistryArguments arguments)
 {
-    if (arguments.argumentTypes.size() < 2 || arguments.argumentTypes.size() > 4)
+    if (arguments.inputs.size() < 2 || arguments.inputs.size() > 4)
     {
         throw InvalidQuerySyntax("HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
     }
-    for (const auto& type : std::span{arguments.argumentTypes}.first(2))
-    {
-        if (!type.isType(DataType::Type::UNDEFINED) && (!type.isType(DataType::Type::VARSIZED) || type.nullable))
-        {
-            throw DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL");
-        }
-    }
-    for (const auto& type : std::span{arguments.argumentTypes}.subspan(2))
-    {
-        if (!type.isType(DataType::Type::UNDEFINED) && (!type.isInteger() || type.nullable))
-        {
-            throw DifferentFieldTypeExpected("HTTP_CALL options must be non-nullable integers");
-        }
-    }
-    return HttpCallAsyncOperator{};
+    return HttpCallAsyncOperator{}.withInputAccessors(std::move(arguments.inputs));
 }
 
 /// NOLINTBEGIN(readability-magic-numbers) HTTP status codes are protocol-defined values.
@@ -200,35 +186,32 @@ private:
 };
 
 AsyncResult<std::unique_ptr<PreparedAsyncCall>> /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, SharedRuntimeValues arguments) const
+HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
 {
-    if (arguments.size() < 2 || arguments.size() > 4)
+    if (row.size() < 2 || row.size() > 4)
     {
         return std::unexpected(permanent(InvalidQuerySyntax("HTTP_CALL takes (body, url[, timeout_ms[, retries]])")));
     }
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) validated arity bounds every argument index
-    for (size_t index = 0; index < 2; ++index)
+    PRECONDITION(bodyInput && urlInput, "HTTP_CALL input accessors are not configured");
+    const auto bodyValue = (*bodyInput)(row);
+    const auto urlValue = (*urlInput)(row);
+    const auto bodyType = bodyValue.getDataType();
+    const auto urlType = urlValue.getDataType();
+    if (!bodyType.isType(DataType::Type::VARSIZED) || bodyType.nullable || !urlType.isType(DataType::Type::VARSIZED) || urlType.nullable)
     {
-        const auto type = arguments[index].getDataType();
-        if (!type.isType(DataType::Type::VARSIZED) || type.nullable)
-        {
-            return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL")));
-        }
+        return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL")));
     }
-    for (size_t index = 2; index < arguments.size(); ++index)
-    {
-        const auto type = arguments[index].getDataType();
-        if (!type.isInteger() || type.nullable)
-        {
-            return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL options must be non-nullable integers")));
-        }
-    }
-    std::string body{arguments[0].get<std::string_view>()};
-    std::string url{arguments[1].get<std::string_view>()};
+    std::string body{bodyValue.view().get<std::string_view>()};
+    std::string url{urlValue.view().get<std::string_view>()};
     auto millis = static_cast<uint64_t>(DEFAULT_TIMEOUT.count());
-    if (arguments.size() >= 3)
+    if (timeoutMillisInput)
     {
-        auto checked = checkedUnsignedIntegerOption(arguments[2], "HTTP_CALL timeout");
+        const auto timeoutValue = (*timeoutMillisInput)(row);
+        if (!timeoutValue.getDataType().isInteger() || timeoutValue.getDataType().nullable)
+        {
+            return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL timeout must be a non-nullable integer")));
+        }
+        auto checked = checkedUnsignedIntegerOption(timeoutValue.view(), "HTTP_CALL timeout");
         if (!checked)
         {
             return std::unexpected(permanent(checked.error()));
@@ -250,9 +233,14 @@ HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, SharedRuntimeValu
         return std::unexpected(permanent(FormattingError("HTTP_CALL needs an http:// url with a host, got {}", url)));
     }
     size_t retries = 0;
-    if (arguments.size() == 4)
+    if (retriesInput)
     {
-        auto checked = checkedUnsignedIntegerOption(arguments[3], "HTTP_CALL retries");
+        const auto retriesValue = (*retriesInput)(row);
+        if (!retriesValue.getDataType().isInteger() || retriesValue.getDataType().nullable)
+        {
+            return std::unexpected(permanent(DifferentFieldTypeExpected("HTTP_CALL retries must be a non-nullable integer")));
+        }
+        auto checked = checkedUnsignedIntegerOption(retriesValue.view(), "HTTP_CALL retries");
         if (!checked)
         {
             return std::unexpected(permanent(checked.error()));
@@ -263,7 +251,6 @@ HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, SharedRuntimeValu
         }
         retries = static_cast<size_t>(*checked);
     }
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     std::string host{parsed->host()};
     std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
     std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
@@ -284,55 +271,14 @@ Schema<UnqualifiedUnboundField, Ordered> HttpCallAsyncOperator::getOutputSchema(
     return {{Identifier::parse("response"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}};
 }
 
-HttpCallAsyncOperator HttpCallAsyncOperator::withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+Reflected Reflector<HttpCallAsyncOperator>::operator()(const HttpCallAsyncOperator& op, const ReflectionContext& context) const
 {
-    if (binding.size() < 2 || binding.size() > 4)
-    {
-        throw CannotInferSchema("HTTP_CALL binding has invalid argument arity");
-    }
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) validated binding arity bounds every argument index
-    for (const auto& argument : std::span{binding}.first(2))
-    {
-        const auto& type = argument.first;
-        if (!type.isType(DataType::Type::VARSIZED) || type.nullable)
-        {
-            throw DifferentFieldTypeExpected("HTTP_CALL expects non-nullable VARSIZED body and URL");
-        }
-    }
-    if (binding[1].first.isType(DataType::Type::UNDEFINED))
-    {
-        throw CannotInferSchema("HTTP_CALL URL type is unresolved");
-    }
-    const auto& urlConstant = binding[1].second;
-    if (urlConstant)
-    {
-        const auto value = urlConstant->view().get<std::string_view>();
-        const auto parsed = boost::urls::parse_uri(value);
-        if (!parsed || parsed->scheme() != "http" || parsed->host().empty())
-        {
-            throw CannotInferSchema("HTTP_CALL constant URL must be an http:// URL with a host");
-        }
-    }
-    for (size_t index = 2; index < binding.size(); ++index)
-    {
-        const auto& [type, constant] = binding[index];
-        if (!type.isInteger() || type.nullable)
-        {
-            throw DifferentFieldTypeExpected("HTTP_CALL options must be non-nullable integers");
-        }
-        if (!constant)
-        {
-            continue;
-        }
-        const auto value = checkedUnsignedIntegerOption(constant->view(), index == 2 ? "HTTP_CALL timeout" : "HTTP_CALL retries");
-        if (!value || (index == 2 && (*value == 0 || !checkedSteadyDeadline(*value, "HTTP_CALL")))
-            || (index == 3 && (!std::in_range<size_t>(*value) || *value == std::numeric_limits<size_t>::max())))
-        {
-            throw CannotInferSchema("HTTP_CALL constant option is outside its representable range");
-        }
-    }
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-    return *this;
+    return context.reflect(op.getInputAccessors());
+}
+
+HttpCallAsyncOperator Unreflector<HttpCallAsyncOperator>::operator()(const Reflected& data, const ReflectionContext& context) const
+{
+    return HttpCallAsyncOperator{}.withInputAccessors(context.unreflect<AsyncInputAccessors>(data));
 }
 
 boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> HttpCallAsyncOperator::State::execute(

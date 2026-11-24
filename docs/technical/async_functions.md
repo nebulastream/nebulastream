@@ -40,16 +40,24 @@ unsupported placements such as join predicates are rejected rather than eagerly 
 
 ## Normalization and optimizer barriers
 
-`AsyncFunctionLiftingRule` normalizes scalar shorthand after type inference and before the semantic barrier and static
-pushdowns. Its historical rule name remains for configuration compatibility; it no longer builds trait-tagged projections.
+`OperatorFunctionLiftingRule` normalizes registered operator-function syntax after type inference and sink target-order calculation, and before the
+semantic barrier and static pushdowns. It first runs `DecideFieldOrder` and consumes those ordinary order traits rather than
+maintaining a private ordering algorithm. Newly created projections use the same ordering implementation, and the normal
+late `DecideFieldOrder` run replaces previous ordering traits after structural rewrites. Async decomposition remains a separate
+step and only processes operators carrying the async marker.
 
 The rule walks expression occurrences in order:
 
 1. Lower nested calls first.
 2. Materialize nontrivial synchronous arguments in ordinary projections, forwarding the existing input fields.
-3. Insert one async operator for the occurrence, with fresh internal output bindings.
-4. Replace that occurrence with a field access to its sole output.
+3. Insert the registered ordinary operator for the occurrence, appending its declared result field unchanged.
+4. Where needed, use an ordinary projection to rename the scalar result to its SQL alias or an internal expression temporary,
+   then replace the expression with a field access. No rename is necessary when the declared result name is already suitable.
 5. Retain the original result projection or selection over those fields.
+
+If an input already has the native result's name, the scalar adapter first projects that input to a temporary name. Its result
+projection restores the original input name and gives the new result its SQL alias or temporary expression name. No input fields are lost,
+and all renaming remains in ordinary projections. Direct programmatic operators require an explicit projection when names collide.
 
 The original visible schema is captured before introducing helpers. `SELECT *` expands against that schema, and helper
 fields introduced for a predicate are removed before its result is exposed to parent operators. Generated names avoid
@@ -85,7 +93,7 @@ correctly typed slots for every appended output. Nullable, variable-sized, boole
 actual datatypes. Field order and physical field mappings are derived for the padded layout rather than copied unchanged
 from the narrower input. The current async runtime requires row layout. The planner gives both handoff endpoints that same ordered schema directly.
 At source construction, `AsyncHandoffLayout` verifies identical ordered schemas (including field names, types, and nullability),
-checks graph output bindings, and builds the runtime copy plan. There is one schema, one row size, and one row-layout view.
+checks graph output mappings, and builds the runtime copy plan. There is one schema, one row size, and one row-layout view.
 Exclusively owned input buffers are updated in place; shared buffers copy unchanged fields to the same offsets before results
 are written. Reordered handoff schemas are rejected rather than adapted.
 
@@ -156,6 +164,13 @@ and cycles.
 Runtime memoization uses explicit producer-node identity. Multiple references to one producer share its result; different
 producer nodes remain different even if their function names and argument values match. This is not structural call deduplication.
 
+Before preparing a consumer, graph execution awaits its producer dependencies. The concrete operator owns an
+`AsyncInputAccessors` bundle supplied at construction. Its accessors read ready fields, constants, or producer results through
+an opaque `AsyncRowHandle`; they do not start coroutines or expose buffer/index pairs. A row provider retains the input buffer
+and its layout view; applying an accessor to a foreign input context is a precondition violation. Providers can also be ordinary C++ callables,
+so operator tests do not require tuple buffers. Bundle reflection transports its signature, not live row callbacks; graph assembly
+creates a fresh input context per call without replaying the concrete configuration factory.
+
 Graph execution exposes `run()` and owner cancellation. Producer lookup is private. Internally, `SharedAsyncResult` provides
 lazy single execution, cached results/errors, independent waiter cancellation/deadlines, and joining. Cancelling a subscriber's
 wait does not cancel the producer. On row failure or cancellation, the owner cancels and joins all producer work before releasing
@@ -169,11 +184,12 @@ Plugins expose one invocation protocol:
 struct MyAsyncOperator {
     // Type, output-schema and inference methods belong to this same concrete struct.
     AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(
-        AsyncExecutionContext& context, SharedRuntimeValues arguments) const;
+        AsyncExecutionContext& context, const AsyncRowHandle& row) const;
 };
 ```
 
-`prepare()` validates and owns per-row arguments once, before the retry loop. On success it returns a `PreparedAsyncCall` whose
+`prepare()` reads its input functions through the current row handle, then validates and owns the per-row arguments once,
+before the retry loop. On success it returns a `PreparedAsyncCall` whose
 `executeAttempt()` returns `boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>`. `AsyncResult<T>` is
 `std::expected<T, AsyncError>`; operational failures are returned values, not thrown exceptions. The prepared call's constructor
 fixes its private retry override, exposed read-only through `getRetryOverride()`: `nullopt` selects the stage default and zero
@@ -215,10 +231,11 @@ resolver state and ignores late results without retaining row/function resources
 
 ## Adding an async operator
 
-Implement one concrete configuration struct and its prepared invocation. Inference receives
-`AsyncArgumentsWithConstants`, a `std::vector<std::pair<DataType, std::optional<RuntimeValue>>>`.
-Each entry keeps the declared type beside its optional compile-time value: `std::nullopt` means a nonconstant argument,
-whereas an engaged optional containing `RuntimeValue::null(type)` is a typed null constant.
+Implement a concrete logical operator with named logical inputs and local schema/constant validation, a native async operator
+receiving named input accessors at construction, and its prepared invocation. Convert the generic SQL argument list to named
+inputs at the syntax factory boundary; do not store that positional list in the concrete operator. The runtime operator has no
+planner-inference interface and is constructed only by the logical operator's lowering step. `prepare()` validates dynamic
+per-row values and captures them once before execution attempts.
 
 For example, a stateless identity operator:
 
@@ -237,32 +254,33 @@ private:
 
 struct MyAsyncOperator {
     DataType valueType;
+    AsyncInputAccessors inputs;
 
     static AsyncOperator create(AsyncOperatorRegistryArguments args) {
-        if (args.argumentTypes.size() != 1) {
+        if (args.inputs.size() != 1) {
             throw InvalidQuerySyntax("MY_FUNCTION takes exactly one argument");
         }
-        return MyAsyncOperator{args.argumentTypes.front()};
+        const auto valueType = args.inputs[0].getDataType();
+        return MyAsyncOperator{valueType, std::move(args.inputs)};
     }
 
     std::string_view getType() const { return "MY_FUNCTION"; }
+
+    const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    MyAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const {
+        auto copy = *this;
+        copy.inputs = std::move(accessors);
+        return copy;
+    }
 
     Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const {
         return {{Identifier::parse("value"), valueType}};
     }
 
-    MyAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const {
-        if (binding.size() != 1) {
-            throw InvalidQuerySyntax("MY_FUNCTION takes exactly one argument");
-        }
-        auto copy = *this;
-        copy.valueType = binding.front().first;
-        return copy;
-    }
-
     AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(
-        AsyncExecutionContext&, SharedRuntimeValues arguments) const {
-        return std::make_unique<PreparedIdentity>(arguments[0].toOwned());
+        AsyncExecutionContext&, const AsyncRowHandle& row) const {
+        return std::unique_ptr<PreparedAsyncCall>{std::make_unique<PreparedIdentity>(inputs[0](row))};
     }
 };
 
@@ -276,12 +294,44 @@ add_unreflection_entry(AsyncOperator My KEY MY_FUNCTION)
 
 The factory registry uses `&MyAsyncOperator::create` from `MyAsyncOperator.hpp`. The unreflection key matches `getType()`;
 the SQL factory registry may additionally provide aliases. There is no second runtime factory or registry. Concrete implementations
-validate argument counts before indexing arguments or deriving outputs, and validate types and constant options during inference.
-Output names are available before inference; the scalar shorthand requires a single stable name.
+validate their accessor signature at construction. Logical operators validate argument types and constant options directly;
+runtime preparation checks dynamic values. Declared result names are available without a runtime instance, and scalar syntax
+requires one stable result field.
 
-Both `AsyncLogicalOperator::create(child, name, arguments, ...)` and
-`AsyncLogicalOperator::create(child, implementation, arguments, ...)` are supported. The latter preserves custom configuration
-state. Scalar syntax and direct operator construction use the same native inference and preparation methods.
+The built-in operations have normal concrete logical nodes, `HttpCallLogicalOperator` and `AsyncDelayLogicalOperator`.
+HTTP directly owns `body`, `url`, optional `timeoutMillis`, and optional `retries` logical functions. Delay directly owns
+`value`, `millis`, and optional static `maxConcurrency`. There is no separate input-wrapper or per-operator logical-function
+class. The `functionSyntax()` callbacks unpack the generic argument list into named fields and reuse the operator's local
+validation. Argument counts and result types are checked during logical inference, not by constructing a runtime object. They forward all child fields and append their declared result fields without renaming them. Use an ordinary `ProjectionLogicalOperator` to rename a result before a
+second operator appends a field with the same name; async operators have no output-name override API and do not store a
+runtime `AsyncOperator` in their logical representation.
+Both are ordinary IR operators with their own child, schema, trait, rewrite, and reflection methods. The empty
+`AsynchronousOperator` marker lets optimizer rules recognize async effects, just like other IR marker classes. There is no
+shared async logical base, CRTP adapter, or virtual argument-rewrite interface. Concrete lowering functions are registered in
+`AsyncOperatorLoweringRegistry`; this is where runtime implementations are first constructed from inferred logical inputs and
+accessor functions. Delay concurrency is static configuration, not a per-row runtime argument.
+
+`OperatorCallLogicalFunction` is the generic shorthand expression. Its dedicated `OperatorFunctionRegistry` is independent
+of both `LogicalOperatorRegistry` and the async runtime registries. The expression stores only the function name, argument
+expressions, and inferred result type. An entry declares the appended result field, provides `inferResultType` over inferred
+arguments, and provides `createOperator` when the child is available. Optional `getArgumentsFromOperator` supports the same
+normalization for directly constructed operators; it returns only a temporary traversal list.
+
+Register scalar syntax with `add_registry_entry(OperatorFunction My KEY MY_FUNCTION)` and implement
+`MyLogicalOperator::functionSyntax()`. The contract is unary and row-preserving: forward every input field and append exactly
+one declared result field. Registry lookup never constructs a logical operator. Result inference uses the operator's logical
+validation functions, and shared call-node identity is preserved independently of argument structure. Row preservation is a
+provider contract; expansion additionally checks the supplied child and the complete input/result schema.
+
+Parsing, logical inference, and logical reflection do not construct or serialize runtime operators for HTTP and delay. Their
+registry callbacks reuse ordinary local validation rather than creating configuration-function objects. The generic expression
+and lifting rule have no dependency on async execution. Synchronous operators use the same registry; the generic tests
+demonstrate a test-only `APPEND_SUM` entry implemented entirely with normal addition and projection. Logical-function reflection remains independent of plan-only reconstruction state.
+
+The generic `AsyncLogicalOperator::create` overloads remain available for programmatic custom/native operators without a
+registered concrete logical node, including named multi-output operators. Both routes use the same inference, preparation,
+and execution contracts. There are no HTTP/delay-specific physical operators: decomposition lowers their shared async
+marker through its concrete lowering registration into the handoff sink and generic async source.
 
 Stateful plugins can define private state types in their implementation file and select the required lifetime in `prepare()`:
 
@@ -310,7 +360,7 @@ all invocations have drained. Shared state is destroyed after the last slot rele
 
 An optional `maxConcurrency()` method on the configuration can lower the stage limit; implementations without it use the stage default.
 
-Constant arguments remain present when `prepare()` receives a row. Returned values must match the declared output count,
+Constant arguments remain accessible through their input functions when `prepare()` receives a row handle. Returned values must match the declared output count,
 types, and nullability exactly; the executor does not convert them.
 
 `SharedRuntimeValues` is an immutable, cheap-to-copy owning list; default construction is a valid empty list. Its views borrow
@@ -319,7 +369,7 @@ A prepared invocation must retain or copy any bytes it needs. Do not retain borr
 
 ## Tests
 
-Counter-based HTTP tests distinguish separate written calls from repeated references to one bound result. Coverage includes
+Counter-based HTTP tests distinguish separate written calls from repeated references to one named result. Coverage includes
 duplicate SELECT calls, repeated nested calls, WHERE/SELECT separation, discarded results, pure-filter barriers, and alias copies.
 Operator tests cover invocation identities, schema append behavior, multi-output programmatic construction, scalar rejection,
 normalization ordering, and reflection. EXPLAIN tests describe plan shape but do not substitute for call-count tests.

@@ -30,13 +30,13 @@ using LogicalOperatorRegistryReturnType = LogicalOperator;
 struct LogicalOperatorRegistryArguments
 {
     std::vector<LogicalOperator> children;
-    Reflected reflected;
+    Reflected reflected{};
 };
 
 using LogicalOperatorFn = std::function<LogicalOperatorRegistryReturnType(LogicalOperatorRegistryArguments)>;
 
-/// Name-based construction surface for logical operators. Currently has no entries: operators
-/// gain one by implementing a static create member and adding an
+/// Name-based construction surface for logical operators. Operators
+/// gain an entry by implementing a static create member and adding an
 /// add_registry_entry(LogicalOperator <name>) line.
 class LogicalOperatorRegistry : public RuntimeRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorFn, /*CaseSensitive*/ false>
 {

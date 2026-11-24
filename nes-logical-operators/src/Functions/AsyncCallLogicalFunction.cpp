@@ -20,7 +20,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Functions/AsyncArgumentsWithConstants.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Sources/AsyncOperator.hpp>
@@ -55,7 +54,11 @@ AsyncCallLogicalFunction::AsyncCallLogicalFunction(const std::string& asyncOpera
 AsyncCallLogicalFunction::AsyncCallLogicalFunction(AsyncOperator implementation, std::vector<LogicalFunction> arguments)
     : implementation(std::move(implementation)), arguments(std::move(arguments))
 {
-    validateScalar();
+}
+
+AsyncCallLogicalFunction AsyncCallLogicalFunction::fromOperator(AsyncOperator implementation, std::vector<LogicalFunction> arguments)
+{
+    return AsyncCallLogicalFunction{std::move(implementation), std::move(arguments)};
 }
 
 bool AsyncCallLogicalFunction::operator==(const AsyncCallLogicalFunction& rhs) const
@@ -78,7 +81,6 @@ AsyncCallLogicalFunction AsyncCallLogicalFunction::withChildren(const std::vecto
 {
     auto copy = *this;
     copy.arguments = children;
-    copy.validateScalar();
     if (copy.getOutputName() != getOutputName() || copy.getOperatorName() != getOperatorName())
     {
         throw InvalidQuerySyntax("Async scalar rewriting changed its public name");
@@ -95,7 +97,6 @@ LogicalFunction AsyncCallLogicalFunction::withInferredDataType(TypeInferenceCont
     {
         copy.arguments.push_back(context.inferType(argument));
     }
-    copy.implementation = implementation.withInferredArguments(makeAsyncArgumentsWithConstants(copy.arguments));
     copy.validateScalar();
     if (copy.getOutputName() != getOutputName() || copy.getOperatorName() != getOperatorName())
     {
@@ -135,6 +136,7 @@ Unreflector<AsyncCallLogicalFunction>::operator()(const Reflected& reflected, co
 {
     auto value = context.unreflect<detail::ReflectedAsyncCallLogicalFunction>(reflected);
     AsyncCallLogicalFunction result(std::move(value.implementation), std::move(value.arguments));
+    result.validateScalar();
     if (result.getOutputName() != value.outputName || result.getDataType() != value.dataType)
     {
         throw CannotDeserialize("AsyncCall payload does not match the serialized signature");

@@ -20,6 +20,7 @@ CREATE SINK unused(id UINT64 NOT NULL) TYPE File SET('unused.csv' AS "SINK".FILE
 CREATE SINK copies(id UINT64 NOT NULL, left_response VARSIZED NOT NULL, right_response VARSIZED NOT NULL) TYPE File SET('copies.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
 CREATE SINK barrier(id UINT64 NOT NULL) TYPE File SET('barrier.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
 CREATE SINK physical_alias(id UINT64 NOT NULL, original UINT64 NOT NULL, response VARSIZED NOT NULL) TYPE File SET('physical_alias.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
+CREATE SINK field_collision(id UINT64 NOT NULL, response VARSIZED NOT NULL, actual VARSIZED NOT NULL) TYPE File SET('field_collision.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);
 SELECT id, HTTP_CALL(data, 'HTTP_SERVER/occ-duplicate') AS left_response, HTTP_CALL(data, 'HTTP_SERVER/occ-duplicate') AS right_response FROM texts INTO duplicates;
 SELECT id,
  HTTP_CALL(HTTP_CALL(data, 'HTTP_SERVER/occ-inner'), 'HTTP_SERVER/occ-outer') AS left_response,
@@ -34,3 +35,6 @@ SELECT id FROM (SELECT id, HTTP_CALL(data, 'HTTP_SERVER/occ-barrier') AS respons
 -- ID is both read and overwritten upstream, requiring a distinct physical alias before handoff padding.
 SELECT id, original, HTTP_CALL(data, 'HTTP_SERVER/occ-physical-alias') AS response
 FROM (SELECT id + UINT64(10) AS id, id AS original, data FROM texts) INTO physical_alias;
+-- The source's RESPONSE is also an argument. Ordinary projections preserve it beside the native result.
+SELECT *, HTTP_CALL(response, 'HTTP_SERVER/occ-field-collision') AS actual
+FROM (SELECT id, data AS response FROM texts) INTO field_collision;

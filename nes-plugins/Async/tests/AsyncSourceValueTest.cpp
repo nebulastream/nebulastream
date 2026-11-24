@@ -191,6 +191,7 @@ struct AsyncSourceTestOperator
     size_t failures = 0;
     bool retryable = true;
     bool preparationFailure = false;
+    AsyncInputAccessors inputs{};
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
     [[nodiscard]] std::string_view getType() const { return label; }
@@ -203,7 +204,16 @@ struct AsyncSourceTestOperator
 
     [[nodiscard]] AsyncSourceTestOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
 
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, SharedRuntimeValues) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] AsyncSourceTestOperator withInputAccessors(AsyncInputAccessors value) const
+    {
+        auto result = *this;
+        result.inputs = std::move(value);
+        return result;
+    }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle&) const
     {
         auto& operatorState = context.getOperatorState<AsyncSourceTestOperatorState>(stats);
         (void)operatorState;
@@ -263,12 +273,10 @@ namespace
 class AsyncSourceValueTest : public Testing::BaseUnitTest
 {
 public:
-/// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
-    static void SetUpTestSuite()
-    {
-        Logger::setupLogging("AsyncSourceValueTest.log", LogLevel::LOG_DEBUG, false);
-    }
-/// NOLINTEND(misc-include-cleaner)
+    /// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
+    static void SetUpTestSuite() { Logger::setupLogging("AsyncSourceValueTest.log", LogLevel::LOG_DEBUG, false); }
+
+    /// NOLINTEND(misc-include-cleaner)
 
     /// Exercise the actual source's validation path, not just a scalar conversion helper.
     static std::shared_ptr<NES::Test::AsyncSourceTestStats> run(const SharedRuntimeValues& result, const DataType declaredType)

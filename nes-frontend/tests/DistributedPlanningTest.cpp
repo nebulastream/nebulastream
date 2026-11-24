@@ -35,7 +35,9 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/AsyncLogicalOperator.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -591,8 +593,7 @@ workers:
         source,
         "ASYNC_DELAY",
         {FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
-         ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}},
-        {Identifier::parse("unused_result")});
+         ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}});
     const std::vector<ProjectionLogicalOperator::UnboundProjection> fields{
         {Identifier::parse("a"), UnboundFieldAccessLogicalFunction{Identifier::parse("a")}}};
     const LogicalOperator left = ProjectionLogicalOperator::create(shared, fields, ProjectionLogicalOperator::Asterisk{false});
@@ -627,7 +628,17 @@ workers:
 )");
     const auto distributed = optimizer->optimize(boundPlan);
     ASSERT_EQ(distributed.getGlobalPlan().getRootOperators().size(), 1);
-    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(distributed.getGlobalPlan()).size(), 1);
+    const auto countAsync = [](const LogicalPlan& plan)
+    {
+        size_t count = 0;
+        for (const auto& root : plan.getRootOperators())
+        {
+            count += std::ranges::count_if(
+                BFSRange(root), [](const LogicalOperator& op) { return op.tryGetAs<AsynchronousOperator>().has_value(); });
+        }
+        return count;
+    };
+    EXPECT_EQ(countAsync(distributed.getGlobalPlan()), 1);
     const auto channels = extractAsyncChannels(distributed[Host{"sink-node:8080"}]);
     ASSERT_EQ(channels.sources.size(), 1);
     ASSERT_EQ(channels.sinks.size(), 1);
@@ -639,7 +650,7 @@ workers:
     {
         for (const auto& plan : plans)
         {
-            EXPECT_TRUE(getOperatorByType<AsyncLogicalOperator>(plan).empty());
+            EXPECT_EQ(countAsync(plan), 0);
             for (const auto& source : getOperatorByType<SourceDescriptorLogicalOperator>(plan))
             {
                 if (source->getSourceDescriptor().getSourceType() == Identifier::parse("Network"))

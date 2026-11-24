@@ -39,11 +39,11 @@ class AsyncCall;
 class AsyncCallGraph;
 class AsyncCallGraphBuilder;
 
-/// An input bound to one graph's immutable input schema. A name alone cannot be reused in another input scope.
+/// An input field resolved against one graph's immutable input schema. A name alone cannot be reused in another input scope.
 class InputFieldReference
 {
 public:
-    /// Value handles remain bound when passed as rvalues; moving cannot leave an empty reference behind.
+    /// Value handles retain their reference when passed as rvalues; moving cannot leave an empty reference behind.
     InputFieldReference(const InputFieldReference&) = default;
     InputFieldReference& operator=(const InputFieldReference&) = default;
     InputFieldReference(InputFieldReference&& other) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>);
@@ -132,7 +132,7 @@ private:
     std::vector<AsyncOutputMapping> outputs;
 };
 
-/// A single-use builder defines the binding scope. Misuse is a precondition violation (contract checks may be disabled); callers must supply
+/// A single-use builder defines the input schema scope. Misuse is a precondition violation (contract checks may be disabled); callers must supply
 /// handles from this builder's scope and finalize it only once. Foreign field/result handles are rejected, including after a rewrite.
 /// Calls can only depend on already constructed immutable producers, making cycles impossible through this API.
 class AsyncCallGraphBuilder

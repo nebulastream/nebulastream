@@ -113,6 +113,8 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(grep -c '^/occ-barrier$' http_received.log)" -eq 3 ]
   [ "$(sink_rows physical_alias.csv)" = "$(printf '11,1,/occ-physical-alias:Hello\n12,2,/occ-physical-alias:NebulaStream\n13,3,/occ-physical-alias:äöü')" ]
   [ "$(grep -c '^/occ-physical-alias$' http_received.log)" -eq 3 ]
+  [ "$(sink_rows field_collision.csv)" = "$(printf '1,Hello,/occ-field-collision:Hello\n2,NebulaStream,/occ-field-collision:NebulaStream\n3,äöü,/occ-field-collision:äöü')" ]
+  [ "$(grep -c '^/occ-field-collision$' http_received.log)" -eq 3 ]
 }
 
 @test "HTTP_CALL occurrences: IN, BETWEEN and IS NAN preserve shared invocation identity" {

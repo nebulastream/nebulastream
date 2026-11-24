@@ -25,20 +25,19 @@ namespace NES
 {
 
 /// Mandatory occurrence-based normalization after type inference and before semantic completion.
-/// Each scalar async call node becomes its own unary AsyncLogicalOperator, in child/source
-/// order. Ordinary projections materialize synchronous arguments; final projections and
-/// selection restoration hide all internal bindings (including from '*').
+/// Each registered operator call becomes its ordinary unary logical operator, in child/source
+/// order. Projections materialize argument expressions; final projections and
+/// selection restoration hide internal temporary fields (including from '*').
 /// Shared DAG references (e.g. from IN/BETWEEN/IS NAN desugaring, preserved through
 /// TypeInferenceContext) resolve by pointer identity to their produced field within one
 /// evaluation region. Distinct call nodes are never structurally merged; sharing across
-/// regions requires an explicit bound output field.
-/// Conditional/lazy and unsupported operator expression contexts reject async calls.
-/// The historical rule name is retained for configuration compatibility.
-class AsyncFunctionLiftingRule
+/// regions requires an explicit named output field.
+/// Conditional/lazy and unsupported operator expression contexts reject operator calls.
+class OperatorFunctionLiftingRule
 {
 public:
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
-    static constexpr std::string_view NAME = "AsyncFunctionLiftingRule";
+    static constexpr std::string_view NAME = "OperatorFunctionLiftingRule";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
@@ -46,5 +45,5 @@ public:
     [[nodiscard]] std::set<std::type_index> wants() const;
 };
 
-static_assert(RuleConcept<AsyncFunctionLiftingRule, LogicalPlan>);
+static_assert(RuleConcept<OperatorFunctionLiftingRule, LogicalPlan>);
 }

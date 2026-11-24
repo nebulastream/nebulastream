@@ -20,6 +20,8 @@ function(add_nes_source_test)
     target_link_libraries(${TARGET_NAME} nes-sources-test-utils)
 endfunction()
 
+add_nes_unit_test(async-input-accessor-test AsyncInputAccessorTest.cpp)
+target_link_libraries(async-input-accessor-test nes-sources reflectcpp::reflectcpp)
 add_nes_unit_test(shared-runtime-values-test SharedRuntimeValuesTest.cpp)
 target_link_libraries(shared-runtime-values-test nes-sources reflectcpp::reflectcpp)
 target_include_directories(shared-runtime-values-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Util)

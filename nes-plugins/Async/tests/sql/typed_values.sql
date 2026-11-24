@@ -1,4 +1,4 @@
--- Typed delay values, dynamic/computed integer millis, and optional concurrency binding.
+-- Typed delay values, dynamic/computed integer millis, and optional concurrency limit.
 CREATE LOGICAL SOURCE typed(id UINT64 NOT NULL, number INT32 NOT NULL, flag BOOLEAN NOT NULL, millis UINT32 NOT NULL, maybe INT16);
 CREATE PHYSICAL SOURCE FOR typed TYPE File SET('tests/testdata/typed_values.csv' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE");
 CREATE SINK results(id UINT64 NOT NULL, number INT32 NOT NULL, flag BOOLEAN NOT NULL, pass_nullable INT16, wait_ms UINT32 NOT NULL, computed_ms UINT32 NOT NULL, nested_ms UINT32 NOT NULL) TYPE File SET('typed.csv' AS "SINK".FILE_PATH, 'CSV' AS "SINK".OUTPUT_FORMAT);

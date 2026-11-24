@@ -22,17 +22,20 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
-/// This class adapts the table-valued-function semantics of AsyncLogicalOperator as a scalar function.
-/// Instance identity (ptr equality) tracks distinct invocations.
+/// Async-specific configured payload for operator function syntax. The generic operator-call
+/// expression owns this payload; runtime configuration and argument inference remain concrete.
 class AsyncCallLogicalFunction
 {
 public:
     AsyncCallLogicalFunction(const std::string& asyncOperatorName, std::vector<LogicalFunction> args);
+    /// Extract an existing operator configuration without replaying its factory, including direct multi-output operators.
+    [[nodiscard]] static AsyncCallLogicalFunction fromOperator(AsyncOperator implementation, std::vector<LogicalFunction> arguments);
 
     [[nodiscard]] std::string getOperatorName() const { return implementation.getType(); }
 

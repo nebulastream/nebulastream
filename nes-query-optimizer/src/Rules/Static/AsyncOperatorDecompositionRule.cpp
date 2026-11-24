@@ -21,6 +21,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -34,7 +35,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Operators/AsyncLogicalOperator.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -55,6 +56,7 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
 #include <Util/Any.hpp>
+#include <AsyncOperatorLoweringRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 
@@ -62,8 +64,8 @@ namespace NES
 {
 LogicalOperator AsyncOperatorDecompositionRule::splitInvocation(const LogicalOperator& asyncOp, std::vector<LogicalOperator>& roots) const
 {
-    const auto invocation = asyncOp.getAs<AsyncLogicalOperator>();
-    const auto child = invocation->getChild();
+    const auto lowering = lowerAsyncOperator(asyncOp);
+    const auto child = asyncOp.getChildren().at(0);
     const auto node = asyncOp.getTraitSet().get<PlacementTrait>()->onNode;
     if (asyncOp.getTraitSet().get<MemoryLayoutTypeTrait>()->memoryLayout != MemoryLayoutType::ROW_LAYOUT)
     {
@@ -110,7 +112,7 @@ LogicalOperator AsyncOperatorDecompositionRule::splitInvocation(const LogicalOpe
 
     AsyncCallGraphBuilder builder{outputFields};
     std::vector<AsyncCallArgument> arguments;
-    for (const auto& argument : invocation->getArguments())
+    for (const auto& argument : lowering.arguments)
     {
         if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
         {
@@ -130,13 +132,13 @@ LogicalOperator AsyncOperatorDecompositionRule::splitInvocation(const LogicalOpe
             throw InvalidQuerySyntax("Async operator arguments must be normalized to fields or constants before decomposition");
         }
     }
-    const auto& outputs = invocation->getOutputBindings();
-    const auto producer = builder.call(invocation->getAsyncOperator(), std::move(arguments));
-    /// Export every result even if a later projection discards it because the invocation itself might have effects
-    for (size_t index = 0; index < outputs.size(); ++index)
+    const auto producer = builder.call(lowering.implementation, std::move(arguments));
+    /// Export every result even if a later projection discards it because the invocation itself might have effects.
+    size_t index = 0;
+    for (const auto& output : lowering.implementation.getOutputSchema())
     {
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) index is bounded by outputs.size()
-        builder.exportOutput(producer->output(index), outputs[index].binding);
+        builder.exportOutput(producer->output(index), output.getFullyQualifiedName());
+        ++index;
     }
     const auto graph = builder.build();
 
@@ -167,6 +169,51 @@ LogicalOperator AsyncOperatorDecompositionRule::splitInvocation(const LogicalOpe
     return SourceDescriptorLogicalOperator::create(asyncSourceDescriptor.value())->withTraitSet(traits);
 }
 
+void AsyncOperatorDecompositionRule::validateSharedSubplans(const LogicalPlan& plan)
+{
+    auto pending = plan.getRootOperators();
+    std::unordered_set<LogicalOperator> visited;
+    std::unordered_map<LogicalOperator, size_t> consumers;
+    while (!pending.empty())
+    {
+        const auto op = pending.back();
+        pending.pop_back();
+        if (!visited.insert(op).second)
+        {
+            continue;
+        }
+        for (const auto& child : op.getChildren())
+        {
+            ++consumers[child];
+            pending.push_back(child);
+        }
+    }
+    for (const auto& [op, count] : consumers)
+    {
+        if (count > 1)
+        {
+            pending.push_back(op);
+        }
+    }
+    visited.clear();
+    while (!pending.empty())
+    {
+        const auto op = pending.back();
+        pending.pop_back();
+        if (!visited.insert(op).second)
+        {
+            continue;
+        }
+        if (op.tryGetAs<AsynchronousOperator>())
+        {
+            throw UnsupportedQuery(
+                "Shared async subplans with multiple consumers are not supported; reuse named output fields within one branch");
+        }
+        const auto children = op.getChildren();
+        pending.insert(pending.end(), children.begin(), children.end());
+    }
+}
+
 LogicalPlan AsyncOperatorDecompositionRule::apply(LogicalPlan plan) const
 {
     using Visitor = PlanVisitor<bool, bool>;
@@ -175,10 +222,10 @@ LogicalPlan AsyncOperatorDecompositionRule::apply(LogicalPlan plan) const
         [](const LogicalOperator& op, const std::vector<bool>& parentSharing) -> Visitor::DownResult
         {
             const bool shared = parentSharing.size() > 1 || std::ranges::any_of(parentSharing, [](const bool value) { return value; });
-            if (op.tryGetAs<AsyncLogicalOperator>() && shared)
+            if (op.tryGetAs<AsynchronousOperator>() && shared)
             {
                 throw UnsupportedQuery(
-                    "Shared async subplans with multiple consumers are not supported; bind and reuse output fields within one branch");
+                    "Shared async subplans with multiple consumers are not supported; reuse named output fields within one branch");
             }
             std::unordered_map<LogicalOperator, bool> children;
             for (const auto& child : op.getChildren())
@@ -190,7 +237,7 @@ LogicalPlan AsyncOperatorDecompositionRule::apply(LogicalPlan plan) const
         [this, &roots](LogicalOperator op, std::vector<LogicalOperator> children, const bool isRoot) -> Visitor::UpResult
         {
             op = op.withChildren(std::move(children));
-            if (op.tryGetAs<AsyncLogicalOperator>())
+            if (op.tryGetAs<AsynchronousOperator>())
             {
                 op = splitInvocation(op, roots);
             }

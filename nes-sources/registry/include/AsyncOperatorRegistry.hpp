@@ -23,7 +23,7 @@ namespace NES
 {
 struct AsyncOperatorRegistryArguments
 {
-    std::vector<DataType> argumentTypes;
+    AsyncInputAccessors inputs;
 };
 
 using AsyncOperatorRegistryReturnType = AsyncOperator;

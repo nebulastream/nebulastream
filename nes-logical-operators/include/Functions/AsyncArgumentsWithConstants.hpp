@@ -27,8 +27,8 @@ namespace NES
 {
 [[nodiscard]] inline AsyncArgumentsWithConstants makeAsyncArgumentsWithConstants(const std::vector<LogicalFunction>& arguments)
 {
-    AsyncArgumentsWithConstants binding;
-    binding.reserve(arguments.size());
+    AsyncArgumentsWithConstants result;
+    result.reserve(arguments.size());
     for (const auto& argument : arguments)
     {
         const auto type = argument.getDataType();
@@ -43,13 +43,13 @@ namespace NES
             {
                 throw CannotInferSchema("Invalid async constant argument: {}", value.error().what());
             }
-            binding.emplace_back(type, std::move(*value));
+            result.emplace_back(type, std::move(*value));
         }
         else
         {
-            binding.emplace_back(type, std::nullopt);
+            result.emplace_back(type, std::nullopt);
         }
     }
-    return binding;
+    return result;
 }
 }

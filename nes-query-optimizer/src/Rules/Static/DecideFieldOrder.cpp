@@ -18,7 +18,6 @@
 #include <memory>
 #include <ranges>
 #include <set>
-#include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -43,6 +42,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
+#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
@@ -68,6 +68,18 @@ namespace NES
 /// see setSinkFieldOrder.
 namespace
 {
+
+TraitSet withoutFieldOrder(const TraitSet& traits)
+{
+    return TraitSet{
+        traits
+        | std::views::filter(
+            [](const Trait& trait)
+            {
+                const std::type_info& traitType = trait.getTypeInfo();
+                return traitType != typeid(FieldOrderingTrait);
+            })};
+}
 
 struct OperatorContext
 {
@@ -109,7 +121,7 @@ Visitor::UpResult setSinkFieldOrder(
         child = newChild.withChildren({child}).withTraitSet(traitSet);
     }
 
-    auto rootTraitSet = sink->getTraitSet();
+    auto rootTraitSet = withoutFieldOrder(sink->getTraitSet());
     rootTraitSet.insert(FieldOrderingTrait{Schema<UnqualifiedUnboundField, Ordered>{}});
 
     return {op.withChildren({child}).withTraitSet(rootTraitSet), false};
@@ -185,7 +197,7 @@ Visitor::UpResult decideFieldOrder(
     }
     op = op.withChildren(children);
 
-    auto traitSet = op.getTraitSet();
+    auto traitSet = withoutFieldOrder(op.getTraitSet());
 
     if (operatorContext.requiredFieldOrdering.size() > 0)
     {
@@ -200,6 +212,14 @@ Visitor::UpResult decideFieldOrder(
     return {op.withTraitSet(std::move(traitSet)), operatorContext.hasMultipleParents};
 }
 
+}
+
+LogicalOperator DecideFieldOrder::withInferredFieldOrder(LogicalOperator op)
+{
+    const auto order = calculateOutputOrder(op, op.getChildren());
+    auto traits = withoutFieldOrder(op.getTraitSet());
+    traits.insert(FieldOrderingTrait{unbind(order)});
+    return op.withTraitSet(std::move(traits));
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

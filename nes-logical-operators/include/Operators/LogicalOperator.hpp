@@ -524,18 +524,16 @@ private:
 
     [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
     {
-        if constexpr (std::is_base_of_v<DynamicBase, OperatorType>)
+        if constexpr (requires() { static_cast<const DynamicBase*>(&impl); })
         {
-            if constexpr (requires() { static_cast<const DynamicBase*>(&impl); })
-            {
-                return static_cast<const DynamicBase*>(&impl);
-            }
-            else if constexpr (requires() {
-                                   { impl.getDynamicBase() } -> std::same_as<const DynamicBase*>;
-                               })
-            {
-                return impl.getDynamicBase();
-            }
+            return static_cast<const DynamicBase*>(&impl);
+        }
+        else if constexpr (requires() {
+                               { impl.getDynamicBase() } -> std::same_as<const DynamicBase*>;
+                           })
+        {
+            /// An explicit view is needed only when multiple Castable bases make conversion ambiguous.
+            return impl.getDynamicBase();
         }
         else
         {

@@ -12,6 +12,7 @@
 
 add_source_files(nes-logical-operators
         AsyncLogicalOperator.cpp
+        AsyncOperatorLoweringRegistry.cpp
         LogicalOperatorRegistry.cpp
         LogicalOperator.cpp
         SelectionLogicalOperator.cpp
@@ -29,6 +30,7 @@ add_subdirectory(Windows)
 
 
 add_unreflection_entry(LogicalOperator Async)
+add_registry_entry(AsyncOperatorLowering Async KEY Async HEADER "Operators/AsyncLogicalOperator.hpp")
 add_unreflection_entry(LogicalOperator Selection)
 add_unreflection_entry(LogicalOperator Projection)
 add_unreflection_entry(LogicalOperator Union)

@@ -30,7 +30,7 @@ TEST(AsyncOperatorRegistryTest, FactoryReceivesNativeArgumentTypesExactlyOnce)
         [](AsyncOperatorRegistryArguments arguments)
         {
             ++calls;
-            return AsyncTestOperatorConfig{.label = "NATIVE_TEST_FACTORY", .resultTypes = arguments.argumentTypes, .marker = 73};
+            return AsyncTestOperatorConfig{.label = "NATIVE_TEST_FACTORY", .resultTypes = arguments.inputs.getTypes(), .marker = 73};
         });
     ASSERT_TRUE(registered);
     const DataType type{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE};
@@ -46,4 +46,5 @@ TEST(AsyncOperatorRegistryTest, UnknownFactoryNameIsRejected)
     EXPECT_THROW(static_cast<void>(createAsyncOperator("NO_SUCH_NATIVE_OPERATOR", {})), Exception);
 }
 }
+
 /// NOLINTEND(readability-magic-numbers)

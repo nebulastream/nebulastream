@@ -45,6 +45,8 @@ public:
     {
     }
 
+    /// Reject unsupported fan-out before placement can change or clone the topology.
+    static void validateSharedSubplans(const LogicalPlan& plan);
     [[nodiscard]] LogicalPlan apply(LogicalPlan plan) const;
 
 private:

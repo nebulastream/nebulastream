@@ -16,12 +16,11 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <ranges>
+#include <stack>
 #include <string>
 #include <utility>
 #include <variant>
@@ -39,7 +38,6 @@
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
-#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/IsNaNLogicalFunction.hpp>
@@ -51,10 +49,10 @@
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
-#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/OperatorCallLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -1026,9 +1024,9 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     }
     else if (
         context->name == nullptr and helper.functionBuilder.size() == 1 and not helper.hasUnnamedAggregation
-        and helper.functionBuilder.back().tryGetAs<AsyncCallLogicalFunction>())
+        and helper.functionBuilder.back().tryGetAs<OperatorCallLogicalFunction>())
     {
-        const auto outputName = helper.functionBuilder.back().getAs<AsyncCallLogicalFunction>()->getOutputName();
+        const auto outputName = helper.functionBuilder.back().getAs<OperatorCallLogicalFunction>()->getOutputName();
         helper.addProjection(outputName, std::move(helper.functionBuilder.back()));
         helper.functionBuilder.pop_back();
     }

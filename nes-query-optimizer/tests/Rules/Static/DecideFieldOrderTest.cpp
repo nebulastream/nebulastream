@@ -81,6 +81,47 @@ TEST_F(DecideFieldOrderTest, SingleSink)
     }
 }
 
+TEST_F(DecideFieldOrderTest, RepeatedPassReplacesItsOwnOrderingTraits)
+{
+    const auto source = utils.createSource("repeated", {"a", "b"});
+    const auto plan = utils.createPlan(utils.createSink(source, "repeated", {"b", "a"}));
+    const auto first = DecideFieldOrder{}.apply(plan);
+    const auto second = DecideFieldOrder{}.apply(first);
+    for (const auto& op : BFSRange(second.getRootOperators().at(0)))
+    {
+        if (!op.tryGetAs<SinkLogicalOperator>())
+        {
+            assertOrderedFieldsIncludeAllOutputFields(op);
+        }
+    }
+    const auto child = second.getRootOperators().at(0).getAs<SinkLogicalOperator>()->getChild();
+    const auto order = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
+    EXPECT_EQ(static_cast<const Identifier&>(order.begin()->getFullyQualifiedName()), Identifier::parse("b"));
+}
+
+TEST_F(DecideFieldOrderTest, RecomputesOrderingAfterAProjectionChangesTheSchema)
+{
+    const auto source = utils.createSource("rewritten", {"a", "b"});
+    const auto original = utils.createPlan(utils.createSink(source, "rewritten", {"a", "b"}));
+    const auto ordered = DecideFieldOrder{}.apply(original);
+    const auto child = ordered.getRootOperators().at(0).getAs<SinkLogicalOperator>()->getChild();
+    const auto projection
+        = ProjectionLogicalOperator::create(
+              child,
+              {{Identifier::parse("b"), FieldAccessLogicalFunction{child.getOutputSchema()[Identifier::parse("b")].value()}}},
+              ProjectionLogicalOperator::Asterisk{false})
+              .withTraitSet(child.getTraitSet());
+    const auto changed = utils.createPlan(utils.createSink(projection, "rewritten", {"b"}));
+    const auto refreshed = DecideFieldOrder{}.apply(changed);
+    for (const auto& op : BFSRange(refreshed.getRootOperators().at(0)))
+    {
+        if (!op.tryGetAs<SinkLogicalOperator>())
+        {
+            assertOrderedFieldsIncludeAllOutputFields(op);
+        }
+    }
+}
+
 TEST_F(DecideFieldOrderTest, MultiSink)
 {
     /// BEFORE (Sink1, Sink2) < Select < Source

@@ -17,6 +17,7 @@
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/AsyncOperatorDecompositionRule.hpp>
 #include <DistributedLogicalPlan.hpp>
 
 namespace NES
@@ -24,7 +25,9 @@ namespace NES
 
 DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
 {
+    AsyncOperatorDecompositionRule::validateSharedSubplans(plan);
     auto ruleOptimizedPlan = ruleBasedOptimization.optimize(std::move(plan));
+    AsyncOperatorDecompositionRule::validateSharedSubplans(ruleOptimizedPlan);
     auto placedPlan = operatorPlacement.place(std::move(ruleOptimizedPlan));
     auto decomposedPlan = asyncOperatorDecomposition.apply(placedPlan);
     return queryDecomposer.decompose(decomposedPlan, placedPlan, networkConfiguration);

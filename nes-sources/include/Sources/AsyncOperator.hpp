@@ -28,6 +28,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/Reflection.hpp>
@@ -53,14 +54,15 @@ struct IsTypedAsyncOperator : std::false_type
 template <typename T>
 concept AsyncOperatorConcept = requires(
     const T& op,
-    const AsyncArgumentsWithConstants& binding,
     AsyncExecutionContext& context,
-    SharedRuntimeValues values,
+    const AsyncRowHandle& row,
+    AsyncInputAccessors inputs,
     const ReflectionContext& reflection) {
     { op.getType() } -> std::convertible_to<std::string_view>;
     { op.getOutputSchema() } -> std::same_as<Schema<UnqualifiedUnboundField, Ordered>>;
-    { op.withInferredArguments(binding) } -> std::same_as<T>;
-    { op.prepare(context, values) } -> std::same_as<AsyncResult<std::unique_ptr<PreparedAsyncCall>>>;
+    { op.getInputAccessors() } -> std::same_as<const AsyncInputAccessors&>;
+    { op.withInputAccessors(std::move(inputs)) } -> std::same_as<T>;
+    { op.prepare(context, row) } -> std::same_as<AsyncResult<std::unique_ptr<PreparedAsyncCall>>>;
     { reflection.reflect(op) } -> std::same_as<Reflected>;
 };
 template <typename Checked = detail::ErasedAsyncOperator>
@@ -79,8 +81,9 @@ struct ErasedAsyncOperator
     virtual ~ErasedAsyncOperator() = default;
     [[nodiscard]] virtual std::string getType() const = 0;
     [[nodiscard]] virtual Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const = 0;
-    [[nodiscard]] virtual AsyncOperator withInferredArguments(const AsyncArgumentsWithConstants&) const = 0;
-    [[nodiscard]] virtual AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, SharedRuntimeValues) const = 0;
+    [[nodiscard]] virtual const AsyncInputAccessors& getInputAccessors() const = 0;
+    [[nodiscard]] virtual AsyncOperator withInputAccessors(AsyncInputAccessors) const = 0;
+    [[nodiscard]] virtual AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const = 0;
     [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const = 0;
     [[nodiscard]] virtual Reflected reflect(const ReflectionContext&) const = 0;
 };
@@ -155,9 +158,11 @@ struct TypedAsyncOperator
 
     [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return getErased().getOutputSchema(); }
 
-    [[nodiscard]] TypedAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return getErased().getInputAccessors(); }
+
+    [[nodiscard]] TypedAsyncOperator withInputAccessors(AsyncInputAccessors inputs) const
     {
-        auto result = getErased().withInferredArguments(binding);
+        auto result = getErased().withInputAccessors(std::move(inputs));
         if constexpr (std::same_as<Checked, detail::ErasedAsyncOperator>)
         {
             return result;
@@ -168,9 +173,22 @@ struct TypedAsyncOperator
         }
     }
 
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
+    {
+        return getErased().prepare(context, row);
+    }
+
+    /// Standalone invocation convenience: create a row handle for ready values without constructing a physical tuple buffer.
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, SharedRuntimeValues values) const
     {
-        return getErased().prepare(context, std::move(values));
+        std::vector<DataType> types;
+        types.reserve(values.size());
+        for (size_t index = 0; index < values.size(); ++index)
+        {
+            types.push_back(values[index].getDataType());
+        }
+        const auto configured = withInputAccessors(AsyncInputAccessors{std::move(types)});
+        return configured.prepare(context, configured.getInputAccessors().createRowHandle(std::move(values)));
     }
 
     [[nodiscard]] std::optional<size_t> maxConcurrency() const { return getErased().maxConcurrency(); }
@@ -205,15 +223,17 @@ struct AsyncOperatorModel final : ErasedAsyncOperator
 
     [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const override { return impl.getOutputSchema(); }
 
-    [[nodiscard]] AsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const override
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const override { return impl.getInputAccessors(); }
+
+    [[nodiscard]] AsyncOperator withInputAccessors(AsyncInputAccessors inputs) const override
     {
-        return impl.withInferredArguments(binding);
+        return impl.withInputAccessors(std::move(inputs));
     }
 
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>>
-    prepare(AsyncExecutionContext& context, SharedRuntimeValues values) const override
+    prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const override
     {
-        return impl.prepare(context, std::move(values));
+        return impl.prepare(context, row);
     }
 
     [[nodiscard]] std::optional<size_t> maxConcurrency() const override

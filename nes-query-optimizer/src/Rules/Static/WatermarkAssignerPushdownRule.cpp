@@ -25,7 +25,7 @@
 
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/AsyncLogicalOperator.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -269,7 +269,7 @@ Visitor::DownResult watermarkAssignerPushdown(const LogicalOperator& op, const s
         downResult = pushBeyondIngestionTimeWatermarkAssigner(ingestionTimeWatermarkAssigner.value(), std::move(context));
     }
     /// NOLINTBEGIN(bugprone-branch-clone) retain the explicit conservative async-operator case
-    else if (op.tryGetAs<AsyncLogicalOperator>())
+    else if (op.tryGetAs<AsynchronousOperator>())
     {
         /// For now we treat AsyncOperators explicitly as a blackbox, where we don't know if its safe to push down,
         /// Even though it might be possible for some simpler ones

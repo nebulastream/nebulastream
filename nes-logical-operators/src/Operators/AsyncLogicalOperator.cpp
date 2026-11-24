@@ -16,15 +16,14 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Functions/AsyncArgumentsWithConstants.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -39,81 +38,65 @@
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
+#include <AsyncOperatorLoweringRegistry.hpp>
 #include <AsyncOperatorRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 AsyncLogicalOperator::AsyncLogicalOperator(
-    WeakLogicalOperator self,
-    LogicalOperator child,
-    AsyncOperator implementation,
-    std::vector<LogicalFunction> arguments,
-    std::vector<Identifier> outputBindings)
+    WeakLogicalOperator self, LogicalOperator child, AsyncOperator implementation, std::vector<LogicalFunction> arguments)
     : ManagedByOperator(std::move(self))
     , child(std::move(child))
     , concreteAsyncImpl(std::move(implementation))
     , arguments(std::move(arguments))
 {
-    inferLocalSchema(std::move(outputBindings));
-}
-
-TypedLogicalOperator<AsyncLogicalOperator> AsyncLogicalOperator::create(
-    LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args, std::vector<Identifier> outputBindings)
-{
-    std::vector<DataType> types;
-    types.reserve(args.size());
-    for (const auto& argument : args)
-    {
-        types.push_back(argument.getDataType());
-    }
-    auto implementation = createAsyncOperator(operatorName, std::move(types));
-    return create(std::move(child), std::move(implementation), std::move(args), std::move(outputBindings));
+    inferLocalSchema();
 }
 
 TypedLogicalOperator<AsyncLogicalOperator>
 AsyncLogicalOperator::create(LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args)
 {
-    return create(std::move(child), operatorName, std::move(args), {});
-}
-
-TypedLogicalOperator<AsyncLogicalOperator> AsyncLogicalOperator::create(
-    LogicalOperator child, AsyncOperator implementation, std::vector<LogicalFunction> arguments, std::vector<Identifier> outputBindings)
-{
-    return TypedLogicalOperator<AsyncLogicalOperator>{
-        std::move(child), std::move(implementation), std::move(arguments), std::move(outputBindings)};
+    TypeInferenceContext context{child.getOutputSchema()};
+    std::vector<DataType> types;
+    types.reserve(args.size());
+    for (auto& argument : args)
+    {
+        argument = context.inferType(argument);
+        types.push_back(argument.getDataType());
+    }
+    auto implementation = createAsyncOperator(operatorName, std::move(types));
+    return create(std::move(child), std::move(implementation), std::move(args));
 }
 
 TypedLogicalOperator<AsyncLogicalOperator>
 AsyncLogicalOperator::create(LogicalOperator child, AsyncOperator implementation, std::vector<LogicalFunction> arguments)
 {
-    return create(std::move(child), std::move(implementation), std::move(arguments), {});
+    return TypedLogicalOperator<AsyncLogicalOperator>{std::move(child), std::move(implementation), std::move(arguments)};
+}
+
+AsyncOperatorLowering AsyncLogicalOperator::lowerToAsync(LogicalOperator op)
+{
+    const auto invocation = op.getAs<AsyncLogicalOperator>();
+    return {.implementation = invocation->getAsyncOperator(), .arguments = invocation->getArguments()};
 }
 
 bool AsyncLogicalOperator::operator==(const AsyncLogicalOperator& rhs) const
 {
     return getOperatorName() == rhs.getOperatorName() && concreteAsyncImpl.getOutputSchema() == rhs.concreteAsyncImpl.getOutputSchema()
         && concreteAsyncImpl.maxConcurrency() == rhs.concreteAsyncImpl.maxConcurrency()
-        && std::ranges::equal(arguments, rhs.arguments, StructuralFunctionEqual{}) && outputs == rhs.outputs
-        && outputSchema == rhs.outputSchema && traitSet == rhs.traitSet;
+        && std::ranges::equal(arguments, rhs.arguments, StructuralFunctionEqual{}) && outputSchema == rhs.outputSchema
+        && traitSet == rhs.traitSet;
 }
 
-void AsyncLogicalOperator::inferLocalSchema(std::vector<Identifier> bindings)
+void AsyncLogicalOperator::inferLocalSchema()
 {
-    if (bindings.empty() && !outputs.empty())
-    {
-        for (const auto& output : outputs)
-        {
-            bindings.push_back(output.binding);
-        }
-    }
     const auto input = child.getOutputSchema();
     TypeInferenceContext context{input};
     for (auto& argument : arguments)
     {
         argument = context.inferType(argument);
     }
-    concreteAsyncImpl = concreteAsyncImpl.withInferredArguments(makeAsyncArgumentsWithConstants(arguments));
     const auto asyncOutputSchema = concreteAsyncImpl.getOutputSchema() | std::ranges::to<std::vector>();
     if (asyncOutputSchema.empty())
     {
@@ -123,32 +106,13 @@ void AsyncLogicalOperator::inferLocalSchema(std::vector<Identifier> bindings)
     {
         throw CannotInferSchema("Async operator '{}' has unresolved output types after inference", getOperatorName());
     }
-    if (bindings.empty())
-    {
-        for (const auto& output : asyncOutputSchema)
-        {
-            bindings.push_back(*output.getFullyQualifiedName().begin());
-        }
-    }
-    if (bindings.size() != asyncOutputSchema.size())
-    {
-        throw InvalidQuerySyntax(
-            "Async operator '{}' requires {} output bindings, got {}", getOperatorName(), asyncOutputSchema.size(), bindings.size());
-    }
-    outputs.clear();
     auto fields = input | RangeUnbinder{} | std::ranges::to<std::vector>();
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) binding and signature sizes match above
-    for (size_t i = 0; i < asyncOutputSchema.size(); ++i)
-    {
-        outputs.push_back(BoundAsyncOutput{.field = asyncOutputSchema[i], .binding = bindings[i]});
-        fields.emplace_back(bindings[i], asyncOutputSchema[i].getDataType());
-    }
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    fields.insert(fields.end(), asyncOutputSchema.begin(), asyncOutputSchema.end());
     auto schema = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(fields);
     if (!schema)
     {
         throw CannotInferSchema(
-            "Async output bindings collide with child fields or each other: {}",
+            "Async result fields collide with child fields or each other; use a projection to rename fields: {}",
             Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(schema.error()));
     }
     outputSchema = std::move(schema).value();
@@ -198,15 +162,16 @@ Schema<Field, Unordered> AsyncLogicalOperator::getOutputSchema() const
 Schema<Field, Ordered> AsyncLogicalOperator::getOrderedOutputSchema(ChildOutputOrderProvider orderProvider) const
 {
     auto fields = orderProvider(child) | RangeUnbinder{} | std::ranges::to<std::vector>();
-    for (const auto& output : outputs)
+    for (const auto& output : concreteAsyncImpl.getOutputSchema())
     {
-        fields.emplace_back(output.binding, output.field.getDataType());
+        fields.push_back(output);
     }
     auto schema = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(fields));
     if (!schema)
     {
         throw CannotInferSchema(
-            "Async output bindings collide: {}", Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(schema.error()));
+            "Async result fields collide; use a projection to rename fields: {}",
+            Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(schema.error()));
     }
     return bindToOperator(self.lock(), std::move(schema).value());
 }
@@ -225,16 +190,32 @@ std::string AsyncLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId
         result += arguments[i].explain(verbosity);
     }
     result += "], outputs: [";
-    for (size_t i = 0; i < outputs.size(); ++i)
+    bool firstOutput = true;
+    for (const auto& output : concreteAsyncImpl.getOutputSchema())
     {
-        if (i != 0U)
+        if (!firstOutput)
         {
             result += ", ";
         }
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) i is bounded by outputs.size()
-        result += fmt::format("{} as {}", outputs[i].field.getFullyQualifiedName(), outputs[i].binding);
+        firstOutput = false;
+        result += fmt::format("{}", output.getFullyQualifiedName());
     }
     return result + "])";
+}
+
+AsyncLogicalOperator
+detail::restoreAsyncLogicalOperator(const detail::ReflectedAsyncLogicalOperator& value, std::vector<LogicalOperator> children)
+{
+    if (children.size() != 1)
+    {
+        throw CannotDeserialize("Async requires exactly one child");
+    }
+    auto result = AsyncLogicalOperator::create(std::move(children.front()), value.implementation, value.arguments);
+    if (result->getAsyncOperator().getOutputSchema() != value.implementation.getOutputSchema())
+    {
+        throw CannotDeserialize("Async payload does not match the serialized output signature");
+    }
+    return result.get();
 }
 
 Reflected Reflector<TypedLogicalOperator<AsyncLogicalOperator>>::operator()(
@@ -242,10 +223,7 @@ Reflected Reflector<TypedLogicalOperator<AsyncLogicalOperator>>::operator()(
 {
     return context.reflect(
         detail::ReflectedAsyncLogicalOperator{
-            .operatorId = op.getId(),
-            .implementation = op->getAsyncOperator(),
-            .arguments = op->getArguments(),
-            .outputs = op->getOutputBindings()});
+            .operatorId = op.getId(), .implementation = op->getAsyncOperator(), .arguments = op->getArguments()});
 }
 
 Unreflector<TypedLogicalOperator<AsyncLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
@@ -257,23 +235,8 @@ Unreflector<TypedLogicalOperator<AsyncLogicalOperator>>::operator()(const Reflec
 {
     auto value = context.unreflect<detail::ReflectedAsyncLogicalOperator>(reflected);
     auto children = plan->getChildrenFor(value.operatorId, context);
-    if (children.size() != 1)
-    {
-        throw CannotDeserialize("Async requires exactly one child");
-    }
-    std::vector<Identifier> bindings;
-    bindings.reserve(value.outputs.size());
-    for (const auto& output : value.outputs)
-    {
-        bindings.push_back(output.binding);
-    }
-    auto result = AsyncLogicalOperator::create(
-        std::move(children.front()), std::move(value.implementation), std::move(value.arguments), std::move(bindings));
-    if (result->getOutputBindings() != value.outputs)
-    {
-        throw CannotDeserialize("Async payload does not match the serialized output signature");
-    }
-    return result;
+    const auto result = detail::restoreAsyncLogicalOperator(value, std::move(children));
+    return TypedLogicalOperator<AsyncLogicalOperator>{result};
 }
 }
 
@@ -284,9 +247,9 @@ size_t std::hash<NES::AsyncLogicalOperator>::operator()(const NES::AsyncLogicalO
     {
         seed = folly::hash::hash_combine(seed, NES::StructuralFunctionHash{}(arg));
     }
-    for (const auto& output : op.getOutputBindings())
+    for (const auto& output : op.getAsyncOperator().getOutputSchema())
     {
-        seed = folly::hash::hash_combine(seed, output.binding, output.field);
+        seed = folly::hash::hash_combine(seed, output);
     }
     return seed;
 }

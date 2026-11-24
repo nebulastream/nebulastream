@@ -48,10 +48,20 @@ create_runtime_registry(AggregationLogicalFunction nes-logical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationLogicalFunction::create"
         HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationLogicalFunction.hpp")
 
-# Name-based construction surface for logical operators; no entries yet (operators gain one by
-# implementing a static create member and registering it).
+# Name-based construction surface for logical operators. Plugin logical operators register
+# factories here alongside their corresponding runtime async-operator implementations.
 create_runtime_registry(LogicalOperator nes-logical-operators
-        ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalOperator::create"
+        ENTRY_TEMPLATE "static_cast<LogicalOperator (*)(LogicalOperatorRegistryArguments)>(&\${PLUGIN_NAME}LogicalOperator::create)"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalOperator.hpp")
+
+# Scalar syntax is an independent opt-in for unary row-preserving operators that append one result.
+create_runtime_registry(OperatorFunction nes-logical-operators
+        ENTRY_TEMPLATE "\${PLUGIN_NAME}LogicalOperator::functionSyntax()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalOperator.hpp")
+
+# Concrete lowering steps for ordinary operators marked as asynchronous.
+create_runtime_registry(AsyncOperatorLowering nes-logical-operators
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalOperator::lowerToAsync"
         HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalOperator.hpp")
 
 # Name + Key based registry for logical functions, one logical function might want to register itself for multiple keys

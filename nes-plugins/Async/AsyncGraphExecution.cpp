@@ -13,34 +13,34 @@
 */
 #include <AsyncGraphExecution.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <expected>
-#include <variant>
-#include <algorithm>
 #include <exception>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <DataTypes/RuntimeValue.hpp>
-#include <SharedAsyncResult.hpp>
 #include <Sources/AsyncCallGraph.hpp>
+#include <Sources/AsyncError.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/cancellation_type.hpp>
-#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; diagnostics misattribute error_code.
 #include <Util/Logger/Logger.hpp>
 #include <boost/asio/as_tuple.hpp>
+#include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/co_spawn.hpp> /// NOLINT(misc-include-cleaner) Public Asio provider; diagnostics misattribute co_spawn overloads.
 #include <boost/asio/redirect_error.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; diagnostics misattribute error_code.
 #include <ErrorHandling.hpp>
-#include <Sources/AsyncError.hpp>
+#include <SharedAsyncResult.hpp>
 
 namespace NES
 {
@@ -221,34 +221,30 @@ AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, Async
         co_return std::unexpected(AsyncError::cancelled());
     }
 
-    std::vector<RuntimeValue> arguments;
-    for (const auto& argument : node->getArguments())
-    {
-        if (const auto* constant = std::get_if<RuntimeValue>(&argument))
+    auto row = node->getAsyncOperator().getInputAccessors().createRowHandle(
+        [self, node, dependencyResults = std::move(*dependencyResults), producerIndices = std::move(producerIndices)](const size_t index)
         {
-            arguments.push_back(*constant);
-        }
-        else if (const auto* field = std::get_if<InputFieldReference>(&argument))
-        {
-            auto value = self->readInput(*field);
-            INVARIANT(
-                value.getDataType() == field->getDataType(),
-                "async input {} has type {}, expected {}",
-                field->getField(),
-                value.getDataType(),
-                field->getDataType());
-            arguments.push_back(std::move(value));
-        }
-        else
-        {
+            const auto& argument = node->getArguments().at(index);
+            if (const auto* constant = std::get_if<RuntimeValue>(&argument))
+            {
+                return *constant;
+            }
+            if (const auto* field = std::get_if<InputFieldReference>(&argument))
+            {
+                auto value = self->readInput(*field);
+                INVARIANT(
+                    value.getDataType() == field->getDataType(),
+                    "async input {} has type {}, expected {}",
+                    field->getField(),
+                    value.getDataType(),
+                    field->getDataType());
+                return value;
+            }
             const auto& reference = std::get<AsyncResultReference>(argument);
-            /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) dependency map and output handles are validated
-            const auto& producerValues = (*dependencyResults)[producerIndices.at(reference.getProducer())];
-            arguments.push_back(producerValues[reference.getOutputIndex()].toOwned());
-            /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-        }
-    }
-    auto result = co_await self->invoke(node, SharedRuntimeValues{std::move(arguments)});
+            const auto& producerValues = dependencyResults.at(producerIndices.at(reference.getProducer()));
+            return producerValues[reference.getOutputIndex()].toOwned();
+        });
+    auto result = co_await self->invoke(node, std::move(row));
     if (!result)
     {
         co_return std::unexpected(std::move(result.error()));

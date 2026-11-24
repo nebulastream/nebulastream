@@ -41,6 +41,7 @@ struct AsyncTestOperatorConfig
     std::string label;
     std::vector<DataType> resultTypes;
     int marker = 0;
+    AsyncInputAccessors inputs{};
 
     [[nodiscard]] std::string_view getType() const { return label; }
 
@@ -58,8 +59,17 @@ struct AsyncTestOperatorConfig
 
     [[nodiscard]] AsyncTestOperatorConfig withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
 
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] AsyncTestOperatorConfig withInputAccessors(AsyncInputAccessors value) const
+    {
+        auto result = *this;
+        result.inputs = std::move(value);
+        return result;
+    }
+
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) Implements the async operator interface.
-    AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, SharedRuntimeValues) const
+    AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
     {
         return std::unexpected(AsyncError{.exception = IOError("Unsupported test operator")});
     }

@@ -20,11 +20,13 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Reorderer.hpp>
@@ -38,36 +40,28 @@
 
 namespace NES
 {
-struct BoundAsyncOutput
-{
-    UnqualifiedUnboundField field;
-    Identifier binding;
-    [[nodiscard]] bool operator==(const BoundAsyncOutput&) const = default;
-};
+struct AsyncOperatorLowering;
 
 /// Actual unary async invocation. Instance identity is pointer equality via TypedLogicalOperator.
 /// NOLINTNEXTLINE(misc-multiple-inheritance) logical operators combine ordering and managed-identity mixins
-class AsyncLogicalOperator : public Reorderer, public ManagedByOperator
+class AsyncLogicalOperator final : public Reorderer, public ManagedByOperator, public AsynchronousOperator
 {
 public:
     AsyncLogicalOperator(
-        WeakLogicalOperator self,
-        LogicalOperator child,
-        AsyncOperator implementation,
-        std::vector<LogicalFunction> arguments,
-        std::vector<Identifier> outputBindings);
-    [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator> create(
-        LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args, std::vector<Identifier> outputBindings);
+        WeakLogicalOperator self, LogicalOperator child, AsyncOperator implementation, std::vector<LogicalFunction> arguments);
     [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator>
     create(LogicalOperator child, const std::string& operatorName, std::vector<LogicalFunction> args);
 
-    [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator> create(
-        LogicalOperator child,
-        AsyncOperator implementation,
-        std::vector<LogicalFunction> arguments,
-        std::vector<Identifier> outputBindings);
     [[nodiscard]] static TypedLogicalOperator<AsyncLogicalOperator>
     create(LogicalOperator child, AsyncOperator implementation, std::vector<LogicalFunction> arguments);
+
+    [[nodiscard]] static AsyncOperatorLowering lowerToAsync(LogicalOperator op);
+
+    /// Disambiguate the DynamicBase view used by the type-erased logical operator model.
+    [[nodiscard]] const DynamicBase* getDynamicBase() const
+    {
+        return static_cast<const DynamicBase*>(static_cast<const Castable<AsynchronousOperator>*>(this));
+    }
 
     [[nodiscard]] const AsyncOperator& getAsyncOperator() const { return concreteAsyncImpl; }
 
@@ -76,8 +70,6 @@ public:
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return {child}; }
 
     [[nodiscard]] const std::vector<LogicalFunction>& getArguments() const { return arguments; }
-
-    [[nodiscard]] const std::vector<BoundAsyncOutput>& getOutputBindings() const { return outputs; }
 
     // TODO remove just call getAsyncOperator getType
     [[nodiscard]] std::string getOperatorName() const { return concreteAsyncImpl.getType(); }
@@ -88,6 +80,7 @@ public:
     [[nodiscard]] bool operator==(const AsyncLogicalOperator& rhs) const;
 
     [[nodiscard]] AsyncLogicalOperator withArguments(std::vector<LogicalFunction> args) const;
+
     [[nodiscard]] AsyncLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] AsyncLogicalOperator withChildrenUnsafe(std::vector<LogicalOperator> children) const;
     [[nodiscard]] AsyncLogicalOperator withInferredSchema() const;
@@ -100,14 +93,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
 
 private:
-    void inferLocalSchema(std::vector<Identifier> bindings);
-
-    void inferLocalSchema() { inferLocalSchema({}); }
+    void inferLocalSchema();
 
     LogicalOperator child;
     AsyncOperator concreteAsyncImpl;
     std::vector<LogicalFunction> arguments;
-    std::vector<BoundAsyncOutput> outputs;
     TraitSet traitSet;
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 };
@@ -119,8 +109,10 @@ struct ReflectedAsyncLogicalOperator
     OperatorId operatorId;
     AsyncOperator implementation;
     std::vector<LogicalFunction> arguments;
-    std::vector<BoundAsyncOutput> outputs;
 };
+
+[[nodiscard]] AsyncLogicalOperator
+restoreAsyncLogicalOperator(const ReflectedAsyncLogicalOperator& value, std::vector<LogicalOperator> children);
 }
 
 template <>

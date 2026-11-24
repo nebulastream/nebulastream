@@ -30,7 +30,10 @@ public:
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "DecideFieldOrder";
 
+    /// Recompute ordering, replacing this rule's previous traits while preserving other traits.
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    /// Assign order to a newly constructed operator using its children's existing order traits.
+    [[nodiscard]] static LogicalOperator withInferredFieldOrder(LogicalOperator op);
     [[nodiscard]] std::set<std::type_index> needs() const;
     [[nodiscard]] std::set<std::type_index> wantedBy() const;
 };

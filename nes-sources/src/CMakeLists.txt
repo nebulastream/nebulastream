@@ -23,6 +23,7 @@ add_source_files(nes-sources
         AsyncOperatorRegistry.cpp
         SharedRuntimeValues.cpp
         AsyncCallGraph.cpp
+        AsyncInputAccessor.cpp
         AsyncHandoffLayout.cpp
         LogicalSource.cpp
         SourceCatalog.cpp

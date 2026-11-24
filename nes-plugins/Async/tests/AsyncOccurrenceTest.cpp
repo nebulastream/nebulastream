@@ -21,6 +21,7 @@
 #include <optional>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <Configurations/Util.hpp>
@@ -37,18 +38,22 @@
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/OperatorCallLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Rules/Static/AsyncFunctionLiftingRule.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/OperatorFunctionLiftingRule.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -56,6 +61,7 @@
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncOperatorReflection.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
@@ -76,6 +82,7 @@
 #include <AsyncOperatorUnreflectionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <OperatorFunctionRegistry.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -115,7 +122,7 @@ struct CustomReflectedAsyncOperator
 
     static CustomReflectedAsyncOperator create(AsyncOperatorRegistryArguments args)
     {
-        if (args.argumentTypes.size() != 1)
+        if (args.inputs.size() != 1)
         {
             throw InvalidQuerySyntax("Custom test operator takes exactly one argument");
         }
@@ -123,16 +130,25 @@ struct CustomReflectedAsyncOperator
         return CustomReflectedAsyncOperator{73};
     }
 
-    [[nodiscard]] CustomReflectedAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+    [[nodiscard]] CustomReflectedAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& arguments) const
     {
-        if (binding.size() != 1)
+        if (arguments.size() != 1)
         {
             throw InvalidQuerySyntax("Custom test operator takes exactly one argument");
         }
         return *this;
     }
 
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, SharedRuntimeValues) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] CustomReflectedAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
+    {
+        auto copy = *this;
+        copy.inputs = std::move(accessors);
+        return copy;
+    }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
     {
         return std::unique_ptr<PreparedAsyncCall>{std::make_unique<MarkerPreparedCall>(static_cast<uint64_t>(value))};
     }
@@ -143,6 +159,7 @@ struct CustomReflectedAsyncOperator
 
 private:
     int value;
+    AsyncInputAccessors inputs{};
 };
 
 /// NOLINTEND(readability-convert-member-functions-to-static)
@@ -187,10 +204,11 @@ struct TestScalarAsyncOperator
 {
     size_t marker = 0;
     bool emptyOutputs = false;
+    AsyncInputAccessors inputs{};
 
     static TestScalarAsyncOperator create(AsyncOperatorRegistryArguments args)
     {
-        if (!args.argumentTypes.empty())
+        if (args.inputs.size() != 0)
         {
             throw InvalidQuerySyntax("Test scalar operator takes no arguments");
         }
@@ -208,16 +226,25 @@ struct TestScalarAsyncOperator
         return Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}};
     }
 
-    [[nodiscard]] TestScalarAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+    [[nodiscard]] TestScalarAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& arguments) const
     {
-        if (!binding.empty())
+        if (!arguments.empty())
         {
             throw InvalidQuerySyntax("Test scalar operator takes no arguments");
         }
         return *this;
     }
 
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, SharedRuntimeValues) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] TestScalarAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
+    {
+        auto copy = *this;
+        copy.inputs = std::move(accessors);
+        return copy;
+    }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
     {
         return std::unexpected(AsyncError{.exception = IOError("Unsupported test operator")});
     }
@@ -228,14 +255,15 @@ struct TestScalarAsyncOperator
 struct TestMultiAsyncOperator
 {
     DataType resultType;
+    AsyncInputAccessors inputs{};
 
     static TestMultiAsyncOperator create(AsyncOperatorRegistryArguments args)
     {
-        if (args.argumentTypes.size() != 1)
+        if (args.inputs.size() != 1)
         {
             throw InvalidQuerySyntax("Test multi-output operator takes exactly one argument");
         }
-        return {args.argumentTypes.front()};
+        return {args.inputs.getTypes().front(), args.inputs};
     }
 
     [[nodiscard]] std::string_view getType() const { return multiName; }
@@ -247,16 +275,25 @@ struct TestMultiAsyncOperator
             UnqualifiedUnboundField{Identifier::parse("count"), DataType::Type::UINT64}};
     }
 
-    [[nodiscard]] TestMultiAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& binding) const
+    [[nodiscard]] TestMultiAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants& arguments) const
     {
-        if (binding.size() != 1)
+        if (arguments.size() != 1)
         {
             throw InvalidQuerySyntax("Test multi-output operator takes exactly one argument");
         }
-        return {binding.front().first};
+        return {arguments.front().first, AsyncInputAccessors{{arguments.front().first}}};
     }
 
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, SharedRuntimeValues) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] TestMultiAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
+    {
+        auto copy = *this;
+        copy.inputs = std::move(accessors);
+        return copy;
+    }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
     {
         return std::unexpected(AsyncError{.exception = IOError("Unsupported test operator")});
     }
@@ -279,6 +316,45 @@ protected:
         ASSERT_TRUE(AsyncOperatorRegistry::instance().addEntry(scalarName, &TestScalarAsyncOperator::create));
         ASSERT_TRUE(AsyncOperatorRegistry::instance().addEntry(multiName, &TestMultiAsyncOperator::create));
         ASSERT_TRUE(AsyncOperatorRegistry::instance().addEntry("TEST_SCALAR_ALIAS", &TestScalarAsyncOperator::create));
+        const auto registerOperatorFunction = [](const std::string& key, Identifier resultName)
+        {
+            OperatorFunctionRegistryEntry entry{
+                .resultName = std::move(resultName),
+                .inferResultType =
+                    [key](const std::vector<LogicalFunction>& arguments)
+                {
+                    const size_t required = (key == scalarName || key == "TEST_SCALAR_ALIAS") ? 0 : 1;
+                    if (arguments.size() != required)
+                    {
+                        throw InvalidQuerySyntax("Invalid test async operator arity");
+                    }
+                    if (key == multiName)
+                    {
+                        throw InvalidQuerySyntax("Multi-output async operator has no scalar result");
+                    }
+                    return DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+                },
+                .createOperator =
+                    [key](LogicalOperator child, const std::vector<LogicalFunction>& arguments)
+                {
+                    std::vector<DataType> types;
+                    for (const auto& argument : arguments)
+                        types.push_back(argument.getDataType());
+                    return AsyncLogicalOperator::create(child, createAsyncOperator(key, types), arguments);
+                },
+                .getArgumentsFromOperator = [key](const LogicalOperator& op) -> std::optional<std::vector<LogicalFunction>>
+                {
+                    const auto async = op.tryGetAs<AsyncLogicalOperator>();
+                    if (!async || async.value()->getAsyncOperator().getType() != key)
+                        return std::nullopt;
+                    return async.value()->getArguments();
+                }};
+            ASSERT_TRUE(OperatorFunctionRegistry::instance().addEntry(key, std::move(entry)));
+        };
+        registerOperatorFunction(scalarName, Identifier::parse("value"));
+        registerOperatorFunction("TEST_SCALAR_ALIAS", Identifier::parse("value"));
+        registerOperatorFunction(multiName, Identifier::parse("value"));
+        registerOperatorFunction("TEST_CUSTOM_PAYLOAD", Identifier::parse("value"));
         ASSERT_TRUE(
             AsyncOperatorUnreflectionRegistry::instance().addEntry(
                 scalarName,
@@ -296,7 +372,7 @@ protected:
                 { return context.unreflect<NES::Test::CustomReflectedAsyncOperator>(data); }));
     }
 
-    /// Construct a bound source through the current uniform source configuration API.
+    /// Construct a descriptor-backed source through the current uniform source configuration API.
     /// NOLINTNEXTLINE(misc-include-cleaner) LogicalOperator is declared by public Operators/LogicalOperator.hpp.
     static LogicalOperator source()
     {
@@ -323,7 +399,7 @@ TEST_F(AsyncOccurrenceTest, PlainStructPayloadSupportsTypedAccessAndValueSemanti
     const auto typed = original.tryGetAs<TestScalarAsyncOperator>();
     ASSERT_TRUE(typed.has_value());
     const AsyncOperator erasedAgain = *typed;
-    const auto copied = original.withInferredArguments(AsyncArgumentsWithConstants{});
+    const auto copied = original;
     original = TestScalarAsyncOperator{.marker = 99};
     EXPECT_EQ(typed->get().marker, 37);
     EXPECT_EQ(erasedAgain.getAs<TestScalarAsyncOperator>()->marker, 37);
@@ -342,11 +418,13 @@ TEST_F(AsyncOccurrenceTest, LogicalOperatorRejectsAnEmptyNativeOutputSignature)
 TEST_F(AsyncOccurrenceTest, ReflectionPreservesConcreteStateWithoutReplayingFactory)
 {
     scalarFactoryCalls = 0;
-    const auto call = LogicalFunctionProvider::provide("TEST_SCALAR_ALIAS", {}).getAs<AsyncCallLogicalFunction>().get();
-    ASSERT_EQ(scalarFactoryCalls, 1);
+    const auto generic = LogicalFunctionProvider::provide("TEST_SCALAR_ALIAS", {});
+    EXPECT_EQ(scalarFactoryCalls, 0);
     TypeInferenceContext inferenceContext{source().getOutputSchema()};
-    const auto inferred = call.withChildren({}).withInferredDataType(inferenceContext);
-    EXPECT_EQ(inferred.getAs<AsyncCallLogicalFunction>()->getAsyncOperator().getAs<TestScalarAsyncOperator>()->marker, 1);
+    static_cast<void>(inferenceContext.inferType(generic));
+    EXPECT_EQ(scalarFactoryCalls, 0);
+    const auto call = AsyncCallLogicalFunction{"TEST_SCALAR_ALIAS", {}};
+    ASSERT_EQ(scalarFactoryCalls, 1);
     const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
     const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
     const auto restored = reader.unreflect<AsyncCallLogicalFunction>(writer.reflect(call));
@@ -363,7 +441,9 @@ TEST_F(AsyncOccurrenceTest, LogicalReflectionKeepsExpressionsOutsideNativeConfig
     customFactoryCalls = 0;
     const std::vector<LogicalFunction> arguments{
         ConstantValueLogicalFunction{DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}, "7"}};
-    const auto call = LogicalFunctionProvider::provide("TEST_CUSTOM_PAYLOAD", arguments).getAs<AsyncCallLogicalFunction>().get();
+    const auto generic = LogicalFunctionProvider::provide("TEST_CUSTOM_PAYLOAD", arguments);
+    EXPECT_EQ(customFactoryCalls, 0);
+    const auto call = AsyncCallLogicalFunction{"TEST_CUSTOM_PAYLOAD", arguments};
     ASSERT_EQ(customFactoryCalls, 1);
     const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
     const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
@@ -398,11 +478,38 @@ TEST_F(AsyncOccurrenceTest, NormalizationTransfersFactoryPayloadInsteadOfConstru
     const auto call = LogicalFunctionProvider::provide("TEST_SCALAR_ALIAS", {});
     const LogicalOperator projection
         = ProjectionLogicalOperator::create(source(), {{Identifier::parse("result"), call}}, ProjectionLogicalOperator::Asterisk{false});
-    const auto normalized = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {projection}});
-    const auto invocation
-        = normalized.getRootOperators().front().getAs<ProjectionLogicalOperator>()->getChild().getAs<AsyncLogicalOperator>();
-    EXPECT_EQ(invocation->getAsyncOperator().getAs<TestScalarAsyncOperator>()->marker, 1);
+    EXPECT_EQ(scalarFactoryCalls, 0);
+    const auto normalized = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {projection}});
+    const auto invocations = getOperatorByType<AsyncLogicalOperator>(normalized);
+    ASSERT_EQ(invocations.size(), 1);
+    EXPECT_EQ(invocations.front()->getAsyncOperator().getAs<TestScalarAsyncOperator>()->marker, 1);
     EXPECT_EQ(scalarFactoryCalls, 1);
+}
+
+TEST_F(AsyncOccurrenceTest, ScalarLiftingPreservesACollidingInputUsedAsAnArgument)
+{
+    const auto input = ProjectionLogicalOperator::create(
+        source(),
+        {{Identifier::parse("value"), UnboundFieldAccessLogicalFunction{Identifier::parse("input")}}},
+        ProjectionLogicalOperator::Asterisk{false});
+    const auto inputValue = input->getOutputSchema()[Identifier::parse("value")].value();
+    const auto call = LogicalFunctionProvider::provide("TEST_CUSTOM_PAYLOAD", {FieldAccessLogicalFunction{inputValue}});
+    const LogicalOperator projection = ProjectionLogicalOperator::create(
+        input,
+        {{Identifier::parse("original"), FieldAccessLogicalFunction{inputValue}}, {Identifier::parse("result"), call}},
+        ProjectionLogicalOperator::Asterisk{false});
+    const auto normalized = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {projection}});
+    const auto invocations = getOperatorByType<AsyncLogicalOperator>(normalized);
+    ASSERT_EQ(invocations.size(), 1);
+    const auto invocation = invocations.front();
+    const auto argument = invocation->getArguments().front().getAs<FieldAccessLogicalFunction>()->getField();
+    EXPECT_NE(argument.getLastName(), Identifier::parse("value"));
+    EXPECT_FALSE(invocation->getChild().getOutputSchema().contains(Identifier::parse("value")));
+    EXPECT_TRUE(invocation->getOutputSchema().contains(Identifier::parse("value")));
+    const auto outputSchema = normalized.getRootOperators().front().getOutputSchema();
+    EXPECT_EQ(outputSchema.size(), 2);
+    EXPECT_EQ(outputSchema[Identifier::parse("original")]->getDataType(), inputValue.getDataType());
+    EXPECT_EQ(outputSchema[Identifier::parse("result")]->getDataType().type, DataType::Type::UINT64);
 }
 
 TEST_F(AsyncOccurrenceTest, ProviderCallsHaveDistinctIdentityEvenWithIdenticalArguments)
@@ -423,8 +530,8 @@ TEST_F(AsyncOccurrenceTest, TypeInferenceContextPreservesSharedDagNodesAndDistin
     const LogicalFunction two = ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "2"};
 
     /// BETWEEN-style DAG: both bounds share the exact same AsyncCallLogicalFunction pointer.
-    const LogicalFunction between = AndLogicalFunction{
-        GreaterEqualsLogicalFunction{sharedCall, one}, LessEqualsLogicalFunction{sharedCall, two}};
+    const LogicalFunction between
+        = AndLogicalFunction{GreaterEqualsLogicalFunction{sharedCall, one}, LessEqualsLogicalFunction{sharedCall, two}};
     const auto inferredBetween = between.withInferredDataType(schema);
     const auto inferredLeftCall = inferredBetween.getChildren().at(0).getChildren().at(0);
     const auto inferredRightCall = inferredBetween.getChildren().at(1).getChildren().at(0);
@@ -432,8 +539,7 @@ TEST_F(AsyncOccurrenceTest, TypeInferenceContextPreservesSharedDagNodesAndDistin
 
     /// Nested pure expression shared across IN-style OR branches.
     const LogicalFunction sharedAdd = AddLogicalFunction{sharedCall, one};
-    const LogicalFunction inExpr = OrLogicalFunction{
-        EqualsLogicalFunction{sharedAdd, one}, EqualsLogicalFunction{sharedAdd, two}};
+    const LogicalFunction inExpr = OrLogicalFunction{EqualsLogicalFunction{sharedAdd, one}, EqualsLogicalFunction{sharedAdd, two}};
     const auto inferredIn = inExpr.withInferredDataType(schema);
     const auto inferredAddLeft = inferredIn.getChildren().at(0).getChildren().at(0);
     const auto inferredAddRight = inferredIn.getChildren().at(1).getChildren().at(0);
@@ -448,12 +554,12 @@ TEST_F(AsyncOccurrenceTest, TypeInferenceContextPreservesSharedDagNodesAndDistin
 
     /// Lifting turns a shared DAG call into one AsyncLogicalOperator and two distinct calls into two.
     const LogicalOperator sharedSelection = SelectionLogicalOperator::create(source(), inExpr);
-    const auto liftedShared = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {sharedSelection}});
+    const auto liftedShared = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {sharedSelection}});
     EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(liftedShared).size(), 1);
 
-    const LogicalOperator distinctProjection
-        = ProjectionLogicalOperator::create(source(), {{Identifier::parse("sum"), distinctSum}}, ProjectionLogicalOperator::Asterisk{false});
-    const auto liftedDistinct = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {distinctProjection}});
+    const LogicalOperator distinctProjection = ProjectionLogicalOperator::create(
+        source(), {{Identifier::parse("sum"), distinctSum}}, ProjectionLogicalOperator::Asterisk{false});
+    const auto liftedDistinct = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {distinctProjection}});
     EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(liftedDistinct).size(), 2);
 }
 
@@ -472,7 +578,7 @@ TEST_F(AsyncOccurrenceTest, ProjectionInferencePreservesSharingAcrossExpressionR
     EXPECT_EQ(expressions.at(0).second, expressions.at(1).second);
     EXPECT_NE(expressions.at(0).second, expressions.at(2).second);
 
-    const auto lifted = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {rewritten}});
+    const auto lifted = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {rewritten}});
     EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(lifted).size(), 2);
     const auto outputs = lifted.getRootOperators().front().getAs<ProjectionLogicalOperator>()->getProjections();
     ASSERT_EQ(outputs.size(), 3);
@@ -525,7 +631,7 @@ TEST_F(AsyncOccurrenceTest, IsNaNDesugaringPreservesSharedChildIdentity)
     EXPECT_EQ(equalsNode.getChildren().at(0), equalsNode.getChildren().at(1));
 
     const LogicalOperator selection = SelectionLogicalOperator::create(floatSource, isNaN);
-    const auto lifted = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {selection}});
+    const auto lifted = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {selection}});
     EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(lifted).size(), 1);
 }
 
@@ -538,9 +644,9 @@ TEST_F(AsyncOccurrenceTest, IntegerIsNaNPreservesOperandEffectsAndNullability)
     const auto operands = inferred.getChildren().at(0).getChildren();
     ASSERT_EQ(operands.size(), 2);
     EXPECT_EQ(operands.at(0), operands.at(1));
-    ASSERT_TRUE(operands.front().tryGetAs<AsyncCallLogicalFunction>().has_value());
+    ASSERT_TRUE(operands.front().tryGetAs<OperatorCallLogicalFunction>().has_value());
     const LogicalOperator selection = SelectionLogicalOperator::create(child, isNaN);
-    const auto lifted = AsyncFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {selection}});
+    const auto lifted = OperatorFunctionLiftingRule{}.apply(LogicalPlan{INVALID_QUERY_ID, {selection}});
     EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(lifted).size(), 1);
 
     const LogicalFunction nullable = ConstantValueLogicalFunction{DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}, "1"};
@@ -584,32 +690,31 @@ TEST_F(AsyncOccurrenceTest, LogicalFunctionReflectionPreservesSharedDagNodes)
 
 TEST_F(AsyncOccurrenceTest, MultioutputDefinitionRejectsScalarShorthand)
 {
-    EXPECT_ANY_THROW((LogicalFunctionProvider::provide(multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}})));
+    EXPECT_ANY_THROW(
+        static_cast<void>(LogicalFunctionProvider::provide(multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}})
+                              .withInferredDataType(source().getOutputSchema())));
 }
 
-TEST_F(AsyncOccurrenceTest, ExplicitOperatorAppendsEveryOutputWithDeclaredTypesAndBindings)
+TEST_F(AsyncOccurrenceTest, ExplicitOperatorAppendsEveryOutputWithDeclaredTypesAndNames)
 {
     const auto child = source();
-    const auto op = AsyncLogicalOperator::create(
-        child,
-        multiName,
-        {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}},
-        {Identifier::parse("result"), Identifier::parse("counted")});
+    const auto op = AsyncLogicalOperator::create(child, multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}});
     EXPECT_EQ(op.get().getChild(), child);
     EXPECT_EQ(op.get().getOperatorName(), multiName);
     EXPECT_EQ(op->getAsyncOperator().getType(), multiName);
     ASSERT_EQ(op.get().getArguments().size(), 1);
-    const auto outputs = op.get().getOutputBindings();
-    ASSERT_EQ(outputs.size(), 2);
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) outputs has two elements as asserted above
-    EXPECT_EQ(outputs[0].binding, Identifier::parse("result"));
-    EXPECT_EQ(outputs[1].binding, Identifier::parse("counted"));
-    EXPECT_EQ(outputs[0].field.getDataType(), DataTypeProvider::provideDataType(DataType::Type::INT32));
-    EXPECT_EQ(outputs[1].field.getDataType(), DataTypeProvider::provideDataType(DataType::Type::UINT64));
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-    EXPECT_EQ(op.get().getOutputSchema().size(), child.getOutputSchema().size() + 2);
-    EXPECT_EQ(op.get().withChildren({child}).getOutputBindings(), outputs);
-    EXPECT_EQ(op.get().withInferredSchema().getOutputBindings(), outputs);
+    const auto outputs = op.get().getOutputSchema();
+    ASSERT_EQ(outputs.size(), 3);
+    EXPECT_TRUE(outputs[Identifier::parse("value")].has_value());
+    EXPECT_TRUE(outputs[Identifier::parse("count")].has_value());
+    EXPECT_EQ(op.get().withChildren({child}).getOutputSchema(), outputs);
+    EXPECT_EQ(op.get().withInferredSchema().getOutputSchema(), outputs);
+    const auto aliases = ProjectionLogicalOperator::create(
+        op,
+        {{Identifier::parse("result"), UnboundFieldAccessLogicalFunction{Identifier::parse("value")}},
+         {Identifier::parse("counted"), UnboundFieldAccessLogicalFunction{Identifier::parse("count")}}},
+        ProjectionLogicalOperator::Asterisk{false});
+    EXPECT_TRUE(aliases.getOutputSchema()[Identifier::parse("result")].has_value());
     const auto second = AsyncLogicalOperator::create(child, multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}});
     EXPECT_NE(LogicalOperator{second}, LogicalOperator{op});
 }
@@ -618,11 +723,8 @@ TEST_F(AsyncOccurrenceTest, ExplicitOperatorAppendsEveryOutputWithDeclaredTypesA
 TEST_F(AsyncOccurrenceTest, MultioutputInvocationExecutesOnceEvenWhenResultsAreDiscardedAboveIt)
 {
     const auto child = source();
-    const LogicalOperator invocation = AsyncLogicalOperator::create(
-        child,
-        multiName,
-        {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}},
-        {Identifier::parse("result"), Identifier::parse("counted")});
+    const LogicalOperator invocation
+        = AsyncLogicalOperator::create(child, multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("input")}});
     const LogicalOperator discard = ProjectionLogicalOperator::create(
         invocation,
         {{Identifier::parse("input"), UnboundFieldAccessLogicalFunction{Identifier::parse("input")}}},
@@ -661,8 +763,8 @@ TEST_F(AsyncOccurrenceTest, MultioutputInvocationExecutesOnceEvenWhenResultsAreD
     ASSERT_EQ(graph->getOutputs().size(), 2);
     /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) graph output count is asserted above
     EXPECT_EQ(graph->getOutputs()[0].result.getProducer(), graph->getOutputs()[1].result.getProducer());
-    EXPECT_EQ(graph->getOutputs()[0].field, QualifiedIdentifier::create(Identifier::parse("result")));
-    EXPECT_EQ(graph->getOutputs()[1].field, QualifiedIdentifier::create(Identifier::parse("counted")));
+    EXPECT_EQ(graph->getOutputs()[0].field, QualifiedIdentifier::create(Identifier::parse("value")));
+    EXPECT_EQ(graph->getOutputs()[1].field, QualifiedIdentifier::create(Identifier::parse("count")));
     /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     boost::asio::io_context context;
     const auto strand = boost::asio::make_strand(context);
@@ -671,15 +773,13 @@ TEST_F(AsyncOccurrenceTest, MultioutputInvocationExecutesOnceEvenWhenResultsAreD
         strand,
         graph,
         [](const InputFieldReference&) { return RuntimeValue{int32_t{7}}; },
-        [&calls](AsyncCall::Ptr, SharedRuntimeValues arguments) -> boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+        [&calls](AsyncCall::Ptr node, AsyncRowHandle row) -> boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
         {
+            const auto arguments = node->getAsyncOperator().getInputAccessors().read(row);
             ++calls;
             co_return SharedRuntimeValues::make(arguments[0].toOwned(), uint64_t{9});
         });
-    auto result = boost::asio::co_spawn(
-        strand,
-        execution->run(),
-        boost::asio::use_future);
+    auto result = boost::asio::co_spawn(strand, execution->run(), boost::asio::use_future);
     context.run();
     const auto values = result.get();
     ASSERT_TRUE(values);
@@ -690,6 +790,7 @@ TEST_F(AsyncOccurrenceTest, MultioutputInvocationExecutesOnceEvenWhenResultsAreD
     /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     EXPECT_EQ(calls, 1);
 }
+
 /// NOLINTEND(misc-include-cleaner)
 
 TEST_F(AsyncOccurrenceTest, RuntimeGraphRoundTripRetainsPrivateConfigWithoutLogicalAstOrFactoryReplay)
@@ -701,8 +802,7 @@ TEST_F(AsyncOccurrenceTest, RuntimeGraphRoundTripRetainsPrivateConfigWithoutLogi
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) schema lookup returns an optional checked below
     const auto input = child.getOutputSchema()[Identifier::parse("input")];
     ASSERT_TRUE(input.has_value());
-    const LogicalOperator invocation
-        = AsyncLogicalOperator::create(child, native, {FieldAccessLogicalFunction{*input}}, {Identifier::parse("result")});
+    const LogicalOperator invocation = AsyncLogicalOperator::create(child, native, {FieldAccessLogicalFunction{*input}});
     const LogicalOperator projection = ProjectionLogicalOperator::create(
         invocation,
         {{Identifier::parse("input"), UnboundFieldAccessLogicalFunction{Identifier::parse("input")}}},
@@ -768,17 +868,18 @@ TEST_F(AsyncOccurrenceTest, RuntimeGraphRoundTripRetainsPrivateConfigWithoutLogi
     EXPECT_EQ(customFactoryCalls, 1);
 }
 
-TEST_F(AsyncOccurrenceTest, ExplicitOperatorRejectsWrongArityAndCollidingBindings)
+TEST_F(AsyncOccurrenceTest, ExplicitOperatorRejectsWrongArityAndCollidingResultFields)
 {
     const auto child = source();
-    const std::vector<LogicalFunction> args{UnboundFieldAccessLogicalFunction{Identifier::parse("input")}};
     EXPECT_ANY_THROW(static_cast<void>(AsyncLogicalOperator::create(child, multiName, {})));
-    EXPECT_ANY_THROW(static_cast<void>(AsyncLogicalOperator::create(child, multiName, args, {Identifier::parse("only_one")})));
-    EXPECT_ANY_THROW(
+    const auto conflicting = ProjectionLogicalOperator::create(
+        child,
+        {{Identifier::parse("value"), UnboundFieldAccessLogicalFunction{Identifier::parse("input")}}},
+        ProjectionLogicalOperator::Asterisk{false});
+    EXPECT_THROW(
         static_cast<void>(
-            AsyncLogicalOperator::create(child, multiName, args, {Identifier::parse("input"), Identifier::parse("counted")})));
-    EXPECT_ANY_THROW(
-        static_cast<void>(AsyncLogicalOperator::create(child, multiName, args, {Identifier::parse("same"), Identifier::parse("same")})));
+            AsyncLogicalOperator::create(conflicting, multiName, {UnboundFieldAccessLogicalFunction{Identifier::parse("value")}})),
+        Exception);
 }
 }
 }

@@ -18,11 +18,11 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <AsyncOperatorRegistry.hpp>
+#include <Functions/OperatorCallLogicalFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <OperatorFunctionRegistry.hpp>
 
 namespace NES::LogicalFunctionProvider
 {
@@ -38,18 +38,18 @@ LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunc
 std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments)
 {
     const auto factory = LogicalFunctionRegistry::instance().find(functionName);
-    const auto async = AsyncOperatorRegistry::instance().find(functionName);
-    if (factory && async)
+    const auto operatorFunction = OperatorFunctionRegistry::instance().find(functionName);
+    if (factory && operatorFunction)
     {
-        throw InvalidQuerySyntax("Function '{}' is ambiguous: registered as both scalar and async", functionName);
+        throw InvalidQuerySyntax("Function '{}' is ambiguous: registered as both scalar and operator function syntax", functionName);
     }
     if (factory)
     {
         return (*factory)(LogicalFunctionRegistryArguments{.children = std::move(arguments)});
     }
-    if (async)
+    if (operatorFunction)
     {
-        return AsyncCallLogicalFunction{functionName, std::move(arguments)};
+        return OperatorCallLogicalFunction{functionName, std::move(arguments)};
     }
     return std::nullopt;
 }

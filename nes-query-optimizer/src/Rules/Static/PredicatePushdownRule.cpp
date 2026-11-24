@@ -30,7 +30,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/AsyncLogicalOperator.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -423,7 +423,7 @@ Visitor::DownResult predicatePushdown(const LogicalOperator& op, const std::vect
         OperatorContext operatorContext = {.toApply = {.predicateSet = predicateSet, .fields = fields}, .pushed = {}};
         downResult = {.operatorContext = std::move(operatorContext), .downContexts = {}};
     }
-    else if (op.tryGetAs<AsyncLogicalOperator>())
+    else if (op.tryGetAs<AsynchronousOperator>())
     {
         /// Effect barrier: even predicates using only input fields must stay above the call.
         /// Restart below with no inherited predicates; never change which rows invoke it.

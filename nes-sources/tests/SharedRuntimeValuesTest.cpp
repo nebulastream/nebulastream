@@ -107,6 +107,7 @@ struct EchoOperator
     std::optional<size_t> retryPolicy = size_t{4};
     bool failPreparation = false;
     bool failAttempt = false;
+    AsyncInputAccessors inputs{};
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
     [[nodiscard]] std::string_view getType() const { return "TEST_ECHO"; }
@@ -116,8 +117,16 @@ struct EchoOperator
 
     [[nodiscard]] EchoOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
 
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>>
-    prepare(AsyncExecutionContext& context, SharedRuntimeValues arguments) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] EchoOperator withInputAccessors(AsyncInputAccessors value) const
+    {
+        auto result = *this;
+        result.inputs = std::move(value);
+        return result;
+    }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
     {
         ++context.getSlotState<size_t>();
         ++stats->preparations;
@@ -125,7 +134,7 @@ struct EchoOperator
         {
             return std::unexpected(AsyncError{.exception = ArithmeticalError("preparation failed")});
         }
-        auto prepared = std::make_unique<Prepared>(stats, std::move(arguments), retryPolicy);
+        auto prepared = std::make_unique<Prepared>(stats, inputs.read(row), retryPolicy);
         prepared->failAttempt = failAttempt;
         return prepared;
     }
@@ -150,16 +159,14 @@ TEST(SharedRuntimeValuesTest, ArgumentsAndResultsOwnTheirStorageAcrossSuspension
 {
     boost::asio::io_context context;
     auto input = SharedRuntimeValues::make(std::string{"small string"}, std::numeric_limits<uint64_t>::max());
-    auto result = boost::asio::co_spawn(
-        context,
-        echoAfterSuspension(input),
-        boost::asio::use_future);
+    auto result = boost::asio::co_spawn(context, echoAfterSuspension(input), boost::asio::use_future);
     input = SharedRuntimeValues::make();
     context.run();
     const auto output = result.get();
     EXPECT_EQ(output[0].get<std::string_view>(), "small string");
     EXPECT_EQ(output[1].get<uint64_t>(), std::numeric_limits<uint64_t>::max());
 }
+
 /// NOLINTEND(misc-include-cleaner)
 
 /// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
@@ -190,20 +197,20 @@ TEST(SharedRuntimeValuesTest, PreparationOwnsArgumentsAndFixesRetryMetadata)
             }
         }
     };
-    auto result = boost::asio::co_spawn(
-        context, run(), boost::asio::use_future);
+    auto result = boost::asio::co_spawn(context, run(), boost::asio::use_future);
     context.run();
     result.get();
     EXPECT_EQ(concrete.stats->preparations, 1);
     EXPECT_EQ(concrete.stats->attempts, 2);
-    const auto zeroRetry = concrete.prepare(executionContext, {});
+    const auto zeroRetry = AsyncOperator{concrete}.prepare(executionContext, SharedRuntimeValues{});
     ASSERT_TRUE(zeroRetry);
     concrete.retryPolicy = std::nullopt;
-    const auto defaultRetry = concrete.prepare(executionContext, {});
+    const auto defaultRetry = AsyncOperator{concrete}.prepare(executionContext, SharedRuntimeValues{});
     ASSERT_TRUE(defaultRetry);
     EXPECT_EQ((*zeroRetry)->getRetryOverride(), size_t{0});
     EXPECT_EQ((*defaultRetry)->getRetryOverride(), std::nullopt);
 }
+
 /// NOLINTEND(misc-include-cleaner)
 
 /// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
@@ -212,10 +219,7 @@ TEST(SharedRuntimeValuesTest, InvokeOnceOwnsPreparedCallAcrossSuspension)
     const EchoOperator concrete;
     boost::asio::io_context context;
     auto arguments = SharedRuntimeValues::make(std::string{"retained"}, uint64_t{42});
-    auto result = boost::asio::co_spawn(
-        context,
-        invokeOnce(AsyncOperator{concrete}, arguments),
-        boost::asio::use_future);
+    auto result = boost::asio::co_spawn(context, invokeOnce(AsyncOperator{concrete}, arguments), boost::asio::use_future);
     arguments = {};
     context.run();
     const auto values = result.get();
@@ -226,6 +230,7 @@ TEST(SharedRuntimeValuesTest, InvokeOnceOwnsPreparedCallAcrossSuspension)
     EXPECT_EQ(concrete.stats->attempts, 1);
     EXPECT_EQ(concrete.stats->livePrepared, 0);
 }
+
 /// NOLINTEND(misc-include-cleaner)
 
 TEST(SharedRuntimeValuesTest, InvokeOncePropagatesPreparationAndAttemptFailuresWithoutRetries)
@@ -298,10 +303,21 @@ TEST(SharedRuntimeValuesTest, PreparedCallDefaultsToExecutorRetryPolicyAndMayRet
         /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
         [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return {}; }
 
+        AsyncInputAccessors inputs{};
+
         [[nodiscard]] EmptyOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
 
+        [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+        [[nodiscard]] EmptyOperator withInputAccessors(AsyncInputAccessors value) const
+        {
+            auto result = *this;
+            result.inputs = std::move(value);
+            return result;
+        }
+
         /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
-        [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, SharedRuntimeValues) const
+        [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
         {
             return std::make_unique<EmptyPrepared>();
         }
@@ -341,21 +357,21 @@ TEST(SharedRuntimeValuesTest, EmptyAndTypedNullAreDifferent)
     EXPECT_EQ(values[0].getDataType(), nullable);
 }
 
-TEST(SharedRuntimeValuesTest, BindingPreservesConstantPositionsAndTypedNulls)
+TEST(SharedRuntimeValuesTest, ArgumentsPreserveConstantPositionsAndTypedNulls)
 {
     const DataType integer{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
     const DataType nullable{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE};
-    const AsyncArgumentsWithConstants binding{
+    const AsyncArgumentsWithConstants arguments{
         {integer, std::nullopt}, {integer, RuntimeValue{uint64_t{4}}}, {nullable, RuntimeValue::null(nullable)}};
     /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) the fixture initializes three constant positions
-    EXPECT_EQ(binding[0].first, integer);
-    EXPECT_FALSE(binding[0].second);
-    const auto& integerConstant = binding[1].second;
+    EXPECT_EQ(arguments[0].first, integer);
+    EXPECT_FALSE(arguments[0].second);
+    const auto& integerConstant = arguments[1].second;
     ASSERT_TRUE(integerConstant.has_value());
     EXPECT_EQ(integerConstant->view().get<uint64_t>(), 4);
-    const auto& nullConstant = binding[2].second;
+    const auto& nullConstant = arguments[2].second;
     ASSERT_TRUE(nullConstant.has_value());
-    EXPECT_EQ(binding[2].first, nullable);
+    EXPECT_EQ(arguments[2].first, nullable);
     EXPECT_TRUE(nullConstant->isNull());
     /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 }
@@ -718,16 +734,14 @@ TEST(AsyncExecutionContextTest, RejectsInconsistentStateType)
 {
 #ifndef NO_ASSERT
     SKIP_IF_TSAN();
-    Logger::setupLogging(
-        "AsyncExecutionContextDeathTest.log",
-        LogLevel::LOG_DEBUG,
-        false);
+    Logger::setupLogging("AsyncExecutionContextDeathTest.log", LogLevel::LOG_DEBUG, false);
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     AsyncExecutionContext context;
     static_cast<void>(context.getSlotState<int>());
     EXPECT_DEATH(static_cast<void>(context.getSlotState<std::string>()), "Precondition violated");
 #endif
 }
+
 /// NOLINTEND(misc-include-cleaner)
 }
 

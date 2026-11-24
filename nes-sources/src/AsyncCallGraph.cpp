@@ -164,6 +164,13 @@ AsyncCall::AsyncCall(
     std::shared_ptr<const detail::AsyncGraphScope> scope, AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments)
     : scope(std::move(scope)), asyncOperator(std::move(asyncOperator)), arguments(std::move(arguments))
 {
+    std::vector<DataType> inputTypes;
+    inputTypes.reserve(this->arguments.size());
+    for (const auto& argument : this->arguments)
+    {
+        inputTypes.push_back(std::visit([](const auto& value) { return value.getDataType(); }, argument));
+    }
+    this->asyncOperator = this->asyncOperator.withInputAccessors(AsyncInputAccessors{std::move(inputTypes)});
     for (const auto& field : this->asyncOperator.getOutputSchema())
     {
         resultTypes.push_back(field.getDataType());

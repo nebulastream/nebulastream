@@ -32,11 +32,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <AsyncGraphExecution.hpp>
-#include <Sources/SharedRuntimeValues.hpp>
-#include <boost/asio/cancellation_type.hpp>
-#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; checker misses direct use
-#include <nautilus/val.hpp> /// NOLINT(misc-include-cleaner) Installed public Nautilus val provider; checker misattributes val uses
 #include <Async/HandoffChannel.hpp>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
@@ -56,9 +51,11 @@
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/PreparedAsyncCall.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -66,6 +63,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
+#include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/co_spawn.hpp> /// NOLINT(misc-include-cleaner) Public Asio co_spawn provider; checker misattributes completion overload
 #include <boost/asio/error.hpp> /// NOLINT(misc-include-cleaner) Public Asio error provider; used through operation error constants
 #include <boost/asio/executor_work_guard.hpp>
@@ -76,6 +74,9 @@
 #include <boost/asio/strand.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; checker misses direct use
+#include <nautilus/val.hpp> /// NOLINT(misc-include-cleaner) Installed public Nautilus val provider; checker misattributes val uses
+#include <AsyncGraphExecution.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -147,7 +148,8 @@ Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig&)
 {
-    PRECONDITION(false, "Async sources require an AsyncCallGraph supplied by the optimizer and cannot be instantiated from literal configuration");
+    PRECONDITION(
+        false, "Async sources require an AsyncCallGraph supplied by the optimizer and cannot be instantiated from literal configuration");
     std::unreachable();
 }
 
@@ -205,12 +207,12 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
 
 std::unordered_map<AsyncCall::Ptr, AsyncSource::CallState> AsyncSource::createCallStates(const AsyncCallGraph& graph)
 {
-    std::unordered_map<AsyncCall::Ptr, CallState> bound;
+    std::unordered_map<AsyncCall::Ptr, CallState> states;
     for (const auto& node : graph.getCalls())
     {
-        bound.emplace(node, CallState{.asyncOperator = node->getAsyncOperator(), .contexts = {}});
+        states.emplace(node, CallState{.asyncOperator = node->getAsyncOperator(), .contexts = {}});
     }
-    return bound;
+    return states;
 }
 
 void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
@@ -235,20 +237,21 @@ void AsyncSource::close()
     channel.close();
 }
 
-RuntimeValue AsyncSource::readInput(const InputFieldReference& field, const TupleBuffer& input, const size_t row) const
+RuntimeValue
+AsyncSource::readInput(const TupleBufferRef& layout, const InputFieldReference& field, const TupleBuffer& input, const size_t row)
 {
     /// NOLINTBEGIN(misc-include-cleaner) nautilus::val is declared by public nautilus/val.hpp.
     const RecordBuffer buffer{BorrowedNautilusBuffer::from(nautilus::val<const TupleBuffer*>{std::addressof(input)})};
     /// NOLINTEND(misc-include-cleaner)
     /// NOLINTNEXTLINE(misc-include-cleaner) nautilus::val is declared by public nautilus/val.hpp.
     auto index = nautilus::val<uint64_t>{row};
-    const auto record = rowBufferRef->readRecord({field.getField()}, buffer, index);
+    const auto record = layout.readRecord({field.getField()}, buffer, index);
     return fromVarVal(record.read(field.getField()), field.getDataType());
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param) a coroutine has to own what it reads after its first suspension
 boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
-AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRuntimeValues arguments)
+AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, AsyncRowHandle row)
 {
     if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
     {
@@ -256,7 +259,7 @@ AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, SharedRunti
     }
     auto& call = calls.at(node);
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) slot comes from the bounded free-slot pool
-    auto preparedResult = call.asyncOperator.prepare(call.contexts[slot], std::move(arguments));
+    auto preparedResult = call.asyncOperator.prepare(call.contexts[slot], row);
     if (!preparedResult)
     {
         co_return std::unexpected(std::move(preparedResult.error()));
@@ -319,9 +322,9 @@ boost::asio::awaitable<AsyncResult<void>> AsyncSource::processRow(const size_t s
     auto execution = std::make_shared<AsyncGraphExecution>(
         strand,
         graph,
-        [this, &buffer, row](const InputFieldReference& field) { return readInput(field, buffer.input, row); },
-        [this, slot](AsyncCall::Ptr node, SharedRuntimeValues arguments)
-        { return callWithRetries(std::move(node), slot, std::move(arguments)); });
+        [layout = rowBufferRef, input = buffer.input, row](const InputFieldReference& field)
+        { return readInput(*layout, field, input, row); },
+        [this, slot](AsyncCall::Ptr node, AsyncRowHandle input) { return callWithRetries(std::move(node), slot, std::move(input)); });
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) slot comes from the bounded free-slot pool
     executions[slot] = execution;
     auto outcome = co_await execution->run();

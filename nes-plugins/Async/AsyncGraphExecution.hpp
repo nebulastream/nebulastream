@@ -31,7 +31,7 @@ namespace NES
 class AsyncGraphExecution final : public std::enable_shared_from_this<AsyncGraphExecution>
 {
 public:
-    using Invoke = std::function<boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>(AsyncCall::Ptr, SharedRuntimeValues)>;
+    using Invoke = std::function<boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>(AsyncCall::Ptr, AsyncRowHandle)>;
     using ReadInput = std::function<RuntimeValue(const InputFieldReference&)>;
     AsyncGraphExecution(
         SharedAsyncResult::Strand executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke);

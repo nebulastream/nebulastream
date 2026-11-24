@@ -149,6 +149,7 @@ struct RowOperatorConfig
     Evaluate evaluate;
     bool suspend = false;
     std::shared_ptr<RowInstrumentation> instrumentation = std::make_shared<RowInstrumentation>();
+    AsyncInputAccessors inputs{};
 
     [[nodiscard]] std::string_view getType() const { return type; }
 
@@ -156,9 +157,18 @@ struct RowOperatorConfig
 
     [[nodiscard]] RowOperatorConfig withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
 
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>>
-    prepare(AsyncExecutionContext& context, SharedRuntimeValues arguments) const
+    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
+
+    [[nodiscard]] RowOperatorConfig withInputAccessors(AsyncInputAccessors value) const
     {
+        auto result = *this;
+        result.inputs = std::move(value);
+        return result;
+    }
+
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
+    {
+        const auto arguments = inputs.read(row);
         PRECONDITION(arguments.size() == 1, "Buffer-reuse operator expects one row ID");
         auto state = context.getSharedSlotState<RowOperatorState>();
         ++state->preparations;

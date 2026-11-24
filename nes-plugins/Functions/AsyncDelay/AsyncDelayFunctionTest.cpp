@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <future>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -25,11 +26,10 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
-#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
-#include <Functions/AsyncCallLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/OperatorCallLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -61,16 +61,6 @@ namespace
 {
 const DataType integer{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
 
-RuntimeValue value(const std::string& literal)
-{
-    return *RuntimeValue::fromLiteral(integer, literal);
-}
-
-RuntimeValue unsignedValue(const std::string& literal)
-{
-    return *RuntimeValue::fromLiteral(DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, literal);
-}
-
 LogicalFunction delayCall(std::vector<LogicalFunction> args)
 {
     return LogicalFunctionProvider::provide("ASYNC_DELAY", std::move(args));
@@ -79,85 +69,51 @@ LogicalFunction delayCall(std::vector<LogicalFunction> args)
 
 TEST(AsyncDelayFunctionTest, NativeConfigurationSignatureAndInitialValueType)
 {
-    const auto op = AsyncDelayAsyncOperator::create({.argumentTypes = {integer, integer}});
+    const auto op = AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, integer}}});
     EXPECT_EQ(op.getType(), "ASYNC_DELAY");
     const auto output = op.getOutputSchema();
     ASSERT_EQ(output.size(), 1);
     EXPECT_EQ(output.begin()->getDataType(), integer);
     EXPECT_EQ(static_cast<const Identifier&>(output.begin()->getFullyQualifiedName()), Identifier::parse("value"));
-    EXPECT_THROW(AsyncDelayAsyncOperator::create({.argumentTypes = {integer}}), Exception);
-    EXPECT_THROW(AsyncDelayAsyncOperator::create({.argumentTypes = {integer, integer, integer, integer}}), Exception);
+    EXPECT_THROW(AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer}}}), Exception);
+    EXPECT_THROW(AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, integer, integer, integer}}}), Exception);
     const auto scalar = LogicalFunctionProvider::provide(
         "ASYNC_DELAY", {ConstantValueLogicalFunction{integer, "1"}, ConstantValueLogicalFunction{integer, "0"}});
-    EXPECT_EQ(scalar.getAs<AsyncCallLogicalFunction>()->getOutputName(), Identifier::parse("value"));
+    EXPECT_EQ(scalar.getAs<OperatorCallLogicalFunction>()->getOutputName(), Identifier::parse("value"));
     ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(LogicalFunctionProvider::provide("ASYNC_DELAY", {ConstantValueLogicalFunction{integer, "1"}})),
+        static_cast<void>(LogicalFunctionProvider::provide("ASYNC_DELAY", {ConstantValueLogicalFunction{integer, "1"}})
+                              .withInferredDataType(Schema<Field, Unordered>{})),
         ErrorCode::InvalidQuerySyntax);
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(LogicalFunctionProvider::provide(
-            "ASYNC_DELAY",
-            {ConstantValueLogicalFunction{integer, "1"},
-             ConstantValueLogicalFunction{integer, "0"},
-             ConstantValueLogicalFunction{integer, "1"},
-             ConstantValueLogicalFunction{integer, "2"}})),
+                              "ASYNC_DELAY",
+                              {ConstantValueLogicalFunction{integer, "1"},
+                               ConstantValueLogicalFunction{integer, "0"},
+                               ConstantValueLogicalFunction{integer, "1"},
+                               ConstantValueLogicalFunction{integer, "2"}})
+                              .withInferredDataType(Schema<Field, Unordered>{})),
         ErrorCode::InvalidQuerySyntax);
 }
 
-TEST(AsyncDelayFunctionTest, NativeInferenceValidatesOptionsAndCarriesConcurrency)
+TEST(AsyncDelayFunctionTest, LogicalInferenceValidatesOptionsAndCarriesConcurrency)
 {
-    const AsyncDelayAsyncOperator config{.valueType = integer, .concurrencyLimit = std::nullopt};
-    const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto inferred
-        = config.withInferredArguments({{integer, value("1")}, {uintType, unsignedValue("0")}, {uintType, unsignedValue("2")}});
-    EXPECT_EQ(inferred.maxConcurrency(), 2);
-    EXPECT_EQ(config.maxConcurrency(), std::nullopt);
-    const AsyncOperator reflectedSource = inferred;
-    const auto reflected = ReflectionContext{}.reflect(reflectedSource);
-    const auto restored = ReflectionContext{}.unreflect<AsyncOperator>(reflected);
-    EXPECT_EQ(restored.maxConcurrency(), 2);
-    EXPECT_EQ(restored.getOutputSchema(), reflectedSource.getOutputSchema());
-    EXPECT_THROW(static_cast<void>(config.withInferredArguments({{integer, value("1")}, {integer, value("-1")}})), Exception);
-    EXPECT_THROW(
-        static_cast<void>(config.withInferredArguments({{integer, value("1")}, {integer, value("0")}, {integer, value("0")}})), Exception);
-    EXPECT_THROW(
-        static_cast<void>(config.withInferredArguments({{integer, std::nullopt}, {integer, std::nullopt}, {integer, std::nullopt}})),
-        Exception);
-    const DataType text{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
     const Schema<Field, Unordered> schema{};
-    const auto valueArgument = ConstantValueLogicalFunction{integer, "1"};
-    const auto zeroArgument = ConstantValueLogicalFunction{integer, "0"};
-    const auto dynamicMillis = config.withInferredArguments({{integer, value("1")}, {uintType, std::nullopt}});
-    EXPECT_EQ(dynamicMillis.getOutputSchema().begin()->getDataType(), integer);
-    const auto nullableInteger = DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
+    const auto one = ConstantValueLogicalFunction{integer, "1"};
+    const auto zero = ConstantValueLogicalFunction{integer, "0"};
+    const auto configured = delayCall({one, zero, ConstantValueLogicalFunction{integer, "2"}}).withInferredDataType(schema);
+    const auto& arguments = configured.getAs<OperatorCallLogicalFunction>()->getArguments();
+    ASSERT_EQ(arguments.size(), 3U);
+    EXPECT_EQ(arguments.at(2).getDataType(), integer);
+    const auto nullable = DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(config.withInferredArguments({{integer, std::nullopt}, {text, std::nullopt}})),
+        static_cast<void>(delayCall({one, ConstantValueLogicalFunction{nullable, "0"}}).withInferredDataType(schema)),
         ErrorCode::DifferentFieldTypeExpected);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(config.withInferredArguments({{integer, std::nullopt}, {nullableInteger, std::nullopt}})),
-        ErrorCode::DifferentFieldTypeExpected);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(
-            config.withInferredArguments({{integer, std::nullopt}, {integer, std::nullopt}, {nullableInteger, std::nullopt}})),
-        ErrorCode::DifferentFieldTypeExpected);
-    const auto invalidLiteral = ConstantValueLogicalFunction{DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}, "256"};
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(
-            delayCall({ConstantValueLogicalFunction{integer, "1"}, invalidLiteral}).withInferredDataType(Schema<Field, Unordered>{})),
-        ErrorCode::CannotInferSchema);
-    const auto hugeDuration
-        = ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "18446744073709551615"};
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(delayCall({valueArgument, hugeDuration}).withInferredDataType(schema)), ErrorCode::CannotInferSchema);
-    const auto negativeConcurrency = delayCall({valueArgument, zeroArgument, ConstantValueLogicalFunction{integer, "-1"}});
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(negativeConcurrency.withInferredDataType(schema)), ErrorCode::CannotInferSchema);
-    const auto nonConstantConcurrency
-        = delayCall({valueArgument, zeroArgument, LogicalFunction{AddLogicalFunction{valueArgument, valueArgument}}});
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(nonConstantConcurrency.withInferredDataType(schema)), ErrorCode::CannotInferSchema);
-    const auto invalidConcurrencyLiteral
-        = ConstantValueLogicalFunction{DataType{DataType::Type::UINT8, DataType::NULLABLE::NOT_NULLABLE}, "256"};
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(delayCall({valueArgument, zeroArgument, invalidConcurrencyLiteral}).withInferredDataType(schema)),
-        ErrorCode::CannotInferSchema);
+    for (const auto& invalid : {std::string{"0"}, std::string{"-1"}})
+    {
+        ASSERT_EXCEPTION_ERRORCODE(
+            static_cast<void>(delayCall({one, zero, ConstantValueLogicalFunction{integer, invalid}}).withInferredDataType(schema)),
+            ErrorCode::CannotInferSchema);
+    }
 }
 
 TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfiguration)
@@ -166,7 +122,7 @@ TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfi
     const auto zero = ConstantValueLogicalFunction{integer, "0"};
     const auto call = delayCall({one, zero}).withInferredDataType(Schema<Field, Unordered>{});
     EXPECT_EQ(call.getDataType(), integer);
-    EXPECT_EQ(call.getAs<AsyncCallLogicalFunction>()->getArguments().size(), 2);
+    EXPECT_EQ(call.getAs<OperatorCallLogicalFunction>()->getArguments().size(), 2);
     const auto nullable = DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     const auto widened
         = call.withChildren({ConstantValueLogicalFunction{nullable, "2"}, zero}).withInferredDataType(Schema<Field, Unordered>{});
@@ -179,7 +135,9 @@ TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfi
     const auto reflected = writer.reflect(withConcurrency);
     const auto restored = reader.unreflect<LogicalFunction>(reflected);
     EXPECT_TRUE(std::ranges::equal(restored.getChildren(), withConcurrency.getChildren(), StructuralFunctionEqual{}));
-    EXPECT_EQ(restored.getAs<AsyncCallLogicalFunction>()->getAsyncOperator().maxConcurrency(), 2);
+    ASSERT_EQ(restored.getAs<OperatorCallLogicalFunction>()->getArguments().size(), 3U);
+    EXPECT_EQ(
+        restored.getAs<OperatorCallLogicalFunction>()->getArguments().at(2).getAs<ConstantValueLogicalFunction>()->getConstantValue(), "2");
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(delayCall({one, ConstantValueLogicalFunction{integer, "-1"}}).withInferredDataType(Schema<Field, Unordered>{})),
         ErrorCode::CannotInferSchema);
@@ -213,19 +171,46 @@ TEST(AsyncDelayFunctionTest, ZeroDelayReturnsOnlyTypedValueAndPreparedCallCanBeR
     }
 }
 
+TEST(AsyncDelayFunctionTest, FactoryAccessorsReadTheCurrentRowOnceBeforeSequentialAttempts)
+{
+    const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    const AsyncInputAccessors inputs{{integer, uintType}};
+    const auto op = AsyncDelayAsyncOperator::create({.inputs = inputs});
+    const auto values = std::make_shared<std::vector<RuntimeValue>>(
+        std::initializer_list<RuntimeValue>{RuntimeValue{int64_t{17}}, RuntimeValue{uint64_t{0}}});
+    const auto reads = std::make_shared<size_t>(0);
+    const auto row = inputs.createRowHandle(
+        [values, reads](const size_t index)
+        {
+            ++*reads;
+            return values->at(index);
+        });
+    AsyncExecutionContext context;
+    const auto prepared = op.prepare(context, row).value();
+    EXPECT_EQ(*reads, 2);
+    values->at(0) = RuntimeValue{int64_t{42}};
+    for (size_t attempt = 0; attempt < 2; ++attempt)
+    {
+        boost::asio::io_context io;
+        auto future = boost::asio::co_spawn(io, prepared->executeAttempt(), boost::asio::use_future);
+        io.run();
+        const auto result = future.get().value();
+        EXPECT_EQ(result[0].get<int64_t>(), 17);
+    }
+    EXPECT_EQ(*reads, 2);
+}
+
 /// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
 TEST(AsyncDelayFunctionTest, InferredConcurrencyConfigurationExecutesThroughFreshContexts)
 {
     const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto concrete = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt}.withInferredArguments(
-        {{integer, value("1")}, {uintType, RuntimeValue{uint64_t{0}}}, {uintType, RuntimeValue{uint64_t{2}}}});
-    const AsyncOperator config = concrete;
+    const auto config = AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, uintType}}}, size_t{2});
     ASSERT_EQ(config.maxConcurrency(), size_t{2});
     boost::asio::io_context ioContext;
     const auto work = [&]() -> boost::asio::awaitable<void>
     {
-        const auto one = co_await invokeOnce(config, SharedRuntimeValues::make(int64_t{10}, uint64_t{0}, uint64_t{2}));
-        const auto two = co_await invokeOnce(config, SharedRuntimeValues::make(int64_t{20}, uint64_t{1}, uint64_t{2}));
+        const auto one = co_await invokeOnce(config, SharedRuntimeValues::make(int64_t{10}, uint64_t{0}));
+        const auto two = co_await invokeOnce(config, SharedRuntimeValues::make(int64_t{20}, uint64_t{1}));
         EXPECT_TRUE(one);
         if (!one)
         {
@@ -244,7 +229,7 @@ TEST(AsyncDelayFunctionTest, InferredConcurrencyConfigurationExecutesThroughFres
     future.get();
 
     AsyncExecutionContext context;
-    const auto prepared = config.prepare(context, SharedRuntimeValues::make(int64_t{30}, uint64_t{0}, uint64_t{2})).value();
+    const auto prepared = config.prepare(context, SharedRuntimeValues::make(int64_t{30}, uint64_t{0})).value();
     EXPECT_EQ(prepared->getRetryOverride(), std::nullopt);
     for (size_t attempt = 0; attempt < 2; ++attempt)
     {
@@ -315,7 +300,7 @@ TEST(AsyncDelayFunctionTest, DynamicPreparationRejectsInvalidTypesAndDurations)
     }
 }
 
-TEST(AsyncDelayFunctionTest, PreparationRejectsAValueOutsideTheBoundOutputType)
+TEST(AsyncDelayFunctionTest, PreparationRejectsAValueOutsideTheDeclaredOutputType)
 {
     const AsyncOperator config = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt};
     AsyncExecutionContext context;
@@ -325,15 +310,13 @@ TEST(AsyncDelayFunctionTest, PreparationRejectsAValueOutsideTheBoundOutputType)
     EXPECT_EQ(result.error().exception.code(), ErrorCode::DifferentFieldTypeExpected);
 }
 
-TEST(AsyncDelayFunctionTest, BoundConfigurationRetainsLimitAndPreparedCallAcrossAttempts)
+TEST(AsyncDelayFunctionTest, InferredConfigurationRetainsLimitAndPreparedCallAcrossAttempts)
 {
     const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto native = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt}.withInferredArguments(
-        {{integer, value("7")}, {uintType, RuntimeValue{uint64_t{0}}}, {uintType, RuntimeValue{uint64_t{3}}}});
-    const AsyncOperator config = native;
+    const auto config = AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, uintType}}}, size_t{3});
     EXPECT_EQ(config.maxConcurrency(), size_t{3});
     AsyncExecutionContext context;
-    const auto prepared = config.prepare(context, SharedRuntimeValues::make(int64_t{7}, uint64_t{0}, uint64_t{3})).value();
+    const auto prepared = config.prepare(context, SharedRuntimeValues::make(int64_t{7}, uint64_t{0})).value();
     EXPECT_EQ(prepared->getRetryOverride(), std::nullopt);
     for (size_t attempt = 0; attempt < 2; ++attempt)
     {
