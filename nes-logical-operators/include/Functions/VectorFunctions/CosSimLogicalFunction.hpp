@@ -29,6 +29,11 @@
 
 namespace NES
 {
+/// Logical function representing the cosine similarity between two dense float32 vectors (e.g., embeddings).
+/// Expects two VARSIZED inputs containing packed little-endian FLOAT32 elements and produces a FLOAT64 value in [-1.0, 1.0].
+/// Output nullability is inferred as nullable if either input is nullable.
+/// Limitation: because DataType has no dedicated vector type, type inference accepts any VARSIZED input (including text),
+/// and binary byte layouts are interpreted directly as packed FLOAT32 values at execution time.
 class CosSimLogicalFunction final
 {
 public:

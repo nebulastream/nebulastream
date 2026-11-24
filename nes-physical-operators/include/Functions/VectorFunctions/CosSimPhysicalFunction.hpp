@@ -23,7 +23,11 @@
 
 namespace NES
 {
-
+/// Physical function that computes the cosine similarity (dot(a, b) / (||a|| * ||b||)) between two dense vectors.
+/// Expects two VARSIZED inputs storing packed little-endian FLOAT32 elements (only float32 vectors are supported) and
+/// returns a FLOAT64 in [-1.0, 1.0] (0.0 for zero-norm inputs, or NULL if either input is NULL).
+/// Accumulates the dot product and squared L2 norms in double precision and clamps the quotient to [-1.0, 1.0].
+/// See https://en.wikipedia.org/wiki/Cosine_similarity for the algorithm definition.
 class CosSimPhysicalFunction final
 {
 public:
