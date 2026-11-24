@@ -80,7 +80,7 @@ double computeCosineSimilarity(const int8_t* inputPtr1, const uint64_t inputSize
     {
         return 0.0;
     }
-    /// To even out numerical errors, the result is clamped.
+    /// Rounding can push the result for nearly parallel vectors past -1 or 1.
     return std::clamp(dot / denom, -1.0, 1.0);
 }
 }
