@@ -39,11 +39,9 @@
 #include <Rewriter/RewriteContext.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Rewriter/TestFilePreparer.hpp>
-#include <Runner/Cluster.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <nes-coordinator-bridge/coordinator.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleWorkerTopology.hpp>
@@ -202,12 +200,6 @@ public:
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down TestFileRewriter test class."); }
-
-    static Cluster createCluster()
-    {
-        return Cluster{Cluster::Config{
-            .mode = Bridge::WorkerMode::Embedded, .topology = Testing::singleWorkerTopology(), .optimizerConfig = {}, .workerConfig = {}}};
-    }
 
     static RunnableTestFile rewriteSlt(const std::string& slt)
     {
@@ -811,14 +803,13 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
+    config.clusterConfig = Testing::singleWorkerTopology();
 
-    auto cluster = createCluster();
-    const auto everything = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}}, cluster);
+    const auto everything = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}});
     ASSERT_EQ(everything.size(), 2U);
 
     TestFilePreparer selecting{config};
-    const auto selected
-        = selecting.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}, std::unordered_set{SystestQueryId{2}}}, cluster);
+    const auto selected = selecting.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}, std::unordered_set{SystestQueryId{2}}});
     ASSERT_EQ(selected.size(), 1U);
     const auto& [overrides, runnable] = selected.front();
     EXPECT_EQ(runnable.key, everything.at(1).file.key);
@@ -827,7 +818,7 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
     EXPECT_TRUE(std::get<RewrittenQuery>(runnable.testCases.front().action).sql.contains(runnable.key));
 }
 
-/// All files of a run share one catalog.
+/// Files with equal overrides share one catalog.
 TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
 {
     const Testing::TemporaryDirectory tmp;
@@ -848,13 +839,12 @@ TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
+    config.clusterConfig = Testing::singleWorkerTopology();
 
-    auto cluster = createCluster();
     TestFilePreparer rewriter{config};
-    EXPECT_NO_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a.test", TestName{"a"}}, cluster));
-    EXPECT_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}, cluster), Exception);
-    EXPECT_NO_THROW(
-        std::ignore = TestFilePreparer{config}.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}, cluster));
+    EXPECT_NO_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a.test", TestName{"a"}}));
+    EXPECT_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}), Exception);
+    EXPECT_NO_THROW(std::ignore = TestFilePreparer{config}.prepare(DiscoveredTestFile{tmp.get() / "a" / "b.test", TestName{"a/b"}}));
 }
 
 TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
@@ -868,9 +858,9 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
+    config.clusterConfig = Testing::singleWorkerTopology();
 
-    auto cluster = createCluster();
-    EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}, cluster).empty());
+    EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}).empty());
 }
 
 }

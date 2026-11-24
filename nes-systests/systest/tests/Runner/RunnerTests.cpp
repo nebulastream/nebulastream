@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -43,6 +44,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <SingleWorkerTopology.hpp>
 #include <TemporaryDirectory.hpp>
 
@@ -64,7 +66,11 @@ public:
     static Cluster createCluster()
     {
         return Cluster{Cluster::Config{
-            .mode = Bridge::WorkerMode::Embedded, .topology = Testing::singleWorkerTopology(), .optimizerConfig = {}, .workerConfig = {}}};
+            .mode = Bridge::WorkerMode::Embedded,
+            .topology = Testing::singleWorkerTopology(),
+            .optimizerConfig = {},
+            .workerConfig = {},
+            .overrides = {}}};
     }
 
     /// A run that keeps its files under the given directory.
@@ -76,7 +82,7 @@ public:
     }
 
     /// A test file with one source row and one query reading it, rewritten under the given name for the runner's worker.
-    static RunnableTestFile rewriteOneTuple(Cluster& cluster, const std::filesystem::path& workingDir, const std::string& name)
+    static RunnableTestFile rewriteOneTuple(const std::filesystem::path& workingDir, const std::string& name)
     {
         SystestParser parser;
         parser.loadString(
@@ -90,7 +96,7 @@ public:
             "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
             "----\n"
             "1\n");
-        const auto placement = cluster.placementFor({});
+        const auto placement = placementIn(Testing::singleWorkerTopology());
         const auto testFile = workingDir / (name + ".test");
         const auto key = TestFileKeyFactory{workingDir}.deriveKeyOf(testFile, 0, 1);
         return TestFilePreparer::rewritePartition(
@@ -122,7 +128,7 @@ TEST_F(RunnerTest, RunsOneTupleEndToEnd)
 {
     const Testing::TemporaryDirectory workingDir;
     auto cluster = createCluster();
-    TestRunner runner{configFor(workingDir.get()), cluster, withoutSettings({rewriteOneTuple(cluster, workingDir.get(), "OneTuple")})};
+    TestRunner runner{configFor(workingDir.get()), cluster, withoutSettings({rewriteOneTuple(workingDir.get(), "OneTuple")})};
     const auto checked = runner.submitAll(1);
 
     ASSERT_EQ(checked.size(), 1U);
@@ -139,7 +145,7 @@ TEST_F(RunnerTest, RunsTwoTestFilesAtOnce)
     TestRunner runner{
         configFor(workingDir.get()),
         cluster,
-        withoutSettings({rewriteOneTuple(cluster, workingDir.get(), "First"), rewriteOneTuple(cluster, workingDir.get(), "Second")})};
+        withoutSettings({rewriteOneTuple(workingDir.get(), "First"), rewriteOneTuple(workingDir.get(), "Second")})};
     const auto checked = runner.submitAll(2);
 
     ASSERT_EQ(checked.size(), 2U);
@@ -225,28 +231,25 @@ TEST_F(RunnerTest, StopsAQueryThatRunsPastTheTimeout)
     EXPECT_TRUE(queries.contains("Stopped")) << queries;
 }
 
-/// A worker takes its settings at startup, so a test file with settings of its own gets a copy of the topology's workers.
-TEST_F(RunnerTest, RegistersACopyOfTheTopologyForEachSetOfSettings)
+/// A source or a sink that sets no host goes to the first host of its allow list.
+TEST_F(RunnerTest, PlacesSourcesAndSinksOnTheFirstAllowedHosts)
 {
     const Host source{"source-node:8080"};
     const Host sink{"sink-node:8080"};
-    Cluster
-        cluster{Cluster::
-                    Config{
-                        .mode = Bridge::WorkerMode::Embedded,
-                        .topology = ClusterConfiguration{.workers = {TopologyWorker{.host = sink, .dataAddress = "sink-node:9090", .maxOperators = std::nullopt, .downstream = {}, .config = {}}, TopologyWorker{.host = source, .dataAddress = "source-node:9090", .maxOperators = std::nullopt, .downstream = {sink}, .config = {}}}, .allowSourcePlacement = {source}, .allowSinkPlacement = {sink}},
-                        .optimizerConfig = {},
-                        .workerConfig = {}}};
+    ClusterConfiguration topology{
+        .workers
+        = {TopologyWorker{.host = sink, .dataAddress = "sink-node:9090", .maxOperators = std::nullopt, .downstream = {}, .config = {}},
+           TopologyWorker{
+               .host = source, .dataAddress = "source-node:9090", .maxOperators = std::nullopt, .downstream = {sink}, .config = {}}},
+        .allowSourcePlacement = {source, sink},
+        .allowSinkPlacement = {sink}};
 
-    const auto unchanged = cluster.placementFor({});
-    EXPECT_EQ(unchanged.sources, source);
-    EXPECT_EQ(unchanged.sinks, sink);
+    const auto placement = placementIn(topology);
+    EXPECT_EQ(placement.sources, source);
+    EXPECT_EQ(placement.sinks, sink);
 
-    const ConfigurationOverride settings{{"worker.query_engine.number_of_worker_threads", "1"}};
-    const auto copy = cluster.placementFor(settings);
-    EXPECT_EQ(copy.sources, Host{"source-node-1:8080"});
-    EXPECT_EQ(copy.sinks, Host{"sink-node-1:8080"});
-    EXPECT_EQ(cluster.placementFor(settings).sources, copy.sources);
+    topology.allowSinkPlacement.clear();
+    EXPECT_THROW(std::ignore = placementIn(topology), Exception);
 }
 
 }

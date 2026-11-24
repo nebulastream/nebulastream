@@ -15,11 +15,8 @@
 #include <Runner/Cluster.hpp>
 
 #include <algorithm>
-#include <cstddef>
 #include <iterator>
 #include <string>
-#include <string_view>
-#include <utility>
 #include <vector>
 
 #include <Config/Topology.hpp>
@@ -60,18 +57,6 @@ rust::Box<Bridge::Coordinator> startCoordinator(const Cluster::Config& config)
     }
 }
 
-/// Gives each copy of the workers its own addresses: copy 1 of `sink-node:8080` is `sink-node-1:8080`.
-/// Copy 0 keeps the addresses of the topology file, which a remote run needs to reach its workers.
-std::string addressOfWorkerCopy(const std::string_view address, const size_t copy)
-{
-    if (copy == 0)
-    {
-        return std::string{address};
-    }
-    const auto port = std::min(address.rfind(':'), address.size());
-    return fmt::format("{}-{}{}", address.substr(0, port), copy, address.substr(port));
-}
-
 std::string createWorkerStatement(const TopologyWorker& worker)
 {
     std::vector options{fmt::format("{} AS {}", Sql::stringLiteral(worker.dataAddress), Sql::DataAddress)};
@@ -97,57 +82,42 @@ Schema<LiteralConfigValue, Ordered> literalsOf(const ConfigurationOverride& over
     return parseCommandLineConfig(arguments);
 }
 
+/// An embedded worker starts with the settings of the topology, the command line and the test files, in rising precedence.
+/// A remote worker is already running, so the cluster registers it without settings.
+void registerWorkers(const Bridge::Coordinator& coordinator, const Cluster::Config& config)
+{
+    const auto embedded = config.mode == Bridge::WorkerMode::Embedded;
+    const auto testFileConfig = embedded ? literalsOf(config.overrides) : Schema<LiteralConfigValue, Ordered>{};
+    for (const auto& worker : config.topology.workers)
+    {
+        auto configured = worker;
+        configured.config = embedded ? mergeConfigLayers({{.name = "topology", .literals = worker.config},
+                                                          {.name = "run configuration", .literals = config.workerConfig},
+                                                          {.name = "test file", .literals = testFileConfig}})
+                                           .literals
+                                     : Schema<LiteralConfigValue, Ordered>{};
+        const auto statement = createWorkerStatement(configured);
+        Bridge::throwIfError(coordinator.submit(rust::Str{statement.data(), statement.size()}, Bridge::WaitMode::None, 0, false).error);
+    }
 }
 
-Cluster::Cluster(const Config& config)
-    : coordinator{startCoordinator(config)}, mode{config.mode}, topology{config.topology}, baseWorkerConfig{config.workerConfig}
+}
+
+Placement placementIn(const ClusterConfiguration& topology)
 {
     if (topology.workers.empty() or topology.allowSourcePlacement.empty() or topology.allowSinkPlacement.empty())
     {
         throw TestException("the topology needs at least one worker, and one host each that allows sources and sinks");
     }
-    placements.emplace(ConfigurationOverride{}, registerWorkers(ConfigurationOverride{}));
-}
-
-void Cluster::submit(const std::string& statement) const
-{
-    Bridge::throwIfError(coordinator->submit(rust::Str{statement.data(), statement.size()}, Bridge::WaitMode::None, 0, false).error);
-}
-
-Placement Cluster::placementFor(const ConfigurationOverride& overrides)
-{
-    const auto applied = runsInThisProcess() ? overrides : ConfigurationOverride{};
-    if (const auto known = placements.find(applied); known != placements.end())
-    {
-        return known->second;
-    }
-    return placements.emplace(applied, registerWorkers(applied)).first->second;
-}
-
-Placement Cluster::registerWorkers(const ConfigurationOverride& overrides) const
-{
-    const auto copy = placements.size();
-    const auto hostOfWorkerCopy = [copy](const Host& host) { return Host{addressOfWorkerCopy(host.view(), copy)}; };
-    const auto testFileConfig = literalsOf(overrides);
-    for (const auto& worker : topology.workers)
-    {
-        auto configured = worker;
-        configured.host = hostOfWorkerCopy(worker.host);
-        configured.dataAddress = addressOfWorkerCopy(worker.dataAddress, copy);
-        std::ranges::transform(worker.downstream, configured.downstream.begin(), hostOfWorkerCopy);
-        configured.config = runsInThisProcess() ? mergeConfigLayers({{.name = "topology", .literals = worker.config},
-                                                                     {.name = "run configuration", .literals = baseWorkerConfig},
-                                                                     {.name = "test file", .literals = testFileConfig}})
-                                                      .literals
-                                                : Schema<LiteralConfigValue, Ordered>{};
-        submit(createWorkerStatement(configured));
-    }
-
     /// The first allowed host, not one chosen to spread the work.
     /// The lists say where a placement is permitted, not which hosts the data can reach: `two-nodes-localhost.yaml`
     /// allows a sink on either node while only one is downstream of the source.
-    return Placement{
-        .sources = hostOfWorkerCopy(topology.allowSourcePlacement.front()), .sinks = hostOfWorkerCopy(topology.allowSinkPlacement.front())};
+    return Placement{.sources = topology.allowSourcePlacement.front(), .sinks = topology.allowSinkPlacement.front()};
+}
+
+Cluster::Cluster(const Config& config) : coordinator{startCoordinator(config)}, mode{config.mode}
+{
+    registerWorkers(*coordinator, config);
 }
 
 }

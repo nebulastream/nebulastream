@@ -66,7 +66,11 @@ void warnNumbersNotInFile(
 }
 
 TestFilePreparer::TestFilePreparer(const SystestConfiguration& config)
-    : workingDir{config.workingDir}, testDataDir{config.testDataDir}, configDir{config.configDir}, keyFactory{config.testDiscoverRoot}
+    : workingDir{config.workingDir}
+    , testDataDir{config.testDataDir}
+    , configDir{config.configDir}
+    , keyFactory{config.testDiscoverRoot}
+    , placement{placementIn(config.clusterConfig)}
 {
 }
 
@@ -89,7 +93,7 @@ ParsedTestFile TestFilePreparer::parse(const DiscoveredTestFile& testFile) const
     }
 }
 
-std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFile& testFile, Cluster& cluster)
+std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFile& testFile)
 {
     const ParsedTestFile parsedFile = parse(testFile);
     warnNumbersNotInFile(testFile.queryFilter, parsedFile, testFile.file);
@@ -106,7 +110,6 @@ std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFil
         {
             continue;
         }
-        const auto [sources, sinks] = cluster.placementFor(overrides);
         /// The loop reads only the overrides after this move.
         auto runnable = rewritePartition(
             std::move(file),
@@ -115,8 +118,8 @@ std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFil
                 .name = testFile.getName().getRawValue(),
                 .workingDir = workingDir,
                 .testDataDir = testDataDir,
-                .sourceHost = sources,
-                .sinkHost = sinks});
+                .sourceHost = placement.sources,
+                .sinkHost = placement.sinks});
         nameOwners.claim(runnable.originalNames, testFile.file);
         rewritten.push_back(RunnablePartition{.overrides = std::move(overrides), .file = std::move(runnable)});
     }
