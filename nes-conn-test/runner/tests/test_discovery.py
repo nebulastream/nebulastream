@@ -278,6 +278,11 @@ def test_sink_bindings_offer_no_source_only_scenario() -> None:
     assert all(getattr(source_bindings, n) is getattr(sink_bindings, n) for n in shared)
 
 
+def test_source_bindings_offer_no_sink_only_scenario() -> None:
+    assert "buffer_without_tuples" in _constructors(sink_bindings)
+    assert "buffer_without_tuples" not in _constructors(source_bindings)
+
+
 def test_source_only_scenario_in_a_sink_fails_discovery(tmp_path: Path) -> None:
     # A sink that imports the source's bindings fails before any case runs, with the module to use instead.
     with pytest.raises(RuntimeError, match=r"close_while_reading.*scenario_bindings\.sink"):

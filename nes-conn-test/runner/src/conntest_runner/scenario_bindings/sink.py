@@ -10,10 +10,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The scenarios that a sink can bind, so far only the shared ones."""
+"""The scenarios that a sink can bind: the shared ones, and those about the buffers that a sink receives."""
 
+from __future__ import annotations
+
+from conntest_runner.discovery import Kind, Scenario
 from conntest_runner.scenario_bindings import _shared
 from conntest_runner.scenario_bindings._shared import *  # noqa: F403
 
-__all__: list[str] = []
+__all__ = [
+    "buffer_without_tuples",
+]
 __all__ += _shared.__all__
+
+
+def buffer_without_tuples(*globs: str) -> Scenario:
+    return Scenario("buffer_without_tuples", configs=list(globs), kind=Kind.SINK)
