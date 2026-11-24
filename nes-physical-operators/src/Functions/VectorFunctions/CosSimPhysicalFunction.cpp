@@ -41,41 +41,41 @@ CosSimPhysicalFunction::CosSimPhysicalFunction(
 
 namespace
 {
-/// Takes raw pointers and byte lengths for vector 1 and vector 2.
-double computeCosineSimilarity(const int8_t* inputPtr1, const uint64_t inputSize1, const int8_t* inputPtr2, const uint64_t inputSize2)
+/// Takes raw pointers and byte lengths for a pair of vectors.
+double computeCosineSimilarity(const int8_t* inputPtrLeft, const uint64_t inputSizeLeft, const int8_t* inputPtrRight, const uint64_t inputSizeRight)
 {
-    const auto* vector1 = reinterpret_cast<const float*>(inputPtr1);
-    const auto* vector2 = reinterpret_cast<const float*>(inputPtr2);
-    const uint64_t dim1 = inputSize1 / sizeof(float);
-    const uint64_t dim2 = inputSize2 / sizeof(float);
+    const auto* vectorLeft = reinterpret_cast<const float*>(inputPtrLeft);
+    const auto* vectorRight = reinterpret_cast<const float*>(inputPtrRight);
+    const uint64_t dimLeft = inputSizeLeft / sizeof(float);
+    const uint64_t dimRight = inputSizeRight / sizeof(float);
 
     double dot = 0.0;
-    double norm1 = 0.0;
-    double norm2 = 0.0;
+    double normLeft = 0.0;
+    double normRight = 0.0;
 
-    for (uint64_t i = 0; i < dim1 && i < dim2; ++i)
+    for (uint64_t i = 0; i < dimLeft && i < dimRight; ++i)
     {
-        const auto vectorElement1 = static_cast<double>(vector1[i]);
-        const auto vectorElement2 = static_cast<double>(vector2[i]);
-        dot += vectorElement1 * vectorElement2;
-        norm1 += vectorElement1 * vectorElement1;
-        norm2 += vectorElement2 * vectorElement2;
+        const auto vectorElementLeft = static_cast<double>(vectorLeft[i]);
+        const auto vectorElementRight = static_cast<double>(vectorRight[i]);
+        dot += vectorElementLeft * vectorElementRight;
+        normLeft += vectorElementLeft * vectorElementLeft;
+        normRight += vectorElementRight * vectorElementRight;
     }
     /// Following steps are a padding.
     /// Elements of the shorter vector are assumed to be 0.
-    for (uint64_t i = dim1; i < dim2; ++i)
+    for (uint64_t i = dimLeft; i < dimRight; ++i)
     {
-        const auto vectorElement2 = static_cast<double>(vector2[i]);
-        norm2 += vectorElement2 * vectorElement2;
+        const auto vectorElementRight = static_cast<double>(vectorRight[i]);
+        normRight += vectorElementRight * vectorElementRight;
     }
-    for (uint64_t i = dim2; i < dim1; ++i)
+    for (uint64_t i = dimRight; i < dimLeft; ++i)
     {
-        const auto vectorElement1 = static_cast<double>(vector1[i]);
-        norm1 += vectorElement1 * vectorElement1;
+        const auto vectorElementLeft = static_cast<double>(vectorLeft[i]);
+        normLeft += vectorElementLeft * vectorElementLeft;
     }
 
     /// This is more numerically stable than sqrt(norm1 * norm2).
-    const double denom = std::sqrt(norm1) * std::sqrt(norm2);
+    const double denom = std::sqrt(normLeft) * std::sqrt(normRight);
     if (denom <= 0.0)
     {
         return 0.0;
