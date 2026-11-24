@@ -17,7 +17,6 @@ use model::query::query_fragment::CreateQueryFragment;
 use model::statement::ParsedStatement;
 use request_handler::SqlPlanner;
 use sea_orm::DatabaseTransaction;
-use tracing::debug;
 
 use crate::catalog::PlanningTransaction;
 
@@ -98,9 +97,6 @@ impl SqlPlanner for FfiSqlPlanner {
 
         let planned = ffi::plan_sql(&ctx, sql, &self.optimizer_config, &self.default_host);
         if let Some(failure) = planned.error.into_error() {
-            // The caller is usually the person who wrote the SQL and gets the message and the code.
-            // The C++ stacktrace would be noise to them and goes to the log instead.
-            debug!(code = ?failure.code, trace = %failure.trace, "planning failed");
             return Err(failure.into());
         }
         let mut statement: ParsedStatement = serde_json::from_str(&planned.statement_json)?;

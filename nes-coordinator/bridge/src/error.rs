@@ -13,8 +13,7 @@
 */
 
 //! How a failure crosses the boundary, and the one place its shape is converted.
-//! A call that returns data reports its failure in the struct that it returns,
-//! so the code and the trace survive.
+//! A call that returns data reports its failure in the struct that it returns, so the code survives.
 //! A constructor may throw instead: its failure has no code to keep, and cxx renders the message.
 
 use std::fmt;
@@ -32,7 +31,6 @@ pub(crate) mod ffi {
     struct BridgeError {
         code: u16,
         msg: String,
-        trace: String,
     }
 }
 
@@ -58,10 +56,9 @@ impl ffi::BridgeError {
         self.code == 0
     }
 
-    /// The reported failure, with the code and stacktrace that the other side gave it.
+    /// The reported failure, with the code that the other side gave it.
     pub(crate) fn into_error(self) -> Option<CodedError> {
-        (!self.is_ok())
-            .then(|| CodedError::relayed(ErrorCode::from_code(self.code), self.msg, self.trace))
+        (!self.is_ok()).then(|| CodedError::new(ErrorCode::from_code(self.code), self.msg))
     }
 }
 
@@ -70,7 +67,6 @@ impl From<&CodedError> for ffi::BridgeError {
         Self {
             code: failure.code as u16,
             msg: failure.msg.clone(),
-            trace: failure.trace.clone(),
         }
     }
 }
@@ -83,7 +79,6 @@ impl From<&anyhow::Error> for ffi::BridgeError {
             Some(failure) => Self {
                 code: failure.code as u16,
                 msg: format!("{error:#}"),
-                trace: failure.trace.clone(),
             },
             // A failure that no layer classified.
             // Zero would read as success, so the unknown code is reported instead.
@@ -91,7 +86,6 @@ impl From<&anyhow::Error> for ffi::BridgeError {
             None => Self {
                 code: ErrorCode::UnknownException as u16,
                 msg: format!("{error:#}"),
-                trace: String::new(),
             },
         }
     }
@@ -112,7 +106,6 @@ impl From<&QueryFragmentError> for ffi::BridgeError {
             QueryFragmentError::Transport { msg } => Self {
                 code: ErrorCode::WorkerUnreachable as u16,
                 msg: msg.clone(),
-                trace: String::new(),
             },
         }
     }
@@ -126,7 +119,6 @@ pub(crate) fn query_failure(query: &Query) -> ffi::BridgeError {
         None => ffi::BridgeError {
             code: ErrorCode::UnknownException as u16,
             msg: "query failed without a fragment error".to_string(),
-            trace: String::new(),
         },
     }
 }

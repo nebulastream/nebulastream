@@ -28,15 +28,12 @@
 namespace NES::Bridge
 {
 
-/// Converts an exception into the error struct that crosses the FFI boundary, with its code and stack trace.
+/// Converts an exception into the error struct that crosses the FFI boundary, with its code.
 /// A thrown exception would reach Rust as a message only.
 /// Code 0 means no error, and no exception has that code.
 inline BridgeError toBridgeError(const Exception& exception)
 {
-    return {
-        .code = static_cast<uint16_t>(exception.code()),
-        .msg = rust::String{std::string{exception.what()}},
-        .trace = rust::String{exception.trace().to_string()}};
+    return {.code = static_cast<uint16_t>(exception.code()), .msg = rust::String{std::string{exception.what()}}};
 }
 
 /// Whether the call that returned this error struct succeeded.
@@ -46,7 +43,6 @@ inline bool isOk(const BridgeError& error)
 }
 
 /// Throws the error that a Rust call reported, as an exception with the same code.
-/// The stack trace from Rust is not kept.
 inline void throwIfError(const BridgeError& error)
 {
     if (!isOk(error))
@@ -117,7 +113,7 @@ auto catchAsBridgeError(Call&& call)
     }
     CPPTRACE_CATCH(...)
     {
-        /// An NES exception keeps its code and trace.
+        /// An NES exception keeps its code.
         /// Any other exception, including an error thrown by a Rust callback, is reported as UnknownException with its message.
         if constexpr (returnsVoid)
         {
