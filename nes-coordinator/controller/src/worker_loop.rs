@@ -15,7 +15,7 @@
 use crate::buggify::buggify;
 use crate::config::MAX_FAILED_STATUS_REQUESTS;
 use crate::fragment::FragmentReconciler;
-use crate::fragment::calls::Call;
+use crate::fragment::calls::{Call, Cancelled};
 use crate::status::{WorkerFragmentState, WorkerStatus};
 use crate::worker_client::WorkerClient;
 use anyhow::Context;
@@ -119,11 +119,13 @@ impl<T: WorkerClient> WorkerLoop<T> {
             tokio::select! {
                 changed = intent_rx.changed() => if changed.is_err() { return; },
                 _ = poll.tick() => {}
-                Some((call, result)) = self.fragments.join_next() => match call {
-                    Call::Start(id) => self.fragments.finalize_start(id, result).await,
+                Some(joined) = self.fragments.join_next() => match joined {
+                    Ok((Call::Start(id), result)) => self.fragments.finalize_start(id, result).await,
                     // The next round that still finds the fragment listed repeats a failed stop.
                     // A round after every stop would repeat it without pause while the worker winds the fragment down.
-                    Call::Stop(_) => continue,
+                    Ok((Call::Stop(_), _)) => continue,
+                    // Only a runtime that shuts down cancels a call, so the calls of a further round would end the same way.
+                    Err(Cancelled) => return,
                 },
             }
             poll.reset();
