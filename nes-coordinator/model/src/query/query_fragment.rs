@@ -26,7 +26,7 @@ use thiserror::Error;
 /// Why a fragment failed: an error inside the worker, or a failure to reach it.
 #[derive(Debug, Clone, Error, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub enum QueryFragmentError {
-    #[error("Internal worker error; code: {}, msg: {}, stacktrace: {}", .0.code as u16, .0.msg, .0.trace)]
+    #[error("Internal worker error; code: {}, msg: {}", .0.code as u16, .0.msg)]
     Internal(CodedError),
     #[error("Worker communication error: {msg}")]
     Transport { msg: String },
