@@ -74,8 +74,7 @@ double computeCosineSimilarity(const int8_t* inputPtr1, const uint64_t inputSize
         norm1 += vectorElement1 * vectorElement1;
     }
 
-    /// This is more numerically stable than sqrt(norm1 * norm2).
-    const double denom = std::sqrt(norm1) * std::sqrt(norm2);
+    const double denom = std::sqrt(norm1 * norm2);
     if (denom <= 0.0)
     {
         return 0.0;
