@@ -17,6 +17,7 @@
 #include <expected>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -90,7 +91,7 @@ std::expected<Schema<UnqualifiedUnboundField, Ordered>, std::string> parseHeader
 }
 }
 
-std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::path& resultFilePath)
+std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::path& resultFilePath, const bool hasHeader)
 {
     std::ifstream resultFile(resultFilePath);
     if (!resultFile)
@@ -99,10 +100,22 @@ std::expected<QueryResult, std::string> loadQueryResult(const std::filesystem::p
     }
 
     std::string line;
+    /// Without a header, every line is a row and an empty file is an empty result.
+    if (not hasHeader)
+    {
+        QueryResult result{.schema = std::nullopt, .tuples = {}};
+        while (std::getline(resultFile, line))
+        {
+            result.tuples.push_back(line);
+        }
+        return result;
+    }
+
     if (!std::getline(resultFile, line))
     {
         return std::unexpected(fmt::format("result file is empty: {}", resultFilePath.string()));
     }
+
     auto schema = parseHeader(line);
     if (not schema)
     {

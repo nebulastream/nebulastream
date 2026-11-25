@@ -69,10 +69,13 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
+    std::optional<std::string> getHeader(const Schema<UnqualifiedUnboundField, Ordered>& schema) const override;
+
 private:
     std::string fieldDelimiter;
     std::string tupleDelimiter;
     bool quoteStrings;
+    std::string headerFormat;
 };
 }
 
