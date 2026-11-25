@@ -18,6 +18,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -464,6 +465,17 @@ struct Unreflector<T>
                 {
                     if constexpr (std::same_as<ValueType, int64_t>)
                     {
+                        /// Integrals narrower than 64 bit must not be truncated silently. 64-bit types keep the
+                        /// wrap-around cast, which is how uint64_t values above INT64_MAX round-trip.
+                        if constexpr (sizeof(T) < sizeof(int64_t))
+                        {
+                            if (value < static_cast<int64_t>(std::numeric_limits<T>::min())
+                                || value > static_cast<int64_t>(std::numeric_limits<T>::max()))
+                            {
+                                throw CannotDeserialize(
+                                    "Failed to unreflect integral type {}, value {} is out of range", NAMEOF_TYPE(T), value);
+                            }
+                        }
                         return static_cast<T>(value);
                     }
                     else
