@@ -297,3 +297,21 @@ def test_sink_bind_rejects_a_config_that_the_session_cannot_run(
         assert (reply["ok"], reply["origin"], reply["name"]) == (False, "harness", "InvalidConfig"), reply
         assert message in reply["message"], reply
         assert session.end() == _EXIT_OK
+
+
+def test_sink_write_until_backpressure_reports_a_sink_that_never_applied_it(
+    harness_binary: Path, sock_dir: Path, tmp_path: Path
+) -> None:
+    # A file sink never applies backpressure, so the step returns once the sink has taken the buffer.
+    # The sink replaces its output file, so the file is not /dev/null.
+    config = tmp_path / "file.nesql"
+    config.write_text(_FILE_CONFIGS["sink"].replace("/dev/null", str(tmp_path / "out.jsonl")), encoding="utf-8")
+    records = tmp_path / "input.jsonl"
+    records.write_text('{"id":1,"Label":"a"}\n', encoding="utf-8")
+    with Session(harness_binary, sock_dir, config=config, mode="sink", args=[f"--input-path={records}"]) as session:
+        assert session.command("BIND")["ok"] is True
+        assert session.command("LOAD") == {"ok": True, "phase": "load", "n_buffers": 1}
+        assert session.command("START") == {"ok": True, "phase": "start"}
+        assert session.command("WRITE_UNTIL_BACKPRESSURE 1") == {"ok": True, "phase": "write", "backpressure": False}
+        assert session.command("STOP") == {"ok": True, "phase": "stop"}
+        assert session.end() == _EXIT_OK

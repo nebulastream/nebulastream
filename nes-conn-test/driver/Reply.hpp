@@ -66,6 +66,9 @@ std::string fillReply(std::string_view phase, bool eos, const std::vector<std::c
 /// `{"ok":true,"phase":"load","n_buffers":3}`.
 /// `n_buffers` is how many buffers the sink session made from its input, so the runner can write them step by step.
 std::string loadReply(std::uint64_t numberOfBuffers);
+/// `{"ok":true,"phase":"write","backpressure":true}`.
+/// `backpressure` says whether the sink applied backpressure during the step.
+std::string writeUntilBackpressureReply(bool backpressure);
 
 /// The error code's name, as in `ExceptionDefinitions.inc`.
 std::string_view errorCodeName(ErrorCode code);

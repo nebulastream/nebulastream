@@ -258,7 +258,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     }
 
     return {
-        .query = std::make_unique<ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
+        .query = std::make_unique<ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources), backpressureListener),
         .sourceIds = sourceIds,
         .pipelineIds = pipelineIds,
         .sourceCtrls = sourceCtrls,

@@ -106,12 +106,13 @@ struct ExpectStats
         size_t lower; \
         size_t upper; \
         Name(size_t lower, size_t upper) : lower(lower), upper(upper) { } \
-        Name(size_t exact) : lower(exact), upper(exact) { } \
+        explicit Name(size_t exact) : lower(exact), upper(exact) { } \
     }; \
 \
-    void apply(Name v) \
+    void apply(Name expected) \
     { \
-        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
+        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))) \
+            .Times(::testing::Between(expected.lower, expected.upper)); \
     }
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
@@ -123,6 +124,8 @@ struct ExpectStats
     STAT_TYPE(TaskExecutionComplete);
     STAT_TYPE(TaskExpired);
     STAT_TYPE(TaskEmit);
+    STAT_TYPE(BackpressureApplied);
+    STAT_TYPE(BackpressureReleased);
 
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
@@ -144,6 +147,10 @@ struct ExpectStats
             .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStopRequest>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::BackpressureApplied>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](const auto&) { }));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::BackpressureReleased>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](const auto&) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryFail>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
     }

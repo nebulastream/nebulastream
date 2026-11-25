@@ -188,6 +188,8 @@ public:
         /// The engine reports a task's repeat before its completion, so the repeats can be ahead for a moment.
         std::uint64_t completedTasks = 0;
         std::uint64_t repeatedTasks = 0;
+        /// How often the sink applied backpressure, which the engine reports for the query.
+        std::uint64_t backpressureApplied = 0;
 
         [[nodiscard]] std::uint64_t takenBuffers() const { return completedTasks - std::min(completedTasks, repeatedTasks); }
     };
@@ -198,6 +200,12 @@ public:
         const std::scoped_lock lock(mutex);
         tracked = queryId;
         state = State{};
+    }
+
+    State current()
+    {
+        const std::scoped_lock lock(mutex);
+        return state;
     }
 
     /// Waits until the condition is met or the query has failed, at most until the deadline, and returns the state either way.
@@ -241,6 +249,8 @@ public:
                         update(complete.queryId, [](State& current) { ++current.completedTasks; });
                     }
                 },
+                [this](const BackpressureApplied& applied)
+                { update(applied.queryId, [](State& current) { ++current.backpressureApplied; }); },
                 [](const auto&) { }},
             event);
     }
@@ -277,8 +287,10 @@ public:
     SinkSessionState(SinkSessionState&&) = delete;
     SinkSessionState& operator=(SinkSessionState&&) = delete;
 
-    /// A session that ends without STOP destroys the engine with the query still running, which destroys the sink without stopping it.
-    /// The runner ends a session that way only after the scenario failed, and a sink that failed may not be able to stop.
+    /// A session that ends without STOP destroys the engine with the query still running, which destroys the sink without stopping it,
+    /// as when the worker shuts down.
+    /// The runner ends a session that way after a scenario failed, because a sink that failed may not be able to stop,
+    /// and in a scenario that shuts the connector down.
     ~SinkSessionState() = default;
 
     std::string dispatch(std::string_view line)
@@ -296,14 +308,14 @@ public:
         {
             return start();
         }
-        if (verb == "WRITE")
+        if (verb == "WRITE" || verb == "WRITE_UNTIL_BACKPRESSURE")
         {
             const auto count = argOf(line);
             if (!count)
             {
-                return errorReply(harnessErrorInfo("write", "HarnessProtocol", fmt::format("WRITE needs <n_buffers>: {}", line)));
+                return errorReply(harnessErrorInfo("write", "HarnessProtocol", fmt::format("{} needs <n_buffers>: {}", verb, line)));
             }
-            return write(*count);
+            return verb == "WRITE" ? write(*count) : writeUntilBackpressure(*count);
         }
         if (verb == "STOP")
         {
@@ -374,13 +386,13 @@ private:
             std::vector<ExecutableQueryPlan::SourceWithSuccessor> sources;
             sources.emplace_back(
                 std::make_unique<SourceHandle>(
-                    std::move(listener),
+                    listener,
                     INITIAL_ORIGIN_ID,
                     SourceRuntimeConfiguration{workerDefaults.defaultMaxInflightBuffers},
                     pool,
                     std::make_unique<FeedSource>(running.feed)),
                 std::vector<std::weak_ptr<ExecutablePipeline>>{sink});
-            engine->start(std::make_unique<ExecutableQueryPlan>(running.id, std::vector{sink}, std::move(sources)));
+            engine->start(std::make_unique<ExecutableQueryPlan>(running.id, std::vector{sink}, std::move(sources), std::move(listener)));
         }
         catch (const Exception& ex)
         {
@@ -499,16 +511,42 @@ private:
         {
             return errorReply(harnessErrorInfo("write", "HarnessProtocol", "WRITE without a started sink"));
         }
-        auto& running = *query;
-        const auto step = running.remaining.first(std::min<std::size_t>(numberOfBuffers, running.remaining.size()));
-        running.remaining = running.remaining.subspan(step.size());
-        running.feed->release(std::vector<std::string>(step.begin(), step.end()));
-        const auto released = batches.size() - running.remaining.size();
+        const auto released = release(*query, numberOfBuffers);
         if (auto error = awaitStep("write", [released](const QueryObserver::State& state) { return state.takenBuffers() >= released; }))
         {
             return errorReply(*error);
         }
         return okReply("write");
+    }
+
+    /// Releases the next batches as WRITE does, but returns as soon as the sink applies backpressure.
+    /// The reply says whether the sink applied it during the step, which it did not if it took every released buffer first.
+    /// So a scenario can check that a sink pushes back on a backend that reads nothing, without measuring time.
+    std::string writeUntilBackpressure(const std::uint64_t numberOfBuffers)
+    {
+        if (!query)
+        {
+            return errorReply(harnessErrorInfo("write", "HarnessProtocol", "WRITE_UNTIL_BACKPRESSURE without a started sink"));
+        }
+        const auto appliedBefore = observer->current().backpressureApplied;
+        const auto released = release(*query, numberOfBuffers);
+        const auto applied = [appliedBefore](const QueryObserver::State& state) { return state.backpressureApplied > appliedBefore; };
+        if (auto error = awaitStep(
+                "write",
+                [&applied, released](const QueryObserver::State& state) { return applied(state) || state.takenBuffers() >= released; }))
+        {
+            return errorReply(*error);
+        }
+        return writeUntilBackpressureReply(applied(observer->current()));
+    }
+
+    /// Releases the next batches that LOAD made, or as many as are left, and returns how many the query's source got since START.
+    std::uint64_t release(RunningQuery& running, const std::uint64_t numberOfBuffers) const
+    {
+        const auto step = running.remaining.first(std::min<std::size_t>(numberOfBuffers, running.remaining.size()));
+        running.remaining = running.remaining.subspan(step.size());
+        running.feed->release(std::vector<std::string>(step.begin(), step.end()));
+        return batches.size() - running.remaining.size();
     }
 
     /// Stops the query as a user does, which drops the buffers of a WRITE that has not returned.

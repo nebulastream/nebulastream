@@ -325,4 +325,20 @@ TEST_F(BackpressureChannelTest, StopTokenFunctionality)
     EXPECT_TRUE(backpressureController.releasePressure());
 }
 
+/// The observer sees each change of the state once and in order, and no call that leaves the state unchanged.
+TEST_F(BackpressureChannelTest, ObserverSeesEachChange)
+{
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    std::vector<bool> changes;
+    backpressureListener.observe([&changes](const bool pressure) { changes.push_back(pressure); });
+
+    EXPECT_TRUE(backpressureController.applyPressure());
+    EXPECT_FALSE(backpressureController.applyPressure());
+    EXPECT_TRUE(backpressureController.releasePressure());
+    EXPECT_FALSE(backpressureController.releasePressure());
+    EXPECT_TRUE(backpressureController.applyPressure());
+
+    EXPECT_EQ(changes, (std::vector{true, false, true}));
+}
+
 }

@@ -116,6 +116,11 @@ def test_read_reply_ok_load() -> None:
     assert got == Got(eos=False, n_buffers=3)
 
 
+def test_read_reply_ok_write_until_backpressure() -> None:
+    got = read_reply(json.dumps({"ok": True, "phase": "write", "backpressure": True}))
+    assert got == Got(backpressure=True)
+
+
 def test_read_reply_connector_error() -> None:
     with pytest.raises(ConnectorError) as ei:
         read_reply(
