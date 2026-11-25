@@ -203,4 +203,30 @@ TEST(UnpooledBufferTests, UnpooledMemoryBudgetIsEnforcedAndReleased)
     ASSERT_TRUE(bufferAfterRelease.has_value());
 }
 
+/// Releasing an older chunk must not make the manager forget the newer chunk that is still the allocation target.
+/// The budget only leaves room for the two chunks of A and B, so a further small buffer can only succeed if it is carved
+/// out of B's still-live chunk instead of opening a third one.
+TEST(UnpooledBufferTests, ReleasingOlderChunkKeepsNewerChunkAsAllocationTarget)
+{
+    constexpr size_t unpooledBudgetInBytes = 700 * 1000;
+    constexpr uint32_t poolBufferSize = 4096;
+    constexpr NES::BufferAlignment bufferAlignment{64};
+    constexpr size_t totalMemoryInBytes = unpooledBudgetInBytes + poolBufferSize;
+    const double unpooledMemoryFraction = static_cast<double>(unpooledBudgetInBytes) / static_cast<double>(totalMemoryInBytes);
+    const auto bufferManager = BufferManager::create(
+        totalMemoryInBytes, unpooledMemoryFraction, bufferAlignment, poolBufferSize, std::make_shared<NesDefaultMemoryAllocator>());
+
+    constexpr size_t smallAllocationSize = 1024;
+    constexpr size_t largeAllocationSize = 100 * 1024;
+
+    auto bufferA = bufferManager->getUnpooledBuffer(smallAllocationSize);
+    ASSERT_TRUE(bufferA.has_value());
+    auto bufferB = bufferManager->getUnpooledBuffer(largeAllocationSize);
+    ASSERT_TRUE(bufferB.has_value());
+
+    bufferA.reset();
+
+    const auto bufferC = bufferManager->getUnpooledBuffer(smallAllocationSize);
+    ASSERT_TRUE(bufferC.has_value());
+}
 }

@@ -219,7 +219,11 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
                 /// All memory segments have been removed, therefore, we can deallocate the unpooled chunk
                 const auto extractedChunk = lockedLocalUnpooledBufferData->chunks.extract(copyOLastChunkPtr);
                 const auto& extractedChunkControlBlock = extractedChunk.mapped();
-                lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
+                /// Only forget the last allocated chunk if it is the one being freed: another, still live chunk may have replaced it.
+                if (lockedLocalUnpooledBufferData->lastAllocateChunkKey == copyOLastChunkPtr)
+                {
+                    lockedLocalUnpooledBufferData->lastAllocateChunkKey = nullptr;
+                }
                 lockedLocalUnpooledBufferData.unlock();
                 /// Clear all poison (redzones + released data regions) before returning the chunk to the allocator.
                 ASAN_UNPOISON_MEMORY_REGION(extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize);
