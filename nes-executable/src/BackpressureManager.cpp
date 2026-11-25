@@ -32,8 +32,39 @@
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+
 namespace NES
 {
+
+/// BPSTAT: local benchmark instrumentation, not for upstream.
+void bpstat::event(const char* kind, const uint64_t a, const uint64_t b, const uint64_t c)
+{
+    static FILE* const file = []() -> FILE*
+    {
+        const char* path = std::getenv("NES_BPSTAT_FILE");
+        if (path == nullptr)
+        {
+            return nullptr;
+        }
+        FILE* opened = std::fopen(path, "w");
+        if (opened != nullptr)
+        {
+            std::setvbuf(opened, nullptr, _IOLBF, 1 << 16);
+        }
+        return opened;
+    }();
+    if (file == nullptr)
+    {
+        return;
+    }
+    static std::mutex mutex;
+    const auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const std::scoped_lock lock(mutex);
+    std::fprintf(file, "%lld %s %llu %llu %llu\n", static_cast<long long>(now), kind, static_cast<unsigned long long>(a), static_cast<unsigned long long>(b), static_cast<unsigned long long>(c));
+}
 
 namespace detail
 {
@@ -50,6 +81,7 @@ struct SourceGate
 
     folly::Synchronized<Votes, std::mutex> votes;
     std::condition_variable_any unblocked;
+    uint64_t id = 0;
 
     /// Applies `change` to the votes, and wakes the listener if the source is no longer blocked.
     template <typename Change>
@@ -231,6 +263,7 @@ bool ExternalBackpressureVoter::applyBackpressureToAll() &
     {
         return false;
     }
+    bpstat::event("hard_apply", 0);
     for (const auto& gate : shared->gates | std::views::values)
     {
         gate->addHard(1);
@@ -245,6 +278,7 @@ bool ExternalBackpressureVoter::releaseBackpressureToAll() &
     {
         return false;
     }
+    bpstat::event("hard_release", 0);
     for (const auto& gate : shared->gates | std::views::values)
     {
         gate->addHard(-1);
@@ -375,7 +409,11 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
     {
         return;
     }
+    const auto begin = std::chrono::steady_clock::now();
+    bpstat::event("block", gate->id, votes->hard, votes->softApply);
     gate->unblocked.wait(votes.as_lock(), stopToken, [&] { return !votes->blocked(); });
+    const auto blockedFor = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - begin).count();
+    bpstat::event("unblock", gate->id, static_cast<uint64_t>(blockedFor));
 }
 
 bool BackpressureListener::isBlocked() const
@@ -390,6 +428,7 @@ BackpressureManager::BackpressureManager(const std::vector<OriginId>& sources, O
     for (const auto source : sources)
     {
         shared->gates.try_emplace(source, std::make_shared<detail::SourceGate>());
+        shared->gates.at(source)->id = source.getRawValue();
         sourcesOfOrigins.try_emplace(source, std::vector{source});
     }
     for (const auto& [origin, sourcesOfOrigin] : sourcesOfOrigins)

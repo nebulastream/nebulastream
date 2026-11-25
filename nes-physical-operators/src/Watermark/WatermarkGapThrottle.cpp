@@ -126,10 +126,12 @@ void WatermarkGapThrottle::updateVotes(const std::span<const Timestamp> watermar
             {
                 voter->applyBackpressureTo(origin);
                 NES_DEBUG("Watermark gap: hold origin {}, slowest at {}", origin, slowest);
+                bpstat::event("hold", origin.getRawValue(), latest[index].getRawValue(), slowest);
             }
             else
             {
                 voter->releaseBackpressureTo(origin);
+                bpstat::event("release", origin.getRawValue(), latest[index].getRawValue(), slowest);
             }
             held[index] = hold;
             holds[index].store(hold, std::memory_order::relaxed);

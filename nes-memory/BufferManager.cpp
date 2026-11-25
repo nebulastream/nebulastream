@@ -40,8 +40,86 @@
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
 
+#include <cstdlib>
+#include <stop_token>
+#include <string>
+#include <thread>
+#include <vector>
+
 namespace NES
 {
+
+/// BPSTAT: local benchmark instrumentation, not for upstream. Samples pool occupancy to $NES_BPSTAT_POOL_FILE.
+namespace
+{
+class PoolSampler
+{
+public:
+    static PoolSampler& get()
+    {
+        static PoolSampler sampler;
+        return sampler;
+    }
+
+    void add(const BufferManager* pool)
+    {
+        const char* path = std::getenv("NES_BPSTAT_POOL_FILE");
+        if (path == nullptr)
+        {
+            return;
+        }
+        const std::scoped_lock lock(mutex);
+        pools.emplace_back(pool, nextId++);
+        if (!thread.joinable())
+        {
+            thread = std::jthread(
+                [this, file = std::string(path)](const std::stop_token& stop)
+                {
+                    FILE* out = std::fopen(file.c_str(), "w");
+                    if (out == nullptr)
+                    {
+                        return;
+                    }
+                    while (!stop.stop_requested())
+                    {
+                        {
+                            const std::scoped_lock lock(mutex);
+                            const auto now = std::chrono::duration_cast<std::chrono::microseconds>(
+                                                 std::chrono::system_clock::now().time_since_epoch())
+                                                 .count();
+                            for (const auto& [pool, id] : pools)
+                            {
+                                std::fprintf(
+                                    out,
+                                    "%lld pool %d %zu %zu %zu\n",
+                                    static_cast<long long>(now),
+                                    id,
+                                    pool->getNumOfPooledBuffers(),
+                                    pool->getNumberOfAvailableBuffers(),
+                                    pool->getNumOfUnpooledBuffers());
+                            }
+                        }
+                        std::fflush(out);
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    }
+                    std::fclose(out);
+                });
+        }
+    }
+
+    void remove(const BufferManager* pool)
+    {
+        const std::scoped_lock lock(mutex);
+        std::erase_if(pools, [&](const auto& entry) { return entry.first == pool; });
+    }
+
+private:
+    std::mutex mutex;
+    std::vector<std::pair<const BufferManager*, int>> pools;
+    int nextId = 0;
+    std::jthread thread;
+};
+}
 
 BufferManager::BufferManager(
     Private,
@@ -87,6 +165,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
 
 BufferManager::~BufferManager()
 {
+    PoolSampler::get().remove(this);
     destroy();
 }
 
@@ -220,6 +299,7 @@ void BufferManager::initialize()
     /// placement-new of each control block (and the debug marker fill above) writes to unpoisoned memory.
     ASAN_POISON_MEMORY_REGION(basePointer, allocatedAreaSize);
     NES_DEBUG("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
+    PoolSampler::get().add(this);
 }
 
 TupleBuffer BufferManager::getBufferBlocking()

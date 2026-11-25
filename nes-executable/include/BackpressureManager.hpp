@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <stop_token>
@@ -21,6 +22,12 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+
+/// BPSTAT: local benchmark instrumentation, not for upstream. Writes one line per event to $NES_BPSTAT_FILE.
+namespace NES::bpstat
+{
+void event(const char* kind, uint64_t a, uint64_t b = 0, uint64_t c = 0);
+}
 
 namespace NES
 {
