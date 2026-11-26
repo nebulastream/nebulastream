@@ -1,0 +1,29 @@
+diff --git a/src/inference/src/os/lin/lin_system_conf.cpp b/src/inference/src/os/lin/lin_system_conf.cpp
+index 2d301ac..88c2d58 100644
+--- a/src/inference/src/os/lin/lin_system_conf.cpp
++++ b/src/inference/src/os/lin/lin_system_conf.cpp
+@@ -376,6 +376,10 @@ void parse_node_info_linux(const std::vector<std::string> node_info_table,
+ 
+     for (auto& row : nodes_table) {
+         for (int i = row[0]; i <= row[1]; i++) {
++            // Offline processors have no core type yet: CPU_MAP_CORE_TYPE is -1.
++            if (_cpu_mapping_table[i][CPU_MAP_CORE_TYPE] < 0) {
++                continue;
++            }
+             _cpu_mapping_table[i][CPU_MAP_NUMA_NODE_ID] = row[2];
+             if (_sockets > _numa_nodes) {
+                 _cpu_mapping_table[i][CPU_MAP_SOCKET_ID] = row[2];
+@@ -589,6 +593,13 @@ void parse_cache_info_linux(const std::vector<std::vector<std::string>> system_i
+         }
+     }
+ 
++    if (offline_list.size() == static_cast<size_t>(_processors)) {
++        // No processor reports L2 or L3 cache info, e.g. in VMs that expose only index0 and index1.
++        // Let the caller fall back to the next parser.
++        clean_up_output();
++        return;
++    }
++
+     if ((node_info_table.size() == 0) || (node_info_table.size() == (unsigned)_sockets)) {
+         if (_sockets > 1) {
+             _proc_type_table.push_back(_proc_type_table[0]);
