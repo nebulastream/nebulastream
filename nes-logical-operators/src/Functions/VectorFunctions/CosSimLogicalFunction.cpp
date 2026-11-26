@@ -56,7 +56,7 @@ std::string CosSimLogicalFunction::explain(ExplainVerbosity verbosity) const
 DataType CosSimLogicalFunction::getDataType() const
 {
     return dataType;
-};
+}
 
 LogicalFunction CosSimLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
@@ -73,12 +73,12 @@ LogicalFunction CosSimLogicalFunction::withInferredDataType(const Schema<Field, 
     copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
-};
+}
 
 std::vector<LogicalFunction> CosSimLogicalFunction::getChildren() const
 {
     return {left, right};
-};
+}
 
 CosSimLogicalFunction CosSimLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {

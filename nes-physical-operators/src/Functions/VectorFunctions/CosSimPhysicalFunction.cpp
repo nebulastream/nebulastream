@@ -108,8 +108,7 @@ VarVal CosSimPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 
     if (outputType.nullable)
     {
-        const auto isNull = (leftVal.isNullable() && leftVal.isNull()) || (rightVal.isNullable() && rightVal.isNull());
-        if (isNull)
+        if (leftVal.isNull() || rightVal.isNull())
         {
             return VarVal{0.0, true, true}.castToType(outputType.type);
         }
@@ -129,9 +128,9 @@ PhysicalFunctionRegistryReturnType
 CosSimPhysicalFunction::createCOSINE_SIMILARITY(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "COSINE_SIMILARITY requires exactly two child functions");
-    return CosSimPhysicalFunction(
+    return CosSimPhysicalFunction{
         physicalFunctionRegistryArguments.childFunctions[0],
         physicalFunctionRegistryArguments.childFunctions[1],
-        physicalFunctionRegistryArguments.outputType);
+        physicalFunctionRegistryArguments.outputType};
 }
 }
