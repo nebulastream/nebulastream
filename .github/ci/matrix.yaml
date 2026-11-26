@@ -56,6 +56,10 @@ runners:
   github-arm64: ubuntu-24.04-arm
   self-hosted-x64: [self-hosted, linux, Build, x64]
   self-hosted-arm64: [self-hosted, linux, Build, arm64]
+  # OpenVINO corrupts the heap when it reads the CPU cache topology of the arm64 Lima VMs,
+  # so the inference tests run only on arm64 machines labeled bare-metal.
+  self-hosted-benchmark-x64: [self-hosted, linux, Build, x64]
+  self-hosted-benchmark-arm64: [self-hosted, linux, Build, arm64, bare-metal]
 
 jobs:
   # === Sanitizer builds (RelWithDebInfo, on self-hosted 64-core) ===
@@ -146,7 +150,7 @@ jobs:
     stdlib: [libcxx, libstdcxx]
     build_type: Benchmark
     sanitizer: none
-    runner: self-hosted-{arch}
+    runner: self-hosted-benchmark-{arch}
     tests: [unit, systest, docker]
     exclude:
       - arch: arm64
