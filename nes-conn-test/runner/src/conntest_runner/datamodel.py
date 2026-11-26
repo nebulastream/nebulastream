@@ -114,10 +114,19 @@ def rows_to_jsonl(schema: list[NativeColumn], rows: Iterable[tuple[Any, ...]]) -
 
 
 def jsonl_to_rows(schema: list[NativeColumn], payload: bytes) -> list[tuple[Any, ...]]:
+    """One row for each line of ``payload``.
+
+    A blank line fails, because it is an empty record, which a connector must not deliver.
+    The newline after the last record ends that record and starts no new one.
+    For example, `{"id":1}\\n` is one row, and `{"id":1}\\n\\n` fails.
+    """
+    lines = payload.split(b"\n")
+    if lines[-1] == b"":
+        lines.pop()
     rows: list[tuple[Any, ...]] = []
-    for line in payload.split(b"\n"):
+    for number, line in enumerate(lines, start=1):
         if not line.strip():
-            continue
+            raise AssertionError(f"line {number} of {len(lines)} is blank, which is an empty record")
         obj = json.loads(line)
         rows.append(tuple(obj[name] for name, _typ, _x in schema))
     return rows
@@ -165,3 +174,27 @@ class SourceModel:
 
     def compare_fill(self, rows: list[tuple[Any, ...]], *, observed: bytes) -> None:
         _verify_rows(self.schema, rows, jsonl_to_rows(self.schema, observed))
+
+
+class SinkModel:
+    """Generates the data of one sink test and checks the rows that the loader reads back.
+
+    The generated rows are both what the sink writes and the oracle, so the two cannot drift apart.
+    """
+
+    def __init__(self, schema: list[NativeColumn]) -> None:
+        self.schema = schema
+
+    def make_rows(self, n_buffers: int, seed: int, buffer_size: int) -> list[tuple[Any, ...]]:
+        """Rows whose JSONL encoding is shorter than ``n_buffers`` buffers.
+
+        The harness fills each buffer before it starts the next, so the rows take at most ``n_buffers`` buffers.
+        """
+        return generate_rows(self.schema, seed=seed, max_bytes=n_buffers * buffer_size - 1)
+
+    def encode(self, rows: list[tuple[Any, ...]]) -> bytes:
+        """The JSONL records that the harness hands to the sink, written to its ``--input-path``."""
+        return rows_to_jsonl(self.schema, rows)
+
+    def compare_read_back(self, rows: list[tuple[Any, ...]], *, received: list[Any]) -> None:
+        _verify_rows(self.schema, rows, received)

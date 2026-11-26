@@ -25,10 +25,5 @@ add_registry_entry(Sink TCP)
 add_registry_entry(SinkConfigSchema TCP)
 add_registry_entry(SinkConfig TCP)
 
-add_e2e_test(
-    NAME tcp-sink-test
-    BATS_FILE tests/distributed.bats
-    DOCKER_COMPOSE
-)
-
 add_tests_if_enabled(tests)
+add_conn_test(PLUGIN TCPSink)

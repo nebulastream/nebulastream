@@ -19,17 +19,27 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include <Plugins/BuiltinPlugins.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Strings.hpp>
+#include <Binder.hpp>
+#include <BufferPool.hpp>
 #include <ControlChannel.hpp>
+#include <ErrorHandling.hpp>
+#include <Reply.hpp>
+#include <SinkSession.hpp>
 #include <SourceSession.hpp>
 
 #include <argparse/argparse.hpp>
 #include <boost/system/system_error.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::ConnTest
 {
@@ -41,35 +51,46 @@ enum class ExitCode : std::uint8_t
     Ok = 0,
     ChannelError = 1,
     BadArguments = 2,
-    SourceStuck = SOURCE_STUCK_EXIT_CODE,
+    Stuck = STUCK_EXIT_CODE,
 };
 
 void configureArgumentParser(argparse::ArgumentParser& program)
 {
-    program.add_argument("--mode").required().choices("source").help("which stepper to run");
-    program.add_argument("--config").required().help("SQL snippet (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE)");
+    program.add_argument("--mode").required().help("which stepper to run, source or sink");
+    program.add_argument("--config").required().help("SQL snippet (CREATE LOGICAL SOURCE + CREATE PHYSICAL SOURCE, or CREATE SINK)");
     program.add_argument("--control-sock").required().help("AF_UNIX path of the runner's control channel");
     program.add_argument("--buffer-size").help("per-buffer size in bytes");
     program.add_argument("--buffer-count").help("number of pooled buffers");
     program.add_argument("--observed-path").help("write the bytes observed per FILL here (runner decode)");
+    program.add_argument("--input-path").help("sink: the JSONL records that the sink writes");
+    program.add_argument("--threads").help("sink: how many worker threads the engine runs");
 }
 
 /// An absent flag leaves `target` at its default.
-template <typename T>
-bool applyUnsigned(const argparse::ArgumentParser& program, const std::string& flag, T& target)
+/// The flag is parsed as a 64-bit number, so that the option's own bounds reject a value that its type cannot hold.
+template <typename Option>
+bool applyOption(const argparse::ArgumentParser& program, const std::string& flag, Option& target)
 {
     const auto raw = program.present<std::string>(flag);
     if (not raw)
     {
         return true;
     }
-    const auto parsed = NES::from_chars<T>(*raw);
+    const auto parsed = NES::from_chars<std::uint64_t>(*raw);
     if (not parsed)
     {
         std::cerr << "error: " << flag << " expects an unsigned integer, got '" << *raw << "'\n";
         return false;
     }
-    target = *parsed;
+    try
+    {
+        target = Option{*parsed};
+    }
+    catch (const Exception& ex)
+    {
+        std::cerr << "error: " << flag << ": " << trimWhiteSpaces(ex.what()) << "\n";
+        return false;
+    }
     return true;
 }
 
@@ -78,8 +99,7 @@ ExitCode runSource(const argparse::ArgumentParser& program, ControlChannel& chan
     SourceSessionOptions options;
     options.configFile = program.get<std::string>("--config");
 
-    if (not applyUnsigned(program, "--buffer-size", options.bufferSize)
-        or not applyUnsigned(program, "--buffer-count", options.bufferCount))
+    if (not applyOption(program, "--buffer-size", options.bufferSize) or not applyOption(program, "--buffer-count", options.bufferCount))
     {
         return ExitCode::BadArguments;
     }
@@ -88,7 +108,37 @@ ExitCode runSource(const argparse::ArgumentParser& program, ControlChannel& chan
     {
         options.observedPath = std::filesystem::path{*observed};
     }
-    return runSourceSession(options, channel) ? ExitCode::Ok : ExitCode::ChannelError;
+
+    /// The pool's size depends only on the flags, so the harness makes it before the first command.
+    /// An exception from making it rejects the flags, as a value outside its bounds does.
+    std::shared_ptr<AbstractBufferProvider> pool;
+    try
+    {
+        pool = makeBufferPool(options.bufferSize, options.bufferCount);
+    }
+    catch (const std::exception& ex)
+    {
+        std::cerr << "error: --buffer-size and --buffer-count: cannot make the buffer pool: " << trimWhiteSpaces(ex.what()) << "\n";
+        return ExitCode::BadArguments;
+    }
+    return runSourceSession(options, std::move(pool), channel) ? ExitCode::Ok : ExitCode::ChannelError;
+}
+
+ExitCode runSink(const argparse::ArgumentParser& program, ControlChannel& channel)
+{
+    SinkSessionOptions options;
+    options.configFile = program.get<std::string>("--config");
+
+    if (not applyOption(program, "--buffer-size", options.bufferSize) or not applyOption(program, "--threads", options.threads))
+    {
+        return ExitCode::BadArguments;
+    }
+
+    if (const auto input = program.present<std::string>("--input-path"))
+    {
+        options.inputPath = std::filesystem::path{*input};
+    }
+    return runSinkSession(options, channel) ? ExitCode::Ok : ExitCode::ChannelError;
 }
 
 }
@@ -108,6 +158,15 @@ int main(int argc, char** argv)
         std::cerr << err.what() << '\n' << program;
         return std::to_underlying(NES::ConnTest::ExitCode::BadArguments);
     }
+    const auto kind = NES::ConnTest::parseConnectorKind(program.get<std::string>("--mode"));
+    if (!kind.has_value())
+    {
+        std::cerr << fmt::format(
+            "conntest-harness: --mode {} is not one of {}\n",
+            program.get<std::string>("--mode"),
+            fmt::join(magic_enum::enum_names<NES::ConnTest::ConnectorKind>(), ", "));
+        return std::to_underlying(NES::ConnTest::ExitCode::BadArguments);
+    }
 
     /// Connectors are registered at runtime, and binding and OPEN look them up by type.
     NES::loadBuiltinPlugins();
@@ -125,5 +184,12 @@ int main(int argc, char** argv)
         return std::to_underlying(NES::ConnTest::ExitCode::ChannelError);
     }
 
-    return std::to_underlying(NES::ConnTest::runSource(program, *channel));
+    switch (*kind)
+    {
+        case NES::ConnTest::ConnectorKind::Source:
+            return std::to_underlying(NES::ConnTest::runSource(program, *channel));
+        case NES::ConnTest::ConnectorKind::Sink:
+            return std::to_underlying(NES::ConnTest::runSink(program, *channel));
+    }
+    std::unreachable();
 }

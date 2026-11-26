@@ -38,6 +38,15 @@ struct ErrorInfo
     std::uint16_t code{0};
 };
 
+/// A stuck source OPEN waits this long for the open and then again for the stop, so one step can take twice this.
+/// The runner's deadline per test is four times this, so a stuck step replies with a StepTimeout that says which step,
+/// as long as the steps before it took less than half of the deadline.
+/// The runner derives its timeouts from a copy of this value in nes-conn-test/runner/src/conntest_runner/harness.py, so change both.
+inline constexpr std::chrono::milliseconds STEP_TIMEOUT{30'000};
+
+/// The harness exits with this code after a step of either session timed out.
+inline constexpr int STUCK_EXIT_CODE = 3;
+
 ErrorInfo connectorErrorInfo(std::string_view phase, const Exception& exception);
 ErrorInfo harnessErrorInfo(std::string_view phase, std::string_view name, std::string_view msg);
 
@@ -46,13 +55,17 @@ std::string errorReply(const ErrorInfo& err);
 
 /// `{"ok":true,"phase":"open"}`.
 std::string okReply(std::string_view phase);
-/// `{"ok":true,"phase":"bind","schema":[{"name":"ID","type":"INT32","nullable":false}]}` for a config with `(id INTEGER NOT NULL)`.
+/// `{"ok":true,"phase":"bind","schema":[{"name":"ID","type":"INT32","nullable":false}],"step_timeout_ms":30000}` for a config with `(id INTEGER NOT NULL)`.
 /// The runner generates its rows for this schema, so it needs no SQL parser of its own.
 /// A name is the canonical one, which the engine's JSON formatters use as the key.
+/// The runner waits as long as the step timeout in the steps that it runs itself, such as a loader's read-back, so the value is defined once.
 std::string bindReply(const Schema<UnqualifiedUnboundField, Ordered>& schema);
 /// `{"ok":true,"phase":"fill","eos":false,"partial_read_ms":[2001]}`.
 /// `partial_read_ms` lists how long each read that returned a partly filled buffer took during the step.
 std::string fillReply(std::string_view phase, bool eos, const std::vector<std::chrono::milliseconds>& partialReads);
+/// `{"ok":true,"phase":"load","n_buffers":3}`.
+/// `n_buffers` is how many buffers the sink session made from its input, so the runner can write them step by step.
+std::string loadReply(std::uint64_t numberOfBuffers);
 
 /// The error code's name, as in `ExceptionDefinitions.inc`.
 std::string_view errorCodeName(ErrorCode code);

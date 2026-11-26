@@ -15,13 +15,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
+import conntest_runner.scenario_bindings.sink as sink_bindings
 import conntest_runner.scenario_bindings.source as source_bindings
 from conntest_runner.discovery import (
     Expectation,
     IsolationContractError,
+    Kind,
+    RegisteredConnector,
     Scenario,
     binding_problems,
     discover_plugin,
@@ -30,6 +34,9 @@ from conntest_runner.discovery import (
 )
 from conntest_runner.scenarios import scenario_names
 
+if TYPE_CHECKING:
+    from types import ModuleType
+
 _LOADER = (
     "from conntest_runner.contracts import SourceLoader\n"
     "class FakeLoader(SourceLoader):\n"
@@ -37,6 +44,15 @@ _LOADER = (
     "    def config_overrides(self, *, target, endpoint): return {}\n"
     "    def setup(self, *, target, schema=None): pass\n"
     "    def seed_batch(self, rows, *, target): pass\n"
+)
+
+_SINK_LOADER = (
+    "from conntest_runner.contracts import SinkLoader\n"
+    "class FakeLoader(SinkLoader):\n"
+    "    def __init__(self, endpoint): pass\n"
+    "    def config_overrides(self, *, target, endpoint): return {}\n"
+    "    def setup(self, *, target, schema=None): pass\n"
+    "    def read_back(self, *, target, schema, n_rows, timeout_s): return []\n"
 )
 
 # The image tag has a digit on purpose: the port must come from `expose:`, not from a digit elsewhere.
@@ -49,18 +65,18 @@ _COMPOSE_ONE_SERVICE = 'services:\n  {service}:\n    image: busybox:1.36\n    ex
 
 
 @pytest.fixture
-def registered(request: pytest.FixtureRequest, repo_root: Path) -> dict[str, Path]:
+def registered(request: pytest.FixtureRequest, repo_root: Path) -> dict[str, RegisteredConnector]:
     build_dir = request.config.getoption("--build-dir")
     if build_dir is None:
         pytest.skip("no --build-dir given")
     return registered_connectors(Path(build_dir), repo_root)
 
 
-def test_every_registered_connector_loads(registered: dict[str, Path]) -> None:
+def test_every_registered_connector_loads(registered: dict[str, RegisteredConnector]) -> None:
     # Loading raises on a compose.yaml without exactly one exposed service,
-    # so a clean load also checks every connector's topology.
-    for name, conn_test_dir in registered.items():
-        p = discover_plugin(name, conn_test_dir)
+    # so a clean load also checks every connector's topology and that its loader is of its registered kind.
+    for name, connector in registered.items():
+        p = discover_plugin(name, connector.conn_test_dir, connector.kind)
         assert p.scenarios, name
         assert all(isinstance(s, Scenario) and s.name for s in p.scenarios), name
 
@@ -71,7 +87,7 @@ def test_missing_scenarios_raises(tmp_path: Path) -> None:
     (ct / "loader.py").write_text(_LOADER, encoding="utf-8")
     (ct / "compose.yaml").write_text(_COMPOSE_ONE_SERVICE.format(service="svc"), encoding="utf-8")
     with pytest.raises(FileNotFoundError, match="scenarios.py"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 _LOADER_NOT_A_SUBCLASS = (
@@ -90,7 +106,7 @@ def test_loader_not_subclassing_base_is_not_discovered(tmp_path: Path) -> None:
     (ct / "loader.py").write_text(_LOADER_NOT_A_SUBCLASS, encoding="utf-8")
     (ct / "compose.yaml").write_text(_COMPOSE_ONE_SERVICE.format(service="svc"), encoding="utf-8")
     with pytest.raises(RuntimeError, match="SourceLoader"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 def _write_fake_broker_plugin(tmp_path: Path, *, compose: str) -> Path:
@@ -104,17 +120,17 @@ def _write_fake_broker_plugin(tmp_path: Path, *, compose: str) -> Path:
 
 def test_topology_derived_from_compose(tmp_path: Path) -> None:
     ct = _write_fake_broker_plugin(tmp_path, compose=_COMPOSE_ONE_SERVICE.format(service="svc"))
-    assert discover_plugin("FakeSource", ct).endpoint == "svc:1234"
+    assert discover_plugin("FakeSource", ct, Kind.SOURCE).endpoint == "svc:1234"
     # Without a compose.yaml, the loader starts the server itself.
     (ct / "compose.yaml").unlink()
-    assert discover_plugin("FakeSource", ct).endpoint is None
+    assert discover_plugin("FakeSource", ct, Kind.SOURCE).endpoint is None
 
 
 def test_missing_expose_port_fails_fast(tmp_path: Path) -> None:
     """The error is reported at discovery, not as a later connect timeout."""
     ct = _write_fake_broker_plugin(tmp_path, compose="services:\n  svc:\n    image: busybox\n")
     with pytest.raises(IsolationContractError, match="expose"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 def test_multiple_services_fails_fast(tmp_path: Path) -> None:
@@ -123,7 +139,7 @@ def test_multiple_services_fails_fast(tmp_path: Path) -> None:
     )
     ct = _write_fake_broker_plugin(tmp_path, compose=two_services)
     with pytest.raises(IsolationContractError, match="exactly one service"):
-        discover_plugin("FakeSource", ct)
+        discover_plugin("FakeSource", ct, Kind.SOURCE)
 
 
 @pytest.mark.parametrize(
@@ -172,11 +188,13 @@ def _discover_with(
     scenarios_py: str,
     configs: tuple[str, ...] = (),
     data_files: tuple[str, ...] = (),
+    loader: str = _LOADER,
+    kind: Kind = Kind.SOURCE,
 ):
     """Loads the plugin even for a malformed binding, as long as scenarios.py imports."""
     ct = tmp_path / "conn-test"
-    ct.mkdir()
-    ct.joinpath("loader.py").write_text(_LOADER, encoding="utf-8")
+    ct.mkdir(parents=True)
+    ct.joinpath("loader.py").write_text(loader, encoding="utf-8")
     ct.joinpath("compose.yaml").write_text(
         _COMPOSE_ONE_SERVICE.format(service="svc"), encoding="utf-8"
     )
@@ -189,16 +207,16 @@ def _discover_with(
         f = ct / rel
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text("x\n", encoding="utf-8")
-    return discover_plugin("FakeSource", ct)
+    return discover_plugin("FakeSource", ct, kind)
 
 
 def test_clean_bindings_have_no_problems(tmp_path: Path) -> None:
     entry = _discover_with(
         tmp_path,
-        scenarios_py=_SCN.format("Scenario('round_trip', config='basic.nesql')"),
+        scenarios_py=_SCN.format("Scenario('transfer_1_buffer', config='basic.nesql')"),
         configs=("basic.nesql",),
     )
-    assert binding_problems(entry, known_scenarios={"round_trip"}) == []
+    assert binding_problems(entry, known_scenarios={"transfer_1_buffer"}) == []
 
 
 def test_unknown_scenario_reported(tmp_path: Path) -> None:
@@ -207,25 +225,81 @@ def test_unknown_scenario_reported(tmp_path: Path) -> None:
         scenarios_py=_SCN.format("Scenario('nope', config='basic.nesql')"),
         configs=("basic.nesql",),
     )
-    probs = binding_problems(entry, known_scenarios={"round_trip"})
+    probs = binding_problems(entry, known_scenarios={"transfer_1_buffer"})
     assert any(p.scenario == "nope" and "not a catalog scenario" in p.message for p in probs)
 
 
+def test_loader_base_class_sets_the_kind(tmp_path: Path) -> None:
+    source = _discover_with(tmp_path / "source", scenarios_py=_SCN.format(""))
+    sink = _discover_with(tmp_path / "sink", scenarios_py=_SCN.format(""), loader=_SINK_LOADER, kind=Kind.SINK)
+    assert (source.kind, sink.kind) == (Kind.SOURCE, Kind.SINK)
+
+
+@pytest.mark.parametrize(
+    ("loader", "kind", "base"),
+    [
+        pytest.param(_SINK_LOADER, Kind.SOURCE, "SourceLoader", id="sink-loader-of-a-source"),
+        pytest.param(_LOADER, Kind.SINK, "SinkLoader", id="source-loader-of-a-sink"),
+    ],
+)
+def test_a_loader_of_the_other_kind_fails_discovery(tmp_path: Path, loader: str, kind: Kind, base: str) -> None:
+    # Otherwise the harness would run in the other mode, and every case would fail at BIND with an error about the config.
+    with pytest.raises(RuntimeError, match=rf"registered a {kind}, so its loader must subclass conntest_runner\.contracts\.{base}"):
+        _discover_with(tmp_path, scenarios_py=_SCN.format(""), loader=loader, kind=kind)
+
+
+def test_registered_connectors_have_the_kind_that_cmake_wrote(tmp_path: Path) -> None:
+    listing = tmp_path / "nes-conn-test" / "connectors.txt"
+    listing.parent.mkdir()
+    listing.write_text("TCPSink sink nes-plugins/Sinks/TCPSink/conn-test\n", encoding="utf-8")
+    connector = registered_connectors(tmp_path, Path("/repo"))["TCPSink"]
+    assert (connector.kind, connector.conn_test_dir) == (Kind.SINK, Path("/repo/nes-plugins/Sinks/TCPSink/conn-test"))
+
+
+def _constructors(module: ModuleType) -> set[str]:
+    return set(module.__all__)
+
+
 def test_every_catalog_scenario_has_a_constructor() -> None:
-    assert set(source_bindings.__all__) == set(scenario_names())
+    assert _constructors(source_bindings) | _constructors(sink_bindings) == set(scenario_names())
     # The arguments without a default, so that the loop can call every constructor.
     required = {"bad_endpoint": {"error": 4002}, "partial_buffer_held": {"flush_interval_ms": 2000}}
-    for name in source_bindings.__all__:
-        assert getattr(source_bindings, name)("basic.nesql", **required.get(name, {})).name == name
+    for module in (source_bindings, sink_bindings):
+        for name in _constructors(module):
+            assert getattr(module, name)("basic.nesql", **required.get(name, {})).name == name
+
+
+def test_sink_bindings_offer_no_source_only_scenario() -> None:
+    # A source-only scenario is missing from the sink's module, so a sink cannot even import it.
+    assert "close_while_reading" in _constructors(source_bindings)
+    assert "close_while_reading" not in _constructors(sink_bindings)
+    # The shared constructors are written once.
+    shared = _constructors(source_bindings) & _constructors(sink_bindings)
+    assert all(getattr(source_bindings, n) is getattr(sink_bindings, n) for n in shared)
+
+
+def test_source_only_scenario_in_a_sink_fails_discovery(tmp_path: Path) -> None:
+    # A sink that imports the source's bindings fails before any case runs, with the module to use instead.
+    with pytest.raises(RuntimeError, match=r"close_while_reading.*scenario_bindings\.sink"):
+        _discover_with(
+            tmp_path,
+            scenarios_py=(
+                "from conntest_runner.scenario_bindings.source import close_while_reading\n"
+                "SCENARIOS = [close_while_reading('basic.nesql')]\n"
+            ),
+            configs=("basic.nesql",),
+            loader=_SINK_LOADER,
+            kind=Kind.SINK,
+        )
 
 
 def test_dangling_config_glob_reported(tmp_path: Path) -> None:
     # No config file is written, so no orphan is reported alongside.
     entry = _discover_with(
         tmp_path,
-        scenarios_py=_SCN.format("Scenario('round_trip', config='missing.nesql')"),
+        scenarios_py=_SCN.format("Scenario('transfer_1_buffer', config='missing.nesql')"),
     )
-    probs = binding_problems(entry, known_scenarios={"round_trip"})
+    probs = binding_problems(entry, known_scenarios={"transfer_1_buffer"})
     assert any("matches no file" in p.message for p in probs)
     assert not any(p.scenario is None for p in probs)  # no orphan reported
 
@@ -234,16 +308,16 @@ def test_invalid_outcome_reported_not_raised(tmp_path: Path) -> None:
     entry = _discover_with(
         tmp_path,
         scenarios_py=_SCN.format(
-            "Scenario('round_trip', config='basic.nesql', outcome='ERROR Bogus')"
+            "Scenario('transfer_1_buffer', config='basic.nesql', outcome='ERROR Bogus')"
         ),
         configs=("basic.nesql",),
     )
-    probs = binding_problems(entry, known_scenarios={"round_trip"})
+    probs = binding_problems(entry, known_scenarios={"transfer_1_buffer"})
     assert any("invalid outcome" in p.message and "Bogus" in p.message for p in probs)
 
 
 def test_invalid_outcome_deferred_onto_spec() -> None:
-    s = Scenario("round_trip", config="basic.nesql", outcome="ERROR Bogus")
+    s = Scenario("transfer_1_buffer", config="basic.nesql", outcome="ERROR Bogus")
     assert s.configs[0].expect is None
     assert s.configs[0].error
     assert "Bogus" in s.configs[0].error
@@ -251,7 +325,7 @@ def test_invalid_outcome_deferred_onto_spec() -> None:
 
 def test_empty_outcome_deferred_not_raised() -> None:
     # A blank outcome fails parsing with IndexError, not ValueError, and must still be deferred.
-    s = Scenario("round_trip", config="basic.nesql", outcome="   ")
+    s = Scenario("transfer_1_buffer", config="basic.nesql", outcome="   ")
     assert s.configs[0].expect is None
     assert s.configs[0].error
 
@@ -260,10 +334,10 @@ def test_orphan_config_reported(tmp_path: Path) -> None:
     # An unreferenced config is a problem of the plugin, not of a scenario.
     entry = _discover_with(
         tmp_path,
-        scenarios_py=_SCN.format("Scenario('round_trip', config='basic.nesql')"),
+        scenarios_py=_SCN.format("Scenario('transfer_1_buffer', config='basic.nesql')"),
         configs=("basic.nesql", "stray.nesql"),
     )
-    probs = binding_problems(entry, known_scenarios={"round_trip"})
+    probs = binding_problems(entry, known_scenarios={"transfer_1_buffer"})
     assert any(p.scenario is None and "stray" in p.message for p in probs)
 
 
@@ -274,7 +348,7 @@ def test_multiple_defects_all_discovered_never_raised(tmp_path: Path) -> None:
             "Scenario('nope', config='missing.nesql', outcome='ERROR Bogus')"
         ),
     )
-    joined = " | ".join(p.message for p in binding_problems(entry, known_scenarios={"round_trip"}))
+    joined = " | ".join(p.message for p in binding_problems(entry, known_scenarios={"transfer_1_buffer"}))
     assert "not a catalog scenario" in joined
     assert "invalid outcome" in joined
     assert "matches no file" in joined

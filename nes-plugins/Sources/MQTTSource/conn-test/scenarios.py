@@ -24,20 +24,20 @@ from conntest_runner.scenario_bindings.source import (
     empty,
     full_buffer_not_held,
     partial_buffer_held,
-    round_trip_1_buffer,
-    round_trip_n_buffers,
     silent_link,
     slow_link,
+    transfer_1_buffer,
+    transfer_n_buffers,
 )
 
 SCENARIOS = [
-    round_trip_1_buffer("basic.nesql", "default_flush.nesql", "qos0.nesql", "qos2.nesql", "log_messages.nesql"),
+    transfer_1_buffer("basic.nesql", "default_flush.nesql", "qos0.nesql", "qos2.nesql", "log_messages.nesql"),
     # The source appends no delimiter, so the loader publishes each row's newline itself.
     # It splits every row across two messages, so a source that writes anything between two messages breaks every row.
-    round_trip_1_buffer("empty_delimiter.nesql", loader_args={"split_rows": True}),
-    # Only this round trip also covers the multi-column schema.
+    transfer_1_buffer("empty_delimiter.nesql", loader_args={"split_rows": True}),
+    # Only this transfer also covers the multi-column schema.
     # QoS 0 must not lose data either: the source's client queues every message that it receives, whether or not the source reads.
-    round_trip_n_buffers("basic.nesql", "multicol.nesql", "qos0.nesql", "qos2.nesql"),
+    transfer_n_buffers("basic.nesql", "multicol.nesql", "qos0.nesql", "qos2.nesql"),
     # No FILL follows the OPEN, so the source subscribes and unsubscribes without a read.
     empty("basic.nesql"),
     # The client library's connect fails, and open() rethrows it as CannotOpenSource (4002).

@@ -37,8 +37,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -66,29 +64,15 @@ constexpr std::chrono::milliseconds INGEST_POLL_INTERVAL{25};
 /// A write into a full queue is sliced so that the source thread keeps noticing a stop request, as in the engine.
 constexpr std::chrono::milliseconds QUEUE_WRITE_POLL{100};
 
-/// A limit on the unpooled buffers that a connector may request, not a reservation.
-constexpr std::size_t UNPOOLED_MEMORY_BUDGET_IN_BYTES = 256UZ * 1024 * 1024;
-
-/// The buffer manager is sized by a memory budget, not a buffer count.
-/// Its rounding only moves bytes from the unpooled to the pooled share, so the pool holds at least the requested count.
-std::shared_ptr<BufferManager> makeBufferPool(const std::uint32_t bufferSize, const std::uint32_t bufferCount)
-{
-    constexpr BufferAlignment alignment{64};
-    const auto totalMemory = (static_cast<std::size_t>(bufferSize) * bufferCount) + UNPOOLED_MEMORY_BUDGET_IN_BYTES;
-    return BufferManager::create(
-        totalMemory,
-        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(totalMemory),
-        alignment,
-        bufferSize,
-        std::make_shared<NesDefaultMemoryAllocator>());
-}
-
 /// The state that persists across the commands of one session.
 /// Each OPEN starts a source thread whose emit pushes buffers into a bounded queue, and FILL reads from that queue.
 class SourceSessionState
 {
 public:
-    explicit SourceSessionState(const SourceSessionOptions& options) : options(options) { }
+    SourceSessionState(const SourceSessionOptions& options, std::shared_ptr<NES::AbstractBufferProvider> pool)
+        : options(options), pool(std::move(pool))
+    {
+    }
 
     SourceSessionState(const SourceSessionState&) = delete;
     SourceSessionState& operator=(const SourceSessionState&) = delete;
@@ -112,7 +96,7 @@ public:
     [[noreturn]] static void exitStuck()
     {
         std::cerr << "conntest-harness: the source did not stop within the step timeout, exiting\n";
-        std::_Exit(SOURCE_STUCK_EXIT_CODE);
+        std::_Exit(STUCK_EXIT_CODE);
     }
 
     std::string dispatch(std::string_view line)
@@ -144,38 +128,39 @@ public:
     }
 
 private:
+    /// Binds at the first BIND only, so a repeated BIND or a later OPEN returns the same descriptor or the same error.
     std::string bind()
-    {
-        const auto& descriptor = ensureBound();
-        if (!descriptor)
-        {
-            return errorReply(descriptor.error());
-        }
-        return bindReply(descriptor->getSchema());
-    }
-
-    /// Binds on the first call only, so a repeated BIND or OPEN returns the same descriptor or the same error.
-    const std::expected<SourceDescriptor, ErrorInfo>& ensureBound()
     {
         if (!bound)
         {
-            if (const auto sql = slurpFile(options.configFile))
-            {
-                bound.emplace(bindSourceStatements(*sql));
-            }
-            else
-            {
-                bound.emplace(
-                    std::unexpected{
-                        harnessErrorInfo("bind", "HarnessIO", fmt::format("cannot read config file: {}", options.configFile.string()))});
-            }
+            bound.emplace(bindConfig());
         }
-        return *bound;
+        if (!*bound)
+        {
+            return errorReply(bound->error());
+        }
+        return bindReply((*bound)->getSchema());
+    }
+
+    [[nodiscard]] std::expected<SourceDescriptor, ErrorInfo> bindConfig() const
+    {
+        const auto sql = slurpFile(options.configFile);
+        if (!sql)
+        {
+            return std::unexpected{
+                harnessErrorInfo("bind", "HarnessIO", fmt::format("cannot read config file: {}", options.configFile.string()))};
+        }
+        return bindSourceStatements(*sql);
     }
 
     std::string open()
     {
-        const auto& descriptor = ensureBound();
+        /// The runner generates its rows for the schema of the BIND reply, so an OPEN without a BIND means that the runner skipped a step.
+        if (!bound)
+        {
+            return errorReply(harnessErrorInfo("open", "HarnessProtocol", "OPEN before BIND"));
+        }
+        const auto& descriptor = *bound;
         if (!descriptor)
         {
             return errorReply(descriptor.error());
@@ -187,19 +172,7 @@ private:
             return errorReply(harnessErrorInfo("open", "StepTimeout", stopTimeoutMessage()));
         }
 
-        if (!pool)
-        {
-            try
-            {
-                pool = makeBufferPool(static_cast<std::uint32_t>(options.bufferSize), static_cast<std::uint32_t>(options.bufferCount));
-            }
-            catch (const std::exception& ex)
-            {
-                return errorReply(harnessErrorInfo("open", "HarnessIO", ex.what()));
-            }
-        }
-
-        queue = std::make_unique<folly::MPMCQueue<TupleBuffer>>(std::max<std::size_t>(options.bufferCount, 1));
+        queue = std::make_unique<folly::MPMCQueue<TupleBuffer>>(options.bufferCount.getRawValue());
         eos.store(false);
 
         auto [channelController, listener] = createBackpressureChannel();
@@ -240,14 +213,17 @@ private:
         /// The handle is built here, not by the source provider, so that the wrapper can be injected.
         /// The in-flight limit is not enforced here; the bounded queue applies the backpressure.
         handle = std::make_unique<SourceHandle>(
-            std::move(listener), NES::OriginId(1), NES::SourceRuntimeConfiguration{options.bufferCount}, pool, std::move(wrapped));
+            std::move(listener),
+            NES::OriginId(1),
+            NES::SourceRuntimeConfiguration{options.bufferCount.getRawValue()},
+            pool,
+            std::move(wrapped));
         handle->start(makeEmitFunction());
 
-        if (openedFuture.wait_for(SOURCE_STEP_TIMEOUT) != std::future_status::ready)
+        if (openedFuture.wait_for(STEP_TIMEOUT) != std::future_status::ready)
         {
             resetSource();
-            return errorReply(
-                harnessErrorInfo("open", "StepTimeout", fmt::format("open timed out after {} ms", SOURCE_STEP_TIMEOUT.count())));
+            return errorReply(harnessErrorInfo("open", "StepTimeout", fmt::format("open timed out after {} ms", STEP_TIMEOUT.count())));
         }
         try
         {
@@ -350,7 +326,7 @@ private:
         bool timedOut = false;
         std::optional<ErrorInfo> err;
 
-        const auto deadline = std::chrono::steady_clock::now() + SOURCE_STEP_TIMEOUT;
+        const auto deadline = std::chrono::steady_clock::now() + STEP_TIMEOUT;
         while (true)
         {
             if (bytesObserved >= quota && (quota > 0 || reading->load()))
@@ -401,7 +377,7 @@ private:
             return errorReply(harnessErrorInfo(
                 phase,
                 "StepTimeout",
-                fmt::format("{} timed out after {} ms ({} of quota observed)", phase, SOURCE_STEP_TIMEOUT.count(), bytesObserved)));
+                fmt::format("{} timed out after {} ms ({} of quota observed)", phase, STEP_TIMEOUT.count(), bytesObserved)));
         }
         return fillReply(phase, sawEoS, partialReads->take());
     }
@@ -425,7 +401,7 @@ private:
 
     [[nodiscard]] std::string stopTimeoutMessage() const
     {
-        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", SOURCE_STEP_TIMEOUT.count());
+        return fmt::format("the source did not stop within {} ms; its connector ignores the stop request", STEP_TIMEOUT.count());
     }
 
     /// The stop has the step timeout, so a connector that ignores the stop request fails the step instead of hanging the session.
@@ -435,7 +411,7 @@ private:
     {
         if (handle)
         {
-            if (handle->tryStop(SOURCE_STEP_TIMEOUT) == SourceReturnType::TryStopResult::TIMEOUT)
+            if (handle->tryStop(STEP_TIMEOUT) == SourceReturnType::TryStopResult::TIMEOUT)
             {
                 stuck = true;
                 return;
@@ -474,9 +450,9 @@ private:
 
 }
 
-bool runSourceSession(const SourceSessionOptions& options, ControlChannel& channel)
+bool runSourceSession(const SourceSessionOptions& options, std::shared_ptr<AbstractBufferProvider> pool, ControlChannel& channel)
 {
-    SourceSessionState state(options);
+    SourceSessionState state(options, std::move(pool));
     while (true)
     {
         const auto line = channel.readLine();

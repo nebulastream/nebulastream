@@ -18,14 +18,22 @@ import importlib.util
 import re
 import sys
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from conntest_runner.contracts import SourceLoader
+from conntest_runner.contracts import SinkLoader, SourceLoader
 from conntest_runner.protocol import describe, resolve_code
 
 if TYPE_CHECKING:
     from pathlib import Path
     from types import ModuleType
+
+
+class Kind(StrEnum):
+    """Whether a connector is a source or a sink, as add_conn_test registers it."""
+
+    SOURCE = "source"
+    SINK = "sink"
 
 
 class IsolationContractError(RuntimeError):
@@ -101,8 +109,9 @@ def _make_config_spec(glob: str, outcome: str) -> ConfigSpec:
 class Scenario:
     """One scenario binding.
 
-    Plugins create it through the constructors in ``scenario_bindings``,
+    Plugins create it through the constructors in ``scenario_bindings.source`` or ``scenario_bindings.sink``,
     which accept only the arguments that each scenario allows.
+    ``kind`` is set for a scenario that only that kind of connector can bind, and is None for a shared one.
     A bare glob in ``configs`` expects OK.
     ``args`` holds the arguments of one scenario, such as the flush interval that a config sets.
     The framework passes them to the scenario as ``ctx.args`` without reading them.
@@ -119,6 +128,7 @@ class Scenario:
         n_buffers: int | None = None,
         args: dict[str, object] | None = None,
         loader_args: dict[str, object] | None = None,
+        kind: Kind | None = None,
     ) -> None:
         specs: list[ConfigSpec] = []
         for entry in configs or []:
@@ -131,11 +141,12 @@ class Scenario:
         self.n_buffers = n_buffers
         self.args = args or {}
         self.loader_args = loader_args or {}
+        self.kind = kind
 
     def __repr__(self) -> str:
         return (
             f"Scenario(name={self.name!r}, configs={self.configs!r}, "
-            f"n_buffers={self.n_buffers!r}, args={self.args!r}, loader_args={self.loader_args!r})"
+            f"n_buffers={self.n_buffers!r}, args={self.args!r}, loader_args={self.loader_args!r}, kind={self.kind!r})"
         )
 
 
@@ -148,6 +159,10 @@ class PluginEntry:
     # None for a connector without a compose.yaml, whose loader starts the server itself.
     endpoint: str | None
     scenarios: list[Scenario] = field(default_factory=list)
+
+    @property
+    def kind(self) -> Kind:
+        return Kind.SINK if issubclass(self.loader_cls, SinkLoader) else Kind.SOURCE
 
     def scenarios_named(self, name: str) -> list[Scenario]:
         return [s for s in self.scenarios if s.name == name]
@@ -165,7 +180,11 @@ def resolve_configs(conn_test_dir: Path, globs: list[str]) -> list[Path]:
 def _is_loader_class(obj: object) -> bool:
     # The loader module imports the abstract base too.
     # Only a concrete subclass can be instantiated.
-    return isinstance(obj, type) and issubclass(obj, SourceLoader) and not getattr(obj, "__abstractmethods__", None)
+    return (
+        isinstance(obj, type)
+        and issubclass(obj, (SourceLoader, SinkLoader))
+        and not getattr(obj, "__abstractmethods__", None)
+    )
 
 
 def _import(path: Path, module_name: str) -> ModuleType:
@@ -305,21 +324,30 @@ def binding_problems(
     return problems
 
 
-def registered_connectors(build_dir: Path, repo_root: Path) -> dict[str, Path]:
+@dataclass(frozen=True)
+class RegisteredConnector:
+    kind: Kind
+    conn_test_dir: Path
+
+
+def registered_connectors(build_dir: Path, repo_root: Path) -> dict[str, RegisteredConnector]:
     """The connectors that called add_conn_test, from the list that CMake writes into the build dir.
 
-    One line per connector, with the directory relative to the repo root: `TCPSource nes-plugins/Sources/TCPSource/conn-test`.
+    One line per connector, with its kind and its directory relative to the repo root:
+    `TCPSource source nes-plugins/Sources/TCPSource/conn-test`.
     """
     listing = build_dir / "nes-conn-test" / "connectors.txt"
     if not listing.is_file():
         raise FileNotFoundError(f"{listing} does not exist; configure the build with tests enabled")
     return {
-        name: repo_root / rel
-        for name, rel in (line.split(maxsplit=1) for line in listing.read_text(encoding="utf-8").splitlines() if line.strip())
+        name: RegisteredConnector(kind=Kind(kind), conn_test_dir=repo_root / rel)
+        for name, kind, rel in (
+            line.split(maxsplit=2) for line in listing.read_text(encoding="utf-8").splitlines() if line.strip()
+        )
     }
 
 
-def discover_plugin(name: str, conn_test_dir: Path) -> PluginEntry:
+def discover_plugin(name: str, conn_test_dir: Path, kind: Kind) -> PluginEntry:
     loader_py = conn_test_dir / "loader.py"
     if not loader_py.is_file():
         raise FileNotFoundError(f"{name}: no {loader_py}")
@@ -328,12 +356,28 @@ def discover_plugin(name: str, conn_test_dir: Path) -> PluginEntry:
     if len(loader_classes) != 1:
         raise RuntimeError(
             f"{name}: loader.py must define exactly one concrete subclass of "
-            f"conntest_runner.contracts.SourceLoader, found {len(loader_classes)}"
+            f"conntest_runner.contracts.SourceLoader or SinkLoader, found {len(loader_classes)}"
         )
-    return PluginEntry(
+    # A loader of the other kind would fail every case at BIND, with an error about the config, not about the loader.
+    base = SinkLoader if kind == Kind.SINK else SourceLoader
+    if not issubclass(loader_classes[0], base):
+        raise RuntimeError(
+            f"{name}: add_conn_test registered a {kind}, so its loader must subclass conntest_runner.contracts.{base.__name__}, "
+            f"which {loader_classes[0].__name__} does not"
+        )
+    entry = PluginEntry(
         name=name,
         conn_test_dir=conn_test_dir,
         loader_cls=loader_classes[0],
         endpoint=_compose_endpoint(conn_test_dir),
         scenarios=read_plugin_scenarios(conn_test_dir),
     )
+    # Importing the other kind's bindings is the only way to bind a scenario for the wrong kind.
+    # The case would fail only when it runs, so discovery rejects the plugin before any case starts.
+    for scenario in entry.scenarios:
+        if scenario.kind is not None and scenario.kind != entry.kind:
+            raise RuntimeError(
+                f"{name}: scenario {scenario.name!r} applies only to a {scenario.kind}, but the loader is a {entry.kind} loader; "
+                f"import the bindings from conntest_runner.scenario_bindings.{entry.kind}"
+            )
+    return entry

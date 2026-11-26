@@ -19,6 +19,7 @@ It is the only timer outside the harness.
 from __future__ import annotations
 
 import contextlib
+import itertools
 import shutil
 import socket
 import subprocess
@@ -37,14 +38,15 @@ if TYPE_CHECKING:
 
 _ACCEPT_TIMEOUT_S = 30.0
 _ACCEPT_POLL_S = 0.1
-# The harness's step timeout, a constant in nes-conn-test/driver/SourceSession.hpp, from which the timeouts below are derived.
-# Change both together, or a stuck step is reported as a killed harness, not as the step that hung.
-_HARNESS_STEP_TIMEOUT_S = 30.0
+# The harness's step timeout, a constant in nes-conn-test/driver/Reply.hpp, from which the timeouts below are derived.
+# BIND fails when the harness reports another value, so a change to only one of them fails every test.
+# It is in milliseconds, as the harness reports it, and the timeouts below are in seconds, as Python's waits take them.
+_HARNESS_STEP_TIMEOUT_MS = 30_000
 # Four times the step timeout, because a stuck OPEN takes twice the step timeout.
 # So a stuck step replies with the harness's StepTimeout, which says which step, before the deadline kills the harness.
-_TEST_DEADLINE_S = 4 * _HARNESS_STEP_TIMEOUT_S
+_TEST_DEADLINE_S = 4 * _HARNESS_STEP_TIMEOUT_MS / 1000
 # Above the step timeout, because on EOF the harness stops a running source with that timeout.
-_END_SESSION_TIMEOUT_S = _HARNESS_STEP_TIMEOUT_S + 10.0
+_END_SESSION_TIMEOUT_S = _HARNESS_STEP_TIMEOUT_MS / 1000 + 10.0
 
 
 @dataclass(frozen=True)
@@ -163,6 +165,9 @@ class _Stepper:
         self._server.bind(str(self._sock_path))
         self._server.listen(1)
         self._proc: _HarnessProc | None = None
+        self._step_timeout_ms: int | None = None
+        # The setup steps that succeeded, which a respawned harness gets again before its first step.
+        self._setup: list[str] = []
         self._deadline = threading.Timer(_TEST_DEADLINE_S, self._on_deadline)
         self._deadline.daemon = True
         self._deadline.start()
@@ -176,18 +181,41 @@ class _Stepper:
         self._proc = _HarnessProc(argv, self._server, log=self._log)
 
     def _command(self, line: str) -> Got:
-        if self._proc is None:
+        proc = self._proc
+        if proc is None:
             self._spawn()
-        assert self._proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
-        return self._proc.command(line)
+            proc = self._proc
+            assert proc is not None  # noqa: S101  # _spawn() sets _proc or raises; narrows the type
+            # A respawned harness has a new session, which fails a step before its setup steps.
+            for setup in itertools.takewhile(lambda step: step != line, self._setup):
+                proc.command(setup)
+        return proc.command(line)
 
     def bind(self) -> list[NativeColumn]:
         """The schema that the engine bound from the config, which the rows are generated for."""
-        schema = list(self._command("BIND").schema)
+        got = self._command("BIND")
+        # The deadlines are derived from the runner's copy of the step timeout, so they are wrong for a harness with another value.
+        if got.step_timeout_ms != _HARNESS_STEP_TIMEOUT_MS:
+            raise HarnessError(
+                name="HarnessProtocol",
+                phase="bind",
+                message=f"the harness's step timeout is {got.step_timeout_ms} ms, "
+                f"but the runner's copy in harness.py is {_HARNESS_STEP_TIMEOUT_MS} ms; change both",
+            )
+        self._step_timeout_ms = got.step_timeout_ms
+        schema = list(got.schema)
         # Every row of an empty schema is `{}`, so every comparison would pass without checking a value.
         if not schema:
             raise HarnessError(name="HarnessProtocol", phase="bind", message="the BIND reply has no schema")
+        self._setup.append("BIND")
         return schema
+
+    @property
+    def step_timeout_s(self) -> float:
+        """The harness's step timeout, so that a step that the runner runs itself waits as long as one of the harness."""
+        if self._step_timeout_ms is None:
+            raise RuntimeError("the harness reports its step timeout at BIND, which has not run")
+        return self._step_timeout_ms / 1000
 
     def kill(self) -> None:
         """Models an ungraceful worker death: the backend sees the connection drop without a CLOSE.
@@ -243,3 +271,24 @@ class Source(_Stepper):
             return Path(self._observed_path).read_bytes()
         except OSError:
             return b""
+
+
+class Sink(_Stepper):
+    def __init__(self, **kw: Any) -> None:
+        super().__init__(mode="sink", **kw)
+
+    def load(self) -> Got:
+        """The reply's ``n_buffers`` is how many buffers the harness made from the ``--input-path`` records."""
+        got = self._command("LOAD")
+        self._setup.append("LOAD")
+        return got
+
+    def start(self) -> Got:
+        return self._command("START")
+
+    def write(self, n_buffers: int) -> Got:
+        """Hands the next ``n_buffers`` buffers to the sink, or as many as are left."""
+        return self._command(f"WRITE {n_buffers}")
+
+    def stop(self) -> Got:
+        return self._command("STOP")

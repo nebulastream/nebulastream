@@ -19,6 +19,7 @@ import json
 import pytest
 
 from conntest_runner.datamodel import (
+    SinkModel,
     SourceModel,
     generate_rows,
     jsonl_to_rows,
@@ -44,6 +45,24 @@ _NULL_SCHEMA = [
     ("reading", "FLOAT64", True),
     ("name", "VARSIZED", False),
 ]
+
+
+def test_sink_model_rows_fit_in_n_buffers() -> None:
+    model = SinkModel(_NULL_SCHEMA)
+    rows = model.make_rows(n_buffers=3, seed=7, buffer_size=256)
+    assert len(model.encode(rows)) < 3 * 256
+    assert jsonl_to_rows(_NULL_SCHEMA, model.encode(rows)) == rows
+
+
+def test_sink_model_compare_read_back_is_order_insensitive_and_counts_rows() -> None:
+    model = SinkModel(_NULL_SCHEMA)
+    rows = model.make_rows(n_buffers=2, seed=7, buffer_size=256)
+    model.compare_read_back(rows, received=list(reversed(rows)))
+    # A sink that loses a record, or delivers one twice, fails the compare.
+    with pytest.raises(AssertionError):
+        model.compare_read_back(rows, received=rows[1:])
+    with pytest.raises(AssertionError):
+        model.compare_read_back(rows, received=[*rows, rows[0]])
 
 
 def test_generate_rows_deterministic() -> None:
@@ -80,6 +99,26 @@ def test_jsonl_keys_are_the_canonical_names() -> None:
     assert blob == b'{"ID":1,"Label":"x","label":"y"}\n'
     assert jsonl_to_rows(schema, blob) == [(1, "x", "y")]
 
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [b"\n", b"\n\n", b'{"id":1}\n\n', b'{"id":1}\n\n{"id":2}\n', b'{"id":1}\n \n'],
+    ids=["only-a-newline", "two-newlines", "after-the-last-record", "between-records", "whitespace"],
+)
+def test_a_blank_line_fails_as_an_empty_record(payload: bytes) -> None:
+    # A sink that writes an empty record for a buffer without tuples would otherwise pass `empty`.
+    with pytest.raises(AssertionError, match="is blank"):
+        jsonl_to_rows([("id", "INT32", False)], payload)
+
+
+@pytest.mark.parametrize(
+    ("payload", "rows"),
+    [(b"", []), (b'{"id":1}', [(1,)]), (b'{"id":1}\n', [(1,)]), (b'{"id":1}\n{"id":2}\n', [(1,), (2,)])],
+    ids=["empty", "no-final-newline", "final-newline", "two-records"],
+)
+def test_the_final_newline_starts_no_record(payload: bytes, rows: list) -> None:
+    assert jsonl_to_rows([("id", "INT32", False)], payload) == rows
 
 
 def test_source_model_rows_roundtrip() -> None:

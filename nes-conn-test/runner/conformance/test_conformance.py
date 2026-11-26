@@ -20,14 +20,14 @@ from pathlib import Path
 import pytest
 
 from conntest_runner.config_rewrite import apply_overrides
-from conntest_runner.datamodel import SourceModel
-from conntest_runner.discovery import PluginEntry, binding_problems, discover_plugin, resolve_configs
-from conntest_runner.endpoint import split_endpoint
-from conntest_runner.harness import Source
+from conntest_runner.datamodel import SinkModel, SourceModel
+from conntest_runner.discovery import Kind, PluginEntry, binding_problems, discover_plugin, resolve_configs
+from conntest_runner.harness import Sink, Source
 from conntest_runner.link import Link
 from conntest_runner.naming import unique_token
 from conntest_runner.scenarios import (
-    Ctx,
+    SinkCtx,
+    SourceCtx,
     get_scenario,
     get_spec,
     run_case,
@@ -35,9 +35,9 @@ from conntest_runner.scenarios import (
     scenario_names,
 )
 
-if "CONNTEST_PLUGIN" not in os.environ or "CONNTEST_DIR" not in os.environ:
-    raise RuntimeError("run the battery through `conntest run`, which sets CONNTEST_PLUGIN and CONNTEST_DIR")
-_PLUGINS = [discover_plugin(os.environ["CONNTEST_PLUGIN"], Path(os.environ["CONNTEST_DIR"]))]
+if any(variable not in os.environ for variable in ("CONNTEST_PLUGIN", "CONNTEST_DIR", "CONNTEST_KIND")):
+    raise RuntimeError("run the battery through `conntest run`, which sets CONNTEST_PLUGIN, CONNTEST_DIR and CONNTEST_KIND")
+_PLUGINS = [discover_plugin(os.environ["CONNTEST_PLUGIN"], Path(os.environ["CONNTEST_DIR"]), Kind(os.environ["CONNTEST_KIND"]))]
 
 # Each binding defect fails once in its own test, and the defective scenario is left out of the cases.
 _BINDING_PROBLEMS = [
@@ -51,6 +51,9 @@ _BROKEN_SCENARIOS = {
 
 # The harness runs with this buffer size, and N buffers of data are N times it.
 _BUFFER_SIZE = 4096
+# The engine runs the sink on this many worker threads.
+# Concurrent calls are where a sink's races are, so every sink scenario makes them.
+_SINK_THREADS = 8
 # One fixed seed keeps every run replayable.
 _DEFAULT_SEED = 1
 
@@ -121,37 +124,58 @@ def test_scenario(
         pytest.fail(f"{plugin.name} has no compose service, so its loader must set its endpoint")
     link = None
     if scenario_needs_link(scenario.name):
-        # The proxy listens on the backend's port number in the stack's only toxiproxy container.
-        # Parallel pytest workers would all bind that port, so this relies on the runner running one test at a time.
-        _, port = split_endpoint(connector_endpoint)
-        link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), listen_port=port, upstream=connector_endpoint).create()
-        connector_endpoint = f"toxiproxy:{port}"
+        link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), upstream=connector_endpoint).create()
+        connector_endpoint = link.endpoint
     cfg_file = _render_config(loader, config_path, endpoint=connector_endpoint, target=target, out_dir=tmp_path)
+    n_buffers = _buffers(scenario)
+    # Kept next to the config and the data, so a failed case has all of its artifacts in one place.
+    harness_args = {"harness": harness_binary, "config": cfg_file, "log_path": tmp_path / "harness.log"}
 
-    observed_path = tmp_path / "observed.jsonl"
     try:
-        with Source(
-            harness=harness_binary,
-            config=cfg_file,
-            observed_path=observed_path,
-            extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
-            # Kept next to the config and the observed bytes, so a failed case has all of its artifacts in one place.
-            log_path=tmp_path / "harness.log",
-        ) as source:
-            schema = source.bind()
-            data_model = SourceModel(schema)
-            n_buffers = _buffers(scenario)
-            ctx = Ctx(
-                loader=loader,
-                data=data_model,
-                target=target,
-                source=source,
-                rows=data_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else [],
-                schema=schema,
-                args=scenario.args,
-                link=link,
-            )
-            run_case(get_scenario(scenario.name), ctx, expect)
+        if plugin.kind == Kind.SINK:
+            input_path = tmp_path / "input.jsonl"
+            with Sink(
+                extra_args=[f"--input-path={input_path}", f"--buffer-size={_BUFFER_SIZE}", f"--threads={_SINK_THREADS}"],
+                **harness_args,
+            ) as sink:
+                schema = sink.bind()
+                sink_model = SinkModel(schema)
+                rows = sink_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else []
+                # The rows are generated for the schema of the BIND reply, so the input is written after BIND and LOAD reads it.
+                input_path.write_bytes(sink_model.encode(rows))
+                buffers = sink.load().n_buffers
+                ctx = SinkCtx(
+                    loader=loader,
+                    data=sink_model,
+                    target=target,
+                    sink=sink,
+                    buffers=buffers,
+                    rows=rows,
+                    schema=schema,
+                    args=scenario.args,
+                    link=link,
+                )
+                run_case(get_scenario(scenario.name), ctx, expect)
+        else:
+            observed_path = tmp_path / "observed.jsonl"
+            with Source(
+                observed_path=observed_path,
+                extra_args=[f"--observed-path={observed_path}", f"--buffer-size={_BUFFER_SIZE}"],
+                **harness_args,
+            ) as source:
+                schema = source.bind()
+                source_model = SourceModel(schema)
+                ctx = SourceCtx(
+                    loader=loader,
+                    data=source_model,
+                    target=target,
+                    source=source,
+                    rows=source_model.make_rows(n_buffers, _DEFAULT_SEED, _BUFFER_SIZE) if n_buffers is not None else [],
+                    schema=schema,
+                    args=scenario.args,
+                    link=link,
+                )
+                run_case(get_scenario(scenario.name), ctx, expect)
     finally:
         # After the harness has stopped, so the connector never sees the proxy vanish mid-scenario.
         if link is not None:

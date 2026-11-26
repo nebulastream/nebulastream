@@ -18,25 +18,39 @@
 #include <expected>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
 
+#include <CharStream.h>
+#include <Token.h>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <Util/Strings.hpp>
+#include <misc/Interval.h>
 #include <ErrorHandling.hpp>
 #include <Reply.hpp>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::ConnTest
 {
+
+std::optional<ConnectorKind> parseConnectorKind(const std::string_view text)
+{
+    return magic_enum::enum_cast<ConnectorKind>(text, magic_enum::case_insensitive);
+}
+
 namespace
 {
 
@@ -74,6 +88,13 @@ std::expected<BoundStatementContexts, Exception> parseProgram(const std::string&
     {
         return std::unexpected{ex};
     }
+}
+
+/// The statement as it is written in the config.
+std::string writtenText(const AntlrSQLParser::StatementContext& statement)
+{
+    const auto* start = statement.getStart();
+    return start->getInputStream()->getText(antlr4::misc::Interval{start->getStartIndex(), statement.getStop()->getStopIndex()});
 }
 
 }
@@ -132,6 +153,65 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
         return bindError("creating the physical source", "failed: the config has no CREATE PHYSICAL SOURCE statement");
     }
     return std::move(*physicalDescriptor);
+}
+
+std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& sql)
+{
+    const auto statements = parseProgram(sql);
+    if (not statements)
+    {
+        return bindError("parsing the SQL", statements.error());
+    }
+    /// The harness runs one sink per session, so it rejects a config with more than one statement.
+    if (statements->size() != 1)
+    {
+        auto detail = fmt::format("failed: expected a single CREATE SINK statement, but the config has {}", statements->size());
+        if (not statements->empty())
+        {
+            detail += fmt::format(
+                ": {}",
+                fmt::join(*statements | std::views::transform([](const auto& statement) { return writtenText(*statement.get()); }), "; "));
+        }
+        return bindError("creating the sink", detail);
+    }
+
+    /// The binder needs a source catalog, even though a sink config declares no source.
+    const StatementBinder binder(
+        std::make_shared<SourceCatalog>(),
+        [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    auto bound = binder.bind(statements->front().get());
+    if (!bound.has_value())
+    {
+        return bindError("binding a statement", bound.error());
+    }
+    const auto* sink = std::get_if<CreateSinkStatement>(&*bound);
+    if (sink == nullptr)
+    {
+        return bindError("creating the sink", "failed: the statement is not a CREATE SINK");
+    }
+    try
+    {
+        /// The harness runs the sink in its own process and ignores placement, so any host works.
+        SinkStatementHandler handler{std::make_shared<SinkCatalog>(), DefaultHost{"localhost"}};
+        auto created = handler(*sink);
+        if (!created.has_value())
+        {
+            return bindError("creating the sink", created.error());
+        }
+        if (toUpperCase(created->created.getFormatType()) != "JSON")
+        {
+            return bindError(
+                "checking the output format",
+                fmt::format(
+                    "failed: the sink receives JSONL, so its OUTPUT_FORMAT must be 'JSON', not '{}'", created->created.getFormatType()));
+        }
+        return std::move(created->created);
+    }
+    catch (const Exception& ex)
+    {
+        /// Some connectors validate their config here by throwing, not by returning an error.
+        return bindError("creating the sink", ex);
+    }
 }
 
 }

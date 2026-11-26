@@ -30,7 +30,7 @@ import uuid
 from pathlib import Path
 from typing import NoReturn
 
-from conntest_runner.discovery import read_plugin_scenarios, registered_connectors
+from conntest_runner.discovery import RegisteredConnector, read_plugin_scenarios, registered_connectors
 from conntest_runner.scenarios import scenario_needs_link
 
 _RUNNER_DIR = Path(__file__).resolve().parents[2]
@@ -62,7 +62,7 @@ def _die(msg: str) -> NoReturn:
     raise SystemExit(2)
 
 
-def _connectors(build_dir: Path) -> dict[str, Path]:
+def _connectors(build_dir: Path) -> dict[str, RegisteredConnector]:
     try:
         return registered_connectors(build_dir, _REPO_ROOT)
     except FileNotFoundError as e:
@@ -128,12 +128,13 @@ def _data_services(base: list[str], env: dict[str, str]) -> list[str]:
 
 def _run_connector(
     plugin: str,
-    conn_test_dir: Path,
+    connector: RegisteredConnector,
     *,
     env: dict[str, str],
     build_dir: str,
     pytest_args: list[str],
 ) -> int:
+    conn_test_dir = connector.conn_test_dir
     container_conn_test_dir = f"{env['CONNTEST_CONTAINER_REPO']}/{conn_test_dir.relative_to(_REPO_ROOT).as_posix()}"
     # A connector without a compose.yaml has no service, and the stack is only the runner.
     composes = [f for f in (conn_test_dir / "compose.yaml", _RUNNER_COMPOSE) if f.is_file()]
@@ -153,6 +154,7 @@ def _run_connector(
                 *("run", "--rm", "-T", "--no-deps"),
                 *("-e", f"CONNTEST_PLUGIN={plugin}"),
                 *("-e", f"CONNTEST_DIR={container_conn_test_dir}"),
+                *("-e", f"CONNTEST_KIND={connector.kind}"),
                 "runner",
             ]
             rc = subprocess.run([*run, *_RUN_PYTEST, *args], env=env, check=False).returncode
@@ -179,8 +181,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     _log(f"runner image {image}, build dir {build_dir}")
     failed = [
         plugin
-        for plugin, conn_test_dir in connectors.items()
-        if _run_connector(plugin, conn_test_dir, env=env, build_dir=build_dir, pytest_args=args.pytest_args) != 0
+        for plugin, connector in connectors.items()
+        if _run_connector(plugin, connector, env=env, build_dir=build_dir, pytest_args=args.pytest_args) != 0
     ]
     if failed:
         _log(f"failed: {', '.join(failed)}")
@@ -189,8 +191,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
-    for plugin, conn_test_dir in _connectors(Path(args.build_dir)).items():
-        names = dict.fromkeys(s.name for s in read_plugin_scenarios(conn_test_dir))
+    for plugin, connector in _connectors(Path(args.build_dir)).items():
+        names = dict.fromkeys(s.name for s in read_plugin_scenarios(connector.conn_test_dir))
         print(f"{plugin}: {', '.join(names)}")
     return 0
 
