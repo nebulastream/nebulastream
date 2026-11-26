@@ -33,6 +33,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
+#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -83,6 +84,13 @@ LogicalPlan AnonymousSourceBindingRule::apply(const LogicalPlan& queryPlan) cons
                           { return this->bindAnonymousSources(op, children); }};
 
     return visitor.apply(queryPlan);
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> AnonymousSourceBindingRule::needs() const
+{
+    /// Query sources can contain anonymous sources, which exist in the plan only after the expansion.
+    return {typeid(LogicalSourceExpansionRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -1,0 +1,96 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Topology:
+#
+#   edge-a ─┐
+#           ├─► coordinator (K: HEART_BEAT_SINK)
+#   edge-b ─┘
+#
+#   Every edge worker generates one heart beat per second. HEART_BEAT_EDGE has one query source per worker,
+#   which adds the host name. HEART_BEAT has a query source that reads HEART_BEAT_EDGE (nesting) and adds the region.
+
+query: |
+  SELECT * FROM HEART_BEAT INTO HEART_BEAT_SINK
+
+sinks:
+  - name: HEART_BEAT_SINK
+    host: coordinator:8080
+    schema:
+      - name: BEAT
+        type: UINT64
+      - name: HOST
+        type: VARSIZED
+      - name: REGION
+        type: VARSIZED
+    type: Print
+    config:
+      output_format: CSV
+
+logical:
+  - name: HEART_BEAT_EDGE
+    schema:
+      - name: BEAT
+        type: UINT64
+      - name: HOST
+        type: VARSIZED
+  - name: HEART_BEAT
+    schema:
+      - name: BEAT
+        type: UINT64
+      - name: HOST
+        type: VARSIZED
+      - name: REGION
+        type: VARSIZED
+
+physical:
+  - query: |
+      SELECT BEAT, 'edge-a' AS HOST
+      FROM Generator(
+        'edge-a:8080' AS "SOURCE".HOST,
+        'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+        'emit_rate 1' AS "SOURCE".GENERATOR_RATE_CONFIG,
+        'NONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+        'CSV' AS INPUT_FORMATTER."TYPE",
+        'SEQUENCE UINT64 0 1000000 1' AS "SOURCE".GENERATOR_SCHEMA,
+        SCHEMA(BEAT UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+      INTO HEART_BEAT_EDGE
+  - query: |
+      SELECT BEAT, 'edge-b' AS HOST
+      FROM Generator(
+        'edge-b:8080' AS "SOURCE".HOST,
+        'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+        'emit_rate 1' AS "SOURCE".GENERATOR_RATE_CONFIG,
+        'NONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+        'CSV' AS INPUT_FORMATTER."TYPE",
+        'SEQUENCE UINT64 0 1000000 1' AS "SOURCE".GENERATOR_SCHEMA,
+        SCHEMA(BEAT UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
+      INTO HEART_BEAT_EDGE
+  - query: |
+      SELECT BEAT, HOST, 'eu' AS REGION FROM HEART_BEAT_EDGE INTO HEART_BEAT
+
+workers:
+  - host: coordinator:8080
+    data_address: coordinator:9090
+    max_operators: 10000
+
+  - host: edge-a:8080
+    data_address: edge-a:9090
+    max_operators: 10000
+    downstream:
+      - coordinator:8080
+
+  - host: edge-b:8080
+    data_address: edge-b:9090
+    max_operators: 10000
+    downstream:
+      - coordinator:8080
