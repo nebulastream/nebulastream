@@ -19,15 +19,6 @@ teardown_file() { nes_distributed_teardown_file; }
 setup()         { nes_distributed_setup; }
 teardown()      { nes_distributed_teardown; }
 
-docker_nes_repl() {
-  # In Docker-out-of-Docker environments, docker exec tears down the exec
-  # session when its stdin pipe closes, even if the process is still running.
-  # Work around this by: (1) piping from tail to keep stdin open until
-  # nes-repl exits, and (2) reading the SQL file from the volume inside the
-  # container instead of piping it via stdin.
-  tail -f /dev/null | docker compose exec nes-repl bash -c "nes-repl -f JSON ${ADDITIONAL_NEBULI_FLAGS} </workdir/$1"
-}
-
 @test "launch query from topology" {
   setup_distributed tests/topologies/8-node.yaml
   run docker_nes_repl tests/sql-file-tests/good/test_large_distributed.sql
@@ -143,7 +134,7 @@ docker_nes_repl() {
   # Send SIGTERM to nes-repl mid-wait and verify the on-exit loop exits well
   # before the 10s mark and reports the warning.
   (
-    tail -f /dev/null | docker compose exec -T nes-repl bash -c \
+    nes_compose_exec -T nes-repl bash -c \
       "nes-repl -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION </workdir/tests/sql-file-tests/good/non_infinite_query.sql"
   ) &
   REPL_BG=$!
