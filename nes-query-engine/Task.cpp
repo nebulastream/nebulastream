@@ -114,9 +114,48 @@ void BaseTask::fail(Exception exception)
 }
 
 WorkTask::WorkTask(
-    QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
-    : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline)), pipelineId(pipelineId), buf(std::move(buf))
+    LocalQueryId localQueryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
+    : BaseTask(QueryId::createLocal(localQueryId), std::move(callback))
+    , pipeline(std::move(pipeline))
+    , pipelineId(pipelineId)
+    , buf(std::move(buf))
 {
+}
+
+void WorkTask::complete()
+{
+    BaseTask::complete();
+    if (!std::exchange(countedInPipeline, false))
+    {
+        return;
+    }
+    if (const auto node = pipeline.lock())
+    {
+        const auto updatedCount = node->pendingTasks.fetch_sub(1) - 1;
+        ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", node->queryId, node->id, updatedCount);
+        INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
+    }
+    else
+    {
+        ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
+    }
+}
+
+void WorkTask::fail(Exception exception)
+{
+    if (!countedInPipeline)
+    {
+        BaseTask::fail(std::move(exception));
+        return;
+    }
+    const auto node = pipeline.lock();
+    if (!node)
+    {
+        ENGINE_LOG_ERROR("Query Failure could not be reported as query has already been terminated. Original Error: {}", exception.what());
+        return;
+    }
+    BaseTask::fail(exception);
+    node->fail(std::move(exception));
 }
 
 StartPipelineTask::StartPipelineTask(
