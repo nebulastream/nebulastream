@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
@@ -41,6 +42,14 @@ CosSimPhysicalFunction::CosSimPhysicalFunction(
 
 namespace
 {
+/// Needed as because `reinterpret_cast` disregards possible misalignment.
+double readElement(const int8_t* vector, const uint64_t index)
+{
+    float element = 0;
+    std::memcpy(&element, vector + (index * sizeof(float)), sizeof(float));
+    return element;
+}
+
 /// Takes raw pointers and byte lengths for a pair of float32 vectors.
 double computeCosineSimilarity(
     const int8_t* inputPtrLeft, const uint64_t inputSizeLeft, const int8_t* inputPtrRight, const uint64_t inputSizeRight)
@@ -54,8 +63,6 @@ double computeCosineSimilarity(
             inputSizeRight);
     }
 
-    const auto* vectorLeft = reinterpret_cast<const float*>(inputPtrLeft);
-    const auto* vectorRight = reinterpret_cast<const float*>(inputPtrRight);
     const uint64_t dimLeft = inputSizeLeft / sizeof(float);
     const uint64_t dimRight = inputSizeRight / sizeof(float);
 
@@ -65,8 +72,8 @@ double computeCosineSimilarity(
 
     for (uint64_t i = 0; i < dimLeft && i < dimRight; ++i)
     {
-        const auto vectorElementLeft = static_cast<double>(vectorLeft[i]);
-        const auto vectorElementRight = static_cast<double>(vectorRight[i]);
+        const auto vectorElementLeft = readElement(inputPtrLeft, i);
+        const auto vectorElementRight = readElement(inputPtrRight, i);
         dot += vectorElementLeft * vectorElementRight;
         normLeft += vectorElementLeft * vectorElementLeft;
         normRight += vectorElementRight * vectorElementRight;
@@ -75,12 +82,12 @@ double computeCosineSimilarity(
     /// Elements of the shorter vector are assumed to be 0.
     for (uint64_t i = dimLeft; i < dimRight; ++i)
     {
-        const auto vectorElementRight = static_cast<double>(vectorRight[i]);
+        const auto vectorElementRight = readElement(inputPtrRight, i);
         normRight += vectorElementRight * vectorElementRight;
     }
     for (uint64_t i = dimRight; i < dimLeft; ++i)
     {
-        const auto vectorElementLeft = static_cast<double>(vectorLeft[i]);
+        const auto vectorElementLeft = readElement(inputPtrLeft, i);
         normLeft += vectorElementLeft * vectorElementLeft;
     }
 

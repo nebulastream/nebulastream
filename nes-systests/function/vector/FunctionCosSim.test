@@ -63,6 +63,22 @@ SELECT id AS id FROM vecStream WHERE COSSIM(FROM_BASE64(v1), FROM_BASE64('AABAQA
 4
 5
 
+# Raw VARSIZED vectors preceded by non-4-byte-aligned VARSIZED strings (exercises unaligned float32 reads)
+CREATE LOGICAL SOURCE unalignedVecStream(id UINT64 NOT NULL, prefix VARSIZED NOT NULL, v1 VARSIZED NOT NULL, v2 VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR unalignedVecStream TYPE File;
+ATTACH INLINE
+1,hi,@@@@,BBBB
+2,hello,@@@@BBBB,@@@@BBBB
+3,hello,@@@@BBBB,@@@@BBBB
+
+CREATE SINK unalignedSimSink(id UINT64 NOT NULL, prefix VARSIZED NOT NULL, sim FLOAT64 NOT NULL) TYPE File;
+
+SELECT id AS id, prefix AS prefix, COSSIM(v1, v2) AS sim FROM unalignedVecStream INTO unalignedSimSink;
+----
+1,hi,1.0
+2,hello,1.0
+3,hello,1.0
+
 # Error cases: wrong arity (CannotDeserialize = 2002) and non-VARSIZED inputs (CannotInferStamp = 2007)
 CREATE LOGICAL SOURCE invalidInputStream(id UINT64 NOT NULL, v VARSIZED NOT NULL, num FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR invalidInputStream TYPE File;
