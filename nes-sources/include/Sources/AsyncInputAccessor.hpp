@@ -12,13 +12,19 @@
     limitations under the License.
 */
 #pragma once
-
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <variant>
 #include <vector>
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/Reflection.hpp>
 
@@ -26,70 +32,170 @@ namespace NES
 {
 namespace detail
 {
-struct AsyncInputContext;
+struct AsyncGraphScope;
+
+struct ReflectedAsyncResultReference
+{
+    std::string producer;
+    size_t output;
+};
 }
+class AsyncCall;
+class AsyncCallGraphBuilder;
+class AsyncCallGraph;
+class AsyncRowHandle;
 
-class AsyncInputAccessor;
-class AsyncInputAccessors;
-
-/// An owning handle to one invocation's ready inputs. Only accessors from its input context can read it.
-/// A provider hides the row's physical representation and retains anything needed by its reads.
-class AsyncRowHandle
+class InputFieldReference
 {
 public:
-    [[nodiscard]] size_t size() const;
+    InputFieldReference(const InputFieldReference&) = default;
+    InputFieldReference& operator=(const InputFieldReference&) = default;
+    InputFieldReference(InputFieldReference&&) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>);
+    InputFieldReference& operator=(InputFieldReference&&) noexcept(std::is_nothrow_copy_assignable_v<QualifiedIdentifier>);
+    ~InputFieldReference() = default;
+    [[nodiscard]] QualifiedIdentifier getField() const;
+    [[nodiscard]] DataType getDataType() const;
 
 private:
+    friend class AsyncCallGraphBuilder;
     friend class AsyncInputAccessor;
-    friend class AsyncInputAccessors;
-    AsyncRowHandle(std::shared_ptr<const detail::AsyncInputContext> inputContext, std::function<RuntimeValue(size_t)> reader, size_t size);
-    std::shared_ptr<const detail::AsyncInputContext> inputContext;
-    std::function<RuntimeValue(size_t)> reader;
-    size_t count;
+    friend struct Reflector<InputFieldReference>;
+    InputFieldReference(std::shared_ptr<const detail::AsyncGraphScope>, QualifiedIdentifier);
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
+    QualifiedIdentifier field;
 };
 
-/// A typed input function for one immutable input context, independent of any buffer layout.
-class AsyncInputAccessor
+class AsyncResultReference
 {
 public:
+    AsyncResultReference(const AsyncResultReference&) = default;
+    AsyncResultReference& operator=(const AsyncResultReference&) = default;
+    AsyncResultReference(AsyncResultReference&&) noexcept;
+    AsyncResultReference& operator=(AsyncResultReference&&) noexcept;
+    ~AsyncResultReference() = default;
+    [[nodiscard]] std::shared_ptr<const AsyncCall> getProducer() const;
+    [[nodiscard]] size_t getOutputIndex() const;
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] RuntimeValue operator()(const AsyncRowHandle& row) const;
 
 private:
-    friend class AsyncInputAccessors;
-    AsyncInputAccessor(std::shared_ptr<const detail::AsyncInputContext> inputContext, size_t index);
-    std::shared_ptr<const detail::AsyncInputContext> inputContext;
+    friend class AsyncCall;
+    friend class AsyncInputAccessor;
+    AsyncResultReference(std::shared_ptr<const AsyncCall>, size_t);
+    std::shared_ptr<const AsyncCall> producer;
     size_t index;
 };
 
-/// Factory-supplied input functions. Copies share their input context; fresh construction creates a distinct context.
-/// Reflection transports the signature, not a live callback or a row. Readers are supplied locally when creating row handles.
-class AsyncInputAccessors
+using AsyncInputAccessorSource = std::variant<RuntimeValue, InputFieldReference, AsyncResultReference>;
+
+class AsyncRowHandle
 {
 public:
-    AsyncInputAccessors();
-    explicit AsyncInputAccessors(std::vector<DataType> types);
-
-    [[nodiscard]] const std::vector<DataType>& getTypes() const;
-    [[nodiscard]] size_t size() const;
-    [[nodiscard]] AsyncInputAccessor operator[](size_t index) const;
-    [[nodiscard]] AsyncRowHandle createRowHandle(std::function<RuntimeValue(size_t)> reader) const;
-    [[nodiscard]] AsyncRowHandle createRowHandle(SharedRuntimeValues values) const;
-    [[nodiscard]] SharedRuntimeValues read(const AsyncRowHandle& row) const;
+    AsyncRowHandle() = default;
 
 private:
-    std::shared_ptr<const detail::AsyncInputContext> inputContext;
+    friend class AsyncInputAccessor;
+    friend class AsyncCallGraph;
+    AsyncRowHandle(std::shared_ptr<const detail::AsyncGraphScope>,
+                   std::function<RuntimeValue(const InputFieldReference&)>,
+                   std::unordered_map<std::shared_ptr<const AsyncCall>, SharedRuntimeValues>);
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
+    std::function<RuntimeValue(const InputFieldReference&)> readInput;
+    std::unordered_map<std::shared_ptr<const AsyncCall>, SharedRuntimeValues> readyResults;
+};
+
+class AsyncInputAccessor
+{
+public:
+    explicit AsyncInputAccessor(RuntimeValue value);
+    explicit AsyncInputAccessor(InputFieldReference field);
+    explicit AsyncInputAccessor(AsyncResultReference result);
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] RuntimeValue operator()(const AsyncRowHandle&) const;
+    [[nodiscard]] std::shared_ptr<const AsyncCall> getProducer() const;
+    [[nodiscard]] const AsyncInputAccessorSource& getSource() const;
+
+private:
+    AsyncInputAccessorSource source;
+};
+
+/// Scoped data for encoding references in one concrete call's configuration.
+struct AsyncReferenceSerializationContext
+{
+    std::shared_ptr<const detail::AsyncGraphScope> scope;
+    const std::unordered_map<std::shared_ptr<const AsyncCall>, std::string>& ids;
+    const std::vector<std::shared_ptr<const AsyncCall>>& dependencies;
+};
+
+/// All members are required; references are resolved synchronously while the graph is decoded.
+struct AsyncReferenceDeserializationContext
+{
+    AsyncCallGraphBuilder& builder;
+    const std::unordered_set<QualifiedIdentifier>& inputNames;
+    const std::unordered_set<std::string>& declaredDependencies;
+    const std::unordered_map<std::string, std::shared_ptr<const AsyncCall>>& nodes;
 };
 
 template <>
-struct Reflector<AsyncInputAccessors>
+struct Reflector<InputFieldReference>
 {
-    Reflected operator()(const AsyncInputAccessors& inputs, const ReflectionContext& context) const;
+    using ContextType = AsyncReferenceSerializationContext;
+
+    explicit Reflector(ContextType state) : state(std::move(state)) { }
+
+    Reflected operator()(const InputFieldReference&, const ReflectionContext&) const;
+
+private:
+    ContextType state;
 };
 
 template <>
-struct Unreflector<AsyncInputAccessors>
+struct Unreflector<InputFieldReference>
 {
-    AsyncInputAccessors operator()(const Reflected& data, const ReflectionContext& context) const;
+    using ContextType = AsyncReferenceDeserializationContext;
+
+    explicit Unreflector(ContextType state) : state(std::move(state)) { }
+
+    InputFieldReference operator()(const Reflected&, const ReflectionContext&) const;
+
+private:
+    ContextType state;
+};
+
+template <>
+struct Reflector<AsyncResultReference>
+{
+    using ContextType = AsyncReferenceSerializationContext;
+
+    explicit Reflector(ContextType state) : state(std::move(state)) { }
+
+    Reflected operator()(const AsyncResultReference&, const ReflectionContext&) const;
+
+private:
+    ContextType state;
+};
+
+template <>
+struct Unreflector<AsyncResultReference>
+{
+    using ContextType = AsyncReferenceDeserializationContext;
+
+    explicit Unreflector(ContextType state) : state(std::move(state)) { }
+
+    AsyncResultReference operator()(const Reflected&, const ReflectionContext&) const;
+
+private:
+    ContextType state;
+};
+
+template <>
+struct Reflector<AsyncInputAccessor>
+{
+    Reflected operator()(const AsyncInputAccessor&, const ReflectionContext&) const;
+};
+
+template <>
+struct Unreflector<AsyncInputAccessor>
+{
+    AsyncInputAccessor operator()(const Reflected&, const ReflectionContext&) const;
 };
 }

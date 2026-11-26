@@ -56,6 +56,7 @@ boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> runProducer(SharedAsync
     }
     if (wasCancelled)
     {
+        //TODO why only return the error but return the result?
         co_return std::unexpected(AsyncError::cancelled());
     }
     co_return outcome;

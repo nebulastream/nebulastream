@@ -28,7 +28,7 @@ namespace NES
 class SourceCatalog;
 class SinkCatalog;
 
-/// Lowers each placed async occurrence to a local handoff sink/source pair.
+/// Lowers same-worker async regions connected through field-only projections to local handoff pairs.
 /// QueryOptimizer runs this rule after placement and before network decomposition, not in
 /// the pre-placement PlanRuleRegistry. Final field order/layout and worker placement must
 /// already be available; no semantic optimization is performed during this lowering.
@@ -37,10 +37,9 @@ class AsyncOperatorDecompositionRule
 public:
     static constexpr std::string_view NAME = "AsyncOperatorDecompositionRule";
 
-    AsyncOperatorDecompositionRule(
-        QueryOptimizerAsyncConfiguration configuration,
-        std::shared_ptr<const SourceCatalog> sourceCatalog,
-        std::shared_ptr<const SinkCatalog> sinkCatalog)
+    AsyncOperatorDecompositionRule(QueryOptimizerAsyncConfiguration configuration,
+                                   std::shared_ptr<const SourceCatalog> sourceCatalog,
+                                   std::shared_ptr<const SinkCatalog> sinkCatalog)
         : configuration(std::move(configuration)), sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
     {
     }
@@ -50,7 +49,8 @@ public:
     [[nodiscard]] LogicalPlan apply(LogicalPlan plan) const;
 
 private:
-    [[nodiscard]] LogicalOperator splitInvocation(const LogicalOperator& invocation, std::vector<LogicalOperator>& roots) const;
+    [[nodiscard]] LogicalOperator
+    splitRegion(const std::vector<LogicalOperator>& region, LogicalOperator input, std::vector<LogicalOperator>& roots) const;
 
     QueryOptimizerAsyncConfiguration configuration;
     std::shared_ptr<const SourceCatalog> sourceCatalog;

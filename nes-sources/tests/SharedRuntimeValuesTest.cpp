@@ -31,6 +31,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
 #include <Sources/AsyncOperator.hpp>
@@ -75,7 +76,7 @@ struct EchoOperator
 {
     struct Prepared final : PreparedAsyncCall
     {
-        Prepared(std::shared_ptr<EchoStats> stats, SharedRuntimeValues arguments, std::optional<size_t> retries)
+        Prepared(std::shared_ptr<EchoStats> stats, SharedRuntimeValues arguments, size_t retries)
             : PreparedAsyncCall(retries), stats(std::move(stats)), arguments(std::move(arguments))
         {
             ++this->stats->livePrepared;
@@ -104,25 +105,25 @@ struct EchoOperator
     };
 
     std::shared_ptr<EchoStats> stats = std::make_shared<EchoStats>();
-    std::optional<size_t> retryPolicy = size_t{4};
+    size_t retryPolicy = 4;
     bool failPreparation = false;
     bool failAttempt = false;
-    AsyncInputAccessors inputs{};
+    std::vector<AsyncInputAccessor> inputs{};
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
     [[nodiscard]] std::string_view getType() const { return "TEST_ECHO"; }
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return {}; }
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const { return {}; }
 
-    [[nodiscard]] EchoOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-    [[nodiscard]] EchoOperator withInputAccessors(AsyncInputAccessors value) const
+    [[nodiscard]] EchoOperator withValues(const SharedRuntimeValues& values) const
     {
         auto result = *this;
-        result.inputs = std::move(value);
+        result.inputs.clear();
+        for (size_t index = 0; index < values.size(); ++index)
+        {
+            result.inputs.emplace_back(values[index].toOwned());
+        }
         return result;
     }
 
@@ -134,7 +135,12 @@ struct EchoOperator
         {
             return std::unexpected(AsyncError{.exception = ArithmeticalError("preparation failed")});
         }
-        auto prepared = std::make_unique<Prepared>(stats, inputs.read(row), retryPolicy);
+        std::vector<RuntimeValue> values;
+        for (const auto& input : inputs)
+        {
+            values.push_back(input(row));
+        }
+        auto prepared = std::make_unique<Prepared>(stats, SharedRuntimeValues{std::move(values)}, retryPolicy);
         prepared->failAttempt = failAttempt;
         return prepared;
     }
@@ -173,16 +179,16 @@ TEST(SharedRuntimeValuesTest, ArgumentsAndResultsOwnTheirStorageAcrossSuspension
 TEST(SharedRuntimeValuesTest, PreparationOwnsArgumentsAndFixesRetryMetadata)
 {
     EchoOperator concrete;
-    const AsyncOperator op{concrete};
     AsyncExecutionContext executionContext;
     auto arguments = SharedRuntimeValues::make(std::string{"retained"}, uint64_t{42});
-    const auto prepared = op.prepare(executionContext, arguments);
+    const AsyncOperator op{concrete.withValues(arguments)};
+    const auto prepared = op.prepare(executionContext, AsyncRowHandle{});
     arguments = SharedRuntimeValues::make();
     EXPECT_EQ(concrete.stats->preparations, 1);
     ASSERT_TRUE(prepared);
-    EXPECT_EQ((*prepared)->getRetryOverride(), size_t{4});
+    EXPECT_EQ((*prepared)->getMaxRetries(), size_t{4});
     concrete.retryPolicy = 0;
-    EXPECT_EQ((*prepared)->getRetryOverride(), size_t{4});
+    EXPECT_EQ((*prepared)->getMaxRetries(), size_t{4});
     boost::asio::io_context context;
     const auto run = [&]() -> boost::asio::awaitable<void>
     {
@@ -202,13 +208,9 @@ TEST(SharedRuntimeValuesTest, PreparationOwnsArgumentsAndFixesRetryMetadata)
     result.get();
     EXPECT_EQ(concrete.stats->preparations, 1);
     EXPECT_EQ(concrete.stats->attempts, 2);
-    const auto zeroRetry = AsyncOperator{concrete}.prepare(executionContext, SharedRuntimeValues{});
+    const auto zeroRetry = AsyncOperator{concrete}.prepare(executionContext, AsyncRowHandle{});
     ASSERT_TRUE(zeroRetry);
-    concrete.retryPolicy = std::nullopt;
-    const auto defaultRetry = AsyncOperator{concrete}.prepare(executionContext, SharedRuntimeValues{});
-    ASSERT_TRUE(defaultRetry);
-    EXPECT_EQ((*zeroRetry)->getRetryOverride(), size_t{0});
-    EXPECT_EQ((*defaultRetry)->getRetryOverride(), std::nullopt);
+    EXPECT_EQ((*zeroRetry)->getMaxRetries(), size_t{0});
 }
 
 /// NOLINTEND(misc-include-cleaner)
@@ -219,7 +221,7 @@ TEST(SharedRuntimeValuesTest, InvokeOnceOwnsPreparedCallAcrossSuspension)
     const EchoOperator concrete;
     boost::asio::io_context context;
     auto arguments = SharedRuntimeValues::make(std::string{"retained"}, uint64_t{42});
-    auto result = boost::asio::co_spawn(context, invokeOnce(AsyncOperator{concrete}, arguments), boost::asio::use_future);
+    auto result = boost::asio::co_spawn(context, invokeOnce(AsyncOperator{concrete.withValues(arguments)}), boost::asio::use_future);
     arguments = {};
     context.run();
     const auto values = result.get();
@@ -278,7 +280,7 @@ TEST(SharedRuntimeValuesTest, InvokeOnceRestoresCallerCancellationPolicyOnReturn
     }
 }
 
-TEST(SharedRuntimeValuesTest, PreparedCallDefaultsToExecutorRetryPolicyAndMayReturnEmptySuccess)
+TEST(SharedRuntimeValuesTest, PreparedCallDefaultsToZeroRetriesAndMayReturnEmptySuccess)
 {
     struct EmptyOperator
     {
@@ -301,20 +303,7 @@ TEST(SharedRuntimeValuesTest, PreparedCallDefaultsToExecutorRetryPolicyAndMayRet
         [[nodiscard]] std::string_view getType() const { return "EMPTY"; }
 
         /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
-        [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return {}; }
-
-        AsyncInputAccessors inputs{};
-
-        [[nodiscard]] EmptyOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
-
-        [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-        [[nodiscard]] EmptyOperator withInputAccessors(AsyncInputAccessors value) const
-        {
-            auto result = *this;
-            result.inputs = std::move(value);
-            return result;
-        }
+        [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const { return {}; }
 
         /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
         [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
@@ -329,8 +318,7 @@ TEST(SharedRuntimeValuesTest, PreparedCallDefaultsToExecutorRetryPolicyAndMayRet
     AsyncExecutionContext executionContext;
     const auto prepared = op.prepare(executionContext, {});
     ASSERT_TRUE(prepared);
-    EXPECT_EQ((*prepared)->getRetryOverride(), std::nullopt);
-    EXPECT_EQ(op.maxConcurrency(), std::nullopt);
+    EXPECT_EQ((*prepared)->getMaxRetries(), size_t{0});
     boost::asio::io_context context;
     auto result = boost::asio::co_spawn(context, invokeOnce(std::move(op), {}), boost::asio::use_future);
     context.run();
@@ -357,23 +345,18 @@ TEST(SharedRuntimeValuesTest, EmptyAndTypedNullAreDifferent)
     EXPECT_EQ(values[0].getDataType(), nullable);
 }
 
-TEST(SharedRuntimeValuesTest, ArgumentsPreserveConstantPositionsAndTypedNulls)
+TEST(SharedRuntimeValuesTest, AccessorsPreserveTypedConstantsAndNulls)
 {
     const DataType integer{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
     const DataType nullable{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE};
-    const AsyncArgumentsWithConstants arguments{
-        {integer, std::nullopt}, {integer, RuntimeValue{uint64_t{4}}}, {nullable, RuntimeValue::null(nullable)}};
-    /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) the fixture initializes three constant positions
-    EXPECT_EQ(arguments[0].first, integer);
-    EXPECT_FALSE(arguments[0].second);
-    const auto& integerConstant = arguments[1].second;
-    ASSERT_TRUE(integerConstant.has_value());
-    EXPECT_EQ(integerConstant->view().get<uint64_t>(), 4);
-    const auto& nullConstant = arguments[2].second;
-    ASSERT_TRUE(nullConstant.has_value());
-    EXPECT_EQ(arguments[2].first, nullable);
-    EXPECT_TRUE(nullConstant->isNull());
-    /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+    const AsyncInputAccessor integerConstant{RuntimeValue{uint64_t{4}}};
+    const AsyncInputAccessor nullConstant{RuntimeValue::null(nullable)};
+    const AsyncRowHandle row;
+    EXPECT_EQ(integerConstant.getDataType(), integer);
+    const auto integerValue = integerConstant(row);
+    EXPECT_EQ(integerValue.view().get<uint64_t>(), 4);
+    EXPECT_EQ(nullConstant.getDataType(), nullable);
+    EXPECT_TRUE(nullConstant(row).isNull());
 }
 
 TEST(SharedRuntimeValuesTest, InvokeOnceRetainsOwningConfigAndExplicitContextAcrossPreparedExecution)
@@ -383,7 +366,7 @@ TEST(SharedRuntimeValuesTest, InvokeOnceRetainsOwningConfigAndExplicitContextAcr
     boost::asio::io_context executor;
     auto completion = boost::asio::co_spawn(
         executor,
-        invokeOnce(AsyncOperator{concrete}, context, SharedRuntimeValues::make(std::string{"s"}, uint64_t{7})),
+        invokeOnce(AsyncOperator{concrete.withValues(SharedRuntimeValues::make(std::string{"s"}, uint64_t{7}))}, context),
         boost::asio::use_future);
     executor.run();
     const auto result = completion.get();

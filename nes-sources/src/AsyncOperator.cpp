@@ -15,6 +15,7 @@
 
 #include <expected>
 #include <utility>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
@@ -24,12 +25,11 @@
 
 namespace NES
 {
-boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
-invokeOnce(AsyncOperator op, AsyncExecutionContext& context, SharedRuntimeValues values)
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator op, AsyncExecutionContext& context, AsyncRowHandle row)
 {
     const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
     co_await boost::asio::this_coro::throw_if_cancelled(false);
-    auto prepared = op.prepare(context, std::move(values));
+    auto prepared = op.prepare(context, row);
     if (!prepared)
     {
         co_await boost::asio::this_coro::throw_if_cancelled(throwIfCancelled);
@@ -41,9 +41,19 @@ invokeOnce(AsyncOperator op, AsyncExecutionContext& context, SharedRuntimeValues
     co_return result;
 }
 
-boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator op, SharedRuntimeValues values)
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator op, AsyncExecutionContext& context)
+{
+    return invokeOnce(std::move(op), context, AsyncRowHandle{});
+}
+
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator op, AsyncRowHandle row)
 {
     AsyncExecutionContext context;
-    co_return co_await invokeOnce(std::move(op), context, std::move(values));
+    co_return co_await invokeOnce(std::move(op), context, std::move(row));
+}
+
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator op)
+{
+    return invokeOnce(std::move(op), AsyncRowHandle{});
 }
 }

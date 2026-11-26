@@ -35,7 +35,6 @@
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
 #include <Sources/AsyncInputAccessor.hpp>
-#include <Sources/AsyncOperator.hpp>
 #include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/CheckedDeadline.hpp>
@@ -58,7 +57,6 @@
 #include <boost/beast/http/write.hpp> /// NOLINT(misc-include-cleaner) Public Beast provider for async_write.
 #include <boost/system/error_code.hpp> /// NOLINT(misc-include-cleaner) Public Boost.System provider; checker misattributes its error_code/category APIs.
 #include <boost/url/parse.hpp>
-#include <AsyncOperatorRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <HttpCallResolver.hpp>
 
@@ -75,13 +73,17 @@ AsyncError permanent(const Exception& error)
 }
 }
 
-AsyncOperator HttpCallAsyncOperator::create(AsyncOperatorRegistryArguments arguments)
+HttpCallAsyncOperator::HttpCallAsyncOperator(AsyncInputAccessor body, AsyncInputAccessor url)
+    : HttpCallAsyncOperator(std::move(body), std::move(url), std::nullopt, std::nullopt)
 {
-    if (arguments.inputs.size() < 2 || arguments.inputs.size() > 4)
-    {
-        throw InvalidQuerySyntax("HTTP_CALL takes (body, url[, timeout_ms[, retries]])");
-    }
-    return HttpCallAsyncOperator{}.withInputAccessors(std::move(arguments.inputs));
+}
+
+HttpCallAsyncOperator::HttpCallAsyncOperator(AsyncInputAccessor body,
+                                             AsyncInputAccessor url,
+                                             std::optional<AsyncInputAccessor> timeoutMillis,
+                                             std::optional<AsyncInputAccessor> retries)
+    : bodyInput(std::move(body)), urlInput(std::move(url)), timeoutMillisInput(std::move(timeoutMillis)), retriesInput(std::move(retries))
+{
 }
 
 /// NOLINTBEGIN(readability-magic-numbers) HTTP status codes are protocol-defined values.
@@ -92,12 +94,11 @@ AsyncResult<void> detail::checkHttpStatus(unsigned status, std::string_view endp
         return {};
     }
     const bool retryable = status == 408 || status == 429 || status == 500 || status == 502 || status == 503 || status == 504;
-    const auto error = IOError(
-        "HTTP_CALL to {} got status {}: {}{}",
-        endpoint,
-        status,
-        body,
-        retryable ? ". Retrying this POST may duplicate server-side effects" : "");
+    const auto error = IOError("HTTP_CALL to {} got status {}: {}{}",
+                               endpoint,
+                               status,
+                               body,
+                               retryable ? ". Retrying this POST may duplicate server-side effects" : "");
     return std::unexpected(AsyncError{.exception = error, .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent});
 }
 
@@ -113,10 +114,9 @@ AsyncError detail::classifyHttpTransportError(const boost::system::error_code& e
     }
     if (error == asioError::timed_out || error == boost::beast::error::timeout)
     {
-        return {
-            .exception
-            = IOError("HTTP_CALL to {} timed out: {}. Retrying this POST may duplicate server-side effects", url, error.message()),
-            .kind = AsyncError::Type::Retryable};
+        return {.exception
+                = IOError("HTTP_CALL to {} timed out: {}. Retrying this POST may duplicate server-side effects", url, error.message()),
+                .kind = AsyncError::Type::Retryable};
     }
     /// NOLINTBEGIN(misc-include-cleaner) generic_category is declared by public boost/system/error_code.hpp.
     const bool retryable = error == asioError::connection_refused || error == asioError::connection_reset
@@ -129,9 +129,48 @@ AsyncError detail::classifyHttpTransportError(const boost::system::error_code& e
         || error == http::error::end_of_stream;
     /// NOLINTEND(misc-include-cleaner)
     const auto* const warning = retryable ? ". Retrying this POST may duplicate server-side effects" : "";
-    return {
-        .exception = IOError("HTTP_CALL to {} failed {}: {}{}", url, retryable ? "transiently" : "permanently", error.message(), warning),
-        .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent};
+    return {.exception
+            = IOError("HTTP_CALL to {} failed {}: {}{}", url, retryable ? "transiently" : "permanently", error.message(), warning),
+            .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent};
+}
+
+AsyncResult<detail::ParsedHttpTarget> detail::parseHttpTarget(std::string_view url)
+{
+    const auto parsed = boost::urls::parse_uri(url);
+    if (!parsed || parsed->scheme() != "http" || parsed->encoded_host().empty())
+    {
+        return std::unexpected(permanent(FormattingError("HTTP_CALL needs an http:// url with a host, got {}", url)));
+    }
+    std::string resolveHost;
+    if (parsed->host_type() == boost::urls::host_type::ipv6)
+    {
+        std::string_view rawIpv6{parsed->encoded_host()};
+        rawIpv6 = rawIpv6.substr(1, rawIpv6.size() - 2);
+        const auto zonePos = rawIpv6.find("%25");
+        resolveHost.assign(rawIpv6.substr(0, zonePos));
+        if (zonePos != std::string_view::npos)
+        {
+            resolveHost.push_back('%');
+            resolveHost.append(parsed->zone_id());
+        }
+    }
+    else
+    {
+        resolveHost = parsed->host_address();
+    }
+    const std::string uriHost{parsed->encoded_host()};
+    const auto explicitPort = parsed->port();
+    std::string port = !explicitPort.empty() ? std::string{explicitPort} : "80";
+    std::string hostHeader = (!explicitPort.empty() && explicitPort != "80") ? (uriHost + ":" + port) : uriHost;
+    std::string endpointKey = uriHost + ":" + port;
+    std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
+    return detail::ParsedHttpTarget{
+        .resolveHost = std::move(resolveHost),
+        .port = std::move(port),
+        .hostHeader = std::move(hostHeader),
+        .endpointKey = std::move(endpointKey),
+        .target = std::move(target),
+    };
 }
 
 struct HttpCallAsyncOperator::State
@@ -141,60 +180,48 @@ struct HttpCallAsyncOperator::State
     std::string connectedTo;
     class Prepared;
     boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
-    execute(std::string body, std::string url, std::string host, std::string port, std::string target, uint64_t millis);
-    boost::asio::awaitable<AsyncResult<std::string>> exchange(
-        std::string host,
-        std::string port,
-        std::string target,
-        std::string body,
-        std::string url,
-        std::chrono::steady_clock::time_point deadline);
+    execute(std::string body, std::string url, detail::ParsedHttpTarget parsedTarget, uint64_t millis);
+    boost::asio::awaitable<AsyncResult<std::string>> exchange(detail::ParsedHttpTarget parsedTarget,
+                                                              std::string body,
+                                                              std::string url,
+                                                              std::chrono::steady_clock::time_point deadline);
 };
 
 class HttpCallAsyncOperator::State::Prepared final : public PreparedAsyncCall
 {
 public:
-    Prepared(
-        std::shared_ptr<State> owner,
-        std::string body,
-        std::string url,
-        std::string host,
-        std::string port,
-        std::string target,
-        uint64_t millis,
-        size_t retries)
+    Prepared(std::shared_ptr<State> owner,
+             std::string body,
+             std::string url,
+             detail::ParsedHttpTarget parsedTarget,
+             uint64_t millis,
+             size_t retries)
         : PreparedAsyncCall(retries)
         , owner(std::move(owner))
         , body(std::move(body))
         , url(std::move(url))
-        , host(std::move(host))
-        , port(std::move(port))
-        , target(std::move(target))
+        , parsedTarget(std::move(parsedTarget))
         , millis(millis)
     {
     }
 
     boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> executeAttempt() override
     {
-        co_return co_await owner->execute(body, url, host, port, target, millis);
+        co_return co_await owner->execute(body, url, parsedTarget, millis);
     }
 
 private:
     std::shared_ptr<State> owner;
-    std::string body, url, host, port, target;
+    std::string body, url;
+    detail::ParsedHttpTarget parsedTarget;
     uint64_t millis;
 };
 
 AsyncResult<std::unique_ptr<PreparedAsyncCall>> /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
 {
-    if (row.size() < 2 || row.size() > 4)
-    {
-        return std::unexpected(permanent(InvalidQuerySyntax("HTTP_CALL takes (body, url[, timeout_ms[, retries]])")));
-    }
-    PRECONDITION(bodyInput && urlInput, "HTTP_CALL input accessors are not configured");
-    const auto bodyValue = (*bodyInput)(row);
-    const auto urlValue = (*urlInput)(row);
+    const auto bodyValue = bodyInput(row);
+    const auto urlValue = urlInput(row);
     const auto bodyType = bodyValue.getDataType();
     const auto urlType = urlValue.getDataType();
     if (!bodyType.isType(DataType::Type::VARSIZED) || bodyType.nullable || !urlType.isType(DataType::Type::VARSIZED) || urlType.nullable)
@@ -227,10 +254,10 @@ HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, const AsyncRowHan
     {
         return std::unexpected(permanent(deadline.error()));
     }
-    const auto parsed = boost::urls::parse_uri(url);
-    if (!parsed || parsed->scheme() != "http" || parsed->host().empty())
+    auto parsedTarget = detail::parseHttpTarget(url);
+    if (!parsedTarget)
     {
-        return std::unexpected(permanent(FormattingError("HTTP_CALL needs an http:// url with a host, got {}", url)));
+        return std::unexpected(parsedTarget.error());
     }
     size_t retries = 0;
     if (retriesInput)
@@ -251,12 +278,9 @@ HttpCallAsyncOperator::prepare(AsyncExecutionContext& context, const AsyncRowHan
         }
         retries = static_cast<size_t>(*checked);
     }
-    std::string host{parsed->host()};
-    std::string port = parsed->has_port() ? std::string{parsed->port()} : "80";
-    std::string target = parsed->encoded_target().empty() ? "/" : std::string{parsed->encoded_target()};
     auto state = context.getSharedSlotState<State>();
-    return std::unique_ptr<PreparedAsyncCall>{std::make_unique<State::Prepared>(
-        std::move(state), std::move(body), std::move(url), std::move(host), std::move(port), std::move(target), millis, retries)};
+    return std::unique_ptr<PreparedAsyncCall>{
+        std::make_unique<State::Prepared>(std::move(state), std::move(body), std::move(url), std::move(*parsedTarget), millis, retries)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -266,23 +290,36 @@ std::string_view HttpCallAsyncOperator::getType() const
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-Schema<UnqualifiedUnboundField, Ordered> HttpCallAsyncOperator::getOutputSchema() const
+Schema<UnqualifiedUnboundField, Ordered> HttpCallAsyncOperator::getWrittenFields() const
 {
     return {{Identifier::parse("response"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}};
 }
 
+namespace detail
+{
+struct ReflectedHttpCallConfiguration
+{
+    AsyncInputAccessor bodyInput;
+    AsyncInputAccessor urlInput;
+    std::optional<AsyncInputAccessor> timeoutMillisInput;
+    std::optional<AsyncInputAccessor> retriesInput;
+};
+}
+
 Reflected Reflector<HttpCallAsyncOperator>::operator()(const HttpCallAsyncOperator& op, const ReflectionContext& context) const
 {
-    return context.reflect(op.getInputAccessors());
+    return context.reflect(detail::ReflectedHttpCallConfiguration{op.bodyInput, op.urlInput, op.timeoutMillisInput, op.retriesInput});
 }
 
 HttpCallAsyncOperator Unreflector<HttpCallAsyncOperator>::operator()(const Reflected& data, const ReflectionContext& context) const
 {
-    return HttpCallAsyncOperator{}.withInputAccessors(context.unreflect<AsyncInputAccessors>(data));
+    const auto configuration = context.unreflect<detail::ReflectedHttpCallConfiguration>(data);
+    return HttpCallAsyncOperator{
+        configuration.bodyInput, configuration.urlInput, configuration.timeoutMillisInput, configuration.retriesInput};
 }
 
 boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> HttpCallAsyncOperator::State::execute(
-    std::string body, std::string url, std::string host, std::string port, std::string target, uint64_t millis)
+    std::string body, std::string url, detail::ParsedHttpTarget parsedTarget, uint64_t millis)
 {
     auto deadline = checkedSteadyDeadline(millis, "HTTP_CALL");
     if (!deadline)
@@ -291,7 +328,7 @@ boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> HttpCallAsyncOperator::
     }
     const bool previousThrowPolicy = co_await boost::asio::this_coro::throw_if_cancelled();
     co_await boost::asio::this_coro::throw_if_cancelled(false);
-    auto response = co_await exchange(std::move(host), std::move(port), std::move(target), std::move(body), url, *deadline);
+    auto response = co_await exchange(std::move(parsedTarget), std::move(body), url, *deadline);
     co_await boost::asio::this_coro::throw_if_cancelled(previousThrowPolicy);
     if (!response)
     {
@@ -301,13 +338,10 @@ boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> HttpCallAsyncOperator::
     co_return SharedRuntimeValues::make(std::move(*response));
 }
 
-boost::asio::awaitable<AsyncResult<std::string>> HttpCallAsyncOperator::State::exchange(
-    std::string host,
-    std::string port,
-    std::string target,
-    std::string body,
-    std::string url,
-    std::chrono::steady_clock::time_point deadline)
+boost::asio::awaitable<AsyncResult<std::string>> HttpCallAsyncOperator::State::exchange(detail::ParsedHttpTarget parsedTarget,
+                                                                                        std::string body,
+                                                                                        std::string url,
+                                                                                        std::chrono::steady_clock::time_point deadline)
 {
     namespace asio = boost::asio;
     auto fail = [&url](const boost::system::error_code& error) -> AsyncResult<std::string>
@@ -330,9 +364,9 @@ boost::asio::awaitable<AsyncResult<std::string>> HttpCallAsyncOperator::State::e
         co_return std::unexpected(*failure);
     }
     const auto executor = co_await asio::this_coro::executor;
-    if (!stream || connectedTo != host + ":" + port)
+    if (!stream || connectedTo != parsedTarget.endpointKey)
     {
-        auto endpoints = co_await detail::resolveHttpHost(host, port, deadline);
+        auto endpoints = co_await detail::resolveHttpHost(parsedTarget.resolveHost, parsedTarget.port, deadline);
         if (!endpoints)
         {
             if (endpoints.error().kind == AsyncError::Type::TimedOut)
@@ -358,16 +392,16 @@ boost::asio::awaitable<AsyncResult<std::string>> HttpCallAsyncOperator::State::e
         {
             co_return std::unexpected(*failure);
         }
-        connectedTo = host + ":" + port;
+        connectedTo = parsedTarget.endpointKey;
     }
     if (const auto failure = checkDeadlineAndCancellation())
     {
         co_return std::unexpected(*failure);
     }
     /// NOLINTBEGIN(misc-include-cleaner, readability-magic-numbers) request/string_body come from public Beast headers; 11 denotes HTTP/1.1.
-    http::request<http::string_body> request{http::verb::post, target, 11, std::move(body)};
+    http::request<http::string_body> request{http::verb::post, parsedTarget.target, 11, std::move(body)};
     /// NOLINTEND(misc-include-cleaner, readability-magic-numbers)
-    request.set(http::field::host, host + ":" + port);
+    request.set(http::field::host, parsedTarget.hostHeader);
     request.set(http::field::content_type, "text/plain");
     request.keep_alive(true);
     request.prepare_payload();

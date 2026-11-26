@@ -19,7 +19,6 @@ add_library(http_call_plugin_library STATIC HttpCallAsyncOperator.cpp)
 target_link_libraries(http_call_plugin_library PRIVATE nes-sources Boost::headers reflectcpp::reflectcpp)
 target_include_directories(http_call_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sources http_call_plugin_library)
-add_registry_entry(AsyncOperator HttpCall KEY HTTP_CALL)
 add_unreflection_entry(AsyncOperator HttpCall KEY HTTP_CALL)
 
 add_library(http_call_logical_plugin_library STATIC HttpCallLogicalOperator.cpp)

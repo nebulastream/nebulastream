@@ -11,19 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncOperatorReflection.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
@@ -31,8 +29,10 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
-#include <Util/Reflection.hpp>
+#include <Sources/AsyncOperatorReflection.hpp>
+#include <Sources/SharedRuntimeValues.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -44,18 +44,28 @@ struct AsyncGraphScope
     Schema<QualifiedUnboundField, Ordered> inputSchema;
 };
 
-namespace
+struct WireCall
 {
-/// IDs are strictly a wire-format concern. They are resolved/validated before a graph can be used.
-struct ReflectedAsyncResultReference
-{
-    std::string producer;
-    size_t output;
+    std::string id;
+    Reflected asyncOperator;
+    std::vector<std::string> dependencies;
 };
 
-using ReflectedAsyncArgument = std::variant<RuntimeValue, QualifiedIdentifier, ReflectedAsyncResultReference>;
+struct WireOutput
+{
+    ReflectedAsyncResultReference result;
+    QualifiedIdentifier field;
+};
 
-bool hasRuntimeType(const DataType::Type type)
+struct WireGraph
+{
+    Schema<QualifiedUnboundField, Ordered> inputSchema;
+    std::vector<WireCall> calls;
+    std::vector<std::string> required;
+    std::vector<WireOutput> outputs;
+};
+
+bool validRuntimeType(DataType::Type type)
 {
     switch (type)
     {
@@ -78,100 +88,24 @@ bool hasRuntimeType(const DataType::Type type)
     }
     return false;
 }
-
-struct ReflectedAsyncCall
-{
-    std::string id;
-    AsyncOperator asyncOperator;
-    std::vector<ReflectedAsyncArgument> arguments;
-};
-
-struct ReflectedAsyncOutput
-{
-    ReflectedAsyncResultReference result;
-    QualifiedIdentifier field;
-};
-
-struct ReflectedAsyncGraph
-{
-    Schema<QualifiedUnboundField, Ordered> inputSchema;
-    std::vector<ReflectedAsyncCall> calls;
-    std::vector<ReflectedAsyncOutput> outputs;
-};
-}
 }
 
-InputFieldReference::InputFieldReference(std::shared_ptr<const detail::AsyncGraphScope> scope, QualifiedIdentifier field)
-    : scope(std::move(scope)), field(std::move(field))
+InputFieldReference::InputFieldReference(std::shared_ptr<const detail::AsyncGraphScope> s, QualifiedIdentifier f)
+    : scope(std::move(s)), field(std::move(f))
 {
-}
-
-InputFieldReference::InputFieldReference(InputFieldReference&& other) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>)
-    : InputFieldReference(static_cast<const InputFieldReference&>(other))
-{
-}
-
-InputFieldReference&
-InputFieldReference::operator=(InputFieldReference&& other) noexcept(std::is_nothrow_copy_assignable_v<QualifiedIdentifier>)
-{
-    return *this = static_cast<const InputFieldReference&>(other);
-}
-
-QualifiedIdentifier InputFieldReference::getField() const
-{
-    return field;
 }
 
 DataType InputFieldReference::getDataType() const
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) schema lookup returns an optional
-    const auto input = scope->inputSchema[field];
-    INVARIANT(input.has_value(), "Async input field {} must belong to its graph's input schema", field);
-    return input->getDataType();
+    const auto fieldValue = scope->inputSchema[field];
+    INVARIANT(fieldValue.has_value(), "Async input field {} must belong to its graph", field);
+    return fieldValue->getDataType();
 }
 
-AsyncResultReference::AsyncResultReference(std::shared_ptr<const AsyncCall> producer, const size_t index)
-    : producer(std::move(producer)), index(index)
+AsyncCall::AsyncCall(std::shared_ptr<const detail::AsyncGraphScope> s, AsyncOperator op, std::vector<Ptr> deps)
+    : scope(std::move(s)), asyncOperator(std::move(op)), dependencies(std::move(deps))
 {
-}
-
-AsyncResultReference::AsyncResultReference(AsyncResultReference&& other) noexcept
-    : AsyncResultReference(static_cast<const AsyncResultReference&>(other))
-{
-}
-
-AsyncResultReference& AsyncResultReference::operator=(AsyncResultReference&& other) noexcept
-{
-    return *this = static_cast<const AsyncResultReference&>(other);
-}
-
-AsyncCall::Ptr AsyncResultReference::getProducer() const
-{
-    return producer;
-}
-
-size_t AsyncResultReference::getOutputIndex() const
-{
-    return index;
-}
-
-DataType AsyncResultReference::getDataType() const
-{
-    return producer->getResultTypes().at(index);
-}
-
-AsyncCall::AsyncCall(
-    std::shared_ptr<const detail::AsyncGraphScope> scope, AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments)
-    : scope(std::move(scope)), asyncOperator(std::move(asyncOperator)), arguments(std::move(arguments))
-{
-    std::vector<DataType> inputTypes;
-    inputTypes.reserve(this->arguments.size());
-    for (const auto& argument : this->arguments)
-    {
-        inputTypes.push_back(std::visit([](const auto& value) { return value.getDataType(); }, argument));
-    }
-    this->asyncOperator = this->asyncOperator.withInputAccessors(AsyncInputAccessors{std::move(inputTypes)});
-    for (const auto& field : this->asyncOperator.getOutputSchema())
+    for (const auto& field : asyncOperator.getWrittenFields())
     {
         resultTypes.push_back(field.getDataType());
     }
@@ -192,20 +126,22 @@ const std::vector<DataType>& AsyncCall::getResultTypes() const
     return resultTypes;
 }
 
-const std::vector<AsyncCallArgument>& AsyncCall::getArguments() const
+const std::vector<AsyncCall::Ptr>& AsyncCall::getDependencies() const
 {
-    return arguments;
+    return dependencies;
 }
 
-AsyncResultReference AsyncCall::output(const size_t index) const
+AsyncResultReference AsyncCall::output(size_t index) const
 {
-    PRECONDITION(index < resultTypes.size(), "Async call {} has no output {}", getFunctionType(), index);
+    PRECONDITION(index < resultTypes.size(), "Async call has no output {}", index);
     return AsyncResultReference{shared_from_this(), index};
 }
 
-AsyncCallGraph::AsyncCallGraph(
-    std::shared_ptr<const detail::AsyncGraphScope> scope, std::vector<AsyncCall::Ptr> calls, std::vector<AsyncOutputMapping> outputs)
-    : scope(std::move(scope)), calls(std::move(calls)), outputs(std::move(outputs))
+AsyncCallGraph::AsyncCallGraph(std::shared_ptr<const detail::AsyncGraphScope> s,
+                               std::vector<AsyncCall::Ptr> c,
+                               std::vector<AsyncOutputMapping> o,
+                               std::vector<AsyncCall::Ptr> r)
+    : scope(std::move(s)), calls(std::move(c)), outputs(std::move(o)), requiredCalls(std::move(r))
 {
 }
 
@@ -224,10 +160,21 @@ const std::vector<AsyncOutputMapping>& AsyncCallGraph::getOutputs() const
     return outputs;
 }
 
-AsyncCallGraphBuilder::AsyncCallGraphBuilder(Schema<QualifiedUnboundField, Ordered> inputSchema)
-    : scope(std::make_shared<const detail::AsyncGraphScope>(detail::AsyncGraphScope{std::move(inputSchema)}))
+const std::vector<AsyncCall::Ptr>& AsyncCallGraph::getRequiredCalls() const
 {
-    std::unordered_set<QualifiedIdentifier> names;
+    return requiredCalls;
+}
+
+AsyncRowHandle AsyncCallGraph::createRowHandle(std::function<RuntimeValue(const InputFieldReference&)> reader,
+                                               std::unordered_map<AsyncCall::Ptr, SharedRuntimeValues> results) const
+{
+    return AsyncRowHandle{scope, std::move(reader), std::move(results)};
+}
+
+AsyncCallGraphBuilder::AsyncCallGraphBuilder(Schema<QualifiedUnboundField, Ordered> schema)
+    : scope(std::make_shared<const detail::AsyncGraphScope>(detail::AsyncGraphScope{std::move(schema)}))
+{
+    IF_PRECONDITION(std::unordered_set<QualifiedIdentifier> names;)
     for (const auto& field : scope->inputSchema)
     {
         visitRuntimeType(field.getDataType().type, []<typename>() { });
@@ -237,145 +184,218 @@ AsyncCallGraphBuilder::AsyncCallGraphBuilder(Schema<QualifiedUnboundField, Order
 
 void AsyncCallGraphBuilder::requireOpen() const
 {
-    PRECONDITION(!built, "Async graph builder has already been finalized");
+    PRECONDITION(!built, "Async graph builder already finalized");
 }
 
 InputFieldReference AsyncCallGraphBuilder::input(QualifiedIdentifier field) const
 {
     requireOpen();
-    PRECONDITION(
-        std::ranges::any_of(scope->inputSchema, [&](const auto& input) { return input.getFullyQualifiedName() == field; }),
-        "Async input field {} is not present in this graph's input schema",
-        field);
+    PRECONDITION(std::ranges::any_of(scope->inputSchema, [&](const auto& f) { return f.getFullyQualifiedName() == field; }),
+                 "Unknown input field {}",
+                 field);
     return InputFieldReference{scope, std::move(field)};
 }
 
-AsyncCall::Ptr AsyncCallGraphBuilder::call(AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments)
+AsyncCall::Ptr AsyncCallGraphBuilder::call(AsyncOperator op, std::vector<AsyncCall::Ptr> deps)
 {
     requireOpen();
-    /// NOLINTNEXTLINE(readability-simplify-boolean-expr) state the nonempty function and output requirements directly
-    PRECONDITION(
-        !asyncOperator.getType().empty() && asyncOperator.getOutputSchema().size() != 0,
-        "An async call needs a function and at least one output type");
-    for (const auto& field : asyncOperator.getOutputSchema())
+    PRECONDITION(!op.getType().empty() && op.getWrittenFields().size() != 0, "An async call needs a function and at least one output type");
+    IF_PRECONDITION(std::unordered_set<AsyncCall::Ptr> unique;)
+    for (const auto& dep : deps)
+    {
+        PRECONDITION(dep && dep->scope == scope, "Dependency belongs to another graph");
+        PRECONDITION(unique.insert(dep).second, "Duplicate async dependency");
+    }
+    for (const auto& field : op.getWrittenFields())
     {
         visitRuntimeType(field.getDataType().type, []<typename>() { });
     }
-    for (const auto& argument : arguments)
-    {
-        std::visit(
-            [&]<typename T>(const T& IF_PRECONDITION(value))
-            {
-                if constexpr (std::is_same_v<T, InputFieldReference>)
-                {
-                    PRECONDITION(value.scope == scope, "Async input reference belongs to another graph's input scope");
-                }
-                else if constexpr (std::is_same_v<T, AsyncResultReference>)
-                {
-                    PRECONDITION(value.getProducer()->scope == scope, "Async result reference belongs to another graph");
-                }
-            },
-            argument);
-    }
-    auto node = std::shared_ptr<AsyncCall>{new AsyncCall{scope, std::move(asyncOperator), std::move(arguments)}};
+    auto node = std::shared_ptr<AsyncCall>{new AsyncCall{scope, std::move(op), std::move(deps)}};
     calls.push_back(node);
     return node;
+}
+
+void AsyncCallGraphBuilder::require(AsyncCall::Ptr node)
+{
+    requireOpen();
+    PRECONDITION(node && node->scope == scope, "Required call belongs to another graph");
+    if (std::ranges::find(requiredCalls, node) == requiredCalls.end())
+    {
+        requiredCalls.push_back(std::move(node));
+    }
 }
 
 void AsyncCallGraphBuilder::exportOutput(AsyncResultReference result, QualifiedIdentifier field)
 {
     requireOpen();
-    PRECONDITION(result.getProducer()->scope == scope, "Cannot export an async result from another graph");
+    PRECONDITION(result.getProducer()->scope == scope, "Cannot export foreign result");
     PRECONDITION(
         std::ranges::none_of(outputs, [&](const auto& output) { return output.field == field; }), "Duplicate async output field {}", field);
-    outputs.push_back({.result = result, .field = std::move(field)});
+    outputs.push_back({std::move(result), std::move(field)});
 }
 
 AsyncCallGraph AsyncCallGraphBuilder::build()
 {
     requireOpen();
     std::unordered_set<AsyncCall::Ptr> reachable;
-    const auto visit = [&](this const auto& self, const AsyncCall::Ptr& node) -> void
+    auto visit = [&](auto&& self, const AsyncCall::Ptr& n) -> void
     {
-        if (!reachable.insert(node).second)
+        if (!reachable.insert(n).second)
         {
             return;
         }
-        for (const auto& argument : node->getArguments())
+        for (const auto& d : n->getDependencies())
         {
-            if (const auto* reference = std::get_if<AsyncResultReference>(&argument))
-            {
-                self(reference->getProducer());
-            }
+            self(self, d);
         }
     };
-    for (const auto& output : outputs)
+    for (const auto& r : requiredCalls)
     {
-        visit(output.result.getProducer());
+        visit(visit, r);
     }
-    std::erase_if(calls, [&](const auto& node) { return !reachable.contains(node); });
+    for (const auto& o : outputs)
+    {
+        visit(visit, o.result.getProducer());
+    }
+    std::erase_if(calls, [&](const auto& c) { return !reachable.contains(c); });
     built = true;
-    return AsyncCallGraph{scope, std::move(calls), std::move(outputs)};
+    return AsyncCallGraph{scope, std::move(calls), std::move(outputs), std::move(requiredCalls)};
 }
 
 Reflected Reflector<AsyncCallGraph>::operator()(const AsyncCallGraph& graph, const ReflectionContext& context) const
 {
     std::unordered_map<AsyncCall::Ptr, std::string> ids;
-    for (const auto& node : graph.getCalls())
+    for (size_t i = 0; i < graph.getCalls().size(); ++i)
     {
-        ids.emplace(node, "node-" + std::to_string(ids.size()));
+        ids.emplace(graph.getCalls()[i], "node-" + std::to_string(i));
     }
-    detail::ReflectedAsyncGraph wire{.inputSchema = graph.getInputSchema(), .calls = {}, .outputs = {}};
-    const auto result = [&](const AsyncResultReference& value)
-    { return detail::ReflectedAsyncResultReference{.producer = ids.at(value.getProducer()), .output = value.getOutputIndex()}; };
-    for (const auto& node : graph.getCalls())
+    const auto encodeResult
+        = [&](const AsyncResultReference& r) { return detail::ReflectedAsyncResultReference{ids.at(r.getProducer()), r.getOutputIndex()}; };
+    detail::WireGraph wire{.inputSchema = graph.getInputSchema(), .calls = {}, .required = {}, .outputs = {}};
+    for (const auto& call : graph.getCalls())
     {
-        detail::ReflectedAsyncCall call{.id = ids.at(node), .asyncOperator = node->getAsyncOperator(), .arguments = {}};
-        for (const auto& argument : node->getArguments())
+        std::vector<std::string> deps;
+        for (const auto& d : call->getDependencies())
         {
-            call.arguments.push_back(
-                std::visit(
-                    [&]<typename T>(const T& value) -> detail::ReflectedAsyncArgument
-                    {
-                        if constexpr (std::is_same_v<T, RuntimeValue>)
-                        {
-                            return value;
-                        }
-                        else if constexpr (std::is_same_v<T, InputFieldReference>)
-                        {
-                            return value.getField();
-                        }
-                        else
-                        {
-                            return result(value);
-                        }
-                    },
-                    argument));
+            deps.push_back(ids.at(d));
         }
-        wire.calls.push_back(std::move(call));
+        const AsyncReferenceSerializationContext references{graph.scope, ids, call->getDependencies()};
+        const auto scoped = context.with(references);
+        wire.calls.push_back({ids.at(call), scoped.reflect(call->getAsyncOperator()), std::move(deps)});
+    }
+    for (const auto& root : graph.getRequiredCalls())
+    {
+        wire.required.push_back(ids.at(root));
     }
     for (const auto& output : graph.getOutputs())
     {
-        wire.outputs.push_back({.result = result(output.result), .field = output.field});
+        wire.outputs.push_back({encodeResult(output.result), output.field});
     }
     return context.reflect(wire);
 }
 
 AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, const ReflectionContext& context) const
 {
-    const auto wire = context.unreflect<detail::ReflectedAsyncGraph>(data);
-    /// Wire data is untrusted: validate all builder preconditions before using its contract-only API.
+    const auto wire = context.unreflect<detail::WireGraph>(data);
+    std::unordered_map<std::string, const detail::WireCall*> defs;
+    for (const auto& call : wire.calls)
+    {
+        if (call.id.empty() || !defs.emplace(call.id, &call).second)
+        {
+            throw CannotDeserialize("Duplicate or empty async call ID {}", call.id);
+        }
+    }
     std::unordered_set<QualifiedIdentifier> inputNames;
     for (const auto& field : wire.inputSchema)
     {
-        if (!inputNames.insert(field.getFullyQualifiedName()).second)
+        if (!inputNames.insert(field.getFullyQualifiedName()).second || !detail::validRuntimeType(field.getDataType().type))
         {
-            throw CannotDeserialize("Duplicate async input field {}", field.getFullyQualifiedName());
+            throw CannotDeserialize("Invalid or duplicate async input field");
         }
-        if (!detail::hasRuntimeType(field.getDataType().type))
+    }
+    for (const auto& call : wire.calls)
+    {
+        std::unordered_set<std::string> unique;
+        for (const auto& id : call.dependencies)
         {
-            throw CannotDeserialize("Invalid async input field type");
+            if (!defs.contains(id) || !unique.insert(id).second)
+            {
+                throw CannotDeserialize("Dangling or duplicate async dependency {}", id);
+            }
         }
+    }
+    std::unordered_set<std::string> done, active;
+    std::vector<std::string> order;
+    auto visit = [&](auto&& self, const std::string& id) -> void
+    {
+        if (done.contains(id))
+        {
+            return;
+        }
+        if (!active.insert(id).second)
+        {
+            throw CannotDeserialize("Cycle in async dependency graph at {}", id);
+        }
+        for (const auto& dep : defs.at(id)->dependencies)
+        {
+            self(self, dep);
+        }
+        active.erase(id);
+        done.insert(id);
+        order.push_back(id);
+    };
+    for (const auto& call : wire.calls)
+    {
+        visit(visit, call.id);
+    }
+    std::unordered_set<std::string> requiredIds;
+    for (const auto& id : wire.required)
+    {
+        if (!defs.contains(id) || !requiredIds.insert(id).second)
+        {
+            throw CannotDeserialize("Dangling or duplicate required async root {}", id);
+        }
+    }
+    for (const auto& output : wire.outputs)
+    {
+        if (!defs.contains(output.result.producer))
+        {
+            throw CannotDeserialize("Dangling output producer {}", output.result.producer);
+        }
+    }
+
+    AsyncCallGraphBuilder builder{wire.inputSchema};
+    std::unordered_map<std::string, AsyncCall::Ptr> nodes;
+    for (const auto& id : order)
+    {
+        const auto& call = *defs.at(id);
+        const std::unordered_set<std::string> declared(call.dependencies.begin(), call.dependencies.end());
+        const AsyncReferenceDeserializationContext references{builder, inputNames, declared, nodes};
+        const auto scoped = context.with(references);
+        AsyncOperator op = scoped.unreflect<AsyncOperator>(call.asyncOperator);
+        const auto writtenFields = op.getWrittenFields();
+        if (op.getType().empty() || writtenFields.size() == 0)
+        {
+            throw CannotDeserialize("Async call needs a function and at least one output");
+        }
+        for (const auto& field : writtenFields)
+        {
+            if (!detail::validRuntimeType(field.getDataType().type))
+            {
+                throw CannotDeserialize("Invalid async output type");
+            }
+        }
+        std::vector<AsyncCall::Ptr> dependencies;
+        for (const auto& dep : call.dependencies)
+        {
+            dependencies.push_back(nodes.at(dep));
+        }
+        auto node = builder.call(std::move(op), std::move(dependencies));
+        nodes.emplace(id, std::move(node));
+    }
+    for (const auto& id : wire.required)
+    {
+        builder.require(nodes.at(id));
     }
     std::unordered_set<QualifiedIdentifier> outputNames;
     for (const auto& output : wire.outputs)
@@ -384,96 +404,7 @@ AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, co
         {
             throw CannotDeserialize("Duplicate async output field {}", output.field);
         }
-    }
-    for (const auto& call : wire.calls)
-    {
-        if (call.asyncOperator.getType().empty() || call.asyncOperator.getOutputSchema().size() == 0)
-        {
-            throw CannotDeserialize("Async call needs a function and at least one output type");
-        }
-        for (const auto& field : call.asyncOperator.getOutputSchema())
-        {
-            if (!detail::hasRuntimeType(field.getDataType().type))
-            {
-                throw CannotDeserialize("Invalid async call output type");
-            }
-        }
-        for (const auto& argument : call.arguments)
-        {
-            if (const auto* input = std::get_if<QualifiedIdentifier>(&argument); (input != nullptr) && !inputNames.contains(*input))
-            {
-                throw CannotDeserialize("Async input field {} is absent", *input);
-            }
-        }
-    }
-    AsyncCallGraphBuilder builder{wire.inputSchema};
-    std::unordered_map<std::string, const detail::ReflectedAsyncCall*> definitions;
-    for (const auto& call : wire.calls)
-    {
-        if (call.id.empty() || !definitions.emplace(call.id, &call).second)
-        {
-            throw CannotDeserialize("Duplicate or empty async call ID {}", call.id);
-        }
-    }
-    std::unordered_map<std::string, AsyncCall::Ptr> resolved;
-    std::unordered_set<std::string> resolving;
-    const auto resolve = [&](this const auto& self, const std::string& id) -> AsyncCall::Ptr
-    {
-        if (const auto found = resolved.find(id); found != resolved.end())
-        {
-            return found->second;
-        }
-        const auto definition = definitions.find(id);
-        if (definition == definitions.end())
-        {
-            throw CannotDeserialize("Dangling async producer reference {}", id);
-        }
-        if (!resolving.insert(id).second)
-        {
-            throw CannotDeserialize("Cycle in async dependency graph at {}", id);
-        }
-        const auto& call = *definition->second;
-        std::vector<AsyncCallArgument> arguments;
-        arguments.reserve(call.arguments.size());
-        for (const auto& argument : call.arguments)
-        {
-            arguments.push_back(
-                std::visit(
-                    [&]<typename T>(const T& value) -> AsyncCallArgument
-                    {
-                        if constexpr (std::is_same_v<T, RuntimeValue>)
-                        {
-                            return value;
-                        }
-                        else if constexpr (std::is_same_v<T, QualifiedIdentifier>)
-                        {
-                            return builder.input(value);
-                        }
-                        else
-                        {
-                            const auto producer = self(value.producer);
-                            if (value.output >= producer->getResultTypes().size())
-                            {
-                                throw CannotDeserialize("Async producer {} has no output {}", value.producer, value.output);
-                            }
-                            return producer->output(value.output);
-                        }
-                    },
-                    argument));
-        }
-        auto node = builder.call(call.asyncOperator, std::move(arguments));
-        resolving.erase(id);
-        resolved.emplace(id, node);
-        return node;
-    };
-    /// Validate even unreachable definitions; malformed cycles must not hide in an unused branch.
-    for (const auto& call : wire.calls)
-    {
-        resolve(call.id);
-    }
-    for (const auto& output : wire.outputs)
-    {
-        const auto producer = resolve(output.result.producer);
+        const auto& producer = nodes.at(output.result.producer);
         if (output.result.output >= producer->getResultTypes().size())
         {
             throw CannotDeserialize("Async producer {} has no output {}", output.result.producer, output.result.output);
@@ -482,5 +413,4 @@ AsyncCallGraph Unreflector<AsyncCallGraph>::operator()(const Reflected& data, co
     }
     return builder.build();
 }
-
 }

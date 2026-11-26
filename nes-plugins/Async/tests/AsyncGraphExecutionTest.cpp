@@ -12,6 +12,7 @@
     limitations under the License.
 */
 /// NOLINTBEGIN(readability-magic-numbers) Numeric values are fixture data in these tests.
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <exception>
@@ -23,12 +24,14 @@
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
@@ -135,6 +138,22 @@ void run(Body body)
     result.get();
 }
 
+AsyncCall::Ptr makeCall(AsyncCallGraphBuilder& builder,
+                        std::string label,
+                        std::vector<DataType> resultTypes,
+                        std::vector<AsyncInputAccessor> accessors = {})
+{
+    std::vector<AsyncCall::Ptr> dependencies;
+    for (const auto& accessor : accessors)
+    {
+        if (auto producer = accessor.getProducer(); producer && std::ranges::find(dependencies, producer) == dependencies.end())
+        {
+            dependencies.push_back(std::move(producer));
+        }
+    }
+    return builder.call(makeAsyncTestOperator(std::move(label), std::move(resultTypes), 0, std::move(accessors)), std::move(dependencies));
+}
+
 AsyncGraphExecution::ReadInput noInputs()
 {
     return [](const InputFieldReference&) -> RuntimeValue
@@ -151,15 +170,14 @@ TEST(SharedAsyncResultTest, LazyProducerRunsOnceAndAllSubscribersIncludingLateOn
         [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
         {
             int calls = 0;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
-                    co_await pause(5ms);
-                    co_return SharedRuntimeValues::make(std::string{"a\0b", 3});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
+                                                                 co_await pause(5ms);
+                                                                 co_return SharedRuntimeValues::make(std::string{"a\0b", 3});
+                                                             });
             EXPECT_EQ(calls, 0);
             auto [first, second] = co_await (value->get() && value->get());
             EXPECT_EQ(calls, 1);
@@ -176,13 +194,12 @@ TEST(SharedAsyncResultTest, DefaultEmptyResultIsSuccessfulAndCached)
         [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
         {
             int calls = 0;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    co_return SharedRuntimeValues{};
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 co_return SharedRuntimeValues{};
+                                                             });
             EXPECT_FALSE(value->finished());
             auto [first, second] = co_await (value->get() && value->get());
             EXPECT_TRUE(successValues(first).empty());
@@ -253,9 +270,9 @@ TEST(SharedAsyncResultTest, ImmediateCompletionCannotLoseTheWakeup)
         {
             for (int repeat = 0; repeat < 50; ++repeat)
             {
-                auto value = std::make_shared<SharedAsyncResult>(
-                    executor,
-                    []() -> asio::awaitable<AsyncResult<SharedRuntimeValues>> { co_return SharedRuntimeValues::make(int64_t{42}); });
+                auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                                 []() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                                 { co_return SharedRuntimeValues::make(int64_t{42}); });
                 auto [first, second] = co_await (value->get() && value->get());
                 EXPECT_EQ(successValues(first)[0].get<int64_t>(), 42);
                 EXPECT_EQ(successValues(second)[0].get<int64_t>(), 42);
@@ -270,16 +287,15 @@ TEST(SharedAsyncResultTest, ConsumerTimeoutDoesNotCancelProducerOrAnotherSubscri
         {
             int calls = 0;
             bool completed = false;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
-                    co_await pause(30ms);
-                    completed = true;
-                    co_return SharedRuntimeValues::make(int64_t{42});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
+                                                                 co_await pause(30ms);
+                                                                 completed = true;
+                                                                 co_return SharedRuntimeValues::make(int64_t{42});
+                                                             });
             /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
             auto [shortWait, other] = co_await (observe(value->getUntil(std::chrono::steady_clock::now() + 2ms)) && value->get());
             EXPECT_EQ(errorCode(shortWait), asio::error::timed_out);
@@ -297,18 +313,17 @@ TEST(SharedAsyncResultTest, CancellingOneSubscriberDoesNotCancelTheSharedProduce
         {
             asio::cancellation_signal cancelWaiter;
             int calls = 0;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    co_await pause(30ms);
-                    co_return SharedRuntimeValues::make(int64_t{42});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 co_await pause(30ms);
+                                                                 co_return SharedRuntimeValues::make(int64_t{42});
+                                                             });
             auto firstWait
                 = asio::co_spawn(executor, observe(value->get()), asio::bind_cancellation_slot(cancelWaiter.slot(), asio::use_awaitable));
-            auto [first, second, cancelled] = co_await (
-                std::move(firstWait) && value->get() && after(2ms, [&] { cancelWaiter.emit(asio::cancellation_type::terminal); }));
+            auto [first, second, cancelled] = co_await (std::move(firstWait) && value->get()
+                                                        && after(2ms, [&] { cancelWaiter.emit(asio::cancellation_type::terminal); }));
             EXPECT_EQ(errorCode(first), asio::error::operation_aborted);
             EXPECT_EQ(successValues(second)[0].get<int64_t>(), 42);
             EXPECT_EQ(calls, 1);
@@ -322,14 +337,13 @@ TEST(SharedAsyncResultTest, LateProducerCompletionCannotTurnAnExpiredWaitIntoSuc
     run(
         [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
         {
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                []() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    /// Deliberately stall this test's executor to exercise completion/deadline notification ordering.
-                    std::this_thread::sleep_for(30ms);
-                    co_return SharedRuntimeValues::make(int64_t{42});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             []() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 /// Deliberately stall this test's executor to exercise completion/deadline notification ordering.
+                                                                 std::this_thread::sleep_for(30ms);
+                                                                 co_return SharedRuntimeValues::make(int64_t{42});
+                                                             });
             /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
             const auto timedOut = co_await observe(value->getUntil(std::chrono::steady_clock::now() + 10ms));
             EXPECT_EQ(errorCode(timedOut), asio::error::timed_out);
@@ -344,14 +358,13 @@ TEST(SharedAsyncResultTest, ProducerTimeoutIsSharedByEverySubscriber)
         [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
         {
             int calls = 0;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    co_await pause(2ms);
-                    co_return std::unexpected(AsyncError::timedOut());
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 co_await pause(2ms);
+                                                                 co_return std::unexpected(AsyncError::timedOut());
+                                                             });
             auto [first, second] = co_await (observe(value->get()) && observe(value->get()));
             EXPECT_EQ(errorCode(first), asio::error::timed_out);
             EXPECT_EQ(errorCode(second), asio::error::timed_out);
@@ -366,18 +379,17 @@ TEST(SharedAsyncResultTest, OwnerCancellationStopsProducerAndWakesAllSubscribers
     run(
         [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
         {
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                []() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
-                    const auto error = co_await pause(10min);
-                    if (error == asio::error::operation_aborted)
-                    {
-                        co_return std::unexpected(AsyncError::cancelled());
-                    }
-                    co_return SharedRuntimeValues::make(int64_t{42});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             []() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 /// NOLINTNEXTLINE(misc-include-cleaner) chrono literals are declared by the public <chrono> header.
+                                                                 const auto error = co_await pause(10min);
+                                                                 if (error == asio::error::operation_aborted)
+                                                                 {
+                                                                     co_return std::unexpected(AsyncError::cancelled());
+                                                                 }
+                                                                 co_return SharedRuntimeValues::make(int64_t{42});
+                                                             });
             auto [first, second, cancelled]
                 = co_await (observe(value->get()) && observe(value->get()) && after(2ms, [value] { value->cancel(); }));
             EXPECT_EQ(errorCode(first), asio::error::operation_aborted);
@@ -394,13 +406,12 @@ TEST(SharedAsyncResultTest, AlreadyCancelledWaiterDoesNotStartProducerEvenWhenAu
         {
             int calls = 0;
             asio::cancellation_signal cancelWaiter;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    co_return SharedRuntimeValues::make(int64_t{42});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 co_return SharedRuntimeValues::make(int64_t{42});
+                                                             });
             const auto waiter = [&]() -> asio::awaitable<Outcome>
             {
                 co_await asio::this_coro::throw_if_cancelled(false);
@@ -423,13 +434,12 @@ TEST(SharedAsyncResultTest, CancelBeforeStartAndExpiredDeadlineDoNotRunProducer)
         [](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
         {
             int calls = 0;
-            auto value = std::make_shared<SharedAsyncResult>(
-                executor,
-                [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                {
-                    ++calls;
-                    co_return SharedRuntimeValues::make(int64_t{42});
-                });
+            auto value = std::make_shared<SharedAsyncResult>(executor,
+                                                             [&]() -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                             {
+                                                                 ++calls;
+                                                                 co_return SharedRuntimeValues::make(int64_t{42});
+                                                             });
             const auto expired = co_await observe(value->getUntil(std::chrono::steady_clock::now() - 1ms));
             EXPECT_EQ(errorCode(expired), asio::error::timed_out);
             EXPECT_EQ(calls, 0);
@@ -444,10 +454,14 @@ TEST(SharedAsyncResultTest, CancelBeforeStartAndExpiredDeadlineDoNotRunProducer)
 TEST(AsyncGraphExecutionTest, DiamondUsesOneInvocationAndSelectsTypedOutputs)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(makeAsyncTestOperator("Producer", {INTEGER, INTEGER}), {RuntimeValue{int64_t{42}}});
-    const auto left = builder.call(makeAsyncTestOperator("Left", {INTEGER}), {producer->output(0)});
-    const auto right = builder.call(makeAsyncTestOperator("Right", {INTEGER}), {producer->output(1)});
-    const auto root = builder.call(makeAsyncTestOperator("Root", {INTEGER, INTEGER}), {left->output(0), right->output(0)});
+    const auto producer
+        = makeCall(builder, "Producer", {INTEGER, INTEGER}, std::vector<AsyncInputAccessor>{AsyncInputAccessor{RuntimeValue{int64_t{42}}}});
+    const auto left = makeCall(builder, "Left", {INTEGER}, std::vector<AsyncInputAccessor>{AsyncInputAccessor{producer->output(0)}});
+    const auto right = makeCall(builder, "Right", {INTEGER}, std::vector<AsyncInputAccessor>{AsyncInputAccessor{producer->output(1)}});
+    const auto root = makeCall(builder,
+                               "Root",
+                               {INTEGER, INTEGER},
+                               std::vector<AsyncInputAccessor>{AsyncInputAccessor{left->output(0)}, AsyncInputAccessor{right->output(0)}});
     builder.exportOutput(root->output(0), QualifiedIdentifier::parse("LEFT"));
     builder.exportOutput(root->output(1), QualifiedIdentifier::parse("RIGHT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -461,7 +475,7 @@ TEST(AsyncGraphExecutionTest, DiamondUsesOneInvocationAndSelectsTypedOutputs)
                 noInputs(),
                 [&](AsyncCall::Ptr node, AsyncRowHandle row) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
                 {
-                    const auto arguments = node->getAsyncOperator().getInputAccessors().read(row);
+                    const auto arguments = readAsyncTestAccessors(node, row);
                     ++counts[node->getFunctionType()];
                     if (node->getFunctionType() == "Producer")
                     {
@@ -469,11 +483,11 @@ TEST(AsyncGraphExecutionTest, DiamondUsesOneInvocationAndSelectsTypedOutputs)
                     }
                     if (node->getFunctionType() == "Left")
                     {
-                        co_return SharedRuntimeValues::make(arguments[0].get<int64_t>() + 1);
+                        co_return SharedRuntimeValues::make(arguments[0].view().get<int64_t>() + 1);
                     }
                     if (node->getFunctionType() == "Right")
                     {
-                        co_return SharedRuntimeValues::make(arguments[0].get<int64_t>() + 2);
+                        co_return SharedRuntimeValues::make(arguments[0].view().get<int64_t>() + 2);
                     }
                     co_return arguments;
                 });
@@ -508,25 +522,24 @@ TEST_F(AsyncGraphExecutionDeathTest, EvaluateRejectsNodeOutsideGraph)
     SKIP_IF_TSAN();
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     AsyncCallGraphBuilder builder{{}};
-    const auto included = builder.call(makeAsyncTestOperator("Included", {INTEGER}), {});
+    const auto included = makeCall(builder, "Included", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(included->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     AsyncCallGraphBuilder otherBuilder{{}};
     const auto foreign = otherBuilder.call(makeAsyncTestOperator("Foreign", {INTEGER}), {});
-    EXPECT_DEATH(
-        run(
-            [graph, foreign](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
-            {
-                auto execution = std::make_shared<AsyncGraphExecution>(
-                    executor,
-                    graph,
-                    noInputs(),
-                    [](AsyncCall::Ptr, AsyncRowHandle) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                    { co_return SharedRuntimeValues::make(int64_t{1}); });
-                static_cast<void>(AsyncGraphExecutionTestAccess::evaluate(*execution, foreign));
-                co_return;
-            }),
-        "Precondition violated.*not part of this async graph");
+    EXPECT_DEATH(run(
+                     [graph, foreign](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
+                     {
+                         auto execution = std::make_shared<AsyncGraphExecution>(
+                             executor,
+                             graph,
+                             noInputs(),
+                             [](AsyncCall::Ptr, AsyncRowHandle) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                             { co_return SharedRuntimeValues::make(int64_t{1}); });
+                         static_cast<void>(AsyncGraphExecutionTestAccess::evaluate(*execution, foreign));
+                         co_return;
+                     }),
+                 "Precondition violated.*not part of this async graph");
 }
 
 TEST_F(AsyncGraphExecutionDeathTest, ARowExecutionCanOnlyRunOnce)
@@ -534,23 +547,22 @@ TEST_F(AsyncGraphExecutionDeathTest, ARowExecutionCanOnlyRunOnce)
     SKIP_IF_TSAN();
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     AsyncCallGraphBuilder builder{{}};
-    const auto node = builder.call(makeAsyncTestOperator("Producer", {INTEGER}), {});
+    const auto node = makeCall(builder, "Producer", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(node->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
-    EXPECT_DEATH(
-        run(
-            [graph](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
-            {
-                auto execution = std::make_shared<AsyncGraphExecution>(
-                    executor,
-                    graph,
-                    noInputs(),
-                    [](AsyncCall::Ptr, AsyncRowHandle) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                    { co_return SharedRuntimeValues::make(int64_t{1}); });
-                static_cast<void>(co_await execution->run());
-                static_cast<void>(co_await execution->run());
-            }),
-        "Precondition violated.*can only be run once");
+    EXPECT_DEATH(run(
+                     [graph](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
+                     {
+                         auto execution = std::make_shared<AsyncGraphExecution>(
+                             executor,
+                             graph,
+                             noInputs(),
+                             [](AsyncCall::Ptr, AsyncRowHandle) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                             { co_return SharedRuntimeValues::make(int64_t{1}); });
+                         static_cast<void>(co_await execution->run());
+                         static_cast<void>(co_await execution->run());
+                     }),
+                 "Precondition violated.*can only be run once");
 }
 
 TEST_F(AsyncGraphExecutionDeathTest, InputReaderMustProduceTheDeclaredNullability)
@@ -560,22 +572,21 @@ TEST_F(AsyncGraphExecutionDeathTest, InputReaderMustProduceTheDeclaredNullabilit
     const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     const auto name = QualifiedIdentifier::parse("INPUT.VALUE");
     AsyncCallGraphBuilder builder{Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{name, nullable}}};
-    const auto node = builder.call(makeAsyncTestOperator("Identity", {nullable}), {builder.input(name)});
+    const auto node = makeCall(builder, "Identity", {nullable}, std::vector<AsyncInputAccessor>{AsyncInputAccessor{builder.input(name)}});
     builder.exportOutput(node->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
-    EXPECT_DEATH(
-        run(
-            [graph](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
-            {
-                auto execution = std::make_shared<AsyncGraphExecution>(
-                    executor,
-                    graph,
-                    [](const InputFieldReference&) { return RuntimeValue{int64_t{42}}; },
-                    [](AsyncCall::Ptr node, AsyncRowHandle row) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
-                    { co_return node->getAsyncOperator().getInputAccessors().read(row); });
-                static_cast<void>(co_await execution->run());
-            }),
-        "Invariant violated.*async input");
+    EXPECT_DEATH(run(
+                     [graph](SharedAsyncResult::Strand executor) -> asio::awaitable<void>
+                     {
+                         auto execution = std::make_shared<AsyncGraphExecution>(
+                             executor,
+                             graph,
+                             [](const InputFieldReference&) { return RuntimeValue{int64_t{42}}; },
+                             [](AsyncCall::Ptr node, AsyncRowHandle row) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                             { co_return readAsyncTestAccessors(node, row); });
+                         static_cast<void>(co_await execution->run());
+                     }),
+                 "Invariant violated.*Async accessor value");
 }
 }
 #endif
@@ -584,8 +595,9 @@ TEST(AsyncGraphExecutionTest, ChainedValuesRetainTheProducersDeclaredNullability
 {
     const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(makeAsyncTestOperator("Producer", {nullable}), {});
-    const auto consumer = builder.call(makeAsyncTestOperator("Consumer", {INTEGER}), {producer->output(0)});
+    const auto producer = makeCall(builder, "Producer", {nullable}, std::vector<AsyncInputAccessor>{});
+    const auto consumer
+        = makeCall(builder, "Consumer", {INTEGER}, std::vector<AsyncInputAccessor>{AsyncInputAccessor{producer->output(0)}});
     builder.exportOutput(consumer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -597,14 +609,14 @@ TEST(AsyncGraphExecutionTest, ChainedValuesRetainTheProducersDeclaredNullability
                 noInputs(),
                 [nullable](AsyncCall::Ptr node, AsyncRowHandle row) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
                 {
-                    const auto arguments = node->getAsyncOperator().getInputAccessors().read(row);
+                    const auto arguments = readAsyncTestAccessors(node, row);
                     if (node->getFunctionType() == "Producer")
                     {
                         co_return SharedRuntimeValues::make(RuntimeValue{nullable, int64_t{42}});
                     }
                     EXPECT_EQ(arguments[0].getDataType(), nullable);
                     EXPECT_FALSE(arguments[0].isNull());
-                    co_return SharedRuntimeValues::make(arguments[0].get<int64_t>());
+                    co_return SharedRuntimeValues::make(arguments[0].view().get<int64_t>());
                 });
             const auto result = co_await execution->run();
             EXPECT_EQ(successValues(result)[0].getDataType(), INTEGER);
@@ -615,9 +627,9 @@ TEST(AsyncGraphExecutionTest, ChainedValuesRetainTheProducersDeclaredNullability
 TEST(AsyncGraphExecutionTest, ConsumerDoesNotWaitForAnUnrelatedRoot)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto fast = builder.call(makeAsyncTestOperator("Fast", {INTEGER}), {});
-    const auto dependent = builder.call(makeAsyncTestOperator("Dependent", {INTEGER}), {fast->output(0)});
-    const auto unrelated = builder.call(makeAsyncTestOperator("Unrelated", {INTEGER}), {});
+    const auto fast = makeCall(builder, "Fast", {INTEGER}, std::vector<AsyncInputAccessor>{});
+    const auto dependent = makeCall(builder, "Dependent", {INTEGER}, std::vector<AsyncInputAccessor>{AsyncInputAccessor{fast->output(0)}});
+    const auto unrelated = makeCall(builder, "Unrelated", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(dependent->output(0), QualifiedIdentifier::parse("A"));
     builder.exportOutput(unrelated->output(0), QualifiedIdentifier::parse("B"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -632,7 +644,7 @@ TEST(AsyncGraphExecutionTest, ConsumerDoesNotWaitForAnUnrelatedRoot)
                 noInputs(),
                 [&](AsyncCall::Ptr node, AsyncRowHandle row) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
                 {
-                    const auto arguments = node->getAsyncOperator().getInputAccessors().read(row);
+                    const auto arguments = readAsyncTestAccessors(node, row);
                     if (node->getFunctionType() == "Fast")
                     {
                         co_await pause(1ms);
@@ -657,9 +669,13 @@ TEST(AsyncGraphExecutionTest, ConsumerDoesNotWaitForAnUnrelatedRoot)
 TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto first = builder.call(makeAsyncTestOperator("First", {INTEGER}), {});
-    const auto second = builder.call(makeAsyncTestOperator("Second", {INTEGER}), {});
-    const auto root = builder.call(makeAsyncTestOperator("Root", {INTEGER}), {first->output(0), second->output(0)});
+    const auto first = makeCall(builder, "First", {INTEGER}, std::vector<AsyncInputAccessor>{});
+    const auto second = makeCall(builder, "Second", {INTEGER}, std::vector<AsyncInputAccessor>{});
+    const auto root
+        = makeCall(builder,
+                   "Root",
+                   {INTEGER},
+                   std::vector<AsyncInputAccessor>{AsyncInputAccessor{first->output(0)}, AsyncInputAccessor{second->output(0)}});
     builder.exportOutput(root->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -672,7 +688,7 @@ TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
                 noInputs(),
                 [&](AsyncCall::Ptr node, AsyncRowHandle row) -> asio::awaitable<AsyncResult<SharedRuntimeValues>>
                 {
-                    const auto arguments = node->getAsyncOperator().getInputAccessors().read(row);
+                    const auto arguments = readAsyncTestAccessors(node, row);
                     if (node->getFunctionType() == "Second")
                     {
                         gate.expires_at(std::chrono::steady_clock::now());
@@ -684,7 +700,7 @@ TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
                         co_await gate.async_wait(asio::redirect_error(asio::use_awaitable, ignored));
                         co_return SharedRuntimeValues::make(int64_t{1});
                     }
-                    co_return SharedRuntimeValues::make(arguments[0].get<int64_t>() + arguments[1].get<int64_t>());
+                    co_return SharedRuntimeValues::make(arguments[0].view().get<int64_t>() + arguments[1].view().get<int64_t>());
                 });
             const auto result = co_await execution->run();
             EXPECT_EQ(successValues(result)[0].get<int64_t>(), 3);
@@ -694,7 +710,7 @@ TEST(AsyncGraphExecutionTest, IndependentArgumentsAreStartedTogether)
 TEST(AsyncGraphExecutionTest, ConsumerDeadlineDoesNotBecomeTheSharedNodesDeadline)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(makeAsyncTestOperator("Producer", {INTEGER}), {});
+    const auto producer = makeCall(builder, "Producer", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -773,8 +789,8 @@ TEST(AsyncGraphExecutionTest, CancellationWithoutAutomaticThrowsDoesNotReturnSuc
 TEST(AsyncGraphExecutionTest, FailureCancelsAndDrainsUnrelatedWorkAndPreservesTheInitiatingError)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto bad = builder.call(makeAsyncTestOperator("Bad", {INTEGER}), {});
-    const auto slow = builder.call(makeAsyncTestOperator("Slow", {INTEGER}), {});
+    const auto bad = makeCall(builder, "Bad", {INTEGER}, std::vector<AsyncInputAccessor>{});
+    const auto slow = makeCall(builder, "Slow", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(bad->output(0), QualifiedIdentifier::parse("BAD"));
     builder.exportOutput(slow->output(0), QualifiedIdentifier::parse("SLOW"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -821,8 +837,8 @@ TEST(AsyncGraphExecutionTest, FailureCancelsAndDrainsUnrelatedWorkAndPreservesTh
 TEST(AsyncGraphExecutionTest, ExecutionStateIsPerRowNotPerPlanAndEqualNodesAreNotImplicitlyMerged)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto first = builder.call(makeAsyncTestOperator("Same", {INTEGER}), {});
-    const auto second = builder.call(makeAsyncTestOperator("Same", {INTEGER}), {});
+    const auto first = makeCall(builder, "Same", {INTEGER}, std::vector<AsyncInputAccessor>{});
+    const auto second = makeCall(builder, "Same", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(first->output(0), QualifiedIdentifier::parse("A"));
     builder.exportOutput(second->output(0), QualifiedIdentifier::parse("B"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
@@ -847,7 +863,7 @@ TEST(AsyncGraphExecutionTest, ExecutionStateIsPerRowNotPerPlanAndEqualNodesAreNo
 TEST(AsyncGraphExecutionTest, CancellingTheRootWaitAlsoCancelsAndDrainsItsOwnedGraph)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(makeAsyncTestOperator("Producer", {INTEGER}), {});
+    const auto producer = makeCall(builder, "Producer", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -881,7 +897,7 @@ TEST(AsyncGraphExecutionTest, CancellingTheRootWaitAlsoCancelsAndDrainsItsOwnedG
 TEST(AsyncGraphExecutionTest, SuccessfulExecutionDoesNotDisableTheCallersCancellationState)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(makeAsyncTestOperator("Producer", {INTEGER}), {});
+    const auto producer = makeCall(builder, "Producer", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(
@@ -908,7 +924,7 @@ TEST(AsyncGraphExecutionTest, SuccessfulExecutionDoesNotDisableTheCallersCancell
 TEST(AsyncGraphExecutionTest, RowCancellationDrainsAllProducersBeforeReturning)
 {
     AsyncCallGraphBuilder builder{{}};
-    const auto producer = builder.call(makeAsyncTestOperator("Producer", {INTEGER}), {});
+    const auto producer = makeCall(builder, "Producer", {INTEGER}, std::vector<AsyncInputAccessor>{});
     builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("OUT"));
     const auto graph = std::make_shared<const AsyncCallGraph>(builder.build());
     run(

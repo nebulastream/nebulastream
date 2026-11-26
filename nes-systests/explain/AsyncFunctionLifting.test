@@ -62,7 +62,7 @@ SINK(CALLSINK)
             SOURCE(TEXTSTREAM)
 ==END==
 
-# Physical padding supplies the declared result slot; ordinary projections do aliases.
+# Physical padding reserves escaping results; field aliases are resolved during region lowering.
 # Placement varies by topology; each sender/receiver pair still shares a worker.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT
 SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream INTO callSink;
@@ -70,7 +70,7 @@ SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream 
 <REGEX>
 -- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
 (?:(?!--).*\n)*SINK\(HANDOFF\)
-  PROJECTION\(fields: \[ID, DATA,  as RESPONSE\]\)
+  PROJECTION\(fields: \[\*,  as RESPONSE\]\)
     SOURCE\((?:TEXTSTREAM|NETWORK)\)
 (?:(?!--).*\n)*.*SOURCE\(ASYNC\)
 </REGEX>
@@ -79,19 +79,19 @@ SELECT id, HTTP_CALL(data, 'http://localhost/echo') AS response FROM textStream 
 <!REGEX>HTTP_CALL</!REGEX>
 ==END==
 
-# Each occurrence gets its own pair; computed arguments may cross a network boundary.
+# Computed synchronous work separates async regions and may cross a network boundary.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT
 SELECT id, HTTP_CALL(CONCAT(HTTP_CALL(data, 'http://localhost/a'), data), 'http://localhost/b') AS response FROM textStream INTO callSink;
 ----
 <REGEX>
 -- [0-9]+ plan\(s\) on [a-z0-9-]+:[0-9]+ --
 (?:(?!--).*\n)*SINK\(HANDOFF\)
-  PROJECTION\(fields: \[ID, DATA,  as RESPONSE\]\)
+  PROJECTION\(fields: \[\*,  as __OPERATOR_CALL_0\]\)
     SOURCE\((?:TEXTSTREAM|NETWORK)\)
 (?:(?!--).*\n)*.*SOURCE\(ASYNC\)
 </REGEX>
-<REGEX>PROJECTION\(fields: \[DATA, ID, __OPERATOR_ARG_1, __OPERATOR_CALL_0,  as RESPONSE\]\)</REGEX>
-<REGEX>PROJECTION\(fields: \[DATA, ID, RESPONSE as __OPERATOR_CALL_0\]\)</REGEX>
+<REGEX>PROJECTION\(fields: \[\*,  as RESPONSE\]\)</REGEX>
+<REGEX>PROJECTION\(fields: \[DATA, ID, CONCAT\(__OPERATOR_CALL_0, DATA\) as __OPERATOR_ARG_1, __OPERATOR_CALL_0\]\)</REGEX>
 <REGEX>PROJECTION\(fields: \[ID, RESPONSE\]\)</REGEX>
 <REGEX>SINK\(CALLSINK\)</REGEX>
 <!REGEX>HTTP_CALL</!REGEX>

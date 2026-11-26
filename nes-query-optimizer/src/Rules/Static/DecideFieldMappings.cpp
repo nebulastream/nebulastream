@@ -18,9 +18,7 @@
 #include <optional>
 #include <ranges>
 #include <set>
-#include <string_view>
 #include <typeindex>
-#include <typeinfo>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -41,6 +39,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Traits/FieldMappingTrait.hpp>
+#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -50,8 +49,9 @@ namespace NES
 
 namespace
 {
-std::unordered_map<Field, QualifiedIdentifier> reprojecterMapping(
-    const std::unordered_map<Field, std::unordered_set<Field>>& accessedFieldsForOutput, const Schema<Field, Unordered>& outputSchema)
+std::unordered_map<Field, QualifiedIdentifier>
+reprojecterMapping(const std::unordered_map<Field, std::unordered_set<Field>>& accessedFieldsForOutput,
+                   const Schema<Field, Unordered>& outputSchema)
 {
     /// We built up a map of the output field names of the child operator, that this projection accesses
     /// And check if there is any non-trivial projection that projects to the same name that could lead to a read-write conflict inside this projection
@@ -70,10 +70,9 @@ std::unordered_map<Field, QualifiedIdentifier> reprojecterMapping(
         if (accessedFieldsForOutput.contains(writeField))
         {
             const auto& accessedFieldsIter = accessedFieldsForOutput.find(writeField);
-            PRECONDITION(
-                accessedFieldsIter != accessedFieldsForOutput.end(),
-                "Field mapping trait does not contain mapping for output schema field {}",
-                writeField);
+            PRECONDITION(accessedFieldsIter != accessedFieldsForOutput.end(),
+                         "Field mapping trait does not contain mapping for output schema field {}",
+                         writeField);
             for (const auto& access : accessedFieldsIter->second)
             {
                 readsToWrites[access.getLastName()].insert(writeField);
@@ -131,8 +130,8 @@ std::unordered_map<Field, QualifiedIdentifier> sinkMapping()
     return {};
 }
 
-std::unordered_map<Field, QualifiedIdentifier>
-defaultMapping(const LogicalOperator& logicalOperator, const std::vector<LogicalOperator>& children)
+std::unordered_map<Field, QualifiedIdentifier> defaultMapping(const LogicalOperator& logicalOperator,
+                                                              const std::vector<LogicalOperator>& children)
 {
     const auto pairs
         = children
@@ -179,7 +178,7 @@ defaultMapping(const LogicalOperator& logicalOperator, const std::vector<Logical
     return mapping;
 }
 
-PlanVisitor<>::UpResult decideFieldMappings(const LogicalOperator& logicalOperator, const std::vector<LogicalOperator>& children)
+LogicalOperator decideFieldMappings(const LogicalOperator& logicalOperator, const std::vector<LogicalOperator>& children)
 {
     const auto mapping = [&]
     {
@@ -202,12 +201,16 @@ PlanVisitor<>::UpResult decideFieldMappings(const LogicalOperator& logicalOperat
     FieldMappingTrait fieldMappingTrait{
         mapping | std::views::transform([](const auto& pair) { return std::pair{pair.first.unbound(), pair.second}; })
         | std::ranges::to<std::unordered_map<UnqualifiedUnboundField, QualifiedIdentifier>>()};
-    auto traitSet = logicalOperator->getTraitSet();
-    const auto success = tryInsert(traitSet, std::move(fieldMappingTrait));
-    /// If there is a good reason why we would want to run this multiple times we can also disable this check and replace the trait instance.
-    PRECONDITION(success, "Field mapping trait already set");
+    auto traitSet = TraitSet{logicalOperator->getTraitSet()
+                             | std::views::filter([](const Trait& trait) { return trait.getTypeInfo() != typeid(FieldMappingTrait); })};
+    traitSet.insert(std::move(fieldMappingTrait));
     return logicalOperator.withTraitSet(std::move(traitSet)).withChildren(children);
 }
+}
+
+LogicalOperator DecideFieldMappings::withInferredFieldMapping(LogicalOperator op)
+{
+    return decideFieldMappings(op, op.getChildren());
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

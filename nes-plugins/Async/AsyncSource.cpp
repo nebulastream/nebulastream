@@ -91,17 +91,10 @@ std::expected<size_t, Exception> sizeFromLiteral(const ConfigLiteral& literal)
 }
 
 /// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
-const ConfigField<size_t> MAX_CONCURRENCY{
-    Identifier::parse("MAX_CONCURRENCY"),
-    "Rows whose calls are in flight at the same time",
-    sizeFromLiteral,
-    AsyncSourceConfig::DEFAULT_MAX_CONCURRENCY};
-
-const ConfigField<size_t> MAX_RETRIES{
-    Identifier::parse("MAX_RETRIES"),
-    "Further attempts after retryable async errors, with exponential backoff starting at 100 ms",
-    sizeFromLiteral,
-    AsyncSourceConfig::DEFAULT_MAX_RETRIES};
+const ConfigField<size_t> MAX_CONCURRENCY{Identifier::parse("MAX_CONCURRENCY"),
+                                          "Rows whose calls are in flight at the same time",
+                                          sizeFromLiteral,
+                                          AsyncSourceConfig::DEFAULT_MAX_CONCURRENCY};
 
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
@@ -143,21 +136,20 @@ constexpr size_t MAX_BACKOFF_DOUBLINGS = 10;
 
 Schema<QualifiedErasedConfigField, Ordered> AsyncSource::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("ASYNC_SOURCE"), MAX_CONCURRENCY, MAX_RETRIES);
+    return createConfigSchema(Identifier::parse("ASYNC_SOURCE"), MAX_CONCURRENCY);
 }
 
 std::expected<AsyncSourceConfig, Exception> AsyncSourceConfig::fromConfig(const InstantiatedConfig&)
 {
-    PRECONDITION(
-        false, "Async sources require an AsyncCallGraph supplied by the optimizer and cannot be instantiated from literal configuration");
+    PRECONDITION(false,
+                 "Async sources require an AsyncCallGraph supplied by the optimizer and cannot be instantiated from literal configuration");
     std::unreachable();
 }
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor)
-    : AsyncSource(
-          config,
-          sourceDescriptor,
-          config.channel ? config.channel->takeReceiver() : throw InvalidConfigParameter("AsyncSource requires a non-null channel"))
+    : AsyncSource(config,
+                  sourceDescriptor,
+                  config.channel ? config.channel->takeReceiver() : throw InvalidConfigParameter("AsyncSource requires a non-null channel"))
 {
 }
 
@@ -171,7 +163,6 @@ AsyncSource::~AsyncSource()
 
 AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor& sourceDescriptor, HandoffChannel::Receiver receiver)
     : maxConcurrency(std::max<size_t>(1, config.maxConcurrency))
-    , maxRetries(config.maxRetries)
     , layout(config.calls, sourceDescriptor.getSchema())
     , graph(std::make_shared<const AsyncCallGraph>(config.calls))
     , calls(createCallStates(*graph))
@@ -179,14 +170,6 @@ AsyncSource::AsyncSource(const AsyncSourceConfig& config, const SourceDescriptor
     , channel(std::move(receiver))
     , strand(boost::asio::make_strand(SharedEventLoop::context()))
 {
-    for (const auto& entry : calls)
-    {
-        const auto& call = entry.second;
-        if (const auto operatorConcurrency = call.asyncOperator.maxConcurrency())
-        {
-            maxConcurrency = std::min(maxConcurrency, std::max<size_t>(1, *operatorConcurrency));
-        }
-    }
     for (auto& entry : calls)
     {
         auto& contexts = entry.second.contexts;
@@ -270,7 +253,7 @@ AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, AsyncRowHan
     {
         co_return std::unexpected(AsyncError::cancelled());
     }
-    const auto retryLimit = prepared->getRetryOverride().value_or(maxRetries);
+    const auto retryLimit = prepared->getMaxRetries();
     for (size_t attempt = 0;; ++attempt)
     {
         /// Result shape/type invariants are checked by the graph, outside retries.
@@ -288,12 +271,11 @@ AsyncSource::callWithRetries(AsyncCall::Ptr node, const size_t slot, AsyncRowHan
             co_return std::unexpected(AsyncError::cancelled());
         }
         const auto backoff = RETRY_BACKOFF * (size_t{1} << std::min<size_t>(attempt, MAX_BACKOFF_DOUBLINGS));
-        NES_WARNING(
-            "Async call of {} failed, attempt {} of {} follows in {} ms",
-            node->getFunctionType(),
-            attempt + 2,
-            retryLimit + 1,
-            backoff.count());
+        NES_WARNING("Async call of {} failed, attempt {} of {} follows in {} ms",
+                    node->getFunctionType(),
+                    attempt + 2,
+                    retryLimit + 1,
+                    backoff.count());
         const bool throwIfCancelled = co_await boost::asio::this_coro::throw_if_cancelled();
         co_await boost::asio::this_coro::throw_if_cancelled(false);
         boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor, backoff};
@@ -386,9 +368,9 @@ void AsyncSource::startRows()
                     boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) co_spawn is declared by public boost/asio/co_spawn.hpp.
                         strand,
                         execution->cancelAndDrain(),
-                        boost::asio::bind_cancellation_slot(
-                            boost::asio::cancellation_slot{},
-                            [this, &buffer, slot, error](std::exception_ptr) { finishRow(buffer, slot, error, AsyncResult<void>{}); }));
+                        boost::asio::bind_cancellation_slot(boost::asio::cancellation_slot{},
+                                                            [this, &buffer, slot, error](std::exception_ptr)
+                                                            { finishRow(buffer, slot, error, AsyncResult<void>{}); }));
                 }));
         /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     }
@@ -399,8 +381,10 @@ void AsyncSource::startRows()
     }
 }
 
-void AsyncSource::finishRow(
-    InFlightBuffer& buffer, const size_t slot, const std::exception_ptr& infrastructureError, const AsyncResult<void>& outcome)
+void AsyncSource::finishRow(InFlightBuffer& buffer,
+                            const size_t slot,
+                            const std::exception_ptr& infrastructureError,
+                            const AsyncResult<void>& outcome)
 {
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) completion retains its admitted slot
     executions[slot].reset();
@@ -433,13 +417,12 @@ void AsyncSource::finishRow(
 void AsyncSource::admit(TupleBuffer input)
 {
     const auto rows = input.getNumberOfTuples();
-    InFlightBuffer buffer{
-        .input = std::move(input),
-        .rows = rows,
-        .nextRow = 0,
-        .unfinishedRows = rows,
-        .results = std::vector<std::optional<SharedRuntimeValues>>(rows),
-        .done = rows == 0};
+    InFlightBuffer buffer{.input = std::move(input),
+                          .rows = rows,
+                          .nextRow = 0,
+                          .unfinishedRows = rows,
+                          .results = std::vector<std::optional<SharedRuntimeValues>>(rows),
+                          .done = rows == 0};
     {
         const std::scoped_lock lock(inFlight.mutex);
         inFlight.buffers.push_back(std::move(buffer));
@@ -503,23 +486,22 @@ void AsyncSource::writeResults(const InFlightBuffer& buffer, TupleBuffer& output
 
 void AsyncSource::cancelAndDrain()
 {
-    boost::asio::post(
-        strand,
-        [this]
-        {
-            stopping = true;
-            for (const auto& execution : executions)
-            {
-                if (execution)
-                {
-                    execution->cancel();
-                }
-            }
-            for (auto& signal : cancelSignals)
-            {
-                signal.emit(boost::asio::cancellation_type::terminal);
-            }
-        });
+    boost::asio::post(strand,
+                      [this]
+                      {
+                          stopping = true;
+                          for (const auto& execution : executions)
+                          {
+                              if (execution)
+                              {
+                                  execution->cancel();
+                              }
+                          }
+                          for (auto& signal : cancelSignals)
+                          {
+                              signal.emit(boost::asio::cancellation_type::terminal);
+                          }
+                      });
     {
         std::unique_lock lock(inFlight.mutex);
         inFlight.changed.wait(lock, [this] { return inFlight.runningRows == 0; });

@@ -13,112 +13,195 @@
 */
 #include <Sources/AsyncInputAccessor.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <type_traits>
+#include <unordered_map>
 #include <utility>
-#include <vector>
+#include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Sources/AsyncCallGraph.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
-#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-namespace detail
+InputFieldReference::InputFieldReference(InputFieldReference&& other) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>)
+    : InputFieldReference(static_cast<const InputFieldReference&>(other))
 {
-struct AsyncInputContext
-{
-    std::vector<DataType> types;
-};
 }
 
-AsyncRowHandle::AsyncRowHandle(
-    std::shared_ptr<const detail::AsyncInputContext> inputContext, std::function<RuntimeValue(size_t)> reader, const size_t size)
-    : inputContext(std::move(inputContext)), reader(std::move(reader)), count(size)
+InputFieldReference&
+InputFieldReference::operator=(InputFieldReference&& other) noexcept(std::is_nothrow_copy_assignable_v<QualifiedIdentifier>)
 {
-    PRECONDITION(this->reader, "An async row needs an input reader");
+    return *this = static_cast<const InputFieldReference&>(other);
 }
 
-size_t AsyncRowHandle::size() const
+QualifiedIdentifier InputFieldReference::getField() const
 {
-    return count;
+    return field;
 }
 
-AsyncInputAccessor::AsyncInputAccessor(std::shared_ptr<const detail::AsyncInputContext> inputContext, const size_t index)
-    : inputContext(std::move(inputContext)), index(index)
+AsyncResultReference::AsyncResultReference(std::shared_ptr<const AsyncCall> p, size_t i) : producer(std::move(p)), index(i)
+{
+}
+
+AsyncResultReference::AsyncResultReference(AsyncResultReference&& other) noexcept
+    : AsyncResultReference(static_cast<const AsyncResultReference&>(other))
+{
+}
+
+AsyncResultReference& AsyncResultReference::operator=(AsyncResultReference&& other) noexcept
+{
+    return *this = static_cast<const AsyncResultReference&>(other);
+}
+
+AsyncCall::Ptr AsyncResultReference::getProducer() const
+{
+    return producer;
+}
+
+size_t AsyncResultReference::getOutputIndex() const
+{
+    return index;
+}
+
+DataType AsyncResultReference::getDataType() const
+{
+    return producer->getResultTypes().at(index);
+}
+
+AsyncRowHandle::AsyncRowHandle(std::shared_ptr<const detail::AsyncGraphScope> s,
+                               std::function<RuntimeValue(const InputFieldReference&)> reader,
+                               std::unordered_map<std::shared_ptr<const AsyncCall>, SharedRuntimeValues> results)
+    : scope(std::move(s)), readInput(std::move(reader)), readyResults(std::move(results))
+{
+}
+
+AsyncInputAccessor::AsyncInputAccessor(RuntimeValue value) : source(std::move(value))
+{
+}
+
+AsyncInputAccessor::AsyncInputAccessor(InputFieldReference field) : source(std::move(field))
+{
+}
+
+AsyncInputAccessor::AsyncInputAccessor(AsyncResultReference result) : source(std::move(result))
 {
 }
 
 DataType AsyncInputAccessor::getDataType() const
 {
-    return inputContext->types.at(index);
+    return std::visit([](const auto& value) { return value.getDataType(); }, source);
 }
 
 RuntimeValue AsyncInputAccessor::operator()(const AsyncRowHandle& row) const
 {
-    PRECONDITION(inputContext == row.inputContext, "Async input accessor belongs to another invocation input context");
-    PRECONDITION(index < row.count, "Async input accessor is outside this row's inputs");
-    return row.reader(index);
+    auto result = std::visit(
+        [&](const auto& value) -> RuntimeValue
+        {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, RuntimeValue>)
+            {
+                return value;
+            }
+            else if constexpr (std::is_same_v<T, InputFieldReference>)
+            {
+                PRECONDITION(row.scope == value.scope, "Input field belongs to another graph");
+                PRECONDITION(row.readInput, "No reader for graph input");
+                return row.readInput(value);
+            }
+            else
+            {
+                const auto producer = value.getProducer();
+                PRECONDITION(producer->scope == row.scope, "Result belongs to another graph");
+                const auto found = row.readyResults.find(producer);
+                PRECONDITION(found != row.readyResults.end(), "Async result is not ready");
+                return found->second[value.getOutputIndex()].toOwned();
+            }
+        },
+        source);
+    INVARIANT(result.getDataType() == getDataType() && (!result.isNull() || getDataType().nullable),
+              "Async accessor value has type {}, expected {}",
+              result.getDataType(),
+              getDataType());
+    return result;
 }
 
-AsyncInputAccessors::AsyncInputAccessors() : AsyncInputAccessors(std::vector<DataType>{})
+std::shared_ptr<const AsyncCall> AsyncInputAccessor::getProducer() const
 {
-}
-
-AsyncInputAccessors::AsyncInputAccessors(std::vector<DataType> types)
-    : inputContext(std::make_shared<const detail::AsyncInputContext>(detail::AsyncInputContext{std::move(types)}))
-{
-}
-
-const std::vector<DataType>& AsyncInputAccessors::getTypes() const
-{
-    return inputContext->types;
-}
-
-size_t AsyncInputAccessors::size() const
-{
-    return inputContext->types.size();
-}
-
-AsyncInputAccessor AsyncInputAccessors::operator[](const size_t index) const
-{
-    PRECONDITION(index < size(), "Async input accessor is outside its input signature");
-    return AsyncInputAccessor{inputContext, index};
-}
-
-AsyncRowHandle AsyncInputAccessors::createRowHandle(std::function<RuntimeValue(size_t)> reader) const
-{
-    return AsyncRowHandle{inputContext, std::move(reader), size()};
-}
-
-AsyncRowHandle AsyncInputAccessors::createRowHandle(SharedRuntimeValues values) const
-{
-    const auto count = values.size();
-    return AsyncRowHandle{inputContext, [values = std::move(values)](const size_t index) { return values[index].toOwned(); }, count};
-}
-
-SharedRuntimeValues AsyncInputAccessors::read(const AsyncRowHandle& row) const
-{
-    PRECONDITION(inputContext == row.inputContext, "Async row belongs to another invocation input context");
-    PRECONDITION(row.size() == size(), "Async row does not match its input signature");
-    std::vector<RuntimeValue> values;
-    values.reserve(size());
-    for (size_t index = 0; index < size(); ++index)
+    if (const auto* result = std::get_if<AsyncResultReference>(&source))
     {
-        values.push_back((*this)[index](row));
+        return result->getProducer();
     }
-    return SharedRuntimeValues{std::move(values)};
+    return {};
 }
 
-Reflected Reflector<AsyncInputAccessors>::operator()(const AsyncInputAccessors& inputs, const ReflectionContext& context) const
+const AsyncInputAccessorSource& AsyncInputAccessor::getSource() const
 {
-    return context.reflect(inputs.getTypes());
+    return source;
 }
 
-AsyncInputAccessors Unreflector<AsyncInputAccessors>::operator()(const Reflected& data, const ReflectionContext& context) const
+Reflected Reflector<InputFieldReference>::operator()(const InputFieldReference& field, const ReflectionContext& context) const
 {
-    return AsyncInputAccessors{context.unreflect<std::vector<DataType>>(data)};
+    const auto& state = this->state;
+    if (field.scope != state.scope)
+    {
+        throw CannotSerialize("Async accessor input belongs to another graph");
+    }
+    return context.reflect(field.getField());
+}
+
+InputFieldReference Unreflector<InputFieldReference>::operator()(const Reflected& data, const ReflectionContext& context) const
+{
+    const auto& state = this->state;
+    const auto field = context.unreflect<QualifiedIdentifier>(data);
+    if (!state.inputNames.contains(field))
+    {
+        throw CannotDeserialize("Async input field is absent");
+    }
+    return state.builder.input(field);
+}
+
+Reflected Reflector<AsyncResultReference>::operator()(const AsyncResultReference& result, const ReflectionContext& context) const
+{
+    const auto& state = this->state;
+    const auto producer = result.getProducer();
+    if (!state.ids.contains(producer) || std::ranges::find(state.dependencies, producer) == state.dependencies.end())
+    {
+        throw CannotSerialize("Async accessor producer is not a declared dependency");
+    }
+    return context.reflect(detail::ReflectedAsyncResultReference{state.ids.at(producer), result.getOutputIndex()});
+}
+
+AsyncResultReference Unreflector<AsyncResultReference>::operator()(const Reflected& data, const ReflectionContext& context) const
+{
+    const auto& state = this->state;
+    const auto wire = context.unreflect<detail::ReflectedAsyncResultReference>(data);
+    const auto producer = state.nodes.find(wire.producer);
+    if (!state.declaredDependencies.contains(wire.producer) || producer == state.nodes.end())
+    {
+        throw CannotDeserialize("Async producer {} is not a declared dependency", wire.producer);
+    }
+    if (wire.output >= producer->second->getResultTypes().size())
+    {
+        throw CannotDeserialize("Async producer {} has no output {}", wire.producer, wire.output);
+    }
+    return producer->second->output(wire.output);
+}
+
+Reflected Reflector<AsyncInputAccessor>::operator()(const AsyncInputAccessor& accessor, const ReflectionContext& context) const
+{
+    return context.reflect(accessor.getSource());
+}
+
+AsyncInputAccessor Unreflector<AsyncInputAccessor>::operator()(const Reflected& data, const ReflectionContext& context) const
+{
+    return std::visit([](auto&& source) { return AsyncInputAccessor{std::forward<decltype(source)>(source)}; },
+                      context.unreflect<AsyncInputAccessorSource>(data));
 }
 }

@@ -23,15 +23,10 @@
 
 namespace NES
 {
-/// The runtime implementation and logical inputs selected by a concrete operator's lowering step.
-/// This is a compiler result, not a logical operator or an inheritance interface.
-struct AsyncOperatorLowering
-{
-    AsyncOperator implementation;
-    std::vector<LogicalFunction> arguments;
-};
+class AsyncLoweringContext;
 
-using AsyncOperatorLoweringFunction = std::function<AsyncOperatorLowering(LogicalOperator)>;
+/// Concrete lowerers construct native operators with their named input accessors.
+using AsyncOperatorLoweringFunction = std::function<AsyncOperator(const LogicalOperator&, AsyncLoweringContext&)>;
 
 class AsyncOperatorLoweringRegistry final
     : public RuntimeRegistry<AsyncOperatorLoweringRegistry, std::string, AsyncOperatorLoweringFunction, false>
@@ -40,5 +35,5 @@ public:
     static AsyncOperatorLoweringRegistry& instance();
 };
 
-[[nodiscard]] AsyncOperatorLowering lowerAsyncOperator(const LogicalOperator& op);
+[[nodiscard]] AsyncOperator lowerAsyncOperator(const LogicalOperator& op, AsyncLoweringContext& context);
 }

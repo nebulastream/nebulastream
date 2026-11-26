@@ -17,7 +17,6 @@ add_subdirectory(ComparisonFunctions)
 add_source_files(nes-logical-operators
         LogicalFunctionRegistry.cpp
         LogicalFunctionProvider.cpp
-        AsyncCallLogicalFunction.cpp
         OperatorCallLogicalFunction.cpp
         OperatorFunctionRegistry.cpp
         ConstantValueLogicalFunction.cpp
@@ -36,7 +35,6 @@ add_source_files(nes-logical-operators
 )
 
 
-add_unreflection_entry(LogicalFunction AsyncCall)
 add_unreflection_entry(LogicalFunction OperatorCall)
 add_unreflection_entry(LogicalFunction ConstantValue)
 add_unreflection_entry(LogicalFunction FieldAccess)

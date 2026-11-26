@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <PhysicalOperator.hpp>
@@ -25,17 +26,19 @@ class SourceDescriptorPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     explicit SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, OriginId id);
+    explicit SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, std::vector<OriginId> originIds);
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
     [[nodiscard]] SourceDescriptor getDescriptor() const;
     [[nodiscard]] OriginId getOriginId() const;
+    [[nodiscard]] const std::vector<OriginId>& getOriginIds() const;
 
     bool operator==(const SourceDescriptorPhysicalOperator& other) const;
 
 private:
     std::optional<PhysicalOperator> child;
-    OriginId originId;
+    std::vector<OriginId> originIds;
     SourceDescriptor descriptor;
 };
 }

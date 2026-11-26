@@ -22,7 +22,6 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <DataTypes/RuntimeValue.hpp>
 #include <Sources/AsyncCallGraph.hpp>
@@ -83,8 +82,8 @@ boost::asio::awaitable<AsyncResult<std::vector<SharedRuntimeValues>>> waitCells(
                     /// Exceptional completion is only a terminal infrastructure fallback; operational failures are returned as values.
                     if (!state->failure)
                     {
-                        state->failure = AsyncError{
-                            .exception = IOError("Unexpected async producer task failure"), .kind = AsyncError::Type::Permanent};
+                        state->failure = AsyncError{.exception = IOError("Unexpected async producer task failure"),
+                                                    .kind = AsyncError::Type::Permanent};
                         for (size_t sibling = 0; sibling < cells.size(); ++sibling)
                         {
                             if (sibling != i)
@@ -147,8 +146,10 @@ boost::asio::awaitable<AsyncResult<std::vector<SharedRuntimeValues>>> waitCells(
 }
 }
 
-AsyncGraphExecution::AsyncGraphExecution(
-    SharedAsyncResult::Strand executor, std::shared_ptr<const AsyncCallGraph> graph, ReadInput readInput, Invoke invoke)
+AsyncGraphExecution::AsyncGraphExecution(SharedAsyncResult::Strand executor,
+                                         std::shared_ptr<const AsyncCallGraph> graph,
+                                         ReadInput readInput,
+                                         Invoke invoke)
     : executor(std::move(executor)), graph(std::move(graph)), readInput(std::move(readInput)), invoke(std::move(invoke))
 {
 }
@@ -165,14 +166,13 @@ std::shared_ptr<SharedAsyncResult> AsyncGraphExecution::evaluate(const AsyncCall
     {
         return found->second;
     }
-    PRECONDITION(
-        std::ranges::find(graph->getCalls(), node) != graph->getCalls().end(),
-        "Producer is not part of this async graph's reachable definitions");
+    PRECONDITION(std::ranges::find(graph->getCalls(), node) != graph->getCalls().end(),
+                 "Producer is not part of this async graph's reachable definitions");
     if (cancelled)
     {
-        return std::make_shared<SharedAsyncResult>(
-            executor,
-            []() -> boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> { co_return std::unexpected(AsyncError::cancelled()); });
+        return std::make_shared<SharedAsyncResult>(executor,
+                                                   []() -> boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
+                                                   { co_return std::unexpected(AsyncError::cancelled()); });
     }
     auto cell = std::make_shared<SharedAsyncResult>(executor, [self = weak_from_this(), node] { return invokeNode(self.lock(), node); });
     cells.emplace(node, cell);
@@ -190,8 +190,8 @@ void AsyncGraphExecution::cancel()
     }
 }
 
-boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
-AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, AsyncCall::Ptr node)
+boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self,
+                                                                                         AsyncCall::Ptr node)
 {
     if (!self || self->cancelled)
     {
@@ -199,16 +199,12 @@ AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, Async
     }
     std::vector<Cell> dependencies;
     std::unordered_map<AsyncCall::Ptr, size_t> producerIndices;
-    for (const auto& argument : node->getArguments())
+    for (const auto& producer : node->getDependencies())
     {
-        if (const auto* reference = std::get_if<AsyncResultReference>(&argument))
+        if (!producerIndices.contains(producer))
         {
-            auto producer = reference->getProducer();
-            if (!producerIndices.contains(producer))
-            {
-                producerIndices.emplace(producer, dependencies.size());
-                dependencies.push_back(self->evaluate(producer));
-            }
+            producerIndices.emplace(producer, dependencies.size());
+            dependencies.push_back(self->evaluate(producer));
         }
     }
     auto dependencyResults = co_await waitCells(self->executor, dependencies);
@@ -221,52 +217,33 @@ AsyncGraphExecution::invokeNode(std::shared_ptr<AsyncGraphExecution> self, Async
         co_return std::unexpected(AsyncError::cancelled());
     }
 
-    auto row = node->getAsyncOperator().getInputAccessors().createRowHandle(
-        [self, node, dependencyResults = std::move(*dependencyResults), producerIndices = std::move(producerIndices)](const size_t index)
-        {
-            const auto& argument = node->getArguments().at(index);
-            if (const auto* constant = std::get_if<RuntimeValue>(&argument))
-            {
-                return *constant;
-            }
-            if (const auto* field = std::get_if<InputFieldReference>(&argument))
-            {
-                auto value = self->readInput(*field);
-                INVARIANT(
-                    value.getDataType() == field->getDataType(),
-                    "async input {} has type {}, expected {}",
-                    field->getField(),
-                    value.getDataType(),
-                    field->getDataType());
-                return value;
-            }
-            const auto& reference = std::get<AsyncResultReference>(argument);
-            const auto& producerValues = dependencyResults.at(producerIndices.at(reference.getProducer()));
-            return producerValues[reference.getOutputIndex()].toOwned();
-        });
+    std::unordered_map<AsyncCall::Ptr, SharedRuntimeValues> readyResults;
+    for (const auto& [producer, index] : producerIndices)
+    {
+        readyResults.emplace(producer, std::move(dependencyResults->at(index)));
+    }
+    auto row = self->graph->createRowHandle(self->readInput, std::move(readyResults));
     auto result = co_await self->invoke(node, std::move(row));
     if (!result)
     {
         co_return std::unexpected(std::move(result.error()));
     }
-    INVARIANT(
-        result->size() == node->getResultTypes().size(),
-        "async function {} produced {} values, but declares {}",
-        node->getFunctionType(),
-        result->size(),
-        node->getResultTypes().size());
+    INVARIANT(result->size() == node->getResultTypes().size(),
+              "async function {} produced {} values, but declares {}",
+              node->getFunctionType(),
+              result->size(),
+              node->getResultTypes().size());
     /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-simplify-boolean-expr) checked bounds; explicit type/nullability contract
     IF_INVARIANT(for (size_t index = 0; index < result->size(); ++index) {
         const auto value = (*result)[index];
         const auto expected = node->getResultTypes()[index];
-        INVARIANT(
-            value.getDataType() == expected && (!value.isNull() || expected.nullable),
-            "async function {} output {} has type {} (null: {}), expected {}",
-            node->getFunctionType(),
-            index,
-            value.getDataType(),
-            value.isNull(),
-            expected);
+        INVARIANT(value.getDataType() == expected && (!value.isNull() || expected.nullable),
+                  "async function {} output {} has type {} (null: {}), expected {}",
+                  node->getFunctionType(),
+                  index,
+                  value.getDataType(),
+                  value.isNull(),
+                  expected);
     })
     /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,readability-simplify-boolean-expr)
     co_return std::move(*result);
@@ -300,6 +277,14 @@ boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> AsyncGraphExecution::ru
     for (const auto& output : self->graph->getOutputs())
     {
         const auto& producer = output.result.getProducer();
+        if (!indices.contains(producer))
+        {
+            indices.emplace(producer, roots.size());
+            roots.push_back(self->evaluate(producer));
+        }
+    }
+    for (const auto& producer : self->graph->getRequiredCalls())
+    {
         if (!indices.contains(producer))
         {
             indices.emplace(producer, roots.size());

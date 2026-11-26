@@ -12,67 +12,36 @@
     limitations under the License.
 */
 #pragma once
-
-#include <cstddef>
-#include <memory>
-#include <optional>
 #include <string_view>
-#include <utility>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/UnboundField.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <Sources/AsyncError.hpp>
-#include <Sources/AsyncExecutionContext.hpp>
 #include <Sources/AsyncOperator.hpp>
-#include <Sources/PreparedAsyncCall.hpp>
-#include <Sources/SharedRuntimeValues.hpp>
-#include <AsyncOperatorRegistry.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 
 namespace NES
 {
-/// Native serializable configuration for ASYNC_DELAY(value, millis[, max_concurrency]).
 struct AsyncDelayAsyncOperator
 {
-    DataType valueType{DataType::Type::UNDEFINED, DataType::NULLABLE::NOT_NULLABLE};
-    std::optional<size_t> concurrencyLimit;
-    AsyncInputAccessors inputs{};
-    std::optional<AsyncInputAccessor> valueInput{};
-    std::optional<AsyncInputAccessor> millisInput{};
-    std::optional<AsyncInputAccessor> concurrencyInput{};
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-    [[nodiscard]] AsyncDelayAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
-    {
-        auto copy = *this;
-        copy.inputs = std::move(accessors);
-        copy.valueInput = copy.inputs.size() >= 1 ? std::optional{copy.inputs[0]} : std::nullopt;
-        copy.millisInput = copy.inputs.size() >= 2 ? std::optional{copy.inputs[1]} : std::nullopt;
-        copy.concurrencyInput = copy.inputs.size() >= 3 ? std::optional{copy.inputs[2]} : std::nullopt;
-        return copy;
-    }
-
+    AsyncDelayAsyncOperator(AsyncInputAccessor value, AsyncInputAccessor millis);
     [[nodiscard]] std::string_view getType() const;
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const;
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const;
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const;
 
-    [[nodiscard]] std::optional<size_t> maxConcurrency() const { return concurrencyLimit; }
-
-    static AsyncOperator create(AsyncOperatorRegistryArguments arguments);
-    static AsyncOperator create(AsyncOperatorRegistryArguments arguments, std::optional<size_t> concurrencyLimit);
+private:
+    friend struct Reflector<AsyncDelayAsyncOperator>;
+    friend struct Unreflector<AsyncDelayAsyncOperator>;
+    AsyncInputAccessor valueInput;
+    AsyncInputAccessor millisInput;
 };
 
 template <>
 struct Reflector<AsyncDelayAsyncOperator>
 {
-    Reflected operator()(const AsyncDelayAsyncOperator& op, const ReflectionContext& context) const;
+    Reflected operator()(const AsyncDelayAsyncOperator&, const ReflectionContext&) const;
 };
 
 template <>
 struct Unreflector<AsyncDelayAsyncOperator>
 {
-    AsyncDelayAsyncOperator operator()(const Reflected& data, const ReflectionContext& context) const;
+    AsyncDelayAsyncOperator operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(AsyncOperatorConcept<AsyncDelayAsyncOperator>);

@@ -12,67 +12,64 @@
     limitations under the License.
 */
 #pragma once
-
 #include <optional>
+#include <string>
 #include <string_view>
-#include <utility>
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
 #include <Sources/AsyncOperator.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <boost/system/error_code.hpp>
-#include <AsyncOperatorRegistry.hpp>
 
 namespace NES
 {
 namespace detail
 {
-/// HTTP status and transport classification never throws; only explicitly transient outcomes are retryable.
+struct ParsedHttpTarget
+{
+    std::string resolveHost;
+    std::string port;
+    std::string hostHeader;
+    std::string endpointKey;
+    std::string target;
+};
+
+AsyncResult<ParsedHttpTarget> parseHttpTarget(std::string_view url);
 AsyncResult<void> checkHttpStatus(unsigned status, std::string_view endpoint, std::string_view body);
 AsyncError classifyHttpTransportError(const boost::system::error_code& error, std::string_view url);
 }
 
-/// Native serializable HTTP_CALL configuration; connection state belongs to an execution context, not this value.
 struct HttpCallAsyncOperator
 {
-    AsyncInputAccessors inputs{};
-    std::optional<AsyncInputAccessor> bodyInput{};
-    std::optional<AsyncInputAccessor> urlInput{};
-    std::optional<AsyncInputAccessor> timeoutMillisInput{};
-    std::optional<AsyncInputAccessor> retriesInput{};
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-    [[nodiscard]] HttpCallAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
-    {
-        auto copy = *this;
-        copy.inputs = std::move(accessors);
-        copy.bodyInput = copy.inputs.size() >= 1 ? std::optional{copy.inputs[0]} : std::nullopt;
-        copy.urlInput = copy.inputs.size() >= 2 ? std::optional{copy.inputs[1]} : std::nullopt;
-        copy.timeoutMillisInput = copy.inputs.size() >= 3 ? std::optional{copy.inputs[2]} : std::nullopt;
-        copy.retriesInput = copy.inputs.size() >= 4 ? std::optional{copy.inputs[3]} : std::nullopt;
-        return copy;
-    }
-
+    HttpCallAsyncOperator(AsyncInputAccessor body, AsyncInputAccessor url);
+    HttpCallAsyncOperator(AsyncInputAccessor body,
+                          AsyncInputAccessor url,
+                          std::optional<AsyncInputAccessor> timeoutMillis,
+                          std::optional<AsyncInputAccessor> retries);
     [[nodiscard]] std::string_view getType() const;
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const;
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const;
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const;
 
-    static AsyncOperator create(AsyncOperatorRegistryArguments arguments);
-
 private:
+    friend struct Reflector<HttpCallAsyncOperator>;
+    friend struct Unreflector<HttpCallAsyncOperator>;
+    AsyncInputAccessor bodyInput;
+    AsyncInputAccessor urlInput;
+    std::optional<AsyncInputAccessor> timeoutMillisInput;
+    std::optional<AsyncInputAccessor> retriesInput;
     struct State;
 };
 
 template <>
 struct Reflector<HttpCallAsyncOperator>
 {
-    Reflected operator()(const HttpCallAsyncOperator& op, const ReflectionContext& context) const;
+    Reflected operator()(const HttpCallAsyncOperator&, const ReflectionContext&) const;
 };
 
 template <>
 struct Unreflector<HttpCallAsyncOperator>
 {
-    HttpCallAsyncOperator operator()(const Reflected& data, const ReflectionContext& context) const;
+    HttpCallAsyncOperator operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(AsyncOperatorConcept<HttpCallAsyncOperator>);

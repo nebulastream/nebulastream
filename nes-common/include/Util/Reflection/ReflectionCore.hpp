@@ -154,12 +154,11 @@ public:
     template <typename T>
     [[nodiscard]] T unreflect(const Reflected&) const
     {
-        static_assert(
-            always_false_v<T>,
-            "No unreflection overload available for this type. "
-            "Options: 1) Add a Unreflector<T> specialization, "
-            "2) Make the type an aggregate, "
-            "3) For primitives/enums, ensure proper includes.");
+        static_assert(always_false_v<T>,
+                      "No unreflection overload available for this type. "
+                      "Options: 1) Add a Unreflector<T> specialization, "
+                      "2) Make the type an aggregate, "
+                      "3) For primitives/enums, ensure proper includes.");
     }
 
     /// Overload for types with contextless Unreflector
@@ -194,12 +193,11 @@ public:
     template <typename T>
     [[nodiscard]] Reflected reflect(const T&) const
     {
-        static_assert(
-            always_false_v<T>,
-            "No reflection overload available for this type. "
-            "Options: 1) Add a Reflector<T> specialization, "
-            "2) Make the type an aggregate, "
-            "3) For primitives/enums, ensure proper includes.");
+        static_assert(always_false_v<T>,
+                      "No reflection overload available for this type. "
+                      "Options: 1) Add a Reflector<T> specialization, "
+                      "2) Make the type an aggregate, "
+                      "3) For primitives/enums, ensure proper includes.");
     }
 
     template <typename T>
@@ -253,9 +251,8 @@ private:
                     return unreflect_array<T>(value);
                 }
                 /// Primitives (bool, int64_t, double, string) - try direct construction or conversion
-                else if constexpr (
-                    std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int64_t> || std::is_same_v<ValueType, double>
-                    || std::is_same_v<ValueType, std::string>)
+                else if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int64_t>
+                                   || std::is_same_v<ValueType, double> || std::is_same_v<ValueType, std::string>)
                 {
                     return unreflect_primitive<T>(value);
                 }
@@ -478,10 +475,9 @@ struct Unreflector<T>
                     }
                     else
                     {
-                        throw CannotDeserialize(
-                            "Failed to unreflect integral type {}, expected int64_t, got: {}",
-                            NAMEOF_TYPE(T),
-                            rfl::json::write(static_cast<rfl::Generic>(data)));
+                        throw CannotDeserialize("Failed to unreflect integral type {}, expected int64_t, got: {}",
+                                                NAMEOF_TYPE(T),
+                                                rfl::json::write(static_cast<rfl::Generic>(data)));
                     }
                 },
                 data->variant());
@@ -491,10 +487,9 @@ struct Unreflector<T>
             auto optional = rfl::from_generic<T>(data);
             if (!optional.has_value())
             {
-                throw CannotDeserialize(
-                    "Failed to unreflect given data, rfl error: {}. {}",
-                    optional.error().what(),
-                    rfl::json::write(static_cast<rfl::Generic>(data)));
+                throw CannotDeserialize("Failed to unreflect given data, rfl error: {}. {}",
+                                        optional.error().what(),
+                                        rfl::json::write(static_cast<rfl::Generic>(data)));
             }
             return optional.value();
         }
@@ -544,9 +539,8 @@ struct Reflector<T>
 {
     Reflected operator()(const T& data, const ReflectionContext& ctx) const
     {
-        static_assert(
-            !std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>,
-            "Cannot reflect char*/const char* — use std::string instead");
+        static_assert(!std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>,
+                      "Cannot reflect char*/const char* — use std::string instead");
         if (data == nullptr)
         {
             return Reflected{std::nullopt};

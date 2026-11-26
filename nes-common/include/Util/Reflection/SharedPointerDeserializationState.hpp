@@ -15,18 +15,19 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <type_traits>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-
-template <typename T>
-struct Unreflector;
 
 /// Batch-scoped, non-concurrent identity bookkeeping for shared-pointer deserialization.
 class SharedPointerDeserializationState
@@ -41,10 +42,53 @@ class SharedPointerDeserializationState
     /// An empty owner marks a definition currently being constructed (cycles are rejected).
     std::unordered_map<int64_t, Entry> deserialized;
 
-    template <typename T>
-    friend struct Unreflector;
-
 public:
+    /// Reuse or construct one shared owner for a checked, repeated definition.
+    template <typename T, typename Factory>
+    [[nodiscard]] std::shared_ptr<T> getOrCreate(int64_t id, const std::string& serializedValue, Factory&& factory)
+    {
+        static_assert(!std::is_const_v<T>);
+        if (id <= 0)
+        {
+            throw CannotDeserialize("Shared pointer id must be a positive integer");
+        }
+        const auto type = std::type_index{typeid(T)};
+        if (const auto found = deserialized.find(id); found != deserialized.end())
+        {
+            const auto& entry = found->second;
+            if (entry.type != type)
+            {
+                throw CannotDeserialize("Shared pointer id {} reused with incompatible pointee type", id);
+            }
+            if (entry.serializedValue != serializedValue)
+            {
+                throw CannotDeserialize("Conflicting definition for shared pointer id {}", id);
+            }
+            if (!entry.owner)
+            {
+                throw CannotDeserialize("Cycles in shared pointer reflection are not supported");
+            }
+            return std::static_pointer_cast<T>(entry.owner);
+        }
+
+        deserialized.emplace(id, Entry{.owner = nullptr, .type = type, .serializedValue = serializedValue});
+        try
+        {
+            std::shared_ptr<T> result = std::invoke(std::forward<Factory>(factory));
+            if (!result)
+            {
+                throw CannotDeserialize("Shared pointer construction returned null for id {}", id);
+            }
+            deserialized.at(id).owner = std::move(result);
+            return std::static_pointer_cast<T>(deserialized.at(id).owner);
+        }
+        catch (...)
+        {
+            deserialized.erase(id);
+            throw;
+        }
+    }
+
     /// Return completed, unique objects whose exact unqualified pointee type is T.
     template <typename T>
     [[nodiscard]] std::vector<std::shared_ptr<T>> getObjects() const

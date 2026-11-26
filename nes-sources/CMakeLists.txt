@@ -47,11 +47,6 @@ create_runtime_registry(SourceConfig nes-sources
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
-create_runtime_registry(AsyncOperator nes-sources
-        ENTRY_TEMPLATE "static_cast<AsyncOperator (*)(AsyncOperatorRegistryArguments)>(&\${PLUGIN_NAME}AsyncOperator::create)"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}AsyncOperator.hpp"
-        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
-
 create_unreflection_registry(AsyncOperator nes-sources
         "\${PLUGIN_NAME}AsyncOperator"
         "\${PLUGIN_NAME}AsyncOperator.hpp")

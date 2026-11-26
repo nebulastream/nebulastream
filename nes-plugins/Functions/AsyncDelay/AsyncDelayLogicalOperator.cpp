@@ -35,7 +35,8 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Sources/AsyncInputAccessor.hpp>
+#include <Operators/AsyncLoweringContext.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/CheckedDeadline.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -73,7 +74,7 @@ void requireInteger(const LogicalFunction& function, std::string_view name)
     }
 }
 
-void validateDelay(const LogicalFunction& value, const LogicalFunction& millis, const std::optional<LogicalFunction>& maxConcurrency)
+void validateDelay(const LogicalFunction& value, const LogicalFunction& millis)
 {
     if (value.getDataType().isType(DataType::Type::UNDEFINED))
     {
@@ -88,25 +89,12 @@ void validateDelay(const LogicalFunction& value, const LogicalFunction& millis, 
             throw CannotInferSchema("ASYNC_DELAY constant delay must be a representable non-negative integer");
         }
     }
-    if (maxConcurrency)
-    {
-        requireInteger(*maxConcurrency, "concurrency limit");
-        static_cast<void>(AsyncDelayLogicalOperator::getConcurrencyLimit(maxConcurrency));
-    }
 }
 }
 
 AsyncDelayLogicalOperator::AsyncDelayLogicalOperator(
-    WeakLogicalOperator self,
-    LogicalOperator child,
-    LogicalFunction value,
-    LogicalFunction millis,
-    std::optional<LogicalFunction> maxConcurrency)
-    : ManagedByOperator(std::move(self))
-    , child(std::move(child))
-    , value(std::move(value))
-    , millis(std::move(millis))
-    , maxConcurrency(std::move(maxConcurrency))
+    WeakLogicalOperator self, LogicalOperator child, LogicalFunction value, LogicalFunction millis)
+    : ManagedByOperator(std::move(self)), child(std::move(child)), value(std::move(value)), millis(std::move(millis))
 {
     inferLocalSchema();
 }
@@ -114,98 +102,54 @@ AsyncDelayLogicalOperator::AsyncDelayLogicalOperator(
 TypedLogicalOperator<AsyncDelayLogicalOperator>
 AsyncDelayLogicalOperator::create(LogicalOperator child, LogicalFunction value, LogicalFunction millis)
 {
-    return TypedLogicalOperator<AsyncDelayLogicalOperator>{std::move(child), std::move(value), std::move(millis), std::nullopt};
+    return TypedLogicalOperator<AsyncDelayLogicalOperator>{std::move(child), std::move(value), std::move(millis)};
 }
 
-TypedLogicalOperator<AsyncDelayLogicalOperator> AsyncDelayLogicalOperator::create(
-    LogicalOperator child, LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> maxConcurrency)
+AsyncOperator AsyncDelayLogicalOperator::lowerToAsync(const LogicalOperator& op, AsyncLoweringContext& context)
 {
-    return TypedLogicalOperator<AsyncDelayLogicalOperator>{
-        std::move(child), std::move(value), std::move(millis), std::move(maxConcurrency)};
-}
-
-std::optional<size_t> AsyncDelayLogicalOperator::getConcurrencyLimit(const std::optional<LogicalFunction>& maxConcurrency)
-{
-    if (!maxConcurrency)
-    {
-        return std::nullopt;
-    }
-    requireInteger(*maxConcurrency, "concurrency limit");
-    const auto constant = constantValue(*maxConcurrency);
-    if (!constant)
-    {
-        throw CannotInferSchema("ASYNC_DELAY requires a constant concurrency limit");
-    }
-    const auto limit = checkedUnsignedIntegerOption(constant->view(), "ASYNC_DELAY concurrency");
-    if (!limit || *limit == 0 || !std::in_range<size_t>(*limit))
-    {
-        throw CannotInferSchema("ASYNC_DELAY constant concurrency must be positive and representable");
-    }
-    return static_cast<size_t>(*limit);
-}
-
-AsyncOperatorLowering AsyncDelayLogicalOperator::lowerToAsync(LogicalOperator op)
-{
-    const auto invocation = op.getAs<AsyncDelayLogicalOperator>();
-    const auto& named = *invocation;
-    std::vector<LogicalFunction> arguments{named.value, named.millis};
-    AsyncInputAccessors accessors{{named.value.getDataType(), named.millis.getDataType()}};
-    auto runtime = AsyncDelayAsyncOperator::create({.inputs = std::move(accessors)}, getConcurrencyLimit(named.maxConcurrency));
-    return {.implementation = std::move(runtime), .arguments = std::move(arguments)};
+    const auto& named = *op.getAs<AsyncDelayLogicalOperator>();
+    return AsyncDelayAsyncOperator{context.lower(named.value), context.lower(named.millis)};
 }
 
 OperatorFunctionRegistryEntry AsyncDelayLogicalOperator::functionSyntax()
 {
-    return {
-        .resultName = Identifier::parse("value"),
-        .inferResultType = [](const std::vector<LogicalFunction>& args) -> DataType
-        {
-            if (args.size() < 2 || args.size() > 3)
+    return {.resultName = Identifier::parse("value"),
+            .inferResultType = [](const std::vector<LogicalFunction>& args) -> DataType
             {
-                throw InvalidQuerySyntax("ASYNC_DELAY takes (value, millis[, max_concurrency])");
-            }
-            std::optional<LogicalFunction> concurrency;
-            if (args.size() == 3)
-            {
-                concurrency = args[2];
-            }
-            validateDelay(args[0], args[1], concurrency);
-            return args[0].getDataType();
-        },
-        .createOperator = [](LogicalOperator child, const std::vector<LogicalFunction>& args) -> LogicalOperator
-        {
-            if (args.size() < 2 || args.size() > 3)
-            {
-                throw InvalidQuerySyntax("ASYNC_DELAY takes (value, millis[, max_concurrency])");
-            }
-            return create(std::move(child), args[0], args[1], args.size() == 3 ? std::optional{args[2]} : std::nullopt);
-        },
-        .getArgumentsFromOperator = [](const LogicalOperator& op) -> std::optional<std::vector<LogicalFunction>>
-        {
-            if (const auto invocation = op.tryGetAs<AsyncDelayLogicalOperator>())
-            {
-                std::vector<LogicalFunction> args{invocation.value()->value, invocation.value()->millis};
-                if (invocation.value()->maxConcurrency)
+                if (args.size() != 2)
                 {
-                    args.push_back(*invocation.value()->maxConcurrency);
+                    throw InvalidQuerySyntax("ASYNC_DELAY takes (value, millis)");
                 }
-                return args;
-            }
-            return std::nullopt;
-        }};
+                validateDelay(args[0], args[1]);
+                return args[0].getDataType();
+            },
+            .createOperator = [](LogicalOperator child, const std::vector<LogicalFunction>& args) -> LogicalOperator
+            {
+                if (args.size() != 2)
+                {
+                    throw InvalidQuerySyntax("ASYNC_DELAY takes (value, millis)");
+                }
+                return create(std::move(child), args[0], args[1]);
+            },
+            .getArgumentsFromOperator = [](const LogicalOperator& op) -> std::optional<std::vector<LogicalFunction>>
+            {
+                if (const auto invocation = op.tryGetAs<AsyncDelayLogicalOperator>())
+                {
+                    return std::vector<LogicalFunction>{invocation.value()->value, invocation.value()->millis};
+                }
+                return std::nullopt;
+            }};
 }
 
 bool AsyncDelayLogicalOperator::operator==(const AsyncDelayLogicalOperator& other) const
 {
     return StructuralFunctionEqual{}(value, other.value) && StructuralFunctionEqual{}(millis, other.millis)
-        && ((!maxConcurrency && !other.maxConcurrency)
-            || (maxConcurrency && other.maxConcurrency && StructuralFunctionEqual{}(*maxConcurrency, *other.maxConcurrency)))
         && outputSchema == other.outputSchema && traitSet == other.traitSet;
 }
 
 void AsyncDelayLogicalOperator::validate() const
 {
-    validateDelay(value, millis, maxConcurrency);
+    validateDelay(value, millis);
 }
 
 void AsyncDelayLogicalOperator::inferLocalSchema()
@@ -214,19 +158,14 @@ void AsyncDelayLogicalOperator::inferLocalSchema()
     TypeInferenceContext context{input};
     value = context.inferType(value);
     millis = context.inferType(millis);
-    if (maxConcurrency)
-    {
-        maxConcurrency = context.inferType(*maxConcurrency);
-    }
     validate();
     auto fields = input | RangeUnbinder{} | std::ranges::to<std::vector>();
     fields.emplace_back(Identifier::parse("value"), value.getDataType());
     auto schema = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(fields);
     if (!schema)
     {
-        throw CannotInferSchema(
-            "AsyncDelay result fields collide; use a projection to rename fields: {}",
-            Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(schema.error()));
+        throw CannotInferSchema("AsyncDelay result fields collide; use a projection to rename fields: {}",
+                                Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(schema.error()));
     }
     outputSchema = std::move(schema).value();
 }
@@ -278,20 +217,14 @@ Schema<Field, Ordered> AsyncDelayLogicalOperator::getOrderedOutputSchema(ChildOu
 
 std::string AsyncDelayLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId) const
 {
-    std::string result = "ASYNC ASYNC_DELAY(args: [" + value.explain(verbosity) + ", " + millis.explain(verbosity);
-    if (maxConcurrency)
-    {
-        result += ", " + maxConcurrency->explain(verbosity);
-    }
-    return result + "], outputs: [VALUE])";
+    return "ASYNC ASYNC_DELAY(args: [" + value.explain(verbosity) + ", " + millis.explain(verbosity) + "], outputs: [VALUE])";
 }
 
-Reflected Reflector<TypedLogicalOperator<AsyncDelayLogicalOperator>>::operator()(
-    const TypedLogicalOperator<AsyncDelayLogicalOperator>& op, const ReflectionContext& context) const
+Reflected Reflector<TypedLogicalOperator<AsyncDelayLogicalOperator>>::operator()(const TypedLogicalOperator<AsyncDelayLogicalOperator>& op,
+                                                                                 const ReflectionContext& context) const
 {
     return context.reflect(
-        detail::ReflectedAsyncDelayLogicalOperator{
-            .operatorId = op.getId(), .value = op->getValue(), .millis = op->getMillis(), .maxConcurrency = op->getMaxConcurrency()});
+        detail::ReflectedAsyncDelayLogicalOperator{.operatorId = op.getId(), .value = op->getValue(), .millis = op->getMillis()});
 }
 
 Unreflector<TypedLogicalOperator<AsyncDelayLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
@@ -307,18 +240,11 @@ Unreflector<TypedLogicalOperator<AsyncDelayLogicalOperator>>::operator()(const R
     {
         throw CannotDeserialize("AsyncDelay requires exactly one child");
     }
-    return AsyncDelayLogicalOperator::create(
-        std::move(children.front()), std::move(value.value), std::move(value.millis), std::move(value.maxConcurrency));
+    return AsyncDelayLogicalOperator::create(std::move(children.front()), std::move(value.value), std::move(value.millis));
 }
 }
 
 size_t std::hash<NES::AsyncDelayLogicalOperator>::operator()(const NES::AsyncDelayLogicalOperator& op) const noexcept
 {
-    size_t result
-        = folly::hash::hash_combine(0, NES::StructuralFunctionHash{}(op.getValue()), NES::StructuralFunctionHash{}(op.getMillis()));
-    if (op.getMaxConcurrency())
-    {
-        result = folly::hash::hash_combine(result, NES::StructuralFunctionHash{}(*op.getMaxConcurrency()));
-    }
-    return result;
+    return folly::hash::hash_combine(0, NES::StructuralFunctionHash{}(op.getValue()), NES::StructuralFunctionHash{}(op.getMillis()));
 }

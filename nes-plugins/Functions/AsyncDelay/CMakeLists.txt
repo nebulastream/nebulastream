@@ -18,7 +18,6 @@ add_library(async_delay_plugin_library STATIC AsyncDelayAsyncOperator.cpp)
 target_link_libraries(async_delay_plugin_library PRIVATE nes-sources reflectcpp::reflectcpp)
 target_include_directories(async_delay_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 link_plugin_library(nes-sources async_delay_plugin_library)
-add_registry_entry(AsyncOperator AsyncDelay KEY ASYNC_DELAY)
 add_unreflection_entry(AsyncOperator AsyncDelay KEY ASYNC_DELAY)
 
 add_library(async_delay_logical_plugin_library STATIC AsyncDelayLogicalOperator.cpp)

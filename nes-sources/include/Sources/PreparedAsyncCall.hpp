@@ -13,7 +13,6 @@
 */
 #pragma once
 #include <cstddef>
-#include <optional>
 #include <Sources/AsyncError.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <boost/asio/awaitable.hpp>
@@ -24,9 +23,9 @@ namespace NES
 class PreparedAsyncCall
 {
 public:
-    PreparedAsyncCall() : PreparedAsyncCall(std::nullopt) { }
+    PreparedAsyncCall() = default;
 
-    explicit PreparedAsyncCall(std::optional<size_t> retryOverride) : retryOverride(retryOverride) { }
+    explicit PreparedAsyncCall(size_t maxRetries) : maxRetries(maxRetries) { }
 
     PreparedAsyncCall(const PreparedAsyncCall&) = delete;
     PreparedAsyncCall& operator=(const PreparedAsyncCall&) = delete;
@@ -36,10 +35,10 @@ public:
 
     [[nodiscard]] virtual boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> executeAttempt() = 0;
 
-    /// Fixed at preparation; nullopt selects the executor's default retry policy.
-    [[nodiscard]] const std::optional<size_t>& getRetryOverride() const { return retryOverride; }
+    /// Fixed at preparation; zero disables retries.
+    [[nodiscard]] size_t getMaxRetries() const { return maxRetries; }
 
 private:
-    const std::optional<size_t> retryOverride;
+    const size_t maxRetries = 0;
 };
 }

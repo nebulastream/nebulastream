@@ -70,21 +70,20 @@ static LogicalSource createLogicalTestSource()
 static SourceDescriptor createTestSourceDescriptor(const LogicalSource& logicalSource)
 {
     const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    return SourceDescriptor::create(
-               PhysicalSourceId{1},
-               logicalSource,
-               Identifier::parse("File"),
-               Host{"localhost"},
-               sourceConfig,
-               {{Identifier::parse("type"), "CSV"}},
-               false)
+    return SourceDescriptor::create(PhysicalSourceId{1},
+                                    logicalSource,
+                                    Identifier::parse("File"),
+                                    Host{"localhost"},
+                                    sourceConfig,
+                                    {{Identifier::parse("type"), "CSV"}},
+                                    false)
         .value();
 }
 
 static SinkDescriptor createTestSinkDescriptor()
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
+    const std::unordered_map<Identifier, std::string> sinkConfig{{Identifier::parse("file_path"), "/dev/null"},
+                                                                 {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
@@ -97,8 +96,8 @@ static SinkDescriptor createTestSinkDescriptor()
 
 static SinkDescriptor createTestSinkDescriptorWithNewField()
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
+    const std::unordered_map<Identifier, std::string> sinkConfig{{Identifier::parse("file_path"), "/dev/null"},
+                                                                 {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
@@ -131,6 +130,30 @@ protected:
     SinkDescriptor sinkDescriptor;
 };
 
+TEST_F(DecideFieldMappingsTest, RerunReplacesItsOwnTrait)
+{
+    const auto source = SourceDescriptorLogicalOperator::create(sourceDescriptor);
+    const auto inferred = DecideFieldMappings::withInferredFieldMapping(source);
+    const auto repeated = DecideFieldMappings::withInferredFieldMapping(inferred);
+    EXPECT_EQ(inferred.getTraitSet(), repeated.getTraitSet());
+}
+
+TEST_F(DecideFieldMappingsTest, RefreshesMappingsAfterAProjectionSchemaChanges)
+{
+    const auto source = DecideFieldMappings::withInferredFieldMapping(SourceDescriptorLogicalOperator::create(sourceDescriptor));
+    const auto field = source.getOutputSchema().getFieldByName(Identifier::parse("attribute_a")).value();
+    const auto first = DecideFieldMappings::withInferredFieldMapping(ProjectionLogicalOperator::create(
+        source, {{Identifier::parse("old_alias"), FieldAccessLogicalFunction{field}}}, ProjectionLogicalOperator::Asterisk{false}));
+    const auto changed = DecideFieldMappings::withInferredFieldMapping(
+        ProjectionLogicalOperator::create(
+            source, {{Identifier::parse("new_alias"), FieldAccessLogicalFunction{field}}}, ProjectionLogicalOperator::Asterisk{false})
+            .withTraitSet(first.getTraitSet()));
+    const auto newField = changed.getOutputSchema().getFieldByName(Identifier::parse("new_alias")).value();
+    EXPECT_TRUE(changed.getTraitSet().get<FieldMappingTrait>()->getMapping(newField.unbound()).has_value());
+    EXPECT_EQ(changed.getTraitSet().get<FieldMappingTrait>()->getMapping(newField.unbound()).value(),
+              QualifiedIdentifier::parse("new_alias"));
+}
+
 TEST_F(DecideFieldMappingsTest, TestNoCollisions)
 {
     const auto sourceDescriptorLogicalOperator = SourceDescriptorLogicalOperator::create(sourceDescriptor);
@@ -153,8 +176,8 @@ TEST_F(DecideFieldMappingsTest, TestNoCollisions)
     const auto projectionOperator
         = ProjectionLogicalOperator::create(sourceDescriptorLogicalOperator, projections, ProjectionLogicalOperator::Asterisk{false});
     const auto sinkOperator = SinkLogicalOperator::create(projectionOperator, sinkDescriptor);
-    const LogicalPlan logicalPlan{
-        QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOperator->withInferredSchema()}};
+    const LogicalPlan logicalPlan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()),
+                                  {sinkOperator->withInferredSchema()}};
 
     auto annotated = DecideFieldMappings{}.apply(logicalPlan);
 
@@ -179,9 +202,9 @@ TEST_F(DecideFieldMappingsTest, TestNoCollisions)
         for (const auto& field : {fieldA, fieldB, fieldC})
         {
             const auto fieldHash = std::hash<Field>{}(field);
-            const auto fieldInMap = *std::ranges::find_if(
-                fieldMappingTrait->getUnderlying() | std::views::keys,
-                [&field](const auto& iter) { return iter.getFullyQualifiedName() == field.getFullyQualifiedName(); });
+            const auto fieldInMap = *std::ranges::find_if(fieldMappingTrait->getUnderlying() | std::views::keys,
+                                                          [&field](const auto& iter)
+                                                          { return iter.getFullyQualifiedName() == field.getFullyQualifiedName(); });
             const auto fieldHashInMap = std::hash<UnqualifiedUnboundField>{}(fieldInMap);
             const auto mapping = fieldMappingTrait->getMapping(field.unbound());
             EXPECT_TRUE(mapping.has_value());
@@ -200,10 +223,9 @@ TEST_F(DecideFieldMappingsTest, TestCollisions)
     /// We'd expect attribute_a to receive a redirection mapping while attribute_b/c do not since they are only accessed in one projection
     const std::vector<std::pair<Identifier, LogicalFunction>> projections{
         {Identifier::parse("attribute_a"),
-         AddLogicalFunction{
-             FieldAccessLogicalFunction{
-                 sourceDescriptorLogicalOperator.getOutputSchema().getFieldByName(Identifier::parse("attribute_a")).value()},
-             ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "5"}}},
+         AddLogicalFunction{FieldAccessLogicalFunction{
+                                sourceDescriptorLogicalOperator.getOutputSchema().getFieldByName(Identifier::parse("attribute_a")).value()},
+                            ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::UINT64), "5"}}},
         {Identifier::parse("attribute_b"),
          AddLogicalFunction{
              FieldAccessLogicalFunction{
@@ -301,8 +323,8 @@ TEST_F(DecideFieldMappingsTest, TestProjectionToNewField)
     const auto projectionOperator
         = ProjectionLogicalOperator::create(sourceDescriptorLogicalOperator, projections, ProjectionLogicalOperator::Asterisk{false});
     const auto sinkOperator = SinkLogicalOperator::create(projectionOperator, sinkDescriptorWithNew);
-    const LogicalPlan logicalPlan{
-        QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOperator->withInferredSchema()}};
+    const LogicalPlan logicalPlan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()),
+                                  {sinkOperator->withInferredSchema()}};
 
     auto annotated = DecideFieldMappings{}.apply(logicalPlan);
 
@@ -338,20 +360,19 @@ TEST_F(DecideFieldMappingsTest, TestProjectionToNewField)
 
 TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
+    const std::unordered_map<Identifier, std::string> sinkConfig{{Identifier::parse("file_path"), "/dev/null"},
+                                                                 {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> renamedSinkSchema{
         UnqualifiedUnboundField{Identifier::parse("renamed_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    const auto renamedSink = SinkDescriptor::createNamed(
-                                 INVALID_SINK_ID,
-                                 Identifier::parse("renamedSink"),
-                                 Identifier::parse("file"),
-                                 renamedSinkSchema,
-                                 Host{"localhost"},
-                                 sinkConfig,
-                                 {})
+    const auto renamedSink = SinkDescriptor::createNamed(INVALID_SINK_ID,
+                                                         Identifier::parse("renamedSink"),
+                                                         Identifier::parse("file"),
+                                                         renamedSinkSchema,
+                                                         Host{"localhost"},
+                                                         sinkConfig,
+                                                         {})
                                  .value();
     const auto sourceOp = SourceDescriptorLogicalOperator::create(sourceDescriptor);
     const std::vector<std::pair<Identifier, LogicalFunction>> projections{

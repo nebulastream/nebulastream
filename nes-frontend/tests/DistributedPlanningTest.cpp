@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <Async/HandoffChannel.hpp>
+#include <AsyncDelayLogicalOperator.hpp>
 #include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -36,7 +37,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/AsyncLogicalOperator.hpp>
 #include <Operators/AsynchronousOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -55,6 +55,7 @@
 #include <Sinks/HandoffSinkConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -199,13 +200,8 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, maxOperators, downstream] : workers)
     {
-        statements.emplace_back(
-            NES::CreateWorkerStatement{
-                .host = host,
-                .dataAddress = dataAddress.value_or(host),
-                .maxOperators = maxOperators,
-                .downstream = downstream,
-                .config = {}});
+        statements.emplace_back(NES::CreateWorkerStatement{
+            .host = host, .dataAddress = dataAddress.value_or(host), .maxOperators = maxOperators, .downstream = downstream, .config = {}});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -221,12 +217,11 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     for (const auto& [logical, host] : physical)
     {
         statements.emplace_back(
-            NES::CreatePhysicalSourceStatement{
-                .attachedTo = NES::LogicalSourceName(NES::Identifier::parse(logical)),
-                .sourceType = NES::Identifier::parse("File"),
-                .host = NES::Host(host),
-                .sourceConfig = {{NES::Identifier::parse("file_path"), "does_not_exist"}},
-                .parserConfig = {{NES::Identifier::parse("type"), "CSV"}}});
+            NES::CreatePhysicalSourceStatement{.attachedTo = NES::LogicalSourceName(NES::Identifier::parse(logical)),
+                                               .sourceType = NES::Identifier::parse("File"),
+                                               .host = NES::Host(host),
+                                               .sourceConfig = {{NES::Identifier::parse("file_path"), "does_not_exist"}},
+                                               .parserConfig = {{NES::Identifier::parse("type"), "CSV"}}});
     }
     for (const auto& [name, schemaFields, host] : sinks)
     {
@@ -236,14 +231,12 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
                           { return NES::UnqualifiedUnboundField{NES::Identifier::parse(fieldName), NES::DataType::Type::UINT64}; })
             | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 
-        statements.emplace_back(
-            NES::CreateSinkStatement{
-                .name = NES::Identifier::parse(name),
-                .sinkType = NES::Identifier::parse("VOID"),
-                .schema = std::move(schema),
-                .host = NES::Host(host),
-                .sinkConfig = {},
-                .formatConfig = {}});
+        statements.emplace_back(NES::CreateSinkStatement{.name = NES::Identifier::parse(name),
+                                                         .sinkType = NES::Identifier::parse("VOID"),
+                                                         .schema = std::move(schema),
+                                                         .host = NES::Host(host),
+                                                         .sinkConfig = {},
+                                                         .formatConfig = {}});
     }
     statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
     return statements;
@@ -391,7 +384,7 @@ std::vector<LogicalPlan> deserializeAsyncPlans(const std::vector<SerializableQue
 }
 }
 
-TEST_F(DistributedPlanningTest, AsyncDecompositionCreatesOneStagePerSyntacticOccurrence)
+TEST_F(DistributedPlanningTest, AsyncDecompositionFusesStagesWithoutMergingSyntacticInvocations)
 {
     const std::vector<std::pair<std::string, size_t>> cases{
         {"SELECT ASYNC_DELAY(a, 1) + ASYNC_DELAY(a, 1) AS a FROM mock_source INTO mock_sink", 2},
@@ -422,10 +415,29 @@ workers:
 )");
         auto distributed = optimizer->optimize(boundPlan);
         const auto& plans = distributed[Host("localhost:8080")];
-        EXPECT_EQ(plans.size(), occurrences + 1);
+        EXPECT_EQ(plans.size(), 2);
         const auto channels = extractAsyncChannels(plans);
-        ASSERT_EQ(channels.sources.size(), occurrences);
-        ASSERT_EQ(channels.sinks.size(), occurrences);
+        ASSERT_EQ(channels.sources.size(), 1);
+        ASSERT_EQ(channels.sinks.size(), 1);
+        size_t callCount = 0;
+        for (const auto& fragment : plans)
+        {
+            for (const auto& source : getOperatorByType<SourceDescriptorLogicalOperator>(fragment))
+            {
+                const auto& descriptor = source->getSourceDescriptor();
+                if (descriptor.getSourceType() == Identifier::parse("ASYNC"))
+                {
+                    const auto& graph = descriptor.getPluginData().getAs<AsyncSourceConfig>().calls;
+                    callCount += graph.getCalls().size();
+                    EXPECT_EQ(graph.getRequiredCalls().size(), graph.getCalls().size());
+                    for (size_t index = 0; index < graph.getCalls().size(); ++index)
+                    {
+                        EXPECT_EQ(std::ranges::count(graph.getCalls(), graph.getCalls().at(index)), 1);
+                    }
+                }
+            }
+        }
+        EXPECT_EQ(callCount, occurrences);
         for (const auto& channel : channels.sources)
         {
             EXPECT_EQ(std::ranges::count(channels.sources, channel), 1);
@@ -589,11 +601,10 @@ workers:
     const auto local = baseline[Host{"localhost:8080"}].front();
     const auto sink = local.getRootOperators().front().getAs<SinkLogicalOperator>();
     const auto source = getLeafOperators(local).front().withTraitSet(TraitSet{});
-    const LogicalOperator shared = AsyncLogicalOperator::create(
+    const LogicalOperator shared = AsyncDelayLogicalOperator::create(
         source,
-        "ASYNC_DELAY",
-        {FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
-         ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}});
+        FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+        ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"});
     const std::vector<ProjectionLogicalOperator::UnboundProjection> fields{
         {Identifier::parse("a"), UnboundFieldAccessLogicalFunction{Identifier::parse("a")}}};
     const LogicalOperator left = ProjectionLogicalOperator::create(shared, fields, ProjectionLogicalOperator::Asterisk{false});
@@ -633,8 +644,8 @@ workers:
         size_t count = 0;
         for (const auto& root : plan.getRootOperators())
         {
-            count += std::ranges::count_if(
-                BFSRange(root), [](const LogicalOperator& op) { return op.tryGetAs<AsynchronousOperator>().has_value(); });
+            count += std::ranges::count_if(BFSRange(root),
+                                           [](const LogicalOperator& op) { return op.tryGetAs<AsynchronousOperator>().has_value(); });
         }
         return count;
     };
@@ -798,28 +809,26 @@ workers:
     const auto sourceNode0Plan = plan[Host("source-node0:8080")].front();
     EXPECT_EQ(flatten(sourceNode0Plan).size(), 3);
     EXPECT_EQ(getLeafOperators(sourceNode0Plan).size(), 1);
-    EXPECT_EQ(
-        getLeafOperators(sourceNode0Plan)
-            .front()
-            .getAs<SourceDescriptorLogicalOperator>()
-            .get()
-            .getSourceDescriptor()
-            .getLogicalSourceName(),
-        Identifier::parse("STREAM0"));
+    EXPECT_EQ(getLeafOperators(sourceNode0Plan)
+                  .front()
+                  .getAs<SourceDescriptorLogicalOperator>()
+                  .get()
+                  .getSourceDescriptor()
+                  .getLogicalSourceName(),
+              Identifier::parse("STREAM0"));
     EXPECT_EQ(sourceNode0Plan.getRootOperators().size(), 1);
     EXPECT_EQ(sourceNode0Plan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sourceNode1Plan = plan[Host("source-node1:8080")].front();
     EXPECT_EQ(flatten(sourceNode1Plan).size(), 4);
     EXPECT_EQ(getLeafOperators(sourceNode1Plan).size(), 1);
-    EXPECT_EQ(
-        getLeafOperators(sourceNode1Plan)
-            .front()
-            .getAs<SourceDescriptorLogicalOperator>()
-            .get()
-            .getSourceDescriptor()
-            .getLogicalSourceName(),
-        Identifier::parse("STREAM1"));
+    EXPECT_EQ(getLeafOperators(sourceNode1Plan)
+                  .front()
+                  .getAs<SourceDescriptorLogicalOperator>()
+                  .get()
+                  .getSourceDescriptor()
+                  .getLogicalSourceName(),
+              Identifier::parse("STREAM1"));
     EXPECT_EQ(sourceNode1Plan.getRootOperators().size(), 1);
     EXPECT_EQ(sourceNode1Plan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkDescriptor()->getSinkType(), "NETWORK");
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(sourceNode1Plan).size(), 1);
@@ -827,12 +836,10 @@ workers:
     const auto sinkNodePlan = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(flatten(sinkNodePlan).size(), 4);
     EXPECT_EQ(getLeafOperators(sinkNodePlan).size(), 2);
-    EXPECT_EQ(
-        getLeafOperators(sinkNodePlan)[0].getAs<SourceDescriptorLogicalOperator>().get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
-    EXPECT_EQ(
-        getLeafOperators(sinkNodePlan)[1].getAs<SourceDescriptorLogicalOperator>().get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getLeafOperators(sinkNodePlan)[0].getAs<SourceDescriptorLogicalOperator>().get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
+    EXPECT_EQ(getLeafOperators(sinkNodePlan)[1].getAs<SourceDescriptorLogicalOperator>().get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(sinkNodePlan.getRootOperators().size(), 1);
     EXPECT_EQ(sinkNodePlan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkName(), Identifier::parse("SINK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkNodePlan).size(), 1);
@@ -878,12 +885,10 @@ workers:
     const auto plan0 = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan0).size(), 1);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0).size(), 2);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(plan0).size(), 1);
     EXPECT_EQ(flatten(plan0).size(), 4);
 
@@ -945,12 +950,10 @@ workers:
     const auto plan0 = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan0).size(), 1);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0).size(), 2);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(plan0).size(), 1);
     EXPECT_EQ(flatten(plan0).size(), 5);
 
@@ -1013,9 +1016,8 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan1).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan1)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourcePlan1).size(), 1);
     EXPECT_EQ(flatten(sourcePlan1).size(), 3);
 
@@ -1023,9 +1025,8 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan2)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(flatten(sourcePlan2).size(), 4);
@@ -1133,27 +1134,24 @@ workers:
     const auto sourcePlan = plan[Host("source-node:8080")].front();
     EXPECT_EQ(flatten(sourcePlan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediatePlan = plan[Host("intermediate-node:8080")].front();
     EXPECT_EQ(flatten(intermediatePlan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(flatten(sinkPlan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].get().getSinkDescriptor()->getSinkType(), "VOID");
 }
@@ -1198,36 +1196,32 @@ workers:
     const auto sourcePlan = plan[Host("source-node:8080")].front();
     EXPECT_EQ(flatten(sourcePlan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediatePlan0 = plan[Host("intermediate-node0:8080")].front();
     EXPECT_EQ(flatten(intermediatePlan0).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan0).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan0)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan0)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan0).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan0)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediatePlan1 = plan[Host("intermediate-node1:8080")].front();
     EXPECT_EQ(flatten(intermediatePlan1).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan1).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan1)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan1)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan1).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan1)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(flatten(sinkPlan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].get().getSinkDescriptor()->getSinkType(), "VOID");
 }
@@ -1272,9 +1266,8 @@ workers:
     const auto sourcePlan1 = plan[Host("source-node:8080")][0];
     EXPECT_EQ(flatten(sourcePlan1).size(), 3);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourcePlan1).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan1).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan1)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
@@ -1282,9 +1275,8 @@ workers:
     const auto sourcePlan2 = plan[Host("source-node:8080")][1];
     EXPECT_EQ(flatten(sourcePlan2).size(), 4);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan2).size(), 1);
@@ -1293,30 +1285,26 @@ workers:
     const auto intermediatePlan1 = plan[Host("intermediate-node:8080")][0];
     EXPECT_EQ(flatten(intermediatePlan1).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan1).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan1)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan1)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan1).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan1)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediatePlan2 = plan[Host("intermediate-node:8080")][1];
     EXPECT_EQ(flatten(intermediatePlan2).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan2).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan2)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediatePlan2)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan2)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(flatten(sinkPlan).size(), 4);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 2);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[1].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[1].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan)[0].get().getSinkDescriptor()->getSinkType(), "VOID");
@@ -1405,12 +1393,10 @@ workers:
     const auto sourceNode0Plan = plan[Host("source-node0:8080")].front();
     EXPECT_EQ(flatten(sourceNode0Plan).size(), 6);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan).size(), 2);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan)[1].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan)[1].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sourceNode0Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourceNode0Plan).size(), 2);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode0Plan).size(), 1);
@@ -1419,9 +1405,8 @@ workers:
     const auto sourceNode1Plan = plan[Host("source-node1:8080")].front();
     EXPECT_EQ(flatten(sourceNode1Plan).size(), 3);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode1Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
@@ -1429,27 +1414,24 @@ workers:
     const auto sourceNode2Plan = plan[Host("source-node2:8080")].front();
     EXPECT_EQ(flatten(sourceNode2Plan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("FILE"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode1Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediateNode0Plan = plan[Host("intermediate-node0:8080")].front();
     EXPECT_EQ(flatten(intermediateNode0Plan).size(), 2);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode0Plan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode0Plan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode0Plan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode0Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode0Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediateNode1Plan = plan[Host("intermediate-node1:8080")].front();
     EXPECT_EQ(flatten(intermediateNode1Plan).size(), 3);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode1Plan).size(), 1);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(intermediateNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode1Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
@@ -1457,15 +1439,12 @@ workers:
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(flatten(sinkPlan).size(), 8);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 3);
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[1].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
-    EXPECT_EQ(
-        getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[2].get().getSourceDescriptor().getSourceType(),
-        Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[1].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[2].get().getSourceDescriptor().getSourceType(),
+              Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 2);
     EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sinkPlan).size(), 2);
     /// Watermark assignments are pushed fully upstream — stream2's watermark applies on source-node1,

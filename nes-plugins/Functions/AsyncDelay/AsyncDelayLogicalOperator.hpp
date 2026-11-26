@@ -28,32 +28,23 @@
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Serialization/ReflectedOperator.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
-struct AsyncOperatorLowering;
+class AsyncLoweringContext;
 struct OperatorFunctionRegistryEntry;
 
 class AsyncDelayLogicalOperator final : public Reorderer, public ManagedByOperator, public AsynchronousOperator
 {
 public:
-    AsyncDelayLogicalOperator(
-        WeakLogicalOperator self,
-        LogicalOperator child,
-        LogicalFunction value,
-        LogicalFunction millis,
-        std::optional<LogicalFunction> maxConcurrency);
+    AsyncDelayLogicalOperator(WeakLogicalOperator self, LogicalOperator child, LogicalFunction value, LogicalFunction millis);
     [[nodiscard]] static TypedLogicalOperator<AsyncDelayLogicalOperator>
     create(LogicalOperator child, LogicalFunction value, LogicalFunction millis);
-    [[nodiscard]] static TypedLogicalOperator<AsyncDelayLogicalOperator>
-    create(LogicalOperator child, LogicalFunction value, LogicalFunction millis, std::optional<LogicalFunction> maxConcurrency);
-    [[nodiscard]] static AsyncOperatorLowering lowerToAsync(LogicalOperator op);
+    [[nodiscard]] static AsyncOperator lowerToAsync(const LogicalOperator& op, AsyncLoweringContext& context);
     [[nodiscard]] static OperatorFunctionRegistryEntry functionSyntax();
-    [[nodiscard]] static std::optional<size_t> getConcurrencyLimit(const std::optional<LogicalFunction>& maxConcurrency);
-
-    [[nodiscard]] std::optional<size_t> getConcurrencyLimit() const { return getConcurrencyLimit(maxConcurrency); }
 
     [[nodiscard]] std::string_view getName() const noexcept { return "AsyncDelay"; }
 
@@ -65,8 +56,6 @@ public:
     [[nodiscard]] const LogicalFunction& getValue() const { return value; }
 
     [[nodiscard]] const LogicalFunction& getMillis() const { return millis; }
-
-    [[nodiscard]] const std::optional<LogicalFunction>& getMaxConcurrency() const { return maxConcurrency; }
 
     [[nodiscard]] LogicalOperator getChild() const { return child; }
 
@@ -89,7 +78,6 @@ private:
     LogicalOperator child;
     LogicalFunction value;
     LogicalFunction millis;
-    std::optional<LogicalFunction> maxConcurrency;
     TraitSet traitSet;
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 };
@@ -101,7 +89,6 @@ struct ReflectedAsyncDelayLogicalOperator
     OperatorId operatorId;
     LogicalFunction value;
     LogicalFunction millis;
-    std::optional<LogicalFunction> maxConcurrency;
 };
 }
 

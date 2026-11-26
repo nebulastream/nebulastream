@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <ranges>
+#include <vector>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -46,7 +47,8 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
     const auto outputOriginIds = traitSet.get<OutputOriginIdsTrait>();
 
     PRECONDITION(outputOriginIds->size() > 0, "Source must have at least one output origin id");
-    auto physicalOperator = SourceDescriptorPhysicalOperator(source->getSourceDescriptor(), (*outputOriginIds)[0]);
+    auto physicalOperator = SourceDescriptorPhysicalOperator(
+        source->getSourceDescriptor(), std::vector<OriginId>{outputOriginIds->begin(), outputOriginIds->end()});
 
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;

@@ -14,17 +14,12 @@
 
 #include <Serialization/LogicalFunctionReflection.hpp>
 
-#include <cstdint>
 #include <memory>
-#include <typeindex>
 #include <utility>
-#include <variant>
 
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/Reflection/SharedPointerDeserializationState.hpp>
-#include <folly/ScopeGuard.h>
-#include <rfl/Generic.hpp>
+#include <Util/Reflection/SharedPtrReflection.hpp>
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionUnreflectionRegistry.hpp>
@@ -46,55 +41,21 @@ Unreflector<std::shared_ptr<const detail::ErasedLogicalFunction>>::operator()(co
     {
         return nullptr;
     }
-    const auto* object = std::get_if<rfl::Generic::Object>(&data->variant());
-    if (object == nullptr)
-    {
-        throw CannotDeserialize("Expected shared pointer object with id and value");
-    }
-    const auto idField = object->get("id");
-    const auto definition = object->get("value");
-    if (!idField.has_value() || !definition.has_value())
-    {
-        throw CannotDeserialize("Shared pointer definition requires id and value");
-    }
-    const auto* id = std::get_if<int64_t>(&idField.value().variant());
-    if ((id == nullptr) || *id <= 0)
-    {
-        throw CannotDeserialize("Shared pointer id must be a positive integer");
-    }
-
-    const auto type = std::type_index{typeid(detail::ErasedLogicalFunction)};
-    const auto text = rfl::json::write(definition.value());
-    auto& identities = state->deserialized;
-    if (const auto found = identities.find(*id); found != identities.end())
-    {
-        const auto& entry = found->second;
-        if (entry.type != type)
+    const auto definition = context.unreflect<detail::SharedPointerDefinition>(data);
+    const auto text = rfl::json::write(*definition.value);
+    auto result = state->getOrCreate<detail::ErasedLogicalFunction>(
+        definition.id,
+        text,
+        [&context, &definition]
         {
-            throw CannotDeserialize("Shared pointer id {} reused with incompatible pointee type", *id);
-        }
-        if (entry.serializedValue != text)
-        {
-            throw CannotDeserialize("Conflicting definition for shared pointer id {}", *id);
-        }
-        if (!entry.owner)
-        {
-            throw CannotDeserialize("Cycles in shared pointer reflection are not supported");
-        }
-        return std::static_pointer_cast<const detail::ErasedLogicalFunction>(entry.owner);
-    }
-
-    identities.emplace(*id, SharedPointerDeserializationState::Entry{.owner = nullptr, .type = type, .serializedValue = text});
-    auto eraseIncomplete = folly::makeGuard([&identities, identity = *id]() noexcept { identities.erase(identity); });
-    auto [name, functionData] = context.unreflect<detail::ReflectedLogicalFunction>(Reflected{definition.value()});
-    auto logicalFunction = LogicalFunctionUnreflectionRegistry::instance().unreflect(name, functionData, context);
-    if (!logicalFunction.has_value())
-    {
-        throw CannotDeserialize("Failed to unreflect logical function of type {}", name);
-    }
-    auto result = std::move(logicalFunction).value().self;
-    identities.at(*id).owner = std::const_pointer_cast<detail::ErasedLogicalFunction>(result);
-    eraseIncomplete.dismiss();
+            auto [name, functionData] = context.unreflect<detail::ReflectedLogicalFunction>(definition.value);
+            auto logicalFunction = LogicalFunctionUnreflectionRegistry::instance().unreflect(name, functionData, context);
+            if (!logicalFunction.has_value())
+            {
+                throw CannotDeserialize("Failed to unreflect logical function of type {}", name);
+            }
+            return std::const_pointer_cast<detail::ErasedLogicalFunction>(std::move(logicalFunction).value().self);
+        });
     return result;
 }
 

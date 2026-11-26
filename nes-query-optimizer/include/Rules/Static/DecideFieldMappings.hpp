@@ -43,6 +43,8 @@ public:
 
     static constexpr std::string_view NAME = "DecideFieldMappings";
 
+    /// Reuse the normal calculation for a newly constructed or schema-changed node.
+    [[nodiscard]] static LogicalOperator withInferredFieldMapping(LogicalOperator op);
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
 };

@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -37,9 +38,11 @@ public:
     /// Constructor that can be configured with various options
     SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
-    /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     [[nodiscard]] std::unique_ptr<SourceHandle>
     lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
+
+    [[nodiscard]] std::unique_ptr<SourceHandle>
+    lower(std::vector<OriginId> originIds, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
 
     [[nodiscard]] bool contains(const std::string& sourceType) const;
 };

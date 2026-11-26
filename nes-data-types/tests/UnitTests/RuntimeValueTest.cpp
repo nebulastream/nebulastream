@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <array>
+#include <bit>
 #include <concepts>
 #include <cstdint>
 #include <limits>
@@ -25,7 +26,11 @@
 #include <DataTypes/RuntimeValue.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp> /// NOLINT(misc-include-cleaner) Public Logger facade; cleaner misattributes setupLogging.
+#include <variant>
 #include <Util/Reflection.hpp>
+#include <rfl/Generic.hpp>
+#include <rfl/json/read.hpp>
+#include <rfl/json/write.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -34,52 +39,50 @@ namespace NES
 {
 namespace
 {
-constexpr std::array TYPES{
-    DataType::Type::BOOLEAN,
-    DataType::Type::CHAR,
-    DataType::Type::UINT8,
-    DataType::Type::UINT16,
-    DataType::Type::UINT32,
-    DataType::Type::UINT64,
-    DataType::Type::INT8,
-    DataType::Type::INT16,
-    DataType::Type::INT32,
-    DataType::Type::INT64,
-    DataType::Type::FLOAT32,
-    DataType::Type::FLOAT64,
-    DataType::Type::VARSIZED};
+constexpr std::array TYPES{DataType::Type::BOOLEAN,
+                           DataType::Type::CHAR,
+                           DataType::Type::UINT8,
+                           DataType::Type::UINT16,
+                           DataType::Type::UINT32,
+                           DataType::Type::UINT64,
+                           DataType::Type::INT8,
+                           DataType::Type::INT16,
+                           DataType::Type::INT32,
+                           DataType::Type::INT64,
+                           DataType::Type::FLOAT32,
+                           DataType::Type::FLOAT64,
+                           DataType::Type::VARSIZED};
 }
 
 TEST(RuntimeValueTest, ExactNativeTypesAndTypedNulls)
 {
     for (const auto type : TYPES)
     {
-        visitRuntimeType(
-            type,
-            [type]<typename T>()
-            {
-                const DataType nullable{type, DataType::NULLABLE::IS_NULLABLE};
-                const auto null = RuntimeValue::null(nullable);
-                EXPECT_TRUE(null.isNull());
-                EXPECT_EQ(null.view().getDataType(), nullable);
-                EXPECT_TRUE(null.view().toOwned().isNull());
-                if constexpr (std::same_as<T, std::string_view>)
-                {
-                    const RuntimeValue value{std::string{"a\0b", 3}};
-                    EXPECT_EQ(value.view().get<T>(), std::string_view("a\0b", 3));
-                    EXPECT_EQ(value.view().bytes().size(), 3);
-                }
-                else
-                {
-                    const auto native = std::numeric_limits<T>::max();
-                    const RuntimeValue value{native};
-                    EXPECT_EQ(value.getDataType().type, type);
-                    EXPECT_FALSE(value.getDataType().nullable);
-                    EXPECT_EQ(value.view().get<T>(), native);
-                    const auto copy = value.view().toOwned();
-                    EXPECT_EQ(copy.view().get<T>(), native);
-                }
-            });
+        visitRuntimeType(type,
+                         [type]<typename T>()
+                         {
+                             const DataType nullable{type, DataType::NULLABLE::IS_NULLABLE};
+                             const auto null = RuntimeValue::null(nullable);
+                             EXPECT_TRUE(null.isNull());
+                             EXPECT_EQ(null.view().getDataType(), nullable);
+                             EXPECT_TRUE(null.view().toOwned().isNull());
+                             if constexpr (std::same_as<T, std::string_view>)
+                             {
+                                 const RuntimeValue value{std::string{"a\0b", 3}};
+                                 EXPECT_EQ(value.view().get<T>(), std::string_view("a\0b", 3));
+                                 EXPECT_EQ(value.view().bytes().size(), 3);
+                             }
+                             else
+                             {
+                                 const auto native = std::numeric_limits<T>::max();
+                                 const RuntimeValue value{native};
+                                 EXPECT_EQ(value.getDataType().type, type);
+                                 EXPECT_FALSE(value.getDataType().nullable);
+                                 EXPECT_EQ(value.view().get<T>(), native);
+                                 const auto copy = value.view().toOwned();
+                                 EXPECT_EQ(copy.view().get<T>(), native);
+                             }
+                         });
     }
 }
 
@@ -98,7 +101,11 @@ namespace
 class RuntimeValueDeathTest : public testing::Test
 {
 public:
-    static void SetUpTestSuite() { Logger::setupLogging("RuntimeValueDeathTest.log", LogLevel::LOG_DEBUG, false); } /// NOLINT(misc-include-cleaner) Public Logger.hpp declares this facade API.
+    static void SetUpTestSuite()
+    {
+        /// NOLINTNEXTLINE(misc-include-cleaner) setupLogging is declared by the directly included public Logger.hpp facade.
+        Logger::setupLogging("RuntimeValueDeathTest.log", LogLevel::LOG_DEBUG, false);
+    } /// NOLINT(misc-include-cleaner) Public Logger.hpp declares this facade API.
 };
 
 TEST_F(RuntimeValueDeathTest, MismatchedPayloadUndefinedAndNonNullableNullViolatePreconditions)
@@ -123,13 +130,12 @@ TEST_F(RuntimeValueDeathTest, ReadingNullPayloadViolatesPrecondition)
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     for (const auto type : TYPES)
     {
-        visitRuntimeType(
-            type,
-            [type]<typename T>()
-            {
-                const auto null = RuntimeValue::null(DataType{type, DataType::NULLABLE::IS_NULLABLE});
-                EXPECT_DEATH(static_cast<void>(null.view().get<T>()), "Precondition violated.*null");
-            });
+        visitRuntimeType(type,
+                         [type]<typename T>()
+                         {
+                             const auto null = RuntimeValue::null(DataType{type, DataType::NULLABLE::IS_NULLABLE});
+                             EXPECT_DEATH(static_cast<void>(null.view().get<T>()), "Precondition violated.*null");
+                         });
     }
 }
 }
@@ -161,16 +167,75 @@ TEST(RuntimeValueTest, BorrowedViewCanMaterializeIndependentStorage)
     EXPECT_EQ(owned.view().get<std::string_view>(), "borrowed");
 }
 
-TEST(RuntimeValueTest, MalformedSerializedValuesAreRejectedBeforeConstruction)
+TEST(RuntimeValueTest, GenericWireRoundTripsExactNativeValuesAndTypedNull)
 {
     const ReflectionContext context;
+    const auto roundTrip = [&context](const RuntimeValue& value) { return context.unreflect<RuntimeValue>(context.reflect(value)); };
+    const RuntimeValue maximum{std::numeric_limits<uint64_t>::max()};
+    const auto restoredMaximum = roundTrip(maximum);
+    EXPECT_EQ(restoredMaximum.view().get<uint64_t>(), std::numeric_limits<uint64_t>::max());
+    const std::string binary{"\0\xff"
+                             "a\0",
+                             4};
+    const RuntimeValue bytes{std::string_view{binary}};
+    const auto restoredBytes = roundTrip(bytes);
+    EXPECT_EQ(restoredBytes.view().get<std::string_view>(), std::string_view{binary});
+    const DataType nullable{DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE};
+    const auto restoredNull = roundTrip(RuntimeValue::null(nullable));
+    EXPECT_TRUE(restoredNull.isNull());
+    EXPECT_EQ(restoredNull.getDataType(), nullable);
+}
+
+TEST(RuntimeValueTest, FloatingPointReflectionPreservesBits)
+{
+    const ReflectionContext context;
+    const std::array<float, 3> floats{std::bit_cast<float>(uint32_t{0x7fc12345}), -0.0F, 1.25F};
+    for (const float value : floats)
+    {
+        const auto encoded = rfl::json::write(*context.reflect(RuntimeValue{value}));
+        const auto parsed = rfl::json::read<rfl::Generic>(encoded);
+        ASSERT_TRUE(parsed);
+        const auto restored = context.unreflect<RuntimeValue>(*parsed);
+        EXPECT_EQ(std::bit_cast<uint32_t>(restored.view().get<float>()), std::bit_cast<uint32_t>(value));
+    }
+    const std::array<double, 3> doubles{std::bit_cast<double>(uint64_t{0x7ff8123456789abc}), -0.0, 1.25};
+    for (const double value : doubles)
+    {
+        const auto encoded = rfl::json::write(*context.reflect(RuntimeValue{value}));
+        const auto parsed = rfl::json::read<rfl::Generic>(encoded);
+        ASSERT_TRUE(parsed);
+        const auto restored = context.unreflect<RuntimeValue>(*parsed);
+        EXPECT_EQ(std::bit_cast<uint64_t>(restored.view().get<double>()), std::bit_cast<uint64_t>(value));
+    }
+}
+
+TEST(RuntimeValueTest, GenericWireFieldsAndMalformedValues)
+{
+    const ReflectionContext context;
+    const auto valid = context.reflect(RuntimeValue{int64_t{42}});
+    const auto* fields = std::get_if<rfl::Generic::Object>(&valid->variant());
+    ASSERT_NE(fields, nullptr);
+    EXPECT_TRUE(fields->get("type").has_value());
+    EXPECT_TRUE(fields->get("payload").has_value());
     const DataType integer{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto undefined = context.reflect(std::pair{DataType{}, context.reflect(int64_t{42})});
-    const auto null = context.reflect(std::pair{integer, Reflected{}});
-    const auto wrongPayload = context.reflect(std::pair{integer, context.reflect(std::string{"not an integer"})});
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(undefined)), ErrorCode::CannotDeserialize);
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(null)), ErrorCode::CannotDeserialize);
-    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(wrongPayload)), ErrorCode::CannotDeserialize);
+    const auto makeWire = [&context](DataType type, int64_t index, Reflected payload)
+    {
+        rfl::Generic::Object variant;
+        variant["index"] = rfl::Generic{index};
+        variant["value"] = *payload;
+        rfl::Generic::Object wire;
+        wire["type"] = *context.reflect(type);
+        wire["payload"] = rfl::Generic{std::move(variant)};
+        return Reflected{rfl::Generic{std::move(wire)}};
+    };
+    const auto undefined = makeWire(DataType{}, 10, context.reflect(int64_t{42}));
+    const auto nonnullableNull = makeWire(integer, 0, Reflected{});
+    const auto wrongNative = makeWire(integer, 1, context.reflect(true));
+    const auto invalidIndex = makeWire(integer, 99, context.reflect(int64_t{42}));
+    for (const auto& malformed : {undefined, nonnullableNull, wrongNative, invalidIndex})
+    {
+        ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(context.unreflect<RuntimeValue>(malformed)), ErrorCode::CannotDeserialize);
+    }
 }
 
 TEST(RuntimeValueTest, ParsesConstantsOnceWithoutNumericPrecisionLoss)

@@ -24,33 +24,32 @@
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Serialization/ReflectedOperator.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
-struct AsyncOperatorLowering;
+class AsyncLoweringContext;
 struct OperatorFunctionRegistryEntry;
 
 class HttpCallLogicalOperator final : public Reorderer, public ManagedByOperator, public AsynchronousOperator
 {
 public:
-    HttpCallLogicalOperator(
-        WeakLogicalOperator self,
-        LogicalOperator child,
-        LogicalFunction body,
-        LogicalFunction url,
-        std::optional<LogicalFunction> timeoutMillis,
-        std::optional<LogicalFunction> retries);
+    HttpCallLogicalOperator(WeakLogicalOperator self,
+                            LogicalOperator child,
+                            LogicalFunction body,
+                            LogicalFunction url,
+                            std::optional<LogicalFunction> timeoutMillis,
+                            std::optional<LogicalFunction> retries);
     [[nodiscard]] static TypedLogicalOperator<HttpCallLogicalOperator>
     create(LogicalOperator child, LogicalFunction body, LogicalFunction url);
-    [[nodiscard]] static TypedLogicalOperator<HttpCallLogicalOperator> create(
-        LogicalOperator child,
-        LogicalFunction body,
-        LogicalFunction url,
-        std::optional<LogicalFunction> timeoutMillis,
-        std::optional<LogicalFunction> retries);
-    [[nodiscard]] static AsyncOperatorLowering lowerToAsync(LogicalOperator op);
+    [[nodiscard]] static TypedLogicalOperator<HttpCallLogicalOperator> create(LogicalOperator child,
+                                                                              LogicalFunction body,
+                                                                              LogicalFunction url,
+                                                                              std::optional<LogicalFunction> timeoutMillis,
+                                                                              std::optional<LogicalFunction> retries);
+    [[nodiscard]] static AsyncOperator lowerToAsync(const LogicalOperator& op, AsyncLoweringContext& context);
     [[nodiscard]] static OperatorFunctionRegistryEntry functionSyntax();
 
     [[nodiscard]] std::string_view getName() const noexcept { return "HttpCall"; }

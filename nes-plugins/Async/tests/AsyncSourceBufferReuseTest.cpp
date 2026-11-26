@@ -49,6 +49,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
@@ -99,12 +100,11 @@ struct RowOperatorState
 class PreparedRowCall final : public PreparedAsyncCall
 {
 public:
-    PreparedRowCall(
-        Evaluate evaluate,
-        bool suspend,
-        int64_t id,
-        std::shared_ptr<RowOperatorState> state,
-        std::shared_ptr<RowInstrumentation> instrumentation)
+    PreparedRowCall(Evaluate evaluate,
+                    bool suspend,
+                    int64_t id,
+                    std::shared_ptr<RowOperatorState> state,
+                    std::shared_ptr<RowInstrumentation> instrumentation)
         : evaluate(std::move(evaluate)), suspend(suspend), id(id), state(std::move(state)), instrumentation(std::move(instrumentation))
     {
     }
@@ -123,9 +123,8 @@ public:
             }
             if (error)
             {
-                co_return std::unexpected(
-                    AsyncError{
-                        .exception = IOError("Buffer-reuse test timer failed: {}", error.message()), .kind = AsyncError::Type::Permanent});
+                co_return std::unexpected(AsyncError{.exception = IOError("Buffer-reuse test timer failed: {}", error.message()),
+                                                     .kind = AsyncError::Type::Permanent});
             }
         }
         ++state->attempts;
@@ -149,27 +148,15 @@ struct RowOperatorConfig
     Evaluate evaluate;
     bool suspend = false;
     std::shared_ptr<RowInstrumentation> instrumentation = std::make_shared<RowInstrumentation>();
-    AsyncInputAccessors inputs{};
+    std::vector<AsyncInputAccessor> accessors;
 
     [[nodiscard]] std::string_view getType() const { return type; }
 
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return {{Identifier::parse("OUT0"), resultType}}; }
-
-    [[nodiscard]] RowOperatorConfig withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-    [[nodiscard]] RowOperatorConfig withInputAccessors(AsyncInputAccessors value) const
-    {
-        auto result = *this;
-        result.inputs = std::move(value);
-        return result;
-    }
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const { return {{Identifier::parse("OUT0"), resultType}}; }
 
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
     {
-        const auto arguments = inputs.read(row);
-        PRECONDITION(arguments.size() == 1, "Buffer-reuse operator expects one row ID");
+        const auto arguments = accessors.front()(row);
         auto state = context.getSharedSlotState<RowOperatorState>();
         ++state->preparations;
         ++instrumentation->preparations;
@@ -180,7 +167,7 @@ struct RowOperatorConfig
         }
         /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) argument count is checked at this helper's entry
         return std::unique_ptr<PreparedAsyncCall>{
-            std::make_unique<PreparedRowCall>(evaluate, suspend, arguments[0].get<int64_t>(), std::move(state), instrumentation)};
+            std::make_unique<PreparedRowCall>(evaluate, suspend, arguments.view().get<int64_t>(), std::move(state), instrumentation)};
         /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     }
 };
@@ -204,10 +191,9 @@ const DataType BYTES{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}
 
 RowSchema schema(const DataType result, bool text)
 {
-    std::vector<UnqualifiedUnboundField> fields{
-        UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
-        UnqualifiedUnboundField{Identifier::parse("KEEP"), INT64},
-        UnqualifiedUnboundField{Identifier::parse("RESULT"), result}};
+    std::vector<UnqualifiedUnboundField> fields{UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
+                                                UnqualifiedUnboundField{Identifier::parse("KEEP"), INT64},
+                                                UnqualifiedUnboundField{Identifier::parse("RESULT"), result}};
     if (text)
     {
         fields.emplace_back(Identifier::parse("TEXT"), BYTES);
@@ -302,34 +288,32 @@ public:
         start(std::move(input), std::move(output), resultType, std::move(evaluate), suspend, {});
     }
 
-    void start(
-        RowSchema input,
-        RowSchema output,
-        DataType resultType,
-        Evaluate evaluate,
-        bool suspend,
-        std::shared_ptr<AbstractBufferProvider> outputProvider)
+    void start(RowSchema input,
+               RowSchema output,
+               DataType resultType,
+               Evaluate evaluate,
+               bool suspend,
+               std::shared_ptr<AbstractBufferProvider> outputProvider)
     {
         inputSchema = std::move(input);
         outputSchema = std::move(output);
         const auto channel = std::make_shared<HandoffChannel>(4);
         const auto functionType = "BufferReuse_" + UUIDToString(generateUUID());
         instrumentation = std::make_shared<RowInstrumentation>();
-        AsyncOperator asyncOperator = RowOperatorConfig{
-            .type = functionType,
-            .resultType = resultType,
-            .evaluate = std::move(evaluate),
-            .suspend = suspend,
-            .instrumentation = instrumentation};
         AsyncCallGraphBuilder builder{inputSchema};
-        const auto call = builder.call(std::move(asyncOperator), {builder.input(QualifiedIdentifier::parse("ID"))});
+        auto native = RowOperatorConfig{.type = functionType,
+                                        .resultType = resultType,
+                                        .evaluate = std::move(evaluate),
+                                        .suspend = suspend,
+                                        .instrumentation = instrumentation,
+                                        .accessors = {AsyncInputAccessor{builder.input(QualifiedIdentifier::parse("ID"))}}};
+        const auto call = builder.call(AsyncOperator{std::move(native)}, {});
         builder.exportOutput(call->output(0), QualifiedIdentifier::parse("RESULT"));
-        const AsyncSourceConfig config{.channel = channel, .calls = builder.build(), .maxConcurrency = 8, .maxRetries = 0};
+        const AsyncSourceConfig config{.channel = channel, .calls = builder.build(), .maxConcurrency = 8};
         const auto descriptor = catalog.getAnonymousSource(
-            PhysicalSourceBuilder{
-                GeneralSourceConfig{.host = Host{"localhost:8080"}, .maxInflightBuffers = std::nullopt},
-                PluginSourceConfiguration{Identifier::parse("ASYNC"), ExplicitAny{std::any{config}}},
-                InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
+            PhysicalSourceBuilder{GeneralSourceConfig{.host = Host{"localhost:8080"}, .maxInflightBuffers = std::nullopt},
+                                  PluginSourceConfiguration{Identifier::parse("ASYNC"), ExplicitAny{std::any{config}}},
+                                  InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
             outputSchema);
         ASSERT_TRUE(descriptor.has_value());
         sink = std::make_unique<HandoffChannel::Sender>(channel->takeSender());
@@ -376,8 +360,8 @@ public:
         auto buffer = provider->getBufferBlocking();
         for (size_t row = 0; row < rows; ++row)
         {
-            std::vector<std::pair<std::string, RuntimeValue>> values{
-                {"ID", RuntimeValue{static_cast<int64_t>(row)}}, {"KEEP", RuntimeValue{int64_t{12345}}}};
+            std::vector<std::pair<std::string, RuntimeValue>> values{{"ID", RuntimeValue{static_cast<int64_t>(row)}},
+                                                                     {"KEEP", RuntimeValue{int64_t{12345}}}};
             if (text)
             {
                 values.emplace_back("TEXT", RuntimeValue{std::string{"original\0bytes", 14}});
@@ -474,23 +458,20 @@ TEST_F(AsyncSourceBufferReuseTest, RejectsDifferentFieldOrder)
 {
     SKIP_IF_TSAN();
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const RowSchema reordered{
-        UnqualifiedUnboundField{Identifier::parse("RESULT"), INT64},
-        UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
-        UnqualifiedUnboundField{Identifier::parse("KEEP"), INT64}};
-    EXPECT_DEATH(
-        start(schema(INT64), reordered, INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 10); }),
-        "Precondition violated.*identical ordered");
+    const RowSchema reordered{UnqualifiedUnboundField{Identifier::parse("RESULT"), INT64},
+                              UnqualifiedUnboundField{Identifier::parse("ID"), INT64},
+                              UnqualifiedUnboundField{Identifier::parse("KEEP"), INT64}};
+    EXPECT_DEATH(start(schema(INT64), reordered, INT64, [](int64_t id) { return SharedRuntimeValues::make(id + 10); }),
+                 "Precondition violated.*identical ordered");
 }
 #endif
 
 TEST_F(AsyncSourceBufferReuseTest, ReusesParentAndPreservesExistingVariablePayloadsForLargeBinaryResults)
 {
-    start(
-        schema(BYTES, true),
-        schema(BYTES, true),
-        BYTES,
-        [](int64_t id) { return SharedRuntimeValues::make(id == 0 ? std::string{} : std::string(8192, static_cast<char>(id))); });
+    start(schema(BYTES, true),
+          schema(BYTES, true),
+          BYTES,
+          [](int64_t id) { return SharedRuntimeValues::make(id == 0 ? std::string{} : std::string(8192, static_cast<char>(id))); });
     auto buffer = input(8, true);
     const auto* address = buffer.getAvailableMemoryArea().data();
     const auto originalChildren = buffer.getNumberOfChildBuffers();
@@ -550,18 +531,17 @@ TEST_F(AsyncSourceBufferReuseTest, CopyPathDoesNotAppendToTheOriginalParentsChil
 TEST_F(AsyncSourceBufferReuseTest, NullableVariableResultsSupportNullEmptyAndBinaryValues)
 {
     const DataType nullable{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE};
-    start(
-        schema(nullable),
-        schema(nullable),
-        nullable,
-        [nullable](int64_t id)
-        {
-            if (id % 3 == 0)
-            {
-                return SharedRuntimeValues::make(RuntimeValue::null(nullable));
-            }
-            return SharedRuntimeValues::make(RuntimeValue{nullable, id % 3 == 1 ? std::string{} : std::string{"\0\xff", 2}});
-        });
+    start(schema(nullable),
+          schema(nullable),
+          nullable,
+          [nullable](int64_t id)
+          {
+              if (id % 3 == 0)
+              {
+                  return SharedRuntimeValues::make(RuntimeValue::null(nullable));
+              }
+              return SharedRuntimeValues::make(RuntimeValue{nullable, id % 3 == 1 ? std::string{} : std::string{"\0\xff", 2}});
+          });
     auto buffer = provider->getBufferBlocking();
     for (size_t row = 0; row < 9; ++row)
     {
@@ -586,15 +566,14 @@ TEST_F(AsyncSourceBufferReuseTest, NullableVariableResultsSupportNullEmptyAndBin
 
 TEST_F(AsyncSourceBufferReuseTest, EmptyBufferIsReusedAndEndOfStreamNeedsNoOutputBuffer)
 {
-    start(
-        schema(INT64),
-        schema(INT64),
-        INT64,
-        [](int64_t) -> SharedRuntimeValues
-        {
-            ADD_FAILURE() << "An empty buffer must not invoke the function";
-            return SharedRuntimeValues::make(int64_t{0});
-        });
+    start(schema(INT64),
+          schema(INT64),
+          INT64,
+          [](int64_t) -> SharedRuntimeValues
+          {
+              ADD_FAILURE() << "An empty buffer must not invoke the function";
+              return SharedRuntimeValues::make(int64_t{0});
+          });
     auto buffer = input(0);
     const auto* address = buffer.getAvailableMemoryArea().data();
     push(std::move(buffer));

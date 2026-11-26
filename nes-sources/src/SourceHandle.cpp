@@ -19,6 +19,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
@@ -34,10 +35,25 @@ SourceHandle::SourceHandle(
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
     std::unique_ptr<Source> sourceImplementation)
+    : SourceHandle(
+          std::move(backpressureListener),
+          std::vector<OriginId>{originId},
+          std::move(configuration),
+          std::move(bufferPool),
+          std::move(sourceImplementation))
+{
+}
+
+SourceHandle::SourceHandle(
+    BackpressureListener backpressureListener,
+    std::vector<OriginId> originIds,
+    SourceRuntimeConfiguration configuration,
+    std::shared_ptr<AbstractBufferProvider> bufferPool,
+    std::unique_ptr<Source> sourceImplementation)
     : configuration(std::move(configuration))
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(backpressureListener), std::move(originId), std::move(bufferPool), std::move(sourceImplementation));
+        std::move(backpressureListener), std::move(originIds), std::move(bufferPool), std::move(sourceImplementation));
 }
 
 SourceHandle::~SourceHandle() = default;

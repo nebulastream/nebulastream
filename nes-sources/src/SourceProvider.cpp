@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -36,6 +37,12 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 std::unique_ptr<SourceHandle>
 SourceProvider::lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
 {
+    return lower(std::vector<OriginId>{originId}, std::move(backpressureListener), sourceDescriptor);
+}
+
+std::unique_ptr<SourceHandle> SourceProvider::lower(
+    std::vector<OriginId> originIds, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
+{
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     if (const auto sourceFactory = SourceRegistry::instance().find(sourceDescriptor.getSourceType().asCanonicalString()))
     {
@@ -46,7 +53,7 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         const SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
         return std::make_unique<SourceHandle>(
-            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source));
+            std::move(backpressureListener), std::move(originIds), std::move(runtimeConfig), bufferPool, std::move(source));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }

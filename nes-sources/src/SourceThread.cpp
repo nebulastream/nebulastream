@@ -25,8 +25,10 @@
 #include <stop_token>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -48,12 +50,33 @@ SourceThread::SourceThread(
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<Source> sourceImplementation)
-    : originId(originId)
+    : SourceThread(
+          std::move(backpressureListener),
+          std::vector<OriginId>{originId},
+          std::move(poolProvider),
+          std::move(sourceImplementation))
+{
+}
+
+SourceThread::SourceThread(
+    BackpressureListener backpressureListener,
+    std::vector<OriginId> originIds,
+    std::shared_ptr<AbstractBufferProvider> poolProvider,
+    std::unique_ptr<Source> sourceImplementation)
+    : originId(originIds.empty() ? INVALID_ORIGIN_ID : originIds.front())
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
 {
+    PRECONDITION(!originIds.empty(), "SourceThread requires at least one origin id");
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
+    for (const auto id : originIds)
+    {
+        if (std::ranges::find(this->originIds, id) == this->originIds.end())
+        {
+            this->originIds.push_back(id);
+        }
+    }
 }
 
 /// Returns nullopt iff stop was requested.
@@ -176,18 +199,27 @@ void dataSourceThread(
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
+    std::vector<OriginId> originIds,
+    ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
-    size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+    std::unordered_map<OriginId, size_t> nextSequenceNumbers;
+    nextSequenceNumbers.reserve(originIds.size());
+    for (const auto id : originIds)
+    {
+        nextSequenceNumbers.emplace(id, SequenceNumber::INITIAL);
+    }
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {
-            addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
+            addBufferMetaData(originId, SequenceNumber(nextSequenceNumbers[originId]++), buffer);
         }
         else
         {
-            sequenceNumberGenerator = std::max(sequenceNumberGenerator, static_cast<size_t>(buffer.getSequenceNumber().getRawValue() + 1));
+            const auto trackedOriginId = nextSequenceNumbers.contains(buffer.getOriginId()) ? buffer.getOriginId() : originId;
+            auto& nextSeq = nextSequenceNumbers.at(trackedOriginId);
+            nextSeq = std::max(nextSeq, static_cast<size_t>(buffer.getSequenceNumber().getRawValue() + 1));
         }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
@@ -201,17 +233,31 @@ void dataSourceThread(
             {
                 /// A stop request must be able to interrupt every wait of the source thread, as the owner joins it after requesting stop.
                 /// A stopped query does not need the final watermark or the EoS.
-                if (auto watermarkBuffer = getBufferUnlessStopped(*bufferProvider, stopToken))
+                /// Sources that forward metadata from multiple upstream origins (e.g. AsyncSource, NetworkSource) must advance
+                /// every upstream origin's watermark to INFINITE_VALUE using that origin's own monotonic sequence number.
+                bool allWatermarksEmitted = true;
+                for (const auto targetOriginId : originIds)
                 {
+                    auto watermarkBuffer = getBufferUnlessStopped(*bufferProvider, stopToken);
+                    if (!watermarkBuffer)
+                    {
+                        allWatermarksEmitted = false;
+                        break;
+                    }
                     watermarkBuffer->setNumberOfTuples(0);
-                    addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator), *watermarkBuffer);
+                    addBufferMetaData(targetOriginId, SequenceNumber(nextSequenceNumbers.at(targetOriginId)), *watermarkBuffer);
                     watermarkBuffer->setWatermark(Timestamp{Timestamp::INFINITE_VALUE});
                     /// A watermark-only buffer is regular data and must pass through execute before EoS.
                     if (emit(originId, SourceReturnType::Data{std::move(*watermarkBuffer)}, stopToken)
-                        == SourceReturnType::EmitResult::SUCCESS)
+                        != SourceReturnType::EmitResult::SUCCESS)
                     {
-                        emit(originId, SourceReturnType::EoS{}, stopToken);
+                        allWatermarksEmitted = false;
+                        break;
                     }
+                }
+                if (allWatermarksEmitted)
+                {
+                    emit(originId, SourceReturnType::EoS{}, stopToken);
                 }
             }
             result.set_value_at_thread_exit(termination);
@@ -234,6 +280,10 @@ void dataSourceThread(
 bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 {
     INVARIANT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
+    for (const auto id : this->originIds)
+    {
+        INVARIANT(id != INVALID_ORIGIN_ID, "The origin ids of the source are not set properly");
+    }
     if (started.exchange(true))
     {
         return false;
@@ -251,6 +301,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
+        originIds,
         localBufferManager);
     thread = std::move(sourceThread);
     return true;

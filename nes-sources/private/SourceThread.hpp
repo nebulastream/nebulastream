@@ -22,6 +22,7 @@
 #include <ostream>
 #include <stop_token>
 #include <thread>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -64,6 +65,12 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
 
+    explicit SourceThread(
+        BackpressureListener backpressureListener,
+        std::vector<OriginId> originIds,
+        std::shared_ptr<AbstractBufferProvider> bufferManager,
+        std::unique_ptr<Source> sourceImplementation);
+
     SourceThread() = delete;
     SourceThread(const SourceThread& other) = delete;
     SourceThread(SourceThread&& other) noexcept = delete;
@@ -90,6 +97,7 @@ public:
 
 protected:
     OriginId originId;
+    std::vector<OriginId> originIds;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;

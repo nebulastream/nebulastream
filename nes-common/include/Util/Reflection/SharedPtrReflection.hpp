@@ -22,18 +22,25 @@
 #include <type_traits>
 #include <typeindex>
 #include <utility>
-#include <variant>
 
 #include <Util/Reflection/ReflectionCore.hpp>
 #include <Util/Reflection/SharedPointerDeserializationState.hpp>
 #include <Util/Reflection/SharedPointerSerializationState.hpp>
 #include <folly/ScopeGuard.h>
-#include <rfl/Generic.hpp>
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
+namespace detail
+{
+struct SharedPointerDefinition
+{
+    int64_t id;
+    Reflected value;
+};
+}
+
 /// Every occurrence carries its full definition, not a back-reference, so readers may
 /// consume plans in any order. IDs are meaningful only within the injected state batch.
 /// Definitions must remain identical within that scope; cycles and polymorphic type
@@ -67,10 +74,9 @@ struct Reflector<std::shared_ptr<T>>
                 throw CannotSerialize("Shared pointer identity space exhausted");
             }
             found = identities.serialized
-                        .emplace(
-                            value.get(),
-                            SharedPointerSerializationState::Entry{
-                                value, std::type_index{typeid(Pointee)}, identities.nextId++, std::nullopt, false})
+                        .emplace(value.get(),
+                                 SharedPointerSerializationState::Entry{
+                                     value, std::type_index{typeid(Pointee)}, identities.nextId++, std::nullopt, false})
                         .first;
         }
         auto& entry = found->second;
@@ -102,14 +108,7 @@ struct Reflector<std::shared_ptr<T>>
             throw CannotSerialize("Conflicting definition for shared pointer id {}", current.id);
         }
         current.serializedValue = text;
-        rfl::Generic::Object object;
-        /// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) key assignment inserts object properties
-        object["id"] = rfl::Generic{current.id};
-        object["value"] = *definition;
-        /// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-        current.active = false;
-        resetActive.dismiss();
-        return Reflected{rfl::Generic{std::move(object)}};
+        return ctx.reflect(detail::SharedPointerDefinition{.id = current.id, .value = definition});
     }
 
 private:
@@ -134,50 +133,11 @@ struct Unreflector<std::shared_ptr<T>>
         {
             return nullptr;
         }
-        const auto* object = std::get_if<rfl::Generic::Object>(&data->variant());
-        if (object == nullptr)
-        {
-            throw CannotDeserialize("Expected shared pointer object with id and value");
-        }
-        const auto idField = object->get("id");
-        const auto definition = object->get("value");
-        if (!idField.has_value() || !definition.has_value())
-        {
-            throw CannotDeserialize("Shared pointer definition requires id and value");
-        }
-        const auto* id = std::get_if<int64_t>(&idField.value().variant());
-        if ((id == nullptr) || *id <= 0)
-        {
-            throw CannotDeserialize("Shared pointer id must be a positive integer");
-        }
+        const auto definition = ctx.unreflect<detail::SharedPointerDefinition>(data);
         using Pointee = std::remove_const_t<T>;
-        const auto type = std::type_index{typeid(Pointee)};
-        const auto text = rfl::json::write(definition.value());
-        auto& identities = state->deserialized;
-        if (const auto found = identities.find(*id); found != identities.end())
-        {
-            const auto& entry = found->second;
-            if (entry.type != type)
-            {
-                throw CannotDeserialize("Shared pointer id {} reused with incompatible pointee type", *id);
-            }
-            if (entry.serializedValue != text)
-            {
-                throw CannotDeserialize("Conflicting definition for shared pointer id {}", *id);
-            }
-            if (!entry.owner)
-            {
-                throw CannotDeserialize("Cycles in shared pointer reflection are not supported");
-            }
-            return std::static_pointer_cast<T>(entry.owner);
-        }
-
-        identities.emplace(*id, SharedPointerDeserializationState::Entry{.owner = nullptr, .type = type, .serializedValue = text});
-        auto eraseIncomplete = folly::makeGuard([&identities, identity = *id]() noexcept { identities.erase(identity); });
-        auto result = std::make_shared<Pointee>(ctx.unreflect<Pointee>(Reflected{definition.value()}));
-        identities.at(*id).owner = result;
-        eraseIncomplete.dismiss();
-        return result;
+        const auto text = rfl::json::write(*definition.value);
+        return state->template getOrCreate<Pointee>(
+            definition.id, text, [&ctx, &definition] { return std::make_shared<Pointee>(ctx.unreflect<Pointee>(definition.value)); });
     }
 
 private:

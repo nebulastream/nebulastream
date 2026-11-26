@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Rules/Static/AsyncOperatorDecompositionRule.hpp>
 
 #include <algorithm>
@@ -19,6 +18,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -27,14 +27,15 @@
 #include <vector>
 #include <Async/HandoffChannel.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Operators/AsyncLoweringContext.hpp>
 #include <Operators/AsynchronousOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -43,18 +44,23 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/PlanVisitor.hpp>
+#include <Rules/Static/DecideFieldMappings.hpp>
+#include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/HandoffSinkConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
+#include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/Any.hpp>
 #include <AsyncOperatorLoweringRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -62,111 +68,344 @@
 
 namespace NES
 {
-LogicalOperator AsyncOperatorDecompositionRule::splitInvocation(const LogicalOperator& asyncOp, std::vector<LogicalOperator>& roots) const
+namespace
 {
-    const auto lowering = lowerAsyncOperator(asyncOp);
-    const auto child = asyncOp.getChildren().at(0);
-    const auto node = asyncOp.getTraitSet().get<PlacementTrait>()->onNode;
-    if (asyncOp.getTraitSet().get<MemoryLayoutTypeTrait>()->memoryLayout != MemoryLayoutType::ROW_LAYOUT)
+using FieldName = QualifiedIdentifierBase<1>;
+using Fields = std::unordered_map<FieldName, AsyncInputAccessor>;
+/// A surviving entry-field name, or a value produced inside the region.
+using Origin = std::optional<FieldName>;
+using Origins = std::unordered_map<FieldName, Origin>;
+
+bool isAliasProjection(const LogicalOperator& op)
+{
+    const auto projection = op.tryGetAs<ProjectionLogicalOperator>();
+    return projection
+        && std::ranges::all_of(projection.value()->getProjections(),
+                               [](const auto& entry) { return entry.second.template tryGetAs<FieldAccessLogicalFunction>().has_value(); });
+}
+
+/// The map is scoped to the projection's child schema, never to globally reused result names.
+template <typename Value>
+std::unordered_map<FieldName, Value>
+projectFields(const ProjectionLogicalOperator& projection, const std::unordered_map<FieldName, Value>& input)
+{
+    auto result = projection.hasAsterisk() ? input : std::unordered_map<FieldName, Value>{};
+    for (const auto& [output, expression] : projection.getProjections())
+    {
+        const auto& source = expression.template getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName();
+        result.insert_or_assign(output.getFullyQualifiedName(), input.at(source));
+    }
+    return result;
+}
+
+Schema<UnqualifiedUnboundField, Ordered> orderedFields(const LogicalOperator& op)
+{
+    return op.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
+}
+
+Field inputField(const LogicalOperator& op, const FieldName& name)
+{
+    const auto field = op.getOutputSchema().getFieldByName(name);
+    if (!field)
+    {
+        throw CannotInferSchema("Async region input field {} is absent", name);
+    }
+    return *field;
+}
+
+TraitSet schemaTraits(const LogicalOperator& op, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+{
+    auto traits
+        = TraitSet{op.getTraitSet()
+                   | std::views::filter(
+                       [](const Trait& trait)
+                       { return trait.getTypeInfo() != typeid(FieldMappingTrait) && trait.getTypeInfo() != typeid(FieldOrderingTrait); })};
+    traits.insert(FieldOrderingTrait{schema});
+    return traits;
+}
+
+LogicalOperator
+withSchemaTraits(LogicalOperator op, const LogicalOperator& original, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+{
+    return DecideFieldMappings::withInferredFieldMapping(op.withTraitSet(schemaTraits(original, schema)));
+}
+
+std::vector<LogicalOperator> collectRegion(const LogicalOperator& root)
+{
+    if (!root.tryGetAs<AsynchronousOperator>() && !isAliasProjection(root))
+    {
+        return {};
+    }
+    const auto placement = root.getTraitSet().tryGet<PlacementTrait>();
+    const auto layout = root.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    if (!placement || !layout)
+    {
+        return {};
+    }
+    std::vector<LogicalOperator> region;
+    auto op = root;
+    while (op.getChildren().size() == 1 && (op.tryGetAs<AsynchronousOperator>() || isAliasProjection(op)))
+    {
+        const auto nextPlacement = op.getTraitSet().tryGet<PlacementTrait>();
+        const auto nextLayout = op.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+        if (!nextPlacement || !nextLayout || nextPlacement.value()->onNode != placement.value()->onNode
+            || nextLayout.value()->memoryLayout != layout.value()->memoryLayout)
+        {
+            break;
+        }
+        region.push_back(op);
+        op = op.getChildren().front();
+    }
+    /// Trailing projections below the lowest async operator belong to the upstream synchronous pipeline
+    /// (e.g., source column pruning) and must not be absorbed into the handoff schema.
+    while (!region.empty() && !region.back().tryGetAs<AsynchronousOperator>())
+    {
+        region.pop_back();
+    }
+    return region;
+}
+
+LogicalFunction placeholder(const DataType& type)
+{
+    std::string literal = "0";
+    if (type.isType(DataType::Type::VARSIZED))
+    {
+        literal.clear();
+    }
+    else if (type.isType(DataType::Type::BOOLEAN))
+    {
+        literal = "false";
+    }
+    else if (type.isType(DataType::Type::CHAR))
+    {
+        literal.assign(1, '\0');
+    }
+    return ConstantValueLogicalFunction{type, std::move(literal)};
+}
+}
+
+LogicalOperator AsyncOperatorDecompositionRule::splitRegion(const std::vector<LogicalOperator>& region,
+                                                            LogicalOperator input,
+                                                            std::vector<LogicalOperator>& roots) const
+{
+    const auto& top = region.front();
+    const auto node = top.getTraitSet().get<PlacementTrait>()->onNode;
+    if (top.getTraitSet().get<MemoryLayoutTypeTrait>()->memoryLayout != MemoryLayoutType::ROW_LAYOUT)
     {
         throw NotImplemented("Async operators currently require row layout");
     }
+    const auto inputOrder = orderedFields(input);
+    const auto outputOrder = orderedFields(top);
+
+    /// First determine escaping field provenance without constructing any native implementation.
+    /// This lets input slots be renamed before a result reuses their logical names or changes their types.
+    Origins origins;
+    for (const auto& field : input.getOutputSchema())
+    {
+        origins.emplace(field.getFullyQualifiedName(), field.getFullyQualifiedName());
+    }
+    for (const auto& op : region | std::views::reverse)
+    {
+        if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
+        {
+            origins = projectFields(*projection.value(), origins);
+        }
+        else
+        {
+            const auto childSchema = op.getChildren().front().getOutputSchema();
+            for (const auto& field : op.getOutputSchema())
+            {
+                if (!childSchema.contains(field.getFullyQualifiedName()))
+                {
+                    origins.emplace(field.getFullyQualifiedName(), std::nullopt);
+                }
+            }
+        }
+    }
+
+    std::unordered_set<FieldName> reserved;
+    for (const auto& field : inputOrder)
+    {
+        reserved.insert(field.getFullyQualifiedName());
+    }
+    for (const auto& field : outputOrder)
+    {
+        reserved.insert(field.getFullyQualifiedName());
+    }
+    std::unordered_map<FieldName, FieldName> physicalInputs;
+    std::vector<ProjectionLogicalOperator::UnboundProjection> snapshots;
+    std::vector<UnqualifiedUnboundField> snapshotFields;
+    size_t nextInput = 0;
+    bool renamed = false;
+    for (const auto& field : inputOrder)
+    {
+        const auto& name = field.getFullyQualifiedName();
+        auto physical = name;
+        if (const auto found = origins.find(name); found != origins.end())
+        {
+            const auto& forwarded = found->second;
+            if (!forwarded || *forwarded != name)
+            {
+                do
+                {
+                    physical = QualifiedIdentifier::create(Identifier::parse("__async_input_" + std::to_string(nextInput++)));
+                } while (!reserved.insert(physical).second);
+                renamed = true;
+            }
+        }
+        physicalInputs.emplace(name, physical);
+        snapshots.emplace_back(physical, FieldAccessLogicalFunction{inputField(input, name)});
+        snapshotFields.emplace_back(physical, field.getDataType());
+    }
+    const auto inputMapping = input.getTraitSet().get<FieldMappingTrait>();
+    const bool hasPhysicalAliases
+        = std::ranges::any_of(input.getOutputSchema(),
+                              [&](const Field& field)
+                              {
+                                  const auto physical = inputMapping->getMapping(field.unbound());
+                                  return !physical || *physical != field.getFullyQualifiedName();
+                              });
+    if (renamed || hasPhysicalAliases)
+    {
+        input = withSchemaTraits(ProjectionLogicalOperator::create(input, std::move(snapshots), ProjectionLogicalOperator::Asterisk{false}),
+                                 top,
+                                 Schema<UnqualifiedUnboundField, Ordered>{snapshotFields});
+    }
+
+    /// The paired endpoints have exactly the same physical schema. Internal producer values have no tuple slots.
+    std::vector<UnqualifiedUnboundField> physicalFields{outputOrder.begin(), outputOrder.end()};
+    std::unordered_set<FieldName> physicalNames;
+    for (const auto& field : physicalFields)
+    {
+        physicalNames.insert(field.getFullyQualifiedName());
+    }
+    for (const auto& field : snapshotFields)
+    {
+        if (physicalNames.insert(field.getFullyQualifiedName()).second)
+        {
+            physicalFields.push_back(field);
+        }
+    }
+    const Schema<UnqualifiedUnboundField, Ordered> physicalSchema{physicalFields};
+    AsyncCallGraphBuilder builder{physicalSchema};
+    Fields fields;
+    for (const auto& [logical, physical] : physicalInputs)
+    {
+        fields.emplace(logical, AsyncInputAccessor{builder.input(physical)});
+    }
+    for (const auto& op : region | std::views::reverse)
+    {
+        if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
+        {
+            fields = projectFields(*projection.value(), fields);
+            continue;
+        }
+        AsyncLoweringContext context{fields};
+        auto implementation = lowerAsyncOperator(op, context);
+        const auto declared = implementation.getWrittenFields();
+        const auto producer = builder.call(std::move(implementation), context.getDependencies());
+        /// An operator invocation is an effect root even when no result leaves this region.
+        builder.require(producer);
+        const auto childSchema = op.getChildren().front().getOutputSchema();
+        /// Written fields are not the full row schema. For now every write must append a new
+        /// field; supporting replacement later also requires tracking overwritten field provenance.
+        if (op.getOutputSchema().size() != childSchema.size() + declared.size())
+        {
+            throw CannotInferSchema("Async operators currently must append their written fields to the input schema");
+        }
+        for (const auto& inputField : childSchema)
+        {
+            const auto forwarded = op.getOutputSchema().getFieldByName(inputField.getFullyQualifiedName());
+            if (!forwarded || forwarded->getDataType() != inputField.getDataType())
+            {
+                throw CannotInferSchema("Async operators currently must preserve all input fields unchanged");
+            }
+        }
+        size_t index = 0;
+        for (const auto& result : declared)
+        {
+            if (childSchema.contains(result.getFullyQualifiedName()))
+            {
+                throw CannotInferSchema("Async operators currently cannot overwrite input field {}", result.getFullyQualifiedName());
+            }
+            const auto logical = op.getOutputSchema().getFieldByName(result.getFullyQualifiedName());
+            if (!logical || logical->getDataType() != result.getDataType())
+            {
+                throw CannotInferSchema("Async lowering must preserve its declared result names and types");
+            }
+            fields.emplace(result.getFullyQualifiedName(), AsyncInputAccessor{producer->output(index++)});
+        }
+    }
+    std::vector<ProjectionLogicalOperator::UnboundProjection> padding;
+    for (const auto& field : physicalSchema)
+    {
+        const auto& name = field.getFullyQualifiedName();
+        const auto final = origins.find(name);
+        if (final != origins.end())
+        {
+            if (const auto& source = final->second; source)
+            {
+                if (physicalInputs.at(*source) != name)
+                {
+                    padding.emplace_back(name, FieldAccessLogicalFunction{inputField(input, physicalInputs.at(*source))});
+                }
+            }
+            else
+            {
+                padding.emplace_back(name, placeholder(field.getDataType()));
+                const auto& accessor = fields.at(name);
+                builder.exportOutput(std::get<AsyncResultReference>(accessor.getSource()), name);
+            }
+        }
+    }
+    /// Preserve unchanged inputs through the normal asterisk path, rather than generating one
+    /// physical map per forwarded field at every async boundary. A projection with no explicit
+    /// expressions would have no physical root after a non-source child, so retain an ordinary
+    /// materialization when all results are internal or discarded.
+    const bool forwardInputs = !padding.empty();
+    if (!forwardInputs)
+    {
+        for (const auto& field : physicalSchema)
+        {
+            const auto& name = field.getFullyQualifiedName();
+            padding.emplace_back(name, FieldAccessLogicalFunction{inputField(input, name)});
+        }
+    }
+    const auto padded
+        = withSchemaTraits(ProjectionLogicalOperator::create(input, std::move(padding), ProjectionLogicalOperator::Asterisk{forwardInputs}),
+                           top,
+                           physicalSchema);
     const auto channel = std::make_shared<HandoffChannel>(configuration.channelCapacity.value_or(HandoffChannel::DEFAULT_CAPACITY));
-    const auto outputFields = asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-
-    /// Prefill the fields used for the async output with a reasonable sentinel
-    std::vector<ProjectionLogicalOperator::UnboundProjection> projections;
-    const auto inputSchema = child.getOutputSchema();
-    for (const auto& field : outputFields)
-    {
-        const Identifier name = field.getFullyQualifiedName();
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) schema lookup returns an optional
-        if (const auto input = inputSchema[name])
-        {
-            projections.emplace_back(name, FieldAccessLogicalFunction{*input});
-        }
-        else
-        {
-            const auto type = field.getDataType();
-            std::string placeholder = "0";
-            if (type.isType(DataType::Type::VARSIZED))
-            {
-                placeholder.clear();
-            }
-            else if (type.isType(DataType::Type::BOOLEAN))
-            {
-                placeholder = "false";
-            }
-            else if (type.isType(DataType::Type::CHAR))
-            {
-                placeholder.assign(1, '\0');
-            }
-            projections.emplace_back(name, ConstantValueLogicalFunction{type, std::move(placeholder)});
-        }
-    }
-
-    const auto traits = asyncOp.getTraitSet();
-    const LogicalOperator padded
-        = ProjectionLogicalOperator::create(child, std::move(projections), ProjectionLogicalOperator::Asterisk{false})
-              ->withTraitSet(traits);
-
-    AsyncCallGraphBuilder builder{outputFields};
-    std::vector<AsyncCallArgument> arguments;
-    for (const auto& argument : lowering.arguments)
-    {
-        if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
-        {
-            arguments.emplace_back(builder.input(field.value()->getField().getFullyQualifiedName()));
-        }
-        else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
-        {
-            auto value = RuntimeValue::fromLiteral(argument.getDataType(), constant.value()->getConstantValue());
-            if (!value)
-            {
-                throw std::move(value).error();
-            }
-            arguments.emplace_back(std::move(*value));
-        }
-        else
-        {
-            throw InvalidQuerySyntax("Async operator arguments must be normalized to fields or constants before decomposition");
-        }
-    }
-    const auto producer = builder.call(lowering.implementation, std::move(arguments));
-    /// Export every result even if a later projection discards it because the invocation itself might have effects.
-    size_t index = 0;
-    for (const auto& output : lowering.implementation.getOutputSchema())
-    {
-        builder.exportOutput(producer->output(index), output.getFullyQualifiedName());
-        ++index;
-    }
-    const auto graph = builder.build();
-
-    AsyncSourceConfig sourceConfig{.channel = channel, .calls = graph};
-    if (configuration.maxConcurrency.has_value())
+    AsyncSourceConfig sourceConfig{.channel = channel, .calls = builder.build()};
+    if (configuration.maxConcurrency)
     {
         sourceConfig.maxConcurrency = *configuration.maxConcurrency;
     }
-    if (configuration.maxRetries.has_value())
-    {
-        sourceConfig.maxRetries = *configuration.maxRetries;
-    }
-
-    const auto handoffSinkDescriptor = sinkCatalog->createAnonymousSinkDescriptor(
-        std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(outputFields),
+    const auto sinkDescriptor = sinkCatalog->createAnonymousSinkDescriptor(
+        std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(physicalSchema),
         GeneralSinkConfig{.host = Host(node.getRawValue())},
         PluginSinkConfiguration{Identifier::parse("Handoff"), ExplicitAny{std::any{HandoffSinkConfig{.channel = channel}}}},
         OutputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}});
-    roots.emplace_back(SinkLogicalOperator::create(padded, handoffSinkDescriptor)->withTraitSet(traits).withInferredSchema());
-
-    const auto asyncSourceDescriptor = sourceCatalog->getAnonymousSource(
-        PhysicalSourceBuilder{
-            GeneralSourceConfig{.host = Host(node.getRawValue()), .maxInflightBuffers = std::nullopt},
-            PluginSourceConfiguration{Identifier::parse("Async"), ExplicitAny{std::any{std::move(sourceConfig)}}},
-            InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
-        outputFields);
-    INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
-    return SourceDescriptorLogicalOperator::create(asyncSourceDescriptor.value())->withTraitSet(traits);
+    roots.push_back(SinkLogicalOperator::create(padded, sinkDescriptor)->withTraitSet(top.getTraitSet()).withInferredSchema());
+    const auto descriptor = sourceCatalog->getAnonymousSource(
+        PhysicalSourceBuilder{GeneralSourceConfig{.host = Host(node.getRawValue()), .maxInflightBuffers = std::nullopt},
+                              PluginSourceConfiguration{Identifier::parse("Async"), ExplicitAny{std::any{std::move(sourceConfig)}}},
+                              InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
+        physicalSchema);
+    INVARIANT(descriptor.has_value(), "Failed to add physical source for async region");
+    const auto source = withSchemaTraits(SourceDescriptorLogicalOperator::create(*descriptor), top, physicalSchema);
+    if (physicalSchema == outputOrder)
+    {
+        return source;
+    }
+    std::vector<ProjectionLogicalOperator::UnboundProjection> restored;
+    for (const auto& field : outputOrder)
+    {
+        const auto& name = field.getFullyQualifiedName();
+        restored.emplace_back(name, FieldAccessLogicalFunction{source.getOutputSchema().getFieldByName(name).value()});
+    }
+    return withSchemaTraits(
+        ProjectionLogicalOperator::create(source, std::move(restored), ProjectionLogicalOperator::Asterisk{false}), top, outputOrder);
 }
 
 void AsyncOperatorDecompositionRule::validateSharedSubplans(const LogicalPlan& plan)
@@ -216,38 +455,37 @@ void AsyncOperatorDecompositionRule::validateSharedSubplans(const LogicalPlan& p
 
 LogicalPlan AsyncOperatorDecompositionRule::apply(LogicalPlan plan) const
 {
-    using Visitor = PlanVisitor<bool, bool>;
+    validateSharedSubplans(plan);
     std::vector<LogicalOperator> roots;
-    Visitor visitor{
-        [](const LogicalOperator& op, const std::vector<bool>& parentSharing) -> Visitor::DownResult
+    std::unordered_map<LogicalOperator, LogicalOperator> rewritten;
+    const auto rewrite = [&](this const auto& self, const LogicalOperator& op) -> LogicalOperator
+    {
+        if (const auto found = rewritten.find(op); found != rewritten.end())
         {
-            const bool shared = parentSharing.size() > 1 || std::ranges::any_of(parentSharing, [](const bool value) { return value; });
-            if (op.tryGetAs<AsynchronousOperator>() && shared)
-            {
-                throw UnsupportedQuery(
-                    "Shared async subplans with multiple consumers are not supported; reuse named output fields within one branch");
-            }
-            std::unordered_map<LogicalOperator, bool> children;
+            return found->second;
+        }
+        LogicalOperator result = op;
+        const auto region = collectRegion(op);
+        if (!region.empty())
+        {
+            result = splitRegion(region, self(region.back().getChildren().front()), roots);
+        }
+        else
+        {
+            std::vector<LogicalOperator> children;
             for (const auto& child : op.getChildren())
             {
-                children.emplace(child, shared);
+                children.push_back(self(child));
             }
-            return {.operatorContext = parentSharing.empty(), .downContexts = std::move(children)};
-        },
-        [this, &roots](LogicalOperator op, std::vector<LogicalOperator> children, const bool isRoot) -> Visitor::UpResult
-        {
-            op = op.withChildren(std::move(children));
-            if (op.tryGetAs<AsynchronousOperator>())
-            {
-                op = splitInvocation(op, roots);
-            }
-            if (isRoot)
-            {
-                roots.emplace_back(op.withInferredSchema());
-                return Visitor::UpResult{std::monostate{}};
-            }
-            return op;
-        }};
-    return visitor.apply(std::move(plan)).withRootOperators(roots);
+            result = op.withChildren(std::move(children)).withInferredSchema();
+        }
+        rewritten.emplace(op, result);
+        return result;
+    };
+    for (const auto& root : plan.getRootOperators())
+    {
+        roots.push_back(rewrite(root));
+    }
+    return plan.withRootOperators(roots);
 }
 }

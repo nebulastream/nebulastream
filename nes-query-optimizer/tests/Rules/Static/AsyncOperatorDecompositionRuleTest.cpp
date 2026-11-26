@@ -14,32 +14,25 @@
 
 #include <Rules/Static/AsyncOperatorDecompositionRule.hpp>
 
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <expected>
 #include <memory>
-#include <optional>
 #include <ranges>
 #include <string>
-#include <string_view>
 #include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <variant> /// NOLINT(misc-include-cleaner) public provider of the variant std::get overloads used below
 #include <vector>
-#include <Async/HandoffChannel.hpp>
+#include <AsyncDelayLogicalOperator.hpp>
+#include <utility>
+#include <optional>
+#include <algorithm>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/RuntimeValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Operators/AsyncLogicalOperator.hpp>
+#include <Iterators/BFSIterator.hpp>
+#include <Operators/AsynchronousOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -53,19 +46,13 @@
 #include <Sinks/HandoffSinkConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/AsyncCallGraph.hpp>
-#include <Sources/AsyncError.hpp>
-#include <Sources/AsyncExecutionContext.hpp>
-#include <Sources/AsyncInputAccessor.hpp>
-#include <Sources/AsyncOperator.hpp>
 #include <Sources/AsyncSourceConfig.hpp>
-#include <Sources/PreparedAsyncCall.hpp>
-#include <Sources/SharedRuntimeValues.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
-#include <Util/Reflection.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -76,45 +63,6 @@ namespace NES
 {
 namespace
 {
-struct TestAsyncOperator
-{
-    std::vector<DataType> resultTypes;
-    int marker;
-    AsyncInputAccessors inputs{};
-
-    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) native async operator interface
-    [[nodiscard]] std::string_view getType() const { return "TEST_DECOMPOSITION"; }
-
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const
-    {
-        std::vector<UnqualifiedUnboundField> fields;
-        for (size_t index = 0; index < resultTypes.size(); ++index)
-        {
-            fields.emplace_back(Identifier::parse("OUT" + std::to_string(index)), resultTypes.at(index));
-        }
-        return Schema<UnqualifiedUnboundField, Ordered>{std::move(fields)};
-    }
-
-    [[nodiscard]] TestAsyncOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-    [[nodiscard]] TestAsyncOperator withInputAccessors(AsyncInputAccessors accessors) const
-    {
-        auto copy = *this;
-        copy.inputs = std::move(accessors);
-        return copy;
-    }
-
-    /// NOLINTBEGIN(readability-convert-member-functions-to-static,performance-unnecessary-value-param) native owning prepare interface
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const
-    {
-        return std::unexpected(AsyncError{IOError("The decomposition test operator is not executable")});
-    }
-
-    /// NOLINTEND(readability-convert-member-functions-to-static,performance-unnecessary-value-param)
-};
-
 Field field(const LogicalOperator& op, const std::string& name)
 {
     const auto result = op.getOutputSchema().getFieldByName(Identifier::parse(name));
@@ -122,13 +70,12 @@ Field field(const LogicalOperator& op, const std::string& name)
     return *result;
 }
 
-LogicalOperator placed(const LogicalOperator& op, const Schema<UnqualifiedUnboundField, Ordered>& fields)
+LogicalOperator placed(const LogicalOperator& op, const Schema<UnqualifiedUnboundField, Ordered>& fields, Host host)
 {
     auto traits = op.getTraitSet();
-    traits.insert(PlacementTrait{Host{"localhost"}});
+    traits.insert(PlacementTrait{std::move(host)});
     traits.insert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
     traits.insert(FieldOrderingTrait{fields});
-    /// Match inferred materialization mappings unless the fixture supplies a physical alias.
     if (!traits.contains<FieldMappingTrait>())
     {
         std::unordered_map<UnqualifiedUnboundField, QualifiedIdentifier> mapping;
@@ -141,10 +88,22 @@ LogicalOperator placed(const LogicalOperator& op, const Schema<UnqualifiedUnboun
     return op.withTraitSet(std::move(traits));
 }
 
+LogicalOperator placed(const LogicalOperator& op, const Schema<UnqualifiedUnboundField, Ordered>& fields)
+{
+    return placed(op, fields, Host{"localhost"});
+}
+
+LogicalOperator placedOn(const LogicalOperator& op, Host host)
+{
+    const Schema<UnqualifiedUnboundField, Ordered> fields{op.getOutputSchema()
+                                                          | std::views::transform([](const Field& output) { return output.unbound(); })};
+    return placed(op, fields, std::move(host));
+}
+
 LogicalOperator placed(const LogicalOperator& op)
 {
-    const Schema<UnqualifiedUnboundField, Ordered> fields{
-        op.getOutputSchema() | std::views::transform([](const Field& output) { return output.unbound(); })};
+    const Schema<UnqualifiedUnboundField, Ordered> fields{op.getOutputSchema()
+                                                          | std::views::transform([](const Field& output) { return output.unbound(); })};
     return placed(op, fields);
 }
 
@@ -161,154 +120,195 @@ std::vector<TypedLogicalOperator<SourceDescriptorLogicalOperator>> asyncSources(
     return sources;
 }
 
-TEST(AsyncOperatorDecompositionRuleTest, PreservesMultiOutputPayloadPaddingLayoutAndPairedChannel)
+LogicalOperator delay(LogicalOperator child, const Field& value)
+{
+    return AsyncDelayLogicalOperator::create(
+        std::move(child),
+        FieldAccessLogicalFunction{value},
+        ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"});
+}
+
+TEST(AsyncOperatorDecompositionRuleTest, LowersOrdinaryLogicalOperatorWithPairedHandoffAndRequiredOutput)
 {
     OptimizerTestUtils utils;
     const auto sourceCatalog = std::make_shared<SourceCatalog>();
     const auto sinkCatalog = std::make_shared<SinkCatalog>();
-    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{3, 5, 0}, sourceCatalog, sinkCatalog};
-    const auto rawSource = utils.createSource("input", std::vector<std::string>{"value"});
-    const auto input = field(rawSource, "value");
-    auto inputTraits = rawSource.getTraitSet();
-    inputTraits.insert(FieldMappingTrait{{{input.unbound(), QualifiedIdentifier::parse("physical_input")}}});
-    const auto source = placed(rawSource.withTraitSet(std::move(inputTraits)));
-
-    const DataType letter{DataType::Type::CHAR, DataType::NULLABLE::NOT_NULLABLE};
-    const DataType flag{DataType::Type::BOOLEAN, DataType::NULLABLE::NOT_NULLABLE};
-    const DataType text{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE};
-    const auto invocation = AsyncLogicalOperator::create(
-        source,
-        TestAsyncOperator{{letter, flag, text}, 73},
-        {FieldAccessLogicalFunction{field(source, "value")}, ConstantValueLogicalFunction{input.getDataType(), "7"}});
-    const Schema<UnqualifiedUnboundField, Ordered> order{
-        field(invocation, "OUT2").unbound(), input.unbound(), field(invocation, "OUT0").unbound(), field(invocation, "OUT1").unbound()};
-    const auto plan = utils.createPlan(utils.createSink(placed(invocation, order), "output", order));
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{3, 5}, sourceCatalog, sinkCatalog};
+    const auto source = placed(utils.createSource("input", std::vector<std::string>{"seed"}));
+    const auto invocation = placed(delay(source, field(source, "seed")));
+    const auto plan = utils.createPlan(utils.createSink(invocation, "output", std::vector<std::string>{"seed", "value"}));
     const auto lowered = rule.apply(plan);
 
-    ASSERT_EQ(lowered.getRootOperators().size(), 2);
-    EXPECT_TRUE(getOperatorByType<AsyncLogicalOperator>(lowered).empty());
+    EXPECT_EQ(std::ranges::count_if(BFSRange(lowered.getRootOperators().front()),
+                                    [](const LogicalOperator& op) { return op.tryGetAs<AsynchronousOperator>().has_value(); }),
+              0);
     const auto sources = asyncSources(lowered);
     ASSERT_EQ(sources.size(), 1);
     const auto& descriptor = sources.front()->getSourceDescriptor();
     const auto& config = descriptor.getPluginData().getAs<AsyncSourceConfig>();
     EXPECT_EQ(descriptor.getHost(), Host{"localhost"});
     EXPECT_EQ(config.maxConcurrency, 3);
-    EXPECT_EQ(config.maxRetries, 0);
     EXPECT_EQ(config.channel->getCapacity(), 5);
     ASSERT_EQ(config.calls.getCalls().size(), 1);
-    EXPECT_EQ(config.calls.getCalls().front()->getAsyncOperator().getAs<TestAsyncOperator>()->marker, 73);
-    ASSERT_EQ(config.calls.getOutputs().size(), 3);
-    EXPECT_EQ(config.calls.getOutputs().at(0).field, QualifiedIdentifier::parse("OUT0"));
-    EXPECT_EQ(config.calls.getOutputs().at(1).field, QualifiedIdentifier::parse("OUT1"));
-    EXPECT_EQ(config.calls.getOutputs().at(2).field, QualifiedIdentifier::parse("OUT2"));
-    const auto& arguments = config.calls.getCalls().front()->getArguments();
-    ASSERT_EQ(arguments.size(), 2);
-    EXPECT_EQ(std::get<InputFieldReference>(arguments.at(0)).getField(), QualifiedIdentifier{input.getFullyQualifiedName()});
-    EXPECT_EQ(std::get<RuntimeValue>(arguments.at(1)).view().get<uint64_t>(), 7);
+    ASSERT_EQ(config.calls.getOutputs().size(), 1);
+    EXPECT_EQ(config.calls.getCalls().front()->getDependencies().size(), 0);
 
     const auto handoff = lowered.getRootOperators().front().getAs<SinkLogicalOperator>();
     const auto sinkDescriptor = handoff->getSinkDescriptor();
     ASSERT_TRUE(sinkDescriptor.has_value());
-    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) guarded by the fatal GoogleTest assertion
-    const auto& sink = *sinkDescriptor;
-    EXPECT_EQ(sink.getHost(), descriptor.getHost());
-    EXPECT_EQ(sink.getPluginData().getAs<HandoffSinkConfig>().channel, config.channel);
-    EXPECT_EQ(descriptor.getSchema(), order);
-    const auto sinkSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sink.getSchema());
+    EXPECT_EQ(sinkDescriptor->getHost(), descriptor.getHost());
+    EXPECT_EQ(sinkDescriptor->getPluginData().getAs<HandoffSinkConfig>().channel, config.channel);
+    const auto sinkSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor->getSchema());
     ASSERT_NE(sinkSchema, nullptr);
-    EXPECT_EQ(*sinkSchema, order);
-    const auto padding = handoff->getChild().getAs<ProjectionLogicalOperator>();
-    EXPECT_EQ(padding.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(), order);
-    for (const auto& [output, expression] : padding->getProjections())
-    {
-        if (output.getLastName() == Identifier::parse("OUT0"))
-        {
-            EXPECT_EQ(expression.getAs<ConstantValueLogicalFunction>()->getConstantValue(), std::string(1, '\0'));
-        }
-    }
-    const auto mapping = sources.front().getTraitSet().get<FieldMappingTrait>()->getMapping(input.unbound());
-    ASSERT_TRUE(mapping.has_value());
-    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) guarded by the fatal GoogleTest assertion
-    EXPECT_EQ(*mapping, QualifiedIdentifier{input.getFullyQualifiedName()});
+    EXPECT_EQ(*sinkSchema, descriptor.getSchema());
     EXPECT_EQ(plan.getRootOperators().size(), 1);
-    EXPECT_EQ(getOperatorByType<AsyncLogicalOperator>(plan).size(), 1);
 }
 
-TEST(AsyncOperatorDecompositionRuleTest, KeepsEqualOccurrencesSeparateAndChainsMaterializedOutputs)
+TEST(AsyncOperatorDecompositionRuleTest, FusesSameWorkerAliasChainsButKeepsEveryInvocationDistinct)
 {
     OptimizerTestUtils utils;
-    const auto sourceCatalog = std::make_shared<SourceCatalog>();
-    const auto sinkCatalog = std::make_shared<SinkCatalog>();
-    const AsyncOperatorDecompositionRule rule{
-        QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt, std::nullopt}, sourceCatalog, sinkCatalog};
-    const auto source = placed(utils.createSource("input", std::vector<std::string>{"value"}));
-    const auto input = field(source, "value");
-    const AsyncOperator config = TestAsyncOperator{{input.getDataType()}, 11};
-    const auto renameResult = [](const LogicalOperator& invocation, const std::string& resultName)
-    {
-        std::vector<ProjectionLogicalOperator::UnboundProjection> fields;
-        for (const auto& inputField : invocation.getOutputSchema())
-        {
-            const auto name = inputField.getLastName();
-            fields.emplace_back(
-                name == Identifier::parse("OUT0") ? Identifier::parse(resultName) : name, FieldAccessLogicalFunction{inputField});
-        }
-        return placed(ProjectionLogicalOperator::create(invocation, std::move(fields), ProjectionLogicalOperator::Asterisk{false}));
-    };
-    const auto first = renameResult(placed(AsyncLogicalOperator::create(source, config, {FieldAccessLogicalFunction{input}})), "first");
-    const auto second
-        = renameResult(placed(AsyncLogicalOperator::create(first, config, {FieldAccessLogicalFunction{field(first, "first")}})), "second");
-    const auto third
-        = renameResult(placed(AsyncLogicalOperator::create(second, config, {FieldAccessLogicalFunction{field(second, "first")}})), "third");
-    const auto plan = utils.createPlan(utils.createSink(third, "output", std::vector<std::string>{"value", "first", "second", "third"}));
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt},
+                                              std::make_shared<SourceCatalog>(),
+                                              std::make_shared<SinkCatalog>()};
+    const auto source = placed(utils.createSource("input", std::vector<std::string>{"seed"}));
+    const auto first = placed(delay(source, field(source, "seed")));
+    const auto firstAlias
+        = placed(ProjectionLogicalOperator::create(first,
+                                                   {{Identifier::parse("one"), FieldAccessLogicalFunction{field(first, "value")}}},
+                                                   ProjectionLogicalOperator::Asterisk{false}));
+    const auto second = placed(delay(firstAlias, field(firstAlias, "one")));
+    const auto secondAlias
+        = placed(ProjectionLogicalOperator::create(second,
+                                                   {{Identifier::parse("two"), FieldAccessLogicalFunction{field(second, "value")}}},
+                                                   ProjectionLogicalOperator::Asterisk{false}));
+    const auto third = placed(delay(secondAlias, field(secondAlias, "two")));
+    const auto plan = utils.createPlan(utils.createSink(third, "output", std::vector<std::string>{"two", "value"}));
     const auto lowered = rule.apply(plan);
-    ASSERT_EQ(lowered.getRootOperators().size(), 4);
     const auto sources = asyncSources(lowered);
-    ASSERT_EQ(sources.size(), 3);
-    std::unordered_set<const HandoffChannel*> channels;
-    bool foundChainedInput = false;
-    for (const auto& sourceOp : sources)
+    ASSERT_EQ(sources.size(), 1);
+    const auto& graph = sources.front()->getSourceDescriptor().getPluginData().getAs<AsyncSourceConfig>().calls;
+    ASSERT_EQ(graph.getCalls().size(), 3);
+    ASSERT_EQ(graph.getRequiredCalls().size(), 3);
+    EXPECT_NE(graph.getCalls()[0], graph.getCalls()[1]);
+    EXPECT_NE(graph.getCalls()[1], graph.getCalls()[2]);
+    EXPECT_EQ(graph.getCalls()[1]->getDependencies().size(), 1);
+    EXPECT_EQ(graph.getCalls()[2]->getDependencies().size(), 1);
+}
+
+TEST(AsyncOperatorDecompositionRuleTest, NarrowingProjectionBelowAsyncOperatorStaysUpstreamOfHandoff)
+{
+    OptimizerTestUtils utils;
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt},
+                                              std::make_shared<SourceCatalog>(),
+                                              std::make_shared<SinkCatalog>()};
+    const auto source = placed(utils.createSource("input", std::vector<std::string>{"used", "pruned_payload"}));
+    const auto pruned
+        = placed(ProjectionLogicalOperator::create(source,
+                                                   {{Identifier::parse("used"), FieldAccessLogicalFunction{field(source, "used")}}},
+                                                   ProjectionLogicalOperator::Asterisk{false}));
+    const auto invocation = placed(delay(pruned, field(pruned, "used")));
+    const auto plan = utils.createPlan(utils.createSink(invocation, "output", std::vector<std::string>{"used", "value"}));
+    const auto lowered = rule.apply(plan);
+
+    const auto sources = asyncSources(lowered);
+    ASSERT_EQ(sources.size(), 1);
+    const auto& descriptor = sources.front()->getSourceDescriptor();
+    EXPECT_EQ(descriptor.getSchema().size(), 2);
+    EXPECT_TRUE(descriptor.getSchema().getFieldByName(Identifier::parse("used")).has_value());
+    EXPECT_TRUE(descriptor.getSchema().getFieldByName(Identifier::parse("value")).has_value());
+    EXPECT_FALSE(descriptor.getSchema().getFieldByName(Identifier::parse("pruned_payload")).has_value());
+
+    const auto handoff = lowered.getRootOperators().front().getAs<SinkLogicalOperator>();
+    const auto sinkDescriptor = handoff->getSinkDescriptor();
+    ASSERT_TRUE(sinkDescriptor.has_value());
+    const auto sinkSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor->getSchema());
+    ASSERT_NE(sinkSchema, nullptr);
+    EXPECT_EQ(*sinkSchema, descriptor.getSchema());
+    EXPECT_FALSE(sinkSchema->getFieldByName(Identifier::parse("pruned_payload")).has_value());
+}
+
+TEST(AsyncOperatorDecompositionRuleTest, PreservesAllUpstreamOriginIdsOnAsyncSource)
+{
+    OptimizerTestUtils utils;
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt},
+                                              std::make_shared<SourceCatalog>(),
+                                              std::make_shared<SinkCatalog>()};
+    auto withOrigins = [](LogicalOperator op, std::vector<OriginId> origins)
     {
-        const auto& stage = sourceOp->getSourceDescriptor().getPluginData().getAs<AsyncSourceConfig>();
-        channels.insert(stage.channel.get());
-        ASSERT_EQ(stage.calls.getCalls().size(), 1);
-        ASSERT_EQ(stage.calls.getOutputs().size(), 1);
-        EXPECT_EQ(stage.calls.getOutputs().front().field, QualifiedIdentifier::parse("OUT0"));
-        if (stage.calls.getInputSchema().contains(QualifiedIdentifier::parse("second")))
-        {
-            foundChainedInput = true;
-            EXPECT_EQ(
-                std::get<InputFieldReference>(stage.calls.getCalls().front()->getArguments().front()).getField(),
-                QualifiedIdentifier::parse("first"));
-        }
+        auto traits = op.getTraitSet();
+        traits.insert(OutputOriginIdsTrait{std::move(origins)});
+        return op.withTraitSet(std::move(traits));
+    };
+    const auto left = withOrigins(placed(utils.createSource("left_input", std::vector<std::string>{"seed"})), {OriginId{1}});
+    const auto right = withOrigins(placed(utils.createSource("right_input", std::vector<std::string>{"seed"})), {OriginId{2}});
+    const auto combined = withOrigins(placed(UnionLogicalOperator::create({left, right})), {OriginId{1}, OriginId{2}});
+    const auto invocation = withOrigins(placed(delay(combined, field(combined, "seed"))), {OriginId{1}, OriginId{2}});
+    const auto plan = utils.createPlan(utils.createSink(invocation, "output", std::vector<std::string>{"seed", "value"}));
+    const auto lowered = rule.apply(plan);
+
+    const auto sources = asyncSources(lowered);
+    ASSERT_EQ(sources.size(), 1);
+    const auto originsTrait = sources.front()->getTraitSet().tryGet<OutputOriginIdsTrait>();
+    ASSERT_TRUE(originsTrait.has_value());
+    const std::vector<OriginId> actualOrigins{(*originsTrait)->begin(), (*originsTrait)->end()};
+    EXPECT_EQ(actualOrigins, (std::vector<OriginId>{OriginId{1}, OriginId{2}}));
+}
+
+TEST(AsyncOperatorDecompositionRuleTest, ComputedProjectionRemainsAnAsyncFusionBoundary)
+{
+    OptimizerTestUtils utils;
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt},
+                                              std::make_shared<SourceCatalog>(),
+                                              std::make_shared<SinkCatalog>()};
+    const auto source = placed(utils.createSource("input", std::vector<std::string>{"seed"}));
+    const auto first = placed(delay(source, field(source, "seed")));
+    const auto computed = placed(ProjectionLogicalOperator::create(
+        first,
+        {{Identifier::parse("computed"), ConstantValueLogicalFunction{field(first, "value").getDataType(), "1"}}},
+        ProjectionLogicalOperator::Asterisk{false}));
+    const auto second = placed(delay(computed, field(computed, "computed")));
+    const auto plan = utils.createPlan(utils.createSink(second, "output", std::vector<std::string>{"computed", "value"}));
+    const auto lowered = rule.apply(plan);
+    EXPECT_EQ(asyncSources(lowered).size(), 2);
+}
+
+TEST(AsyncOperatorDecompositionRuleTest, DifferentWorkerPlacementStopsFusionAcrossAnAlias)
+{
+    OptimizerTestUtils utils;
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt},
+                                              std::make_shared<SourceCatalog>(),
+                                              std::make_shared<SinkCatalog>()};
+    const auto source = placed(utils.createSource("input", std::vector<std::string>{"seed"}));
+    const auto first = placed(delay(source, field(source, "seed")));
+    const auto alias
+        = placed(ProjectionLogicalOperator::create(first,
+                                                   {{Identifier::parse("intermediate"), FieldAccessLogicalFunction{field(first, "value")}}},
+                                                   ProjectionLogicalOperator::Asterisk{false}));
+    const auto second = placedOn(delay(alias, field(alias, "intermediate")), Host{"worker-two"});
+    const auto plan = utils.createPlan(utils.createSink(second, "output", std::vector<std::string>{"intermediate", "value"}));
+    const auto lowered = rule.apply(plan);
+    const auto sources = asyncSources(lowered);
+    ASSERT_EQ(sources.size(), 2);
+    for (const auto& asyncSource : sources)
+    {
+        const auto& graph = asyncSource->getSourceDescriptor().getPluginData().getAs<AsyncSourceConfig>().calls;
+        ASSERT_EQ(graph.getCalls().size(), 1);
+        EXPECT_TRUE(graph.getCalls().front()->getDependencies().empty());
     }
-    EXPECT_EQ(channels.size(), 3);
-    EXPECT_TRUE(foundChainedInput);
-    EXPECT_TRUE(getOperatorByType<AsyncLogicalOperator>(lowered).empty());
-    const auto output = lowered.getRootOperators().back().getAs<SinkLogicalOperator>()->getChild().getAs<ProjectionLogicalOperator>();
-    EXPECT_EQ(field(output, "third").getDataType(), input.getDataType());
-    const auto projections = output->getProjections();
-    const auto renamed
-        = std::ranges::find_if(projections, [](const auto& entry) { return entry.first.getLastName() == Identifier::parse("third"); });
-    ASSERT_NE(renamed, projections.end());
-    EXPECT_EQ(renamed->second.getAs<FieldAccessLogicalFunction>()->getField().getLastName(), Identifier::parse("OUT0"));
 }
 
 TEST(AsyncOperatorDecompositionRuleTest, RejectsAsyncBelowASharedAncestorBeforeCreatingStages)
 {
     OptimizerTestUtils utils;
-    const AsyncOperatorDecompositionRule rule{
-        QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt, std::nullopt},
-        std::make_shared<SourceCatalog>(),
-        std::make_shared<SinkCatalog>()};
-    const auto source = placed(utils.createSource("input", std::vector<std::string>{"value"}));
-    const auto input = field(source, "value");
-    const auto invocation
-        = placed(AsyncLogicalOperator::create(source, TestAsyncOperator{{input.getDataType()}, 0}, {FieldAccessLogicalFunction{input}}));
-    const auto shared = ProjectionLogicalOperator::create(
-        invocation,
-        {{Identifier::parse("value"), FieldAccessLogicalFunction{field(invocation, "value")}}},
-        ProjectionLogicalOperator::Asterisk{false});
+    const AsyncOperatorDecompositionRule rule{QueryOptimizerAsyncConfiguration{std::nullopt, std::nullopt},
+                                              std::make_shared<SourceCatalog>(),
+                                              std::make_shared<SinkCatalog>()};
+    const auto source = placed(utils.createSource("input", std::vector<std::string>{"seed"}));
+    const auto invocation = placed(delay(source, field(source, "seed")));
+    const auto shared
+        = ProjectionLogicalOperator::create(invocation,
+                                            {{Identifier::parse("value"), FieldAccessLogicalFunction{field(invocation, "value")}}},
+                                            ProjectionLogicalOperator::Asterisk{false});
     const auto combined = UnionLogicalOperator::create({shared, shared});
     const auto plan = utils.createPlan(utils.createSink(combined, "output", std::vector<std::string>{"value"}));
     ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(rule.apply(plan)), ErrorCode::UnsupportedQuery);

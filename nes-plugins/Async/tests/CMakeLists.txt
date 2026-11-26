@@ -21,4 +21,4 @@ target_include_directories(async-graph-execution-test PRIVATE ${PROJECT_SOURCE_D
 target_link_libraries(async-graph-execution-test async_graph_execution)
 
 add_nes_test(async-occurrence-test AsyncOccurrenceTest.cpp)
-target_link_libraries(async-occurrence-test nes-logical-operators nes-sources nes-query-optimizer async_graph_execution)
+target_link_libraries(async-occurrence-test nes-logical-operators nes-sources nes-query-optimizer nes-query-optimizer-test-utils-lib async_graph_execution)

@@ -149,9 +149,8 @@ private:
     void startRows();
     void finishRow(InFlightBuffer& buffer, size_t slot, const std::exception_ptr& infrastructureError, const AsyncResult<void>& outcome);
 
-    /// The configured bound, lowered to what the operator configurations allow.
+    /// Maximum rows in flight at the same time.
     size_t maxConcurrency;
-    size_t maxRetries;
     AsyncHandoffLayout layout;
     std::shared_ptr<const TupleBufferRef> rowBufferRef;
     std::shared_ptr<const AsyncCallGraph> graph;

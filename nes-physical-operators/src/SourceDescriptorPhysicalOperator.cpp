@@ -17,25 +17,40 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
 SourceDescriptorPhysicalOperator::SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, OriginId id)
-    : originId(id), descriptor(std::move(descriptor)) { };
+    : SourceDescriptorPhysicalOperator(std::move(descriptor), std::vector<OriginId>{id})
+{
+}
+
+SourceDescriptorPhysicalOperator::SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, std::vector<OriginId> originIds)
+    : originIds(std::move(originIds)), descriptor(std::move(descriptor))
+{
+    PRECONDITION(!this->originIds.empty(), "Source must have at least one origin id");
+}
 
 SourceDescriptor SourceDescriptorPhysicalOperator::getDescriptor() const
 {
     return descriptor;
-};
+}
 
 OriginId SourceDescriptorPhysicalOperator::getOriginId() const
 {
-    return originId;
-};
+    return originIds.front();
+}
+
+const std::vector<OriginId>& SourceDescriptorPhysicalOperator::getOriginIds() const
+{
+    return originIds;
+}
 
 bool SourceDescriptorPhysicalOperator::operator==(const SourceDescriptorPhysicalOperator& other) const
 {

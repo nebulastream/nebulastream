@@ -28,15 +28,13 @@ class InstantiatedConfig;
 struct AsyncSourceConfig
 {
     static constexpr size_t DEFAULT_MAX_CONCURRENCY = 16;
-    static constexpr size_t DEFAULT_MAX_RETRIES = 0;
 
     /// The same channel object is held by the paired Handoff sink configuration.
     std::shared_ptr<HandoffChannel> channel;
     /// Immutable producers, typed constants, scoped inputs, and checked output handles.
     AsyncCallGraph calls;
-    /// Rows in flight, further bounded by the stage's functions.
+    /// Rows in flight at the same time.
     size_t maxConcurrency = DEFAULT_MAX_CONCURRENCY;
-    size_t maxRetries = DEFAULT_MAX_RETRIES;
 
     /// Async sources need a planner-supplied graph, not frontend literal configuration.
     static std::expected<AsyncSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);

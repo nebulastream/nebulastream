@@ -56,6 +56,62 @@ void validatePayload(const DataType type, const Payload& payload)
         payload);
 }
 #endif
+
+struct Float32Bits
+{
+    uint32_t bits;
+};
+
+struct Float64Bits
+{
+    uint64_t bits;
+};
+
+using WirePayload = std::variant<std::monostate,
+                                 bool,
+                                 char,
+                                 uint8_t,
+                                 uint16_t,
+                                 uint32_t,
+                                 uint64_t,
+                                 int8_t,
+                                 int16_t,
+                                 int32_t,
+                                 int64_t,
+                                 Float32Bits,
+                                 Float64Bits,
+                                 std::vector<uint8_t>>;
+
+struct WireRuntimeValue
+{
+    DataType type;
+    WirePayload payload;
+};
+
+template <typename T>
+constexpr DataType::Type wireType()
+{
+    if constexpr (std::is_same_v<T, std::monostate>)
+    {
+        return DataType::Type::UNDEFINED;
+    }
+    else if constexpr (std::is_same_v<T, Float32Bits>)
+    {
+        return DataType::Type::FLOAT32;
+    }
+    else if constexpr (std::is_same_v<T, Float64Bits>)
+    {
+        return DataType::Type::FLOAT64;
+    }
+    else if constexpr (std::is_same_v<T, std::vector<uint8_t>>)
+    {
+        return DataType::Type::VARSIZED;
+    }
+    else
+    {
+        return RuntimeTypeTraits<T>::type;
+    }
+}
 }
 
 RuntimeValueView::RuntimeValueView(const DataType type, RuntimeValueViewPayload payload) : type(type), payload(std::move(payload))
@@ -87,28 +143,27 @@ uint64_t RuntimeValueView::getUnsignedInteger() const
 
 std::optional<uint64_t> RuntimeValueView::tryGetUnsignedInteger() const
 {
-    return visitRuntimeType(
-        type.type,
-        [this]<typename T>() -> std::optional<uint64_t>
-        {
-            if constexpr (std::integral<T> && !std::same_as<T, bool> && !std::same_as<T, char>)
-            {
-                const auto value = get<T>();
-                if constexpr (std::is_signed_v<T>)
-                {
-                    if (value < 0)
-                    {
-                        return std::nullopt;
-                    }
-                }
-                return static_cast<uint64_t>(value);
-            }
-            else
-            {
-                PRECONDITION(false, "Expected an integer runtime value, got {}", type);
-                std::unreachable();
-            }
-        });
+    return visitRuntimeType(type.type,
+                            [this]<typename T>() -> std::optional<uint64_t>
+                            {
+                                if constexpr (std::integral<T> && !std::same_as<T, bool> && !std::same_as<T, char>)
+                                {
+                                    const auto value = get<T>();
+                                    if constexpr (std::is_signed_v<T>)
+                                    {
+                                        if (value < 0)
+                                        {
+                                            return std::nullopt;
+                                        }
+                                    }
+                                    return static_cast<uint64_t>(value);
+                                }
+                                else
+                                {
+                                    PRECONDITION(false, "Expected an integer runtime value, got {}", type);
+                                    std::unreachable();
+                                }
+                            });
 }
 
 RuntimeValue RuntimeValueView::toOwned() const
@@ -117,19 +172,18 @@ RuntimeValue RuntimeValueView::toOwned() const
     {
         return RuntimeValue::null(type);
     }
-    return visitRuntimeType(
-        type.type,
-        [this]<typename T>() -> RuntimeValue
-        {
-            if constexpr (std::same_as<T, std::string_view>)
-            {
-                return RuntimeValue{type, std::string{get<T>()}};
-            }
-            else
-            {
-                return RuntimeValue{type, get<T>()};
-            }
-        });
+    return visitRuntimeType(type.type,
+                            [this]<typename T>() -> RuntimeValue
+                            {
+                                if constexpr (std::same_as<T, std::string_view>)
+                                {
+                                    return RuntimeValue{type, std::string{get<T>()}};
+                                }
+                                else
+                                {
+                                    return RuntimeValue{type, get<T>()};
+                                }
+                            });
 }
 
 RuntimeValue::RuntimeValue(const DataType type, RuntimeValuePayload payload) : type(type), payload(std::move(payload))
@@ -144,23 +198,22 @@ RuntimeValue RuntimeValue::null(const DataType type)
 
 std::expected<RuntimeValue, Exception> RuntimeValue::fromLiteral(const DataType type, const std::string_view literal)
 {
-    return visitRuntimeType(
-        type.type,
-        [type, literal]<typename T>() -> std::expected<RuntimeValue, Exception>
-        {
-            if constexpr (std::same_as<T, std::string_view>)
-            {
-                return RuntimeValue{type, std::string{literal}};
-            }
-            else
-            {
-                if (const auto parsed = from_chars<T>(literal))
-                {
-                    return RuntimeValue{type, *parsed};
-                }
-                return std::unexpected(InvalidLiteral("'{}' is not a valid constant of type {}", literal, type));
-            }
-        });
+    return visitRuntimeType(type.type,
+                            [type, literal]<typename T>() -> std::expected<RuntimeValue, Exception>
+                            {
+                                if constexpr (std::same_as<T, std::string_view>)
+                                {
+                                    return RuntimeValue{type, std::string{literal}};
+                                }
+                                else
+                                {
+                                    if (const auto parsed = from_chars<T>(literal))
+                                    {
+                                        return RuntimeValue{type, *parsed};
+                                    }
+                                    return std::unexpected(InvalidLiteral("'{}' is not a valid constant of type {}", literal, type));
+                                }
+                            });
 }
 
 DataType RuntimeValue::getDataType() const
@@ -192,68 +245,75 @@ RuntimeValueView RuntimeValue::view() const&
 
 Reflected Reflector<RuntimeValue>::operator()(const RuntimeValue& value, const ReflectionContext& context) const
 {
-    Reflected payload;
-    if (!value.isNull())
-    {
-        payload = visitRuntimeType(
-            value.getDataType().type,
-            [&]<typename T>() -> Reflected
+    WirePayload payload = std::visit(
+        []<typename T>(const T& native) -> WirePayload
+        {
+            if constexpr (std::same_as<T, float>)
             {
-                if constexpr (std::same_as<T, std::string_view>)
-                {
-                    /// VARSIZED is arbitrary bytes; JSON strings require UTF-8. Do not silently change or reject binary constants.
-                    const auto bytes = value.view().get<T>();
-                    return context.reflect(std::vector<uint8_t>{bytes.begin(), bytes.end()});
-                }
-                else if constexpr (std::floating_point<T>)
-                {
-                    /// Preserve signed zero and every NaN payload; JSON numbers cannot represent all floating-point values.
-                    using Bits = std::conditional_t<sizeof(T) == sizeof(uint32_t), uint32_t, uint64_t>;
-                    return context.reflect(std::bit_cast<Bits>(value.view().get<T>()));
-                }
-                else
-                {
-                    return context.reflect(value.view().get<T>());
-                }
-            });
-    }
-    return context.reflect(std::pair{value.getDataType(), payload});
+                return Float32Bits{std::bit_cast<uint32_t>(native)};
+            }
+            else if constexpr (std::same_as<T, double>)
+            {
+                return Float64Bits{std::bit_cast<uint64_t>(native)};
+            }
+            else if constexpr (std::same_as<T, std::string>)
+            {
+                return std::vector<uint8_t>{native.begin(), native.end()};
+            }
+            else
+            {
+                return native;
+            }
+        },
+        value.payload);
+    return context.reflect(WireRuntimeValue{value.type, std::move(payload)});
 }
 
 RuntimeValue Unreflector<RuntimeValue>::operator()(const Reflected& value, const ReflectionContext& context) const
 {
-    const auto [type, payload] = context.unreflect<std::pair<DataType, Reflected>>(value);
-    if (type.type == DataType::Type::UNDEFINED)
+    const auto wire = context.unreflect<WireRuntimeValue>(value);
+    if (wire.type.type == DataType::Type::UNDEFINED)
     {
         throw CannotDeserialize("UNDEFINED has no runtime value representation");
     }
-    if (payload.isEmpty())
-    {
-        if (!type.nullable)
+    RuntimeValuePayload payload = std::visit(
+        [&wire](const auto& native) -> RuntimeValuePayload
         {
-            throw CannotDeserialize("Cannot deserialize null for non-nullable {}", type);
-        }
-        return RuntimeValue::null(type);
-    }
-    return visitRuntimeType(
-        type.type,
-        [&]<typename T>() -> RuntimeValue
-        {
-            if constexpr (std::same_as<T, std::string_view>)
+            using T = std::decay_t<decltype(native)>;
+            if constexpr (!std::same_as<T, std::monostate>)
             {
-                const auto bytes = context.unreflect<std::vector<uint8_t>>(payload);
-                return RuntimeValue{type, std::string{bytes.begin(), bytes.end()}};
+                if (wireType<T>() != wire.type.type)
+                {
+                    throw CannotDeserialize("Native payload does not match runtime type {}", wire.type);
+                }
             }
-            else if constexpr (std::floating_point<T>)
+            if constexpr (std::same_as<T, std::monostate>)
             {
-                using Bits = std::conditional_t<sizeof(T) == sizeof(uint32_t), uint32_t, uint64_t>;
-                return RuntimeValue{type, std::bit_cast<T>(context.unreflect<Bits>(payload))};
+                if (!wire.type.nullable)
+                {
+                    throw CannotDeserialize("Cannot deserialize null for non-nullable {}", wire.type);
+                }
+                return std::monostate{};
+            }
+            else if constexpr (std::same_as<T, Float32Bits>)
+            {
+                return std::bit_cast<float>(native.bits);
+            }
+            else if constexpr (std::same_as<T, Float64Bits>)
+            {
+                return std::bit_cast<double>(native.bits);
+            }
+            else if constexpr (std::same_as<T, std::vector<uint8_t>>)
+            {
+                return std::string{native.begin(), native.end()};
             }
             else
             {
-                return RuntimeValue{type, context.unreflect<T>(payload)};
+                return native;
             }
-        });
+        },
+        wire.payload);
+    return RuntimeValue{wire.type, std::move(payload)};
 }
 
 }

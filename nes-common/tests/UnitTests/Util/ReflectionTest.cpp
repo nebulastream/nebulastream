@@ -150,10 +150,9 @@ TEST(ReflectionTest, NestedContextPropagationExcludesOptionalField)
 
 TEST(ReflectionTest, VectorSerialization)
 {
-    const std::vector<InnerData> vec{
-        InnerData{.value = "first", .optionalField = 1},
-        InnerData{.value = "second", .optionalField = 2},
-        InnerData{.value = "third", .optionalField = std::nullopt}};
+    const std::vector<InnerData> vec{InnerData{.value = "first", .optionalField = 1},
+                                     InnerData{.value = "second", .optionalField = 2},
+                                     InnerData{.value = "third", .optionalField = std::nullopt}};
 
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
 
@@ -222,10 +221,9 @@ TEST(ReflectionTest, PairSerialization)
 
 TEST(ReflectionTest, MapSerialization)
 {
-    const std::unordered_map<std::string, InnerData> map
-        = {{"first", InnerData{.value = "first", .optionalField = 1}},
-           {"second", InnerData{.value = "second", .optionalField = 2}},
-           {"third", InnerData{.value = "third", .optionalField = std::nullopt}}};
+    const std::unordered_map<std::string, InnerData> map = {{"first", InnerData{.value = "first", .optionalField = 1}},
+                                                            {"second", InnerData{.value = "second", .optionalField = 2}},
+                                                            {"third", InnerData{.value = "third", .optionalField = std::nullopt}}};
     const ReflectionContext context{InnerDataDeserializationConfig{.includeOptionalField = true}};
     auto reflected = context.reflect(map);
     auto deserialized = context.unreflect<std::unordered_map<std::string, InnerData>>(reflected);
@@ -368,6 +366,33 @@ TEST(ReflectionTest, SharedPointerIdentityAcrossCopiesChildrenAndReversedPlans)
     EXPECT_EQ(rfl::json::write(*writer.reflect(std::shared_ptr<const MovableChannelConfig>{original})), rfl::json::write(*first));
 }
 
+TEST(ReflectionTest, SharedPointerConstructionCallbackRunsOnceForRepeatedDefinitions)
+{
+    const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
+    const auto wire = writer.reflect(std::make_shared<int>(23));
+    const auto envelope = ReflectionContext{}.unreflect<detail::SharedPointerDefinition>(wire);
+    const auto fingerprint = rfl::json::write(*envelope.value);
+    SharedPointerDeserializationState state;
+    size_t constructions = 0;
+    const auto first = state.getOrCreate<int>(envelope.id,
+                                              fingerprint,
+                                              [&constructions]
+                                              {
+                                                  ++constructions;
+                                                  return std::make_shared<int>(23);
+                                              });
+    const auto second = state.getOrCreate<int>(envelope.id,
+                                               fingerprint,
+                                               [&constructions]
+                                               {
+                                                   ++constructions;
+                                                   return std::make_shared<int>(99);
+                                               });
+    EXPECT_EQ(first, second);
+    EXPECT_EQ(*second, 23);
+    EXPECT_EQ(constructions, 1);
+}
+
 TEST(ReflectionTest, SharedPointerNullAndOwningCaches)
 {
     const auto serializationState = std::make_shared<SharedPointerSerializationState>();
@@ -410,8 +435,8 @@ TEST(ReflectionTest, SharedPointerConflictingDefinitionsAndTypes)
 
 TEST(ReflectionTest, SharedPointerCyclesAreRejectedAndFailureDoesNotPoisonContext)
 {
-    const ReflectionContext context{
-        std::make_shared<SharedPointerSerializationState>(), std::make_shared<SharedPointerDeserializationState>()};
+    const ReflectionContext context{std::make_shared<SharedPointerSerializationState>(),
+                                    std::make_shared<SharedPointerDeserializationState>()};
     auto cycle = std::make_shared<SharedPointerCycle>();
     cycle->next = cycle;
     EXPECT_THROW(static_cast<void>(context.reflect(cycle)), Exception);

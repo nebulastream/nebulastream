@@ -38,6 +38,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncCallGraph.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
@@ -131,12 +132,11 @@ struct AsyncSourceTestSlotState
 class AsyncSourceTestPreparedCall final : public PreparedAsyncCall
 {
 public:
-    AsyncSourceTestPreparedCall(
-        SharedRuntimeValues result,
-        std::shared_ptr<AsyncSourceTestStats> stats,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        bool retryable)
+    AsyncSourceTestPreparedCall(SharedRuntimeValues result,
+                                std::shared_ptr<AsyncSourceTestStats> stats,
+                                size_t retryLimit,
+                                size_t failures,
+                                bool retryable)
         : PreparedAsyncCall(retryLimit), result(std::move(result)), stats(std::move(stats)), failures(failures), retryable(retryable)
     {
         ++this->stats->livePrepared;
@@ -162,10 +162,8 @@ public:
         }
         if (++stats->attempts <= failures)
         {
-            co_return std::unexpected(
-                AsyncError{
-                    .exception = IOError(retryable ? "test invocation failed" : "permanent test failure"),
-                    .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent});
+            co_return std::unexpected(AsyncError{.exception = IOError(retryable ? "test invocation failed" : "permanent test failure"),
+                                                 .kind = retryable ? AsyncError::Type::Retryable : AsyncError::Type::Permanent});
         }
         co_return result;
     }
@@ -181,36 +179,22 @@ private:
 
 struct AsyncSourceTestOperator
 {
-    inline static std::atomic<size_t> factoryCreations{0};
-
     std::string label;
     DataType outputType;
     SharedRuntimeValues result;
     std::shared_ptr<AsyncSourceTestStats> stats;
-    std::optional<size_t> retryLimit;
+    size_t retryLimit = 0;
     size_t failures = 0;
     bool retryable = true;
     bool preparationFailure = false;
-    AsyncInputAccessors inputs{};
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
     [[nodiscard]] std::string_view getType() const { return label; }
 
     /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const
     {
         return Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("OUT"), outputType}};
-    }
-
-    [[nodiscard]] AsyncSourceTestOperator withInferredArguments(const AsyncArgumentsWithConstants&) const { return *this; }
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return inputs; }
-
-    [[nodiscard]] AsyncSourceTestOperator withInputAccessors(AsyncInputAccessors value) const
-    {
-        auto result = *this;
-        result.inputs = std::move(value);
-        return result;
     }
 
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle&) const
@@ -234,21 +218,16 @@ struct AsyncSourceTestOperator
         return std::make_unique<AsyncSourceTestPreparedCall>(result, stats, retryLimit, failures, retryable);
     }
 
-    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) implements the operator interface
-    [[nodiscard]] std::optional<size_t> maxConcurrency() const { return std::nullopt; }
-
     static AsyncSourceTestOperator create()
     {
-        ++factoryCreations;
-        return {
-            .label = "FixedResult",
-            .outputType = DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE},
-            .result = {},
-            .stats = std::make_shared<AsyncSourceTestStats>(),
-            .retryLimit = std::nullopt,
-            .failures = 0,
-            .retryable = true,
-            .preparationFailure = false};
+        return {.label = "FixedResult",
+                .outputType = DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE},
+                .result = {},
+                .stats = std::make_shared<AsyncSourceTestStats>(),
+                .retryLimit = 0,
+                .failures = 0,
+                .retryable = true,
+                .preparationFailure = false};
     }
 };
 }
@@ -281,247 +260,106 @@ public:
     /// Exercise the actual source's validation path, not just a scalar conversion helper.
     static std::shared_ptr<NES::Test::AsyncSourceTestStats> run(const SharedRuntimeValues& result, const DataType declaredType)
     {
-        return run(result, declaredType, std::nullopt, 0, 3, 1, 1, 1, true, false, {}, std::chrono::milliseconds{0}, false);
+        return run(result, declaredType, 0, 0, 1, 1, 1, true, false, {}, std::chrono::milliseconds{0}, false);
     }
 
     static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result, const DataType declaredType, std::optional<size_t> retryLimit)
+    run(const SharedRuntimeValues& result, const DataType declaredType, size_t retryLimit)
     {
-        return run(result, declaredType, std::move(retryLimit), 0, 3, 1, 1, 1, true, false, {}, std::chrono::milliseconds{0}, false);
+        return run(result, declaredType, retryLimit, 0, 1, 1, 1, true, false, {}, std::chrono::milliseconds{0}, false);
     }
 
     static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result, const DataType declaredType, std::optional<size_t> retryLimit, size_t failures)
+    run(const SharedRuntimeValues& result, const DataType declaredType, size_t retryLimit, size_t failures)
     {
-        return run(result, declaredType, std::move(retryLimit), failures, 3, 1, 1, 1, true, false, {}, std::chrono::milliseconds{0}, false);
+        return run(result, declaredType, retryLimit, failures, 1, 1, 1, true, false, {}, std::chrono::milliseconds{0}, false);
     }
 
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries)
+    static std::shared_ptr<NES::Test::AsyncSourceTestStats> run(const SharedRuntimeValues& result,
+                                                                const DataType declaredType,
+                                                                size_t retryLimit,
+                                                                size_t failures,
+                                                                size_t rowsPerBuffer,
+                                                                size_t bufferCount,
+                                                                size_t concurrency)
     {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            1,
-            1,
-            1,
-            true,
-            false,
-            {},
-            std::chrono::milliseconds{0},
-            false);
+        return run(result,
+                   declaredType,
+                   retryLimit,
+                   failures,
+                   rowsPerBuffer,
+                   bufferCount,
+                   concurrency,
+                   true,
+                   false,
+                   {},
+                   std::chrono::milliseconds{0},
+                   false);
     }
 
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer)
+    static std::shared_ptr<NES::Test::AsyncSourceTestStats> run(const SharedRuntimeValues& result,
+                                                                const DataType declaredType,
+                                                                size_t retryLimit,
+                                                                size_t failures,
+                                                                size_t rowsPerBuffer,
+                                                                size_t bufferCount,
+                                                                size_t concurrency,
+                                                                bool retryable,
+                                                                bool preparationFailure,
+                                                                std::shared_ptr<NES::Test::AsyncSourceTestStats> stats)
     {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            1,
-            1,
-            true,
-            false,
-            {},
-            std::chrono::milliseconds{0},
-            false);
+        return run(result,
+                   declaredType,
+                   retryLimit,
+                   failures,
+                   rowsPerBuffer,
+                   bufferCount,
+                   concurrency,
+                   retryable,
+                   preparationFailure,
+                   std::move(stats),
+                   std::chrono::milliseconds{0},
+                   false);
     }
 
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount)
+    static std::shared_ptr<NES::Test::AsyncSourceTestStats> run(const SharedRuntimeValues& result,
+                                                                const DataType declaredType,
+                                                                size_t retryLimit,
+                                                                size_t failures,
+                                                                size_t rowsPerBuffer,
+                                                                size_t bufferCount,
+                                                                size_t concurrency,
+                                                                bool retryable,
+                                                                bool preparationFailure,
+                                                                std::shared_ptr<NES::Test::AsyncSourceTestStats> stats,
+                                                                std::chrono::milliseconds executionDelay)
     {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            bufferCount,
-            1,
-            true,
-            false,
-            {},
-            std::chrono::milliseconds{0},
-            false);
+        return run(result,
+                   declaredType,
+                   retryLimit,
+                   failures,
+                   rowsPerBuffer,
+                   bufferCount,
+                   concurrency,
+                   retryable,
+                   preparationFailure,
+                   std::move(stats),
+                   executionDelay,
+                   false);
     }
 
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount,
-        size_t concurrency)
-    {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            bufferCount,
-            concurrency,
-            true,
-            false,
-            {},
-            std::chrono::milliseconds{0},
-            false);
-    }
-
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount,
-        size_t concurrency,
-        bool retryable)
-    {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            bufferCount,
-            concurrency,
-            retryable,
-            false,
-            {},
-            std::chrono::milliseconds{0},
-            false);
-    }
-
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount,
-        size_t concurrency,
-        bool retryable,
-        bool preparationFailure)
-    {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            bufferCount,
-            concurrency,
-            retryable,
-            preparationFailure,
-            {},
-            std::chrono::milliseconds{0},
-            false);
-    }
-
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount,
-        size_t concurrency,
-        bool retryable,
-        bool preparationFailure,
-        std::shared_ptr<NES::Test::AsyncSourceTestStats> stats)
-    {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            bufferCount,
-            concurrency,
-            retryable,
-            preparationFailure,
-            std::move(stats),
-            std::chrono::milliseconds{0},
-            false);
-    }
-
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount,
-        size_t concurrency,
-        bool retryable,
-        bool preparationFailure,
-        std::shared_ptr<NES::Test::AsyncSourceTestStats> stats,
-        std::chrono::milliseconds executionDelay)
-    {
-        return run(
-            result,
-            declaredType,
-            std::move(retryLimit),
-            failures,
-            sourceRetries,
-            rowsPerBuffer,
-            bufferCount,
-            concurrency,
-            retryable,
-            preparationFailure,
-            std::move(stats),
-            executionDelay,
-            false);
-    }
-
-    static std::shared_ptr<NES::Test::AsyncSourceTestStats>
-    run(const SharedRuntimeValues& result,
-        const DataType declaredType,
-        std::optional<size_t> retryLimit,
-        size_t failures,
-        size_t sourceRetries,
-        size_t rowsPerBuffer,
-        size_t bufferCount,
-        size_t concurrency,
-        bool retryable,
-        bool preparationFailure,
-        std::shared_ptr<NES::Test::AsyncSourceTestStats> stats,
-        std::chrono::milliseconds executionDelay,
-        bool twoGraphNodes)
+    static std::shared_ptr<NES::Test::AsyncSourceTestStats> run(const SharedRuntimeValues& result,
+                                                                const DataType declaredType,
+                                                                size_t retryLimit,
+                                                                size_t failures,
+                                                                size_t rowsPerBuffer,
+                                                                size_t bufferCount,
+                                                                size_t concurrency,
+                                                                bool retryable,
+                                                                bool preparationFailure,
+                                                                std::shared_ptr<NES::Test::AsyncSourceTestStats> stats,
+                                                                std::chrono::milliseconds executionDelay,
+                                                                bool twoGraphNodes)
     {
         if (!stats)
         {
@@ -542,24 +380,21 @@ public:
         nativeConfig.retryable = retryable;
         nativeConfig.preparationFailure = preparationFailure;
         NES::Test::AsyncSourceTestPreparedCall::setExecutionDelay(executionDelay);
-        const auto factoryCallsAfterConfigCreation = NES::Test::AsyncSourceTestOperator::factoryCreations.load();
         const auto producer = builder.call(AsyncOperator{nativeConfig}, {});
         if (twoGraphNodes)
         {
-            const auto consumer = builder.call(AsyncOperator{nativeConfig}, {producer->output(0)});
+            const auto consumer = builder.call(AsyncOperator{nativeConfig}, {producer});
             builder.exportOutput(consumer->output(0), QualifiedIdentifier::parse("RESULT"));
         }
         else
         {
             builder.exportOutput(producer->output(0), QualifiedIdentifier::parse("RESULT"));
         }
-        const AsyncSourceConfig config{
-            .channel = channel, .calls = builder.build(), .maxConcurrency = concurrency, .maxRetries = sourceRetries};
+        const AsyncSourceConfig config{.channel = channel, .calls = builder.build(), .maxConcurrency = concurrency};
         const auto descriptor = catalog.getAnonymousSource(
-            PhysicalSourceBuilder{
-                GeneralSourceConfig{.host = Host{"localhost:8080"}, .maxInflightBuffers = std::nullopt},
-                PluginSourceConfiguration{Identifier::parse("ASYNC"), ExplicitAny{std::any{config}}},
-                InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
+            PhysicalSourceBuilder{GeneralSourceConfig{.host = Host{"localhost:8080"}, .maxInflightBuffers = std::nullopt},
+                                  PluginSourceConfiguration{Identifier::parse("ASYNC"), ExplicitAny{std::any{config}}},
+                                  InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}}},
             schema);
         EXPECT_TRUE(descriptor.has_value());
         if (!descriptor)
@@ -573,7 +408,6 @@ public:
         {
             auto sink = channel->takeSender();
             AsyncSource source{installedConfig, *descriptor};
-            EXPECT_EQ(NES::Test::AsyncSourceTestOperator::factoryCreations.load(), factoryCallsAfterConfigCreation);
             channel->validate();
             source.open(provider);
             for (size_t buffer = 0; buffer < bufferCount; ++buffer)
@@ -653,23 +487,23 @@ TEST_F(AsyncSourceValueTest, InvalidArgumentsFailPreparationOnceWithoutExecuting
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, std::nullopt, 0, 8, 1, 1, 1, true, true, stats), Exception);
+    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, 8, 0, 1, 1, 1, true, true, stats), Exception);
     EXPECT_EQ(stats->preparations.load(), 1);
     EXPECT_EQ(stats->attempts.load(), 0);
 }
 
-TEST_F(AsyncSourceValueTest, PermanentFailureIsNotRetriedEvenWithAnExplicitRetryOverride)
+TEST_F(AsyncSourceValueTest, PermanentFailureIsNotRetriedEvenWithExplicitRetries)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, size_t{3}, 1, 8, 1, 1, 1, false, false, stats), Exception);
+    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, 3, 1, 1, 1, 1, false, false, stats), Exception);
     EXPECT_EQ(stats->attempts.load(), 1);
 }
 
-TEST_F(AsyncSourceValueTest, RuntimeDoesNotReplayTheConcreteConfigFactory)
+TEST_F(AsyncSourceValueTest, NativeConfigurationSurvivesSourceConstructionAndExecution)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, size_t{0});
+    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, 0);
     EXPECT_EQ(stats->preparations.load(), 1);
     EXPECT_EQ(stats->attempts.load(), 1);
 }
@@ -677,7 +511,7 @@ TEST_F(AsyncSourceValueTest, RuntimeDoesNotReplayTheConcreteConfigFactory)
 TEST_F(AsyncSourceValueTest, ValueOwnedBuffersSupportConcurrentRowsAndOrderedRemoval)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, size_t{0}, 0, 0, 8, 2, 4);
+    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, 0, 0, 8, 2, 4);
     EXPECT_EQ(stats->attempts.load(), 16);
 }
 
@@ -685,45 +519,38 @@ TEST_F(AsyncSourceValueTest, FailedRowsDrainBeforeBorrowedBuffersAreCleared)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, size_t{0}, 1, 0, 8, 2, 4, true, false, stats), Exception);
+    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, 0, 1, 8, 2, 4, true, false, stats), Exception);
     EXPECT_GE(stats->attempts.load(), 1);
 }
 
-TEST_F(AsyncSourceValueTest, ExplicitZeroRetriesOverridesTheSourceDefault)
+TEST_F(AsyncSourceValueTest, DefaultZeroRetriesFailsAfterSingleAttempt)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, size_t{0}, 2, 3, 1, 1, 1, true, false, stats), Exception);
+    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, 0, 2, 1, 1, 1, true, false, stats), Exception);
     EXPECT_EQ(stats->attempts.load(), 1);
 }
 
-TEST_F(AsyncSourceValueTest, ExplicitRetriesOverrideADisabledSourceDefault)
+TEST_F(AsyncSourceValueTest, PerRowRetriesSucceedWithinBudget)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, size_t{2}, 2, 0);
+    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, 2, 2);
     EXPECT_EQ(stats->attempts.load(), 3);
 }
 
-TEST_F(AsyncSourceValueTest, ExplicitRetryCountBoundsTheNumberOfAttempts)
+TEST_F(AsyncSourceValueTest, PerRowRetryCountBoundsTheNumberOfAttempts)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, size_t{1}, 2, 3, 1, 1, 1, true, false, stats), Exception);
+    EXPECT_THROW(run(SharedRuntimeValues::make(int64_t{42}), type, 1, 2, 1, 1, 1, true, false, stats), Exception);
     EXPECT_EQ(stats->attempts.load(), 2);
-}
-
-TEST_F(AsyncSourceValueTest, UnspecifiedRetryPolicyUsesTheSourceDefault)
-{
-    const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto stats = run(SharedRuntimeValues::make(int64_t{42}), type, std::nullopt, 2);
-    EXPECT_EQ(stats->attempts.load(), 3);
 }
 
 TEST_F(AsyncSourceValueTest, ConcurrentRowsShareOperatorStateButUseIndependentSlotState)
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    run(SharedRuntimeValues::make(int64_t{42}), type, std::nullopt, 0, 0, 8, 1, 4, true, false, stats, std::chrono::milliseconds{25});
+    run(SharedRuntimeValues::make(int64_t{42}), type, 0, 0, 8, 1, 4, true, false, stats, std::chrono::milliseconds{25});
     EXPECT_EQ(stats->operatorStateConstructions.load(), 1);
     EXPECT_EQ(stats->operatorStateDestructions.load(), 1);
     EXPECT_GE(stats->slotStateConstructions.load(), 2);
@@ -736,8 +563,8 @@ TEST_F(AsyncSourceValueTest, SeparateSourceExecutionsHaveIndependentOperatorStat
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    run(SharedRuntimeValues::make(int64_t{42}), type, std::nullopt, 0, 0, 1, 1, 2, true, false, stats);
-    run(SharedRuntimeValues::make(int64_t{42}), type, std::nullopt, 0, 0, 1, 1, 2, true, false, stats);
+    run(SharedRuntimeValues::make(int64_t{42}), type, 0, 0, 1, 1, 2, true, false, stats);
+    run(SharedRuntimeValues::make(int64_t{42}), type, 0, 0, 1, 1, 2, true, false, stats);
     EXPECT_EQ(stats->operatorStateConstructions.load(), 2);
     EXPECT_EQ(stats->operatorStateDestructions.load(), 2);
     EXPECT_EQ(stats->livePreparedAtOperatorStateDestruction.load(), 0);
@@ -747,7 +574,7 @@ TEST_F(AsyncSourceValueTest, GraphCallsUsingTheSameConfigHaveIndependentOperator
 {
     const DataType type{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
     auto stats = std::make_shared<NES::Test::AsyncSourceTestStats>();
-    run(SharedRuntimeValues::make(int64_t{42}), type, std::nullopt, 0, 0, 2, 1, 2, true, false, stats, std::chrono::milliseconds{10}, true);
+    run(SharedRuntimeValues::make(int64_t{42}), type, 0, 0, 2, 1, 2, true, false, stats, std::chrono::milliseconds{10}, true);
     EXPECT_EQ(stats->operatorStateConstructions.load(), 2);
     EXPECT_EQ(stats->operatorStateDestructions.load(), 2);
     EXPECT_EQ(stats->preparations.load(), 4);

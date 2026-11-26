@@ -37,7 +37,8 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Sources/AsyncInputAccessor.hpp>
+#include <Operators/AsyncLoweringContext.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/CheckedDeadline.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -84,11 +85,10 @@ void requireInteger(const LogicalFunction& f, const char* name)
     }
 }
 
-void validate(
-    const LogicalFunction& body,
-    const LogicalFunction& url,
-    const std::optional<LogicalFunction>& timeout,
-    const std::optional<LogicalFunction>& retries)
+void validate(const LogicalFunction& body,
+              const LogicalFunction& url,
+              const std::optional<LogicalFunction>& timeout,
+              const std::optional<LogicalFunction>& retries)
 {
     requireText(body, "body");
     requireText(url, "URL");
@@ -136,13 +136,12 @@ const std::vector<LogicalFunction>& unpack(const std::vector<LogicalFunction>& a
 }
 }
 
-HttpCallLogicalOperator::HttpCallLogicalOperator(
-    WeakLogicalOperator self,
-    LogicalOperator child,
-    LogicalFunction body,
-    LogicalFunction url,
-    std::optional<LogicalFunction> timeoutMillis,
-    std::optional<LogicalFunction> retries)
+HttpCallLogicalOperator::HttpCallLogicalOperator(WeakLogicalOperator self,
+                                                 LogicalOperator child,
+                                                 LogicalFunction body,
+                                                 LogicalFunction url,
+                                                 std::optional<LogicalFunction> timeoutMillis,
+                                                 std::optional<LogicalFunction> retries)
     : ManagedByOperator(std::move(self))
     , child(std::move(child))
     , body(std::move(body))
@@ -159,60 +158,53 @@ HttpCallLogicalOperator::create(LogicalOperator child, LogicalFunction body, Log
     return TypedLogicalOperator<HttpCallLogicalOperator>{std::move(child), std::move(body), std::move(url), std::nullopt, std::nullopt};
 }
 
-TypedLogicalOperator<HttpCallLogicalOperator> HttpCallLogicalOperator::create(
-    LogicalOperator child,
-    LogicalFunction body,
-    LogicalFunction url,
-    std::optional<LogicalFunction> timeout,
-    std::optional<LogicalFunction> retries)
+TypedLogicalOperator<HttpCallLogicalOperator> HttpCallLogicalOperator::create(LogicalOperator child,
+                                                                              LogicalFunction body,
+                                                                              LogicalFunction url,
+                                                                              std::optional<LogicalFunction> timeout,
+                                                                              std::optional<LogicalFunction> retries)
 {
     return TypedLogicalOperator<HttpCallLogicalOperator>{
         std::move(child), std::move(body), std::move(url), std::move(timeout), std::move(retries)};
 }
 
-AsyncOperatorLowering HttpCallLogicalOperator::lowerToAsync(LogicalOperator op)
+AsyncOperator HttpCallLogicalOperator::lowerToAsync(const LogicalOperator& op, AsyncLoweringContext& context)
 {
-    const auto& v = *op.getAs<HttpCallLogicalOperator>();
-    auto args = v.functionArguments();
-    std::vector<DataType> types;
-    for (const auto& a : args)
-    {
-        types.push_back(a.getDataType());
-    }
-    auto runtime = HttpCallAsyncOperator::create({.inputs = AsyncInputAccessors{std::move(types)}});
-    return {.implementation = std::move(runtime), .arguments = std::move(args)};
+    const auto& value = *op.getAs<HttpCallLogicalOperator>();
+    return HttpCallAsyncOperator{context.lower(value.getBody()),
+                                 context.lower(value.getUrl()),
+                                 context.lower(value.getTimeoutMillis()),
+                                 context.lower(value.getRetries())};
 }
 
 OperatorFunctionRegistryEntry HttpCallLogicalOperator::functionSyntax()
 {
-    return {
-        .resultName = Identifier::parse("response"),
-        .inferResultType =
-            [](const std::vector<LogicalFunction>& input)
-        {
-            const auto& a = unpack(input);
-            validate(a[0], a[1], a.size() > 2 ? std::optional{a[2]} : std::nullopt, a.size() > 3 ? std::optional{a[3]} : std::nullopt);
-            return DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
-        },
-        .createOperator =
-            [](LogicalOperator child, const std::vector<LogicalFunction>& input)
-        {
-            const auto& a = unpack(input);
-            return LogicalOperator{create(
-                std::move(child),
-                a[0],
-                a[1],
-                a.size() > 2 ? std::optional{a[2]} : std::nullopt,
-                a.size() > 3 ? std::optional{a[3]} : std::nullopt)};
-        },
-        .getArgumentsFromOperator = [](const LogicalOperator& op) -> std::optional<std::vector<LogicalFunction>>
-        {
-            if (auto v = op.tryGetAs<HttpCallLogicalOperator>())
+    return {.resultName = Identifier::parse("response"),
+            .inferResultType =
+                [](const std::vector<LogicalFunction>& input)
             {
-                return v.value()->functionArguments();
-            }
-            return std::nullopt;
-        }};
+                const auto& a = unpack(input);
+                validate(a[0], a[1], a.size() > 2 ? std::optional{a[2]} : std::nullopt, a.size() > 3 ? std::optional{a[3]} : std::nullopt);
+                return DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
+            },
+            .createOperator =
+                [](LogicalOperator child, const std::vector<LogicalFunction>& input)
+            {
+                const auto& a = unpack(input);
+                return LogicalOperator{create(std::move(child),
+                                              a[0],
+                                              a[1],
+                                              a.size() > 2 ? std::optional{a[2]} : std::nullopt,
+                                              a.size() > 3 ? std::optional{a[3]} : std::nullopt)};
+            },
+            .getArgumentsFromOperator = [](const LogicalOperator& op) -> std::optional<std::vector<LogicalFunction>>
+            {
+                if (auto v = op.tryGetAs<HttpCallLogicalOperator>())
+                {
+                    return v.value()->functionArguments();
+                }
+                return std::nullopt;
+            }};
 }
 
 bool HttpCallLogicalOperator::operator==(const HttpCallLogicalOperator& o) const
@@ -242,9 +234,8 @@ void HttpCallLogicalOperator::inferLocalSchema()
     auto schema = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(fields);
     if (!schema)
     {
-        throw CannotInferSchema(
-            "HttpCall result fields collide; use a projection to rename fields: {}",
-            Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(schema.error()));
+        throw CannotInferSchema("HttpCall result fields collide; use a projection to rename fields: {}",
+                                Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(schema.error()));
     }
     outputSchema = std::move(schema).value();
 }
@@ -298,9 +289,8 @@ std::vector<LogicalFunction> HttpCallLogicalOperator::functionArguments() const
     }
     else if (retries)
     {
-        result.emplace_back(
-            ConstantValueLogicalFunction{
-                DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, std::to_string(HTTP_CALL_DEFAULT_TIMEOUT_MILLIS)});
+        result.emplace_back(ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE},
+                                                         std::to_string(HTTP_CALL_DEFAULT_TIMEOUT_MILLIS)});
     }
     if (retries)
     {
@@ -325,8 +315,8 @@ std::string HttpCallLogicalOperator::explain(ExplainVerbosity verbosity, Operato
     return result + "], outputs: [RESPONSE])";
 }
 
-Reflected Reflector<TypedLogicalOperator<HttpCallLogicalOperator>>::operator()(
-    const TypedLogicalOperator<HttpCallLogicalOperator>& op, const ReflectionContext& c) const
+Reflected Reflector<TypedLogicalOperator<HttpCallLogicalOperator>>::operator()(const TypedLogicalOperator<HttpCallLogicalOperator>& op,
+                                                                               const ReflectionContext& c) const
 {
     return c.reflect(
         detail::ReflectedHttpCallLogicalOperator{op.getId(), op->getBody(), op->getUrl(), op->getTimeoutMillis(), op->getRetries()});

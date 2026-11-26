@@ -14,6 +14,7 @@
 #include <HttpCallLogicalOperator.hpp>
 
 #include <concepts>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -22,8 +23,11 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/AsynchronousOperator.hpp>
+#include <Operators/AsyncLoweringContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -52,14 +56,13 @@ LogicalOperator child(Schema<UnqualifiedUnboundField, Ordered> schema)
 {
     const auto logical = LogicalSource{Identifier::parse("http_input"), std::move(schema)};
     const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const auto descriptor = SourceDescriptor::create(
-                                PhysicalSourceId{1},
-                                logical,
-                                Identifier::parse("File"),
-                                Host{"localhost"},
-                                sourceConfig,
-                                {{Identifier::parse("type"), "CSV"}},
-                                false)
+    const auto descriptor = SourceDescriptor::create(PhysicalSourceId{1},
+                                                     logical,
+                                                     Identifier::parse("File"),
+                                                     Host{"localhost"},
+                                                     sourceConfig,
+                                                     {{Identifier::parse("type"), "CSV"}},
+                                                     false)
                                 .value();
     return SourceDescriptorLogicalOperator::create(descriptor);
 }
@@ -132,11 +135,11 @@ TEST(HttpCallLogicalOperatorTest, RepeatedOperatorsUseAnOrdinaryProjectionForRes
     const auto preservedFirst = renamed->getOutputSchema()[firstName].value();
     const auto second = HttpCallLogicalOperator::create(renamed, FieldAccessLogicalFunction{preservedFirst}, url);
     const auto secondResponse = second->getOutputSchema()[responseName].value();
-    const auto projected = ProjectionLogicalOperator::create(
-        second,
-        {{firstName, FieldAccessLogicalFunction{second->getOutputSchema()[firstName].value()}},
-         {secondName, FieldAccessLogicalFunction{secondResponse}}},
-        ProjectionLogicalOperator::Asterisk{false});
+    const auto projected
+        = ProjectionLogicalOperator::create(second,
+                                            {{firstName, FieldAccessLogicalFunction{second->getOutputSchema()[firstName].value()}},
+                                             {secondName, FieldAccessLogicalFunction{secondResponse}}},
+                                            ProjectionLogicalOperator::Asterisk{false});
     const auto schema = projected->getOutputSchema();
     EXPECT_EQ(schema.size(), 2U);
     EXPECT_TRUE(schema[firstName]);
@@ -148,28 +151,32 @@ TEST(HttpCallLogicalOperatorTest, RepeatedOperatorsUseAnOrdinaryProjectionForRes
 TEST(HttpCallLogicalOperatorTest, DynamicNamedInputsAreValidatedLogicallyAndConstructRuntimeOnlyOnLowering)
 {
     const DataType millisType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto input = child(
-        Schema<UnqualifiedUnboundField, Ordered>{
-            {Identifier::parse("body"), text}, {Identifier::parse("url"), text}, {Identifier::parse("timeout"), millisType}});
-    const auto op = HttpCallLogicalOperator::create(
-        input,
-        FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("body")].value()},
-        FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("url")].value()},
-        FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("timeout")].value()},
-        {});
+    const auto input = child(Schema<UnqualifiedUnboundField, Ordered>{
+        {Identifier::parse("body"), text}, {Identifier::parse("url"), text}, {Identifier::parse("timeout"), millisType}});
+    const auto op
+        = HttpCallLogicalOperator::create(input,
+                                          FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("body")].value()},
+                                          FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("url")].value()},
+                                          FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("timeout")].value()},
+                                          {});
     EXPECT_EQ(op->getTimeoutMillis()->getDataType(), millisType);
-    const auto lowered = HttpCallLogicalOperator::lowerToAsync(op);
-    EXPECT_EQ(lowered.implementation.getType(), "HTTP_CALL");
-    ASSERT_EQ(lowered.arguments.size(), 3U);
-    EXPECT_EQ(lowered.arguments.at(0), op->getBody());
-    EXPECT_EQ(lowered.arguments.at(1), op->getUrl());
+    std::unordered_map<QualifiedIdentifierBase<1>, AsyncInputAccessor> fields;
+    fields.emplace(op->getBody().getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName(),
+                   AsyncInputAccessor{RuntimeValue{std::string{"body"}}});
+    fields.emplace(op->getUrl().getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName(),
+                   AsyncInputAccessor{RuntimeValue{std::string{"http://localhost"}}});
+    fields.emplace(op->getTimeoutMillis()->getAs<FieldAccessLogicalFunction>()->getField().getFullyQualifiedName(),
+                   AsyncInputAccessor{RuntimeValue{int64_t{100}}});
+    AsyncLoweringContext context{std::move(fields)};
+    const auto lowered = HttpCallLogicalOperator::lowerToAsync(op, context);
+    EXPECT_EQ(lowered.getType(), "HTTP_CALL");
+    EXPECT_EQ(context.getDependencies().size(), 0U);
 }
 
 TEST(HttpCallLogicalOperatorTest, LogicalInferenceRejectsANonintegerOrNullableRetriesField)
 {
-    for (const auto& retriesType :
-         {DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE},
-          DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}})
+    for (const auto& retriesType : {DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE},
+                                    DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}})
     {
         const auto input = child(Schema<UnqualifiedUnboundField, Ordered>{{Identifier::parse("retries"), retriesType}});
         const auto retries = FieldAccessLogicalFunction{input.getOutputSchema()[Identifier::parse("retries")].value()};
@@ -186,15 +193,15 @@ TEST(HttpCallLogicalOperatorTest, ReflectionRoundTripRetainsConcreteTypeAndNamed
 {
     const auto op = call();
     const auto schema = Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("response"), text}};
-    const auto descriptor = SinkDescriptor::createNamed(
-                                INVALID_SINK_ID,
-                                Identifier::parse("http_test_sink"),
-                                Identifier::parse("file"),
-                                schema,
-                                Host{"localhost"},
-                                {{Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}},
-                                {})
-                                .value();
+    const auto descriptor
+        = SinkDescriptor::createNamed(INVALID_SINK_ID,
+                                      Identifier::parse("http_test_sink"),
+                                      Identifier::parse("file"),
+                                      schema,
+                                      Host{"localhost"},
+                                      {{Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}},
+                                      {})
+              .value();
     const auto sinkOp = SinkLogicalOperator::create(LogicalOperator{op}, descriptor).withInferredSchema();
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {LogicalOperator{sinkOp}}};
     const auto restored = QueryPlanSerializationUtil::deserializeQueryPlan(QueryPlanSerializationUtil::serializeQueryPlan(plan));

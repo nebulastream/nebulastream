@@ -26,9 +26,9 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncError.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
-#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/Reflection.hpp>
@@ -37,8 +37,6 @@
 
 namespace NES
 {
-using AsyncArgumentsWithConstants = std::vector<std::pair<DataType, std::optional<RuntimeValue>>>;
-
 namespace detail
 {
 struct ErasedAsyncOperator;
@@ -52,27 +50,22 @@ struct IsTypedAsyncOperator : std::false_type
 }
 
 template <typename T>
-concept AsyncOperatorConcept = requires(
-    const T& op,
-    AsyncExecutionContext& context,
-    const AsyncRowHandle& row,
-    AsyncInputAccessors inputs,
-    const ReflectionContext& reflection) {
-    { op.getType() } -> std::convertible_to<std::string_view>;
-    { op.getOutputSchema() } -> std::same_as<Schema<UnqualifiedUnboundField, Ordered>>;
-    { op.getInputAccessors() } -> std::same_as<const AsyncInputAccessors&>;
-    { op.withInputAccessors(std::move(inputs)) } -> std::same_as<T>;
-    { op.prepare(context, row) } -> std::same_as<AsyncResult<std::unique_ptr<PreparedAsyncCall>>>;
-    { reflection.reflect(op) } -> std::same_as<Reflected>;
-};
+concept AsyncOperatorConcept
+    = requires(const T& op, AsyncExecutionContext& context, const AsyncRowHandle& row, const ReflectionContext& reflection) {
+          { op.getType() } -> std::convertible_to<std::string_view>;
+          { op.getWrittenFields() } -> std::same_as<Schema<UnqualifiedUnboundField, Ordered>>;
+          { op.prepare(context, row) } -> std::same_as<AsyncResult<std::unique_ptr<PreparedAsyncCall>>>;
+          { reflection.reflect(op) } -> std::same_as<Reflected>;
+      };
 template <typename Checked = detail::ErasedAsyncOperator>
 struct TypedAsyncOperator;
 using AsyncOperator = TypedAsyncOperator<>;
 /// The owning operator handle and values are retained by the coroutine; explicit context must outlive it.
-[[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>>
-invokeOnce(AsyncOperator, AsyncExecutionContext&, SharedRuntimeValues);
+[[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator, AsyncExecutionContext&, AsyncRowHandle);
+[[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator, AsyncExecutionContext&);
 /// Owns a fresh context for the full invocation lifetime.
-[[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator, SharedRuntimeValues);
+[[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator, AsyncRowHandle);
+[[nodiscard]] boost::asio::awaitable<AsyncResult<SharedRuntimeValues>> invokeOnce(AsyncOperator);
 
 namespace detail
 {
@@ -80,11 +73,8 @@ struct ErasedAsyncOperator
 {
     virtual ~ErasedAsyncOperator() = default;
     [[nodiscard]] virtual std::string getType() const = 0;
-    [[nodiscard]] virtual Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const = 0;
-    [[nodiscard]] virtual const AsyncInputAccessors& getInputAccessors() const = 0;
-    [[nodiscard]] virtual AsyncOperator withInputAccessors(AsyncInputAccessors) const = 0;
+    [[nodiscard]] virtual Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const = 0;
     [[nodiscard]] virtual AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext&, const AsyncRowHandle&) const = 0;
-    [[nodiscard]] virtual std::optional<size_t> maxConcurrency() const = 0;
     [[nodiscard]] virtual Reflected reflect(const ReflectionContext&) const = 0;
 };
 
@@ -102,9 +92,8 @@ template <typename Checked>
 struct TypedAsyncOperator
 {
     template <typename T>
-    requires(
-        !detail::IsTypedAsyncOperator<T>::value
-        && AsyncOperatorConcept<T> && (std::same_as<Checked, detail::ErasedAsyncOperator> || std::same_as<Checked, T>))
+    requires(!detail::IsTypedAsyncOperator<T>::value
+             && AsyncOperatorConcept<T> && (std::same_as<Checked, detail::ErasedAsyncOperator> || std::same_as<Checked, T>))
     TypedAsyncOperator(T op) /// NOLINT(google-explicit-constructor)
         : self(std::make_shared<const detail::AsyncOperatorModel<T>>(std::move(op)))
     {
@@ -156,42 +145,14 @@ struct TypedAsyncOperator
 
     [[nodiscard]] std::string getType() const { return getErased().getType(); }
 
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const { return getErased().getOutputSchema(); }
-
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const { return getErased().getInputAccessors(); }
-
-    [[nodiscard]] TypedAsyncOperator withInputAccessors(AsyncInputAccessors inputs) const
-    {
-        auto result = getErased().withInputAccessors(std::move(inputs));
-        if constexpr (std::same_as<Checked, detail::ErasedAsyncOperator>)
-        {
-            return result;
-        }
-        else
-        {
-            return result.template getAs<Checked>();
-        }
-    }
+    /// Ordered fields written by this invocation, excluding forwarded input fields.
+    /// Decomposition currently requires these fields to be appended under new names.
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const { return getErased().getWrittenFields(); }
 
     [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const
     {
         return getErased().prepare(context, row);
     }
-
-    /// Standalone invocation convenience: create a row handle for ready values without constructing a physical tuple buffer.
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context, SharedRuntimeValues values) const
-    {
-        std::vector<DataType> types;
-        types.reserve(values.size());
-        for (size_t index = 0; index < values.size(); ++index)
-        {
-            types.push_back(values[index].getDataType());
-        }
-        const auto configured = withInputAccessors(AsyncInputAccessors{std::move(types)});
-        return configured.prepare(context, configured.getInputAccessors().createRowHandle(std::move(values)));
-    }
-
-    [[nodiscard]] std::optional<size_t> maxConcurrency() const { return getErased().maxConcurrency(); }
 
     [[nodiscard]] Reflected reflect(const ReflectionContext& context) const { return getErased().reflect(context); }
 
@@ -221,32 +182,12 @@ struct AsyncOperatorModel final : ErasedAsyncOperator
 
     [[nodiscard]] std::string getType() const override { return std::string{impl.getType()}; }
 
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getOutputSchema() const override { return impl.getOutputSchema(); }
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getWrittenFields() const override { return impl.getWrittenFields(); }
 
-    [[nodiscard]] const AsyncInputAccessors& getInputAccessors() const override { return impl.getInputAccessors(); }
-
-    [[nodiscard]] AsyncOperator withInputAccessors(AsyncInputAccessors inputs) const override
-    {
-        return impl.withInputAccessors(std::move(inputs));
-    }
-
-    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>>
-    prepare(AsyncExecutionContext& context, const AsyncRowHandle& row) const override
+    [[nodiscard]] AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepare(AsyncExecutionContext& context,
+                                                                          const AsyncRowHandle& row) const override
     {
         return impl.prepare(context, row);
-    }
-
-    [[nodiscard]] std::optional<size_t> maxConcurrency() const override
-    {
-        if constexpr (requires { impl.maxConcurrency(); })
-        {
-            static_assert(std::same_as<decltype(impl.maxConcurrency()), std::optional<size_t>>);
-            return impl.maxConcurrency();
-        }
-        else
-        {
-            return std::nullopt;
-        }
     }
 
     [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override { return context.reflect(impl); }

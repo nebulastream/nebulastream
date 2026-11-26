@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -47,6 +48,13 @@ public:
     explicit SourceHandle(
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
+        SourceRuntimeConfiguration configuration,
+        std::shared_ptr<AbstractBufferProvider> bufferPool,
+        std::unique_ptr<Source> sourceImplementation);
+
+    explicit SourceHandle(
+        BackpressureListener backpressureListener,
+        std::vector<OriginId> originIds,
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
         std::unique_ptr<Source> sourceImplementation);

@@ -12,12 +12,11 @@
     limitations under the License.
 */
 #pragma once
-
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
-#include <type_traits>
-#include <variant>
+#include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/RuntimeValue.hpp>
@@ -25,8 +24,8 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
-#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -35,54 +34,6 @@ namespace detail
 struct AsyncGraphScope;
 }
 
-class AsyncCall;
-class AsyncCallGraph;
-class AsyncCallGraphBuilder;
-
-/// An input field resolved against one graph's immutable input schema. A name alone cannot be reused in another input scope.
-class InputFieldReference
-{
-public:
-    /// Value handles retain their reference when passed as rvalues; moving cannot leave an empty reference behind.
-    InputFieldReference(const InputFieldReference&) = default;
-    InputFieldReference& operator=(const InputFieldReference&) = default;
-    InputFieldReference(InputFieldReference&& other) noexcept(std::is_nothrow_copy_constructible_v<QualifiedIdentifier>);
-    InputFieldReference& operator=(InputFieldReference&& other) noexcept(std::is_nothrow_copy_assignable_v<QualifiedIdentifier>);
-    ~InputFieldReference() = default;
-    [[nodiscard]] QualifiedIdentifier getField() const;
-    [[nodiscard]] DataType getDataType() const;
-
-private:
-    friend class AsyncCallGraphBuilder;
-    InputFieldReference(std::shared_ptr<const detail::AsyncGraphScope> scope, QualifiedIdentifier field);
-    std::shared_ptr<const detail::AsyncGraphScope> scope;
-    QualifiedIdentifier field;
-};
-
-/// A validated output of an owning producer, never a position in some unrelated call array.
-/// Only the producer can construct this handle, and its immutable signature remains alive with it.
-class AsyncResultReference
-{
-public:
-    AsyncResultReference(const AsyncResultReference&) = default;
-    AsyncResultReference& operator=(const AsyncResultReference&) = default;
-    AsyncResultReference(AsyncResultReference&& other) noexcept;
-    AsyncResultReference& operator=(AsyncResultReference&& other) noexcept;
-    ~AsyncResultReference() = default;
-    [[nodiscard]] std::shared_ptr<const AsyncCall> getProducer() const;
-    [[nodiscard]] size_t getOutputIndex() const;
-    [[nodiscard]] DataType getDataType() const;
-
-private:
-    friend class AsyncCall;
-    AsyncResultReference(std::shared_ptr<const AsyncCall> producer, size_t index);
-    std::shared_ptr<const AsyncCall> producer;
-    size_t index;
-};
-
-using AsyncCallArgument = std::variant<RuntimeValue, InputFieldReference, AsyncResultReference>;
-
-/// Immutable computation description, separate from any row's live coroutine/result state.
 class AsyncCall final : public std::enable_shared_from_this<AsyncCall>
 {
 public:
@@ -92,19 +43,19 @@ public:
     AsyncCall(AsyncCall&&) = delete;
     AsyncCall& operator=(AsyncCall&&) = delete;
     ~AsyncCall() = default;
-
     [[nodiscard]] std::string getFunctionType() const;
     [[nodiscard]] const AsyncOperator& getAsyncOperator() const;
     [[nodiscard]] const std::vector<DataType>& getResultTypes() const;
-    [[nodiscard]] const std::vector<AsyncCallArgument>& getArguments() const;
+    [[nodiscard]] const std::vector<Ptr>& getDependencies() const;
     [[nodiscard]] AsyncResultReference output(size_t index) const;
 
 private:
     friend class AsyncCallGraphBuilder;
-    AsyncCall(std::shared_ptr<const detail::AsyncGraphScope> scope, AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments);
+    friend class AsyncInputAccessor;
+    AsyncCall(std::shared_ptr<const detail::AsyncGraphScope>, AsyncOperator, std::vector<Ptr>);
     std::shared_ptr<const detail::AsyncGraphScope> scope;
     AsyncOperator asyncOperator;
-    std::vector<AsyncCallArgument> arguments;
+    std::vector<Ptr> dependencies;
     std::vector<DataType> resultTypes;
 };
 
@@ -114,40 +65,42 @@ struct AsyncOutputMapping
     QualifiedIdentifier field;
 };
 
-/// A reusable DAG: producer handles preserve identity/sharing; no live awaitables are stored in the plan.
-/// Reflection resolves local wire IDs into checked owning references, rejecting dangling edges/cycles.
 class AsyncCallGraph
 {
 public:
     [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getInputSchema() const;
     [[nodiscard]] const std::vector<AsyncCall::Ptr>& getCalls() const;
     [[nodiscard]] const std::vector<AsyncOutputMapping>& getOutputs() const;
+    [[nodiscard]] const std::vector<AsyncCall::Ptr>& getRequiredCalls() const;
+    [[nodiscard]] AsyncRowHandle createRowHandle(std::function<RuntimeValue(const InputFieldReference&)>,
+                                                 std::unordered_map<AsyncCall::Ptr, SharedRuntimeValues>) const;
 
 private:
     friend class AsyncCallGraphBuilder;
-    AsyncCallGraph(
-        std::shared_ptr<const detail::AsyncGraphScope> scope, std::vector<AsyncCall::Ptr> calls, std::vector<AsyncOutputMapping> outputs);
+    friend struct Reflector<AsyncCallGraph>;
+    AsyncCallGraph(std::shared_ptr<const detail::AsyncGraphScope>,
+                   std::vector<AsyncCall::Ptr>,
+                   std::vector<AsyncOutputMapping>,
+                   std::vector<AsyncCall::Ptr>);
     std::shared_ptr<const detail::AsyncGraphScope> scope;
     std::vector<AsyncCall::Ptr> calls;
     std::vector<AsyncOutputMapping> outputs;
+    std::vector<AsyncCall::Ptr> requiredCalls;
 };
 
-/// A single-use builder defines the input schema scope. Misuse is a precondition violation (contract checks may be disabled); callers must supply
-/// handles from this builder's scope and finalize it only once. Foreign field/result handles are rejected, including after a rewrite.
-/// Calls can only depend on already constructed immutable producers, making cycles impossible through this API.
 class AsyncCallGraphBuilder
 {
 public:
-    explicit AsyncCallGraphBuilder(Schema<QualifiedUnboundField, Ordered> inputSchema);
+    explicit AsyncCallGraphBuilder(Schema<QualifiedUnboundField, Ordered>);
     AsyncCallGraphBuilder(const AsyncCallGraphBuilder&) = delete;
     AsyncCallGraphBuilder& operator=(const AsyncCallGraphBuilder&) = delete;
     AsyncCallGraphBuilder(AsyncCallGraphBuilder&&) = delete;
     AsyncCallGraphBuilder& operator=(AsyncCallGraphBuilder&&) = delete;
     ~AsyncCallGraphBuilder() = default;
-
-    [[nodiscard]] InputFieldReference input(QualifiedIdentifier field) const;
-    [[nodiscard]] AsyncCall::Ptr call(AsyncOperator asyncOperator, std::vector<AsyncCallArgument> arguments);
-    void exportOutput(AsyncResultReference result, QualifiedIdentifier field);
+    [[nodiscard]] InputFieldReference input(QualifiedIdentifier) const;
+    [[nodiscard]] AsyncCall::Ptr call(AsyncOperator, std::vector<AsyncCall::Ptr>);
+    void require(AsyncCall::Ptr);
+    void exportOutput(AsyncResultReference, QualifiedIdentifier);
     [[nodiscard]] AsyncCallGraph build();
 
 private:
@@ -155,19 +108,19 @@ private:
     std::shared_ptr<const detail::AsyncGraphScope> scope;
     std::vector<AsyncCall::Ptr> calls;
     std::vector<AsyncOutputMapping> outputs;
+    std::vector<AsyncCall::Ptr> requiredCalls;
     bool built = false;
 };
 
 template <>
 struct Reflector<AsyncCallGraph>
 {
-    Reflected operator()(const AsyncCallGraph& graph, const ReflectionContext& context) const;
+    Reflected operator()(const AsyncCallGraph&, const ReflectionContext&) const;
 };
 
 template <>
 struct Unreflector<AsyncCallGraph>
 {
-    AsyncCallGraph operator()(const Reflected& data, const ReflectionContext& context) const;
+    AsyncCallGraph operator()(const Reflected&, const ReflectionContext&) const;
 };
-
 }

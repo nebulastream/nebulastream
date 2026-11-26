@@ -55,25 +55,18 @@ const ConfigField<std::optional<uint64_t>> CHANNEL_CAPACITY{
     optionalUInt,
     std::nullopt,
     "Not set"};
-
-const ConfigField<std::optional<uint64_t>> MAX_RETRIES{
-    Identifier::parse("max_retries"),
-    "Further attempts after retryable async errors, with exponential backoff starting at 100 ms",
-    optionalUInt,
-    std::nullopt,
-    "Not set"};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerAsyncConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY, MAX_RETRIES);
+    return createConfigSchema(Identifier::parse("async"), MAX_CONCURRENCY, CHANNEL_CAPACITY);
 }
 
 QueryOptimizerAsyncConfiguration QueryOptimizerAsyncConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(MAX_CONCURRENCY), config.get(CHANNEL_CAPACITY), config.get(MAX_RETRIES)};
+    return {config.get(MAX_CONCURRENCY), config.get(CHANNEL_CAPACITY)};
 }
 
 }

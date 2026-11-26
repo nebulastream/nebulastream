@@ -33,18 +33,15 @@ struct QueryOptimizerAsyncConfiguration
 
     QueryOptimizerAsyncConfiguration() = delete;
 
-    QueryOptimizerAsyncConfiguration(
-        std::optional<uint64_t> maxConcurrency, std::optional<uint64_t> channelCapacity, std::optional<uint64_t> maxRetries)
-        : maxConcurrency(maxConcurrency), channelCapacity(channelCapacity), maxRetries(maxRetries)
+    QueryOptimizerAsyncConfiguration(std::optional<uint64_t> maxConcurrency, std::optional<uint64_t> channelCapacity)
+        : maxConcurrency(maxConcurrency), channelCapacity(channelCapacity)
     {
     }
 
-    /// Rows of one async stage whose calls are in flight at the same time. A function of the stage may lower it.
+    /// Rows of one async stage whose calls are in flight at the same time.
     std::optional<uint64_t> maxConcurrency;
     /// Buffers that wait between the producer half of an async stage and its calls before the producer is held back.
     std::optional<uint64_t> channelCapacity;
-    /// Further attempts after retryable async errors, with exponential backoff starting at 100 ms.
-    std::optional<uint64_t> maxRetries;
 
     static QueryOptimizerAsyncConfiguration fromConfig(const InstantiatedConfig& config);
 };

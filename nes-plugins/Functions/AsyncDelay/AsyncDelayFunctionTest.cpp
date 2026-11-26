@@ -36,7 +36,10 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Sources/AsyncExecutionContext.hpp>
+#include <Sources/AsyncInputAccessor.hpp>
 #include <Sources/AsyncOperator.hpp>
+#include <Sources/AsyncError.hpp>
+#include <Sources/PreparedAsyncCall.hpp>
 #include <Sources/AsyncOperatorReflection.hpp>
 #include <Sources/SharedRuntimeValues.hpp>
 #include <Util/Reflection.hpp>
@@ -61,6 +64,16 @@ namespace
 {
 const DataType integer{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE};
 
+AsyncOperator delayOperator(RuntimeValue value, RuntimeValue millis)
+{
+    return AsyncDelayAsyncOperator{AsyncInputAccessor{std::move(value)}, AsyncInputAccessor{std::move(millis)}};
+}
+
+AsyncResult<std::unique_ptr<PreparedAsyncCall>> prepareDelay(AsyncExecutionContext& context, SharedRuntimeValues values)
+{
+    return delayOperator(values[0].toOwned(), values[1].toOwned()).prepare(context, AsyncRowHandle{});
+}
+
 LogicalFunction delayCall(std::vector<LogicalFunction> args)
 {
     return LogicalFunctionProvider::provide("ASYNC_DELAY", std::move(args));
@@ -69,14 +82,12 @@ LogicalFunction delayCall(std::vector<LogicalFunction> args)
 
 TEST(AsyncDelayFunctionTest, NativeConfigurationSignatureAndInitialValueType)
 {
-    const auto op = AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, integer}}});
+    const auto op = delayOperator(RuntimeValue{int64_t{1}}, RuntimeValue{uint64_t{0}});
     EXPECT_EQ(op.getType(), "ASYNC_DELAY");
-    const auto output = op.getOutputSchema();
+    const auto output = op.getWrittenFields();
     ASSERT_EQ(output.size(), 1);
     EXPECT_EQ(output.begin()->getDataType(), integer);
     EXPECT_EQ(static_cast<const Identifier&>(output.begin()->getFullyQualifiedName()), Identifier::parse("value"));
-    EXPECT_THROW(AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer}}}), Exception);
-    EXPECT_THROW(AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, integer, integer, integer}}}), Exception);
     const auto scalar = LogicalFunctionProvider::provide(
         "ASYNC_DELAY", {ConstantValueLogicalFunction{integer, "1"}, ConstantValueLogicalFunction{integer, "0"}});
     EXPECT_EQ(scalar.getAs<OperatorCallLogicalFunction>()->getOutputName(), Identifier::parse("value"));
@@ -84,36 +95,22 @@ TEST(AsyncDelayFunctionTest, NativeConfigurationSignatureAndInitialValueType)
         static_cast<void>(LogicalFunctionProvider::provide("ASYNC_DELAY", {ConstantValueLogicalFunction{integer, "1"}})
                               .withInferredDataType(Schema<Field, Unordered>{})),
         ErrorCode::InvalidQuerySyntax);
-    ASSERT_EXCEPTION_ERRORCODE(
-        static_cast<void>(LogicalFunctionProvider::provide(
-                              "ASYNC_DELAY",
-                              {ConstantValueLogicalFunction{integer, "1"},
-                               ConstantValueLogicalFunction{integer, "0"},
-                               ConstantValueLogicalFunction{integer, "1"},
-                               ConstantValueLogicalFunction{integer, "2"}})
-                              .withInferredDataType(Schema<Field, Unordered>{})),
-        ErrorCode::InvalidQuerySyntax);
+    ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(LogicalFunctionProvider::provide("ASYNC_DELAY",
+                                                                                  {ConstantValueLogicalFunction{integer, "1"},
+                                                                                   ConstantValueLogicalFunction{integer, "0"},
+                                                                                   ConstantValueLogicalFunction{integer, "1"}})
+                                                     .withInferredDataType(Schema<Field, Unordered>{})),
+                               ErrorCode::InvalidQuerySyntax);
 }
 
-TEST(AsyncDelayFunctionTest, LogicalInferenceValidatesOptionsAndCarriesConcurrency)
+TEST(AsyncDelayFunctionTest, LogicalInferenceValidatesMillisOption)
 {
     const Schema<Field, Unordered> schema{};
     const auto one = ConstantValueLogicalFunction{integer, "1"};
-    const auto zero = ConstantValueLogicalFunction{integer, "0"};
-    const auto configured = delayCall({one, zero, ConstantValueLogicalFunction{integer, "2"}}).withInferredDataType(schema);
-    const auto& arguments = configured.getAs<OperatorCallLogicalFunction>()->getArguments();
-    ASSERT_EQ(arguments.size(), 3U);
-    EXPECT_EQ(arguments.at(2).getDataType(), integer);
     const auto nullable = DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(delayCall({one, ConstantValueLogicalFunction{nullable, "0"}}).withInferredDataType(schema)),
         ErrorCode::DifferentFieldTypeExpected);
-    for (const auto& invalid : {std::string{"0"}, std::string{"-1"}})
-    {
-        ASSERT_EXCEPTION_ERRORCODE(
-            static_cast<void>(delayCall({one, zero, ConstantValueLogicalFunction{integer, invalid}}).withInferredDataType(schema)),
-            ErrorCode::CannotInferSchema);
-    }
 }
 
 TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfiguration)
@@ -127,17 +124,12 @@ TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfi
     const auto widened
         = call.withChildren({ConstantValueLogicalFunction{nullable, "2"}, zero}).withInferredDataType(Schema<Field, Unordered>{});
     EXPECT_EQ(widened.getDataType(), nullable);
-    const auto withConcurrency
-        = delayCall({one, zero, ConstantValueLogicalFunction{integer, "2"}}).withInferredDataType(Schema<Field, Unordered>{});
-    EXPECT_EQ(withConcurrency.getDataType(), integer);
     const ReflectionContext writer{std::make_shared<SharedPointerSerializationState>()};
     const ReflectionContext reader{std::make_shared<SharedPointerDeserializationState>()};
-    const auto reflected = writer.reflect(withConcurrency);
+    const auto reflected = writer.reflect(call);
     const auto restored = reader.unreflect<LogicalFunction>(reflected);
-    EXPECT_TRUE(std::ranges::equal(restored.getChildren(), withConcurrency.getChildren(), StructuralFunctionEqual{}));
-    ASSERT_EQ(restored.getAs<OperatorCallLogicalFunction>()->getArguments().size(), 3U);
-    EXPECT_EQ(
-        restored.getAs<OperatorCallLogicalFunction>()->getArguments().at(2).getAs<ConstantValueLogicalFunction>()->getConstantValue(), "2");
+    EXPECT_TRUE(std::ranges::equal(restored.getChildren(), call.getChildren(), StructuralFunctionEqual{}));
+    ASSERT_EQ(restored.getAs<OperatorCallLogicalFunction>()->getArguments().size(), 2U);
     ASSERT_EXCEPTION_ERRORCODE(
         static_cast<void>(delayCall({one, ConstantValueLogicalFunction{integer, "-1"}}).withInferredDataType(Schema<Field, Unordered>{})),
         ErrorCode::CannotInferSchema);
@@ -146,11 +138,12 @@ TEST(AsyncDelayFunctionTest, LogicalInferenceAndRewriteKeepArgumentsOutsideConfi
 TEST(AsyncDelayFunctionTest, ZeroDelayReturnsOnlyTypedValueAndPreparedCallCanBeReused)
 {
     boost::asio::io_context ioContext;
-    const AsyncOperator op = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt};
     const DataType nullable{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE};
-    const AsyncOperator nullableOp = AsyncDelayAsyncOperator{.valueType = nullable, .concurrencyLimit = std::nullopt};
+    const AsyncOperator nullableOp = delayOperator(RuntimeValue::null(nullable), RuntimeValue{uint64_t{0}});
     auto future = boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) co_spawn is declared by public boost/asio/co_spawn.hpp.
-        ioContext, invokeOnce(nullableOp, SharedRuntimeValues::make(RuntimeValue::null(nullable), uint64_t{0})), boost::asio::use_future);
+        ioContext,
+        invokeOnce(nullableOp, AsyncRowHandle{}),
+        boost::asio::use_future);
     ioContext.run();
     const auto result = future.get();
     ASSERT_TRUE(result);
@@ -159,8 +152,8 @@ TEST(AsyncDelayFunctionTest, ZeroDelayReturnsOnlyTypedValueAndPreparedCallCanBeR
     EXPECT_TRUE((*result)[0].isNull());
 
     AsyncExecutionContext context;
-    const auto prepared = op.prepare(context, SharedRuntimeValues::make(int64_t{9}, uint64_t{0})).value();
-    EXPECT_EQ(prepared->getRetryOverride(), std::nullopt);
+    const auto prepared = prepareDelay(context, SharedRuntimeValues::make(int64_t{9}, uint64_t{0})).value();
+    EXPECT_EQ(prepared->getMaxRetries(), size_t{0});
     for (int attempt = 0; attempt < 2; ++attempt)
     {
         boost::asio::io_context retryIo;
@@ -171,24 +164,10 @@ TEST(AsyncDelayFunctionTest, ZeroDelayReturnsOnlyTypedValueAndPreparedCallCanBeR
     }
 }
 
-TEST(AsyncDelayFunctionTest, FactoryAccessorsReadTheCurrentRowOnceBeforeSequentialAttempts)
+TEST(AsyncDelayFunctionTest, NamedConstantInputsAreCapturedBeforeSequentialAttempts)
 {
-    const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    const AsyncInputAccessors inputs{{integer, uintType}};
-    const auto op = AsyncDelayAsyncOperator::create({.inputs = inputs});
-    const auto values = std::make_shared<std::vector<RuntimeValue>>(
-        std::initializer_list<RuntimeValue>{RuntimeValue{int64_t{17}}, RuntimeValue{uint64_t{0}}});
-    const auto reads = std::make_shared<size_t>(0);
-    const auto row = inputs.createRowHandle(
-        [values, reads](const size_t index)
-        {
-            ++*reads;
-            return values->at(index);
-        });
     AsyncExecutionContext context;
-    const auto prepared = op.prepare(context, row).value();
-    EXPECT_EQ(*reads, 2);
-    values->at(0) = RuntimeValue{int64_t{42}};
+    const auto prepared = delayOperator(RuntimeValue{int64_t{17}}, RuntimeValue{uint64_t{0}}).prepare(context, AsyncRowHandle{}).value();
     for (size_t attempt = 0; attempt < 2; ++attempt)
     {
         boost::asio::io_context io;
@@ -197,20 +176,17 @@ TEST(AsyncDelayFunctionTest, FactoryAccessorsReadTheCurrentRowOnceBeforeSequenti
         const auto result = future.get().value();
         EXPECT_EQ(result[0].get<int64_t>(), 17);
     }
-    EXPECT_EQ(*reads, 2);
 }
 
 /// NOLINTBEGIN(misc-include-cleaner) Verified public provider; false-positive attribution for this test callsite.
-TEST(AsyncDelayFunctionTest, InferredConcurrencyConfigurationExecutesThroughFreshContexts)
+TEST(AsyncDelayFunctionTest, DelayConfigurationExecutesThroughFreshContexts)
 {
-    const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto config = AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, uintType}}}, size_t{2});
-    ASSERT_EQ(config.maxConcurrency(), size_t{2});
+    const AsyncOperator config = delayOperator(RuntimeValue{int64_t{10}}, RuntimeValue{uint64_t{0}});
     boost::asio::io_context ioContext;
     const auto work = [&]() -> boost::asio::awaitable<void>
     {
-        const auto one = co_await invokeOnce(config, SharedRuntimeValues::make(int64_t{10}, uint64_t{0}));
-        const auto two = co_await invokeOnce(config, SharedRuntimeValues::make(int64_t{20}, uint64_t{1}));
+        const auto one = co_await invokeOnce(config, AsyncRowHandle{});
+        const auto two = co_await invokeOnce(delayOperator(RuntimeValue{int64_t{20}}, RuntimeValue{uint64_t{1}}), AsyncRowHandle{});
         EXPECT_TRUE(one);
         if (!one)
         {
@@ -229,8 +205,8 @@ TEST(AsyncDelayFunctionTest, InferredConcurrencyConfigurationExecutesThroughFres
     future.get();
 
     AsyncExecutionContext context;
-    const auto prepared = config.prepare(context, SharedRuntimeValues::make(int64_t{30}, uint64_t{0})).value();
-    EXPECT_EQ(prepared->getRetryOverride(), std::nullopt);
+    const auto prepared = prepareDelay(context, SharedRuntimeValues::make(int64_t{30}, uint64_t{0})).value();
+    EXPECT_EQ(prepared->getMaxRetries(), size_t{0});
     for (size_t attempt = 0; attempt < 2; ++attempt)
     {
         boost::asio::io_context attemptIo;
@@ -245,39 +221,32 @@ TEST(AsyncDelayFunctionTest, InferredConcurrencyConfigurationExecutesThroughFres
 
 TEST(AsyncDelayFunctionTest, DynamicInvalidAndUnrepresentableDurationsFailBeforeTimer)
 {
-    const AsyncOperator op = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt};
     for (const auto millis : {int64_t{-1}, std::numeric_limits<int64_t>::max()})
     {
         AsyncExecutionContext context;
-        const auto prepared = op.prepare(context, SharedRuntimeValues::make(int64_t{1}, millis));
+        const auto prepared = prepareDelay(context, SharedRuntimeValues::make(int64_t{1}, millis));
         EXPECT_FALSE(prepared);
         EXPECT_EQ(prepared.error().kind, AsyncError::Type::Permanent);
     }
     AsyncExecutionContext context;
-    const auto tooLarge = op.prepare(context, SharedRuntimeValues::make(int64_t{1}, std::numeric_limits<uint64_t>::max()));
+    const auto tooLarge = prepareDelay(context, SharedRuntimeValues::make(int64_t{1}, std::numeric_limits<uint64_t>::max()));
     EXPECT_FALSE(tooLarge);
     EXPECT_EQ(tooLarge.error().kind, AsyncError::Type::Permanent);
     AsyncExecutionContext wrongTypeContext;
-    const auto wrongType = op.prepare(wrongTypeContext, SharedRuntimeValues::make(int64_t{1}, std::string{"not millis"}));
+    const auto wrongType = prepareDelay(wrongTypeContext, SharedRuntimeValues::make(int64_t{1}, std::string{"not millis"}));
     EXPECT_FALSE(wrongType);
     EXPECT_EQ(wrongType.error().kind, AsyncError::Type::Permanent);
 }
 
-TEST(AsyncDelayFunctionTest, RejectsInvalidConstantDelayAndConcurrencyOptions)
+TEST(AsyncDelayFunctionTest, RejectsInvalidConstantDelayOptions)
 {
     const auto one = ConstantValueLogicalFunction{integer, "1"};
-    const auto zero = ConstantValueLogicalFunction{integer, "0"};
     const Schema<Field, Unordered> schema{};
     const auto negativeMillis = delayCall({one, ConstantValueLogicalFunction{integer, "-1"}});
     ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(negativeMillis.withInferredDataType(schema)), ErrorCode::CannotInferSchema);
     const auto unrepresentableMillis = delayCall(
         {one, ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "18446744073709551615"}});
     ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(unrepresentableMillis.withInferredDataType(schema)), ErrorCode::CannotInferSchema);
-    for (const auto& limit : {std::string{"0"}, std::string{"-1"}})
-    {
-        const auto invalid = delayCall({one, zero, ConstantValueLogicalFunction{integer, limit}});
-        ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(invalid.withInferredDataType(schema)), ErrorCode::CannotInferSchema);
-    }
     const auto nullableMillis
         = delayCall({one, ConstantValueLogicalFunction{DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}, "2"}});
     ASSERT_EXCEPTION_ERRORCODE(static_cast<void>(nullableMillis.withInferredDataType(schema)), ErrorCode::DifferentFieldTypeExpected);
@@ -285,12 +254,11 @@ TEST(AsyncDelayFunctionTest, RejectsInvalidConstantDelayAndConcurrencyOptions)
 
 TEST(AsyncDelayFunctionTest, DynamicPreparationRejectsInvalidTypesAndDurations)
 {
-    const AsyncOperator config = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt};
     for (const auto& millis :
          {RuntimeValue{int64_t{-1}}, RuntimeValue{std::numeric_limits<uint64_t>::max()}, RuntimeValue{std::string{"bad"}}})
     {
         AsyncExecutionContext context;
-        const auto result = config.prepare(context, SharedRuntimeValues{RuntimeValue{int64_t{7}}, millis});
+        const auto result = prepareDelay(context, SharedRuntimeValues{RuntimeValue{int64_t{7}}, millis});
         ASSERT_FALSE(result);
         EXPECT_EQ(result.error().kind, AsyncError::Type::Permanent);
         if (!millis.view().getDataType().isInteger())
@@ -300,45 +268,25 @@ TEST(AsyncDelayFunctionTest, DynamicPreparationRejectsInvalidTypesAndDurations)
     }
 }
 
-TEST(AsyncDelayFunctionTest, PreparationRejectsAValueOutsideTheDeclaredOutputType)
+TEST(AsyncDelayFunctionTest, WrittenFieldsUseTheNamedValueAccessorType)
 {
-    const AsyncOperator config = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt};
-    AsyncExecutionContext context;
-    const auto result = config.prepare(context, SharedRuntimeValues::make(std::string{"wrong type"}, uint64_t{0}));
-    ASSERT_FALSE(result);
-    EXPECT_EQ(result.error().kind, AsyncError::Type::Permanent);
-    EXPECT_EQ(result.error().exception.code(), ErrorCode::DifferentFieldTypeExpected);
-}
-
-TEST(AsyncDelayFunctionTest, InferredConfigurationRetainsLimitAndPreparedCallAcrossAttempts)
-{
-    const DataType uintType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    const auto config = AsyncDelayAsyncOperator::create({.inputs = AsyncInputAccessors{{integer, uintType}}}, size_t{3});
-    EXPECT_EQ(config.maxConcurrency(), size_t{3});
-    AsyncExecutionContext context;
-    const auto prepared = config.prepare(context, SharedRuntimeValues::make(int64_t{7}, uint64_t{0})).value();
-    EXPECT_EQ(prepared->getRetryOverride(), std::nullopt);
-    for (size_t attempt = 0; attempt < 2; ++attempt)
-    {
-        boost::asio::io_context ioContext;
-        auto future = boost::asio::co_spawn(ioContext, prepared->executeAttempt(), boost::asio::use_future);
-        ioContext.run();
-        const auto resultValues = future.get().value();
-        EXPECT_EQ(resultValues[0].get<int64_t>(), 7);
-    }
+    const auto config = delayOperator(RuntimeValue{std::string{"value"}}, RuntimeValue{uint64_t{0}});
+    ASSERT_EQ(config.getWrittenFields().size(), 1U);
+    EXPECT_EQ(config.getWrittenFields().begin()->getDataType(), RuntimeValue{std::string{"value"}}.getDataType());
 }
 
 TEST(AsyncDelayFunctionTest, CancellationIsReturnedAsAsyncError)
 {
     boost::asio::io_context ioContext;
-    const AsyncOperator op = AsyncDelayAsyncOperator{.valueType = integer, .concurrencyLimit = std::nullopt};
     AsyncExecutionContext context;
-    auto prepared = op.prepare(context, SharedRuntimeValues::make(int64_t{42}, uint64_t{1000})).value();
+    auto prepared = prepareDelay(context, SharedRuntimeValues::make(int64_t{42}, uint64_t{1000})).value();
     boost::asio::cancellation_signal cancellation;
     boost::asio::steady_timer stop{ioContext, std::chrono::milliseconds{1}};
     stop.async_wait([&](const auto&) { cancellation.emit(boost::asio::cancellation_type::terminal); });
     auto future = boost::asio::co_spawn( /// NOLINT(misc-include-cleaner) co_spawn is declared by public boost/asio/co_spawn.hpp.
-        ioContext, prepared->executeAttempt(), boost::asio::bind_cancellation_slot(cancellation.slot(), boost::asio::use_future));
+        ioContext,
+        prepared->executeAttempt(),
+        boost::asio::bind_cancellation_slot(cancellation.slot(), boost::asio::use_future));
     ioContext.run();
     EXPECT_EQ(future.get().error().kind, AsyncError::Type::Cancelled);
 }

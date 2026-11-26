@@ -278,8 +278,8 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(wc -l < http_paths.log)" -eq 5 ]
 }
 
-@test "HTTP_CALL retries: omitted retry count stays zero even when source retries are enabled" {
-  run_async_sql flaky.sql --optimizer.async.max_retries=2
+@test "HTTP_CALL retries: omitted retry count defaults to zero" {
+  run_async_sql flaky.sql
   [ "$status" -eq 0 ]
 
   grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/flaky?fail_first=2 got status 500" nes-repl.log
@@ -287,7 +287,7 @@ sink_rows() { tail -n +2 "$1" | sort; }
 }
 
 @test "HTTP_CALL retries: a dropped response on a reused connection is not replayed by default" {
-  run_async_sql replay_drop.sql --optimizer.async.max_concurrency=1 --optimizer.async.max_retries=2
+  run_async_sql replay_drop.sql --optimizer.async.max_concurrency=1
   [ "$status" -eq 0 ]
   grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/echo?drop_on=2 failed" nes-repl.log
   [ "$(wc -l < http_received.log)" -eq 2 ]
@@ -375,16 +375,6 @@ sink_rows() { tail -n +2 "$1" | sort; }
   [ "$(sink_rows typed_http.csv)" = "$(printf '1,/echo:hello\n2,/echo:world')" ]
 }
 
-@test "ASYNC_DELAY: a function's own concurrency limit bounds the calls in flight" {
-  local start=$SECONDS
-  run_async_sql function_concurrency.sql
-  [ "$status" -eq 0 ]
-
-  [ "$(sink_rows delayed.csv)" = "$(printf '1,Hello\n2,NebulaStream\n3,äöü')" ]
-  # The stage allows 16 calls, the function only one: three rows of one second each, one after the other.
-  [ $((SECONDS - start)) -ge 3 ]
-}
-
 @test "ASYNC_OUTPUT: removed SQL function is unknown" {
   run_async_sql removed_async_output.sql
   [ "$status" -ne 0 ]
@@ -399,4 +389,12 @@ sink_rows() { tail -n +2 "$1" | sort; }
   grep -q "Query Failed: .*HTTP_CALL to http://127.0.0.1:[0-9]*/slow?slow_after=1&delay_ms=3000 timed out" nes-repl.log
   # The first row's request, and the second row's once: the service received it, only its answer was too slow.
   [ "$(grep -c '^/slow?slow_after=1&delay_ms=3000$' http_received.log)" -eq 2 ]
+}
+
+@test "ASYNC_DELAY: multi-origin UNION before async stage flushes downstream tumbling windows at EoS" {
+  printf '1,1000\n12,1001\n32,1002\n1,2001\n' > left.csv
+  printf '65,1000\n21,1001\n3,1002\n2,2001\n' > right.csv
+  run_async_sql union_window.sql
+  [ "$status" -eq 0 ]
+  [ "$(sink_rows windowed.csv)" = "$(printf '2\n65')" ]
 }

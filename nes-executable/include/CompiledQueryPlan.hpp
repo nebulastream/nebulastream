@@ -41,8 +41,8 @@ struct CompiledQueryPlan
     struct Source
     {
         /// The Source representation in the `CompiledQueryPlan` is still an abstract source representation. During Query Instantiation
-        /// the descriptor and originId are instantiated into concrete source implementation.
-        OriginId originId;
+        /// the descriptor and originIds are instantiated into concrete source implementation.
+        std::vector<OriginId> originIds;
         OperatorId operatorId;
         SourceDescriptor descriptor;
 

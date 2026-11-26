@@ -101,36 +101,34 @@ decltype(auto) visitRuntimeType(const DataType::Type type, Visitor&& visitor)
     std::unreachable();
 }
 
-using RuntimeValuePayload = std::variant<
-    std::monostate,
-    bool,
-    char,
-    uint8_t,
-    uint16_t,
-    uint32_t,
-    uint64_t,
-    int8_t,
-    int16_t,
-    int32_t,
-    int64_t,
-    float,
-    double,
-    std::string>;
-using RuntimeValueViewPayload = std::variant<
-    std::monostate,
-    bool,
-    char,
-    uint8_t,
-    uint16_t,
-    uint32_t,
-    uint64_t,
-    int8_t,
-    int16_t,
-    int32_t,
-    int64_t,
-    float,
-    double,
-    std::string_view>;
+using RuntimeValuePayload = std::variant<std::monostate,
+                                         bool,
+                                         char,
+                                         uint8_t,
+                                         uint16_t,
+                                         uint32_t,
+                                         uint64_t,
+                                         int8_t,
+                                         int16_t,
+                                         int32_t,
+                                         int64_t,
+                                         float,
+                                         double,
+                                         std::string>;
+using RuntimeValueViewPayload = std::variant<std::monostate,
+                                             bool,
+                                             char,
+                                             uint8_t,
+                                             uint16_t,
+                                             uint32_t,
+                                             uint64_t,
+                                             int8_t,
+                                             int16_t,
+                                             int32_t,
+                                             int64_t,
+                                             float,
+                                             double,
+                                             std::string_view>;
 
 class RuntimeValue;
 
@@ -197,6 +195,9 @@ public:
     [[nodiscard]] RuntimeValueView view() const&& = delete;
 
 private:
+    friend struct Reflector<RuntimeValue>;
+    friend struct Unreflector<RuntimeValue>;
+
     template <RuntimeScalar T>
     static RuntimeValuePayload makePayload(T value)
     {

@@ -14,8 +14,8 @@
 #include <AsyncOperatorLoweringRegistry.hpp>
 
 #include <string>
-#include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Sources/AsyncOperator.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -26,13 +26,13 @@ AsyncOperatorLoweringRegistry& AsyncOperatorLoweringRegistry::instance()
     return registry;
 }
 
-AsyncOperatorLowering lowerAsyncOperator(const LogicalOperator& op)
+AsyncOperator lowerAsyncOperator(const LogicalOperator& op, AsyncLoweringContext& context)
 {
     const auto lowering = AsyncOperatorLoweringRegistry::instance().find(std::string{op.getName()});
     if (!lowering)
     {
         throw NotImplemented("No async lowering registered for logical operator '{}'", op.getName());
     }
-    return (*lowering)(op);
+    return (*lowering)(op, context);
 }
 }

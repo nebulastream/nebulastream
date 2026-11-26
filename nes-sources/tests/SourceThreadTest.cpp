@@ -857,6 +857,105 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
     EXPECT_TRUE(control->wasDestroyed());
 }
 
+TEST_F(SourceThreadTest, MultiOriginMetadataSourceEmitsFinalWatermarkForEveryOrigin)
+{
+    class MultiOriginMetadataSource final : public Source
+    {
+    public:
+        struct Entry
+        {
+            OriginId originId;
+            SequenceNumber sequenceNumber;
+            Timestamp watermark;
+        };
+
+        explicit MultiOriginMetadataSource(std::vector<Entry> entries) : entries(std::move(entries)) { }
+
+        void open(std::shared_ptr<AbstractBufferProvider>) override { }
+
+        void close() override { }
+
+        FillTupleBufferResult fillTupleBuffer(TupleBuffer& buffer, const std::stop_token&) override
+        {
+            if (index >= entries.size())
+            {
+                return FillTupleBufferResult::eos();
+            }
+            const auto& entry = entries[index++];
+            buffer.setOriginId(entry.originId);
+            buffer.setSequenceNumber(entry.sequenceNumber);
+            buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
+            buffer.setLastChunk(true);
+            buffer.setWatermark(entry.watermark);
+            return FillTupleBufferResult::withBytes(1);
+        }
+
+        [[nodiscard]] bool addsMetadata() const override { return true; }
+
+    protected:
+        [[nodiscard]] std::ostream& toString(std::ostream& str) const override { return str << "MultiOriginMetadataSource"; }
+
+    private:
+        std::vector<Entry> entries;
+        size_t index = 0;
+    };
+
+    auto bm = BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    std::vector<MultiOriginMetadataSource::Entry> entries{
+        {.originId = OriginId{1}, .sequenceNumber = SequenceNumber{1}, .watermark = Timestamp{100}},
+        {.originId = OriginId{2}, .sequenceNumber = SequenceNumber{1}, .watermark = Timestamp{200}},
+        {.originId = OriginId{2}, .sequenceNumber = SequenceNumber{5}, .watermark = Timestamp{500}},
+        {.originId = OriginId{1}, .sequenceNumber = SequenceNumber{2}, .watermark = Timestamp{300}},
+    };
+    SourceThread sourceThread(std::move(backpressureListener),
+                              std::vector<OriginId>{OriginId{1}, OriginId{2}, OriginId{3}},
+                              bm,
+                              std::make_unique<MultiOriginMetadataSource>(std::move(entries)));
+    EXPECT_EQ(sourceThread.getOriginId(), OriginId{1});
+    verify_non_blocking_start(
+        sourceThread,
+        [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+        {
+            EXPECT_EQ(originId, OriginId{1});
+            recorder(originId, std::move(ret));
+            return SourceReturnType::EmitResult::SUCCESS;
+        });
+    wait_for_emits(recorder, 8);
+    verify_non_blocking_stop(sourceThread);
+
+    const auto events = recorder.recordedEmits.lock();
+    ASSERT_EQ(events->size(), 8U);
+    const auto* wmOrigin1 = std::get_if<SourceReturnType::Data>(&events->at(4));
+    const auto* wmOrigin2 = std::get_if<SourceReturnType::Data>(&events->at(5));
+    const auto* wmOrigin3 = std::get_if<SourceReturnType::Data>(&events->at(6));
+    ASSERT_NE(wmOrigin1, nullptr);
+    ASSERT_NE(wmOrigin2, nullptr);
+    ASSERT_NE(wmOrigin3, nullptr);
+
+    EXPECT_EQ(wmOrigin1->buffer.getOriginId(), OriginId{1});
+    EXPECT_EQ(wmOrigin1->buffer.getSequenceNumber(), SequenceNumber{3});
+    EXPECT_EQ(wmOrigin1->buffer.getNumberOfTuples(), 0U);
+    EXPECT_EQ(wmOrigin1->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE});
+
+    EXPECT_EQ(wmOrigin2->buffer.getOriginId(), OriginId{2});
+    EXPECT_EQ(wmOrigin2->buffer.getSequenceNumber(), SequenceNumber{6});
+    EXPECT_EQ(wmOrigin2->buffer.getNumberOfTuples(), 0U);
+    EXPECT_EQ(wmOrigin2->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE});
+
+    EXPECT_EQ(wmOrigin3->buffer.getOriginId(), OriginId{3});
+    EXPECT_EQ(wmOrigin3->buffer.getSequenceNumber(), SequenceNumber{SequenceNumber::INITIAL});
+    EXPECT_EQ(wmOrigin3->buffer.getNumberOfTuples(), 0U);
+    EXPECT_EQ(wmOrigin3->buffer.getWatermark(), Timestamp{Timestamp::INFINITE_VALUE});
+
+    EXPECT_TRUE(std::holds_alternative<SourceReturnType::EoS>(events->at(7)));
+}
 
 }
 /// NOLINTEND(readability-magic-numbers)
