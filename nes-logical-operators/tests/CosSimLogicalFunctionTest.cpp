@@ -51,8 +51,25 @@ TEST_F(CosSimLogicalFunctionTest, InfersFloat64AndNullabilityForVarsizedInputs)
     const auto nonNullResult = CosSimLogicalFunction{nonNullVec, nonNullVec}.withInferredDataType(emptySchema);
     EXPECT_EQ(nonNullResult.getDataType(), (DataType{DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE}));
 
-    const auto mixedNullResult = CosSimLogicalFunction{nonNullVec, nullableVec}.withInferredDataType(emptySchema);
-    EXPECT_EQ(mixedNullResult.getDataType(), (DataType{DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE}));
+    const auto rightNullResult = CosSimLogicalFunction{nonNullVec, nullableVec}.withInferredDataType(emptySchema);
+    EXPECT_EQ(rightNullResult.getDataType(), (DataType{DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE}));
+
+    const auto leftNullResult = CosSimLogicalFunction{nullableVec, nonNullVec}.withInferredDataType(emptySchema);
+    EXPECT_EQ(leftNullResult.getDataType(), (DataType{DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE}));
+
+    const auto bothNullResult = CosSimLogicalFunction{nullableVec, nullableVec}.withInferredDataType(emptySchema);
+    EXPECT_EQ(bothNullResult.getDataType(), (DataType{DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE}));
+}
+
+TEST_F(CosSimLogicalFunctionTest, EqualityIsCommutative)
+{
+    const ConstantValueLogicalFunction leftVec{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "@@@@"};
+    const ConstantValueLogicalFunction rightVec{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "BBBB"};
+    const ConstantValueLogicalFunction otherVec{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}, "CCCC"};
+
+    EXPECT_TRUE((CosSimLogicalFunction{leftVec, rightVec} == CosSimLogicalFunction{leftVec, rightVec}));
+    EXPECT_TRUE((CosSimLogicalFunction{leftVec, rightVec} == CosSimLogicalFunction{rightVec, leftVec}));
+    EXPECT_FALSE((CosSimLogicalFunction{leftVec, rightVec} == CosSimLogicalFunction{leftVec, otherVec}));
 }
 
 TEST_F(CosSimLogicalFunctionTest, ThrowsForInvalidInputsAndArity)
