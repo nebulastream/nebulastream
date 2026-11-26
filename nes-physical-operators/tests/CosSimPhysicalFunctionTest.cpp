@@ -88,8 +88,8 @@ public:
         return bytes;
     }
 
-    nautilus::val<double> similarity(
-        const CosSimPhysicalFunction& cosSim, const std::vector<float>& left, const std::vector<float>& right) const
+    nautilus::val<double>
+    similarity(const CosSimPhysicalFunction& cosSim, const std::vector<float>& left, const std::vector<float>& right) const
     {
         auto leftBytes = toBytes(left);
         auto rightBytes = toBytes(right);
