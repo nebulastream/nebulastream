@@ -27,6 +27,7 @@ vcpkg_from_github(
         multimap-first-entry.patch
         no-sigaltstack.patch
         onednn-acl-no-primitive-cache.patch
+        vm-cache-topology.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
