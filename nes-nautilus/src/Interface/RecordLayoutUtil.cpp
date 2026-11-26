@@ -104,4 +104,8 @@ void writeRecordFields(const std::vector<FieldAccess>& fields, const Record& rec
     }
 }
 
+void writeVarVal(const DataType& dataType, const nautilus::val<int8_t*>& address, const VarVal& value, const VarSizedStoreFn& storeVarSized)
+{
+    writeFieldValue(dataType, address, value, storeVarSized);
+}
 }

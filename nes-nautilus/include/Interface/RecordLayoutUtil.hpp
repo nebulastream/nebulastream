@@ -71,4 +71,9 @@ Record readRecordFields(const std::vector<FieldAccess>& fields, const VarSizedLo
 /// Serializes the record's fields into their slots. Fields not present in @param record are skipped.
 void writeRecordFields(const std::vector<FieldAccess>& fields, const Record& record, const VarSizedStoreFn& storeVarSized);
 
+/// Writes a single VarVal into the buffer at address.
+/// This function was added to support the writing of the singular composite values of an EncodedValue.
+void writeVarVal(
+    const DataType& dataType, const nautilus::val<int8_t*>& address, const VarVal& value, const VarSizedStoreFn& storeVarSized);
+
 }

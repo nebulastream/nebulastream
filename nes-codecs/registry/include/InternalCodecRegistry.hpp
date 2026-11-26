@@ -20,8 +20,8 @@
 #include <string>
 
 #include <DataTypes/DataType.hpp>
-#include <Internal/InternalCodec.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <InternalCodec.hpp>
 
 namespace NES
 {

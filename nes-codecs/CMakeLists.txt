@@ -19,7 +19,9 @@ target_link_libraries(nes-codecs PUBLIC nes-common nes-data-types nes-memory nes
 
 target_include_directories(nes-codecs PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # Runtime registries
 create_runtime_registry(InternalCodec nes-codecs

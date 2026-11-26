@@ -56,6 +56,6 @@ public:
 
     /// Encodes the value within the VarVal on-the-fly, based on the Codec and the CodecState.
     /// Returns an EncodedValue object, encapsulating all the VarVals the encoded value is composed of.
-    virtual EncodedValue encodeValue(const VarVal value) = 0;
+    virtual std::unique_ptr<EncodedValue> encodeValue(const VarVal value) = 0;
 };
 }

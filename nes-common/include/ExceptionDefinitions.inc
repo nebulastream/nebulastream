@@ -71,6 +71,7 @@ EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
 EXCEPTION(UnknownValueSerializerType, 2044, "unknown value serializer type")
 EXCEPTION(UnknownValueDeserializerType, 2045, "unknown value deserializer type")
+EXCEPTION(UnknownInternalCodec, 2046, "unknown internal codec")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
