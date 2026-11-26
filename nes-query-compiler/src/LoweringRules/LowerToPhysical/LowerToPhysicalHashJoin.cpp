@@ -33,6 +33,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -47,6 +48,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
+#include <Interface/HashMap/ChainedHashMap/EntryRecordsRef.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -252,7 +254,6 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
     const QueryExecutionConfiguration& conf)
 {
     uint64_t keySize = 0;
-    constexpr auto valueSize = sizeof(uint32_t);
     std::vector<PhysicalFunction> keyFunctions;
     std::vector<QualifiedIdentifier> fieldKeyNames;
     for (auto& fieldExtension : joinFieldExtensions)
@@ -264,6 +265,9 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
 
     const auto pageSize = conf.pageSize;
     const auto numberOfBuckets = conf.numberOfPartitions;
+    /// The entry of a key stores its first records, which is the expected number of records per key, and a paged vector for more of them
+    const auto inlineRecords = EntryRecordsRef::getEffectiveInlineRecords(inputSchema, conf.numberOfRecordsPerKey, pageSize);
+    const auto valueSize = EntryRecordsRef::getValueAreaSize(inlineRecords, getSizeInBytes(inputSchema));
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap
@@ -276,7 +280,8 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
             .bloomFilterParams = createBloomFilterParams(conf),
             .fieldKeys = fieldKeys,
             .fieldValues = fieldValues,
-            .hashFunction = std::make_shared<MurMur3HashFunction>()},
+            .hashFunction = std::make_shared<MurMur3HashFunction>(),
+            .inlineRecords = inlineRecords},
         std::move(keyFunctions)};
 }
 }

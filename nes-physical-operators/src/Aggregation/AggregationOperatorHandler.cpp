@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -97,12 +98,7 @@ void AggregationOperatorHandler::triggerSlices(
 
         /// We need a buffer that is large enough to store an EmittedAggregationWindow
         constexpr auto neededBufferSize = sizeof(EmittedAggregationWindow);
-        const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
-        if (not tupleBufferVal.has_value())
-        {
-            throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
-        }
-        auto tupleBuffer = tupleBufferVal.value();
+        auto tupleBuffer = getPooledBufferIfFits(neededBufferSize, *pipelineCtx->getBufferManager());
         /// Store each hash map buffer as a child so the probe can load them via loadChildBuffer(i)
         for (auto hashMapBuffer : allHashMapBuffers)
         {

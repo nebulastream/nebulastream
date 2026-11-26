@@ -14,4 +14,5 @@ add_source_files(nes-nautilus
     ChainedHashMap.cpp
     ChainedHashMapRef.cpp
     ChainedEntryMemoryProvider.cpp
+    EntryRecordsRef.cpp
 )

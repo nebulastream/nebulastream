@@ -31,6 +31,7 @@
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
@@ -148,13 +149,7 @@ void HJOperatorHandler::emitSlicesToProbe(
 
     /// Hash map buffers are stored as child buffers, not inline in the main buffer.
     constexpr auto neededBufferSize = sizeof(EmittedHJWindowTrigger);
-    const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
-    if (not tupleBufferVal.has_value())
-    {
-        throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
-    }
-
-    auto tupleBuffer = tupleBufferVal.value();
+    auto tupleBuffer = getPooledBufferIfFits(neededBufferSize, *pipelineCtx->getBufferManager());
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));

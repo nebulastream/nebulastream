@@ -69,7 +69,7 @@ void AggregationProbePhysicalOperator::probeWindow(ExecutionContext& executionCt
             const uint64_t bloomBytes)
         {
             const auto neededFinalBufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets, bloomBytes);
-            *finalHashMapBuffer = getBuffer(neededFinalBufferSize, *bufferProvider);
+            *finalHashMapBuffer = getPooledBufferIfFits(neededFinalBufferSize, *bufferProvider);
             /// initialize the final hash map tuple buffer
             ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize), bloomBytes);
         },
