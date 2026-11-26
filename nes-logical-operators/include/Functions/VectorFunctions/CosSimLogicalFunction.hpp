@@ -37,7 +37,7 @@ namespace NES
 class CosSimLogicalFunction final
 {
 public:
-    static constexpr std::string_view NAME = "CosSim";
+    static constexpr std::string_view NAME = "COSINE_SIMILARITY";
 
     CosSimLogicalFunction(LogicalFunction left, LogicalFunction right);
 
@@ -53,7 +53,8 @@ public:
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
-    static LogicalFunctionRegistryReturnType createCosSim(LogicalFunctionRegistryArguments arguments);
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static LogicalFunctionRegistryReturnType createCOSINE_SIMILARITY(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;

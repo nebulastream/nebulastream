@@ -84,10 +84,10 @@ TEST_F(CosSimLogicalFunctionTest, ThrowsForInvalidInputsAndArity)
         (std::ignore = CosSimLogicalFunction{numInput, vecInput}.withInferredDataType(emptySchema)), ErrorCode::CannotInferStamp);
 
     ASSERT_EXCEPTION_ERRORCODE(
-        (std::ignore = CosSimLogicalFunction::createCosSim(LogicalFunctionRegistryArguments{.children = {}})),
+        (std::ignore = CosSimLogicalFunction::createCOSINE_SIMILARITY(LogicalFunctionRegistryArguments{.children = {}})),
         ErrorCode::CannotDeserialize);
     ASSERT_EXCEPTION_ERRORCODE(
-        (std::ignore = CosSimLogicalFunction::createCosSim(LogicalFunctionRegistryArguments{.children = {vecInput}})),
+        (std::ignore = CosSimLogicalFunction::createCOSINE_SIMILARITY(LogicalFunctionRegistryArguments{.children = {vecInput}})),
         ErrorCode::CannotDeserialize);
 }
 

@@ -34,7 +34,8 @@ public:
     explicit CosSimPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
-    static PhysicalFunctionRegistryReturnType createCosSim(PhysicalFunctionRegistryArguments arguments);
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static PhysicalFunctionRegistryReturnType createCOSINE_SIMILARITY(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction leftPhysicalFunction;

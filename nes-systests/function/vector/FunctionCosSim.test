@@ -1,5 +1,5 @@
 # name: function/vector/FunctionCosSim.test
-# description: Tests for the COSSIM vector cosine similarity function
+# description: Tests for the COSINE_SIMILARITY vector cosine similarity function
 # groups: [Function, FunctionCosSim]
 
 # Base64-encoded little-endian IEEE-754 float32 vector pairs:
@@ -27,7 +27,7 @@ CREATE SINK simSink(id UINT64 NOT NULL, sim FLOAT64 NOT NULL) TYPE File;
 CREATE SINK idSink(id UINT64 NOT NULL) TYPE File;
 
 # Standard cosine similarity over decoded float32 vectors
-SELECT id AS id, COSSIM(FROM_BASE64(v1), FROM_BASE64(v2)) AS sim FROM vecStream INTO simSink;
+SELECT id AS id, COSINE_SIMILARITY(FROM_BASE64(v1), FROM_BASE64(v2)) AS sim FROM vecStream INTO simSink;
 ----
 1,1.0
 2,-1.0
@@ -38,8 +38,8 @@ SELECT id AS id, COSSIM(FROM_BASE64(v1), FROM_BASE64(v2)) AS sim FROM vecStream 
 7,0.0
 8,0.0
 
-# Symmetry: COSSIM(v2, v1) must match COSSIM(v1, v2)
-SELECT id AS id, COSSIM(FROM_BASE64(v2), FROM_BASE64(v1)) AS sim FROM vecStream INTO simSink;
+# Symmetry: COSINE_SIMILARITY(v2, v1) must match COSINE_SIMILARITY(v1, v2)
+SELECT id AS id, COSINE_SIMILARITY(FROM_BASE64(v2), FROM_BASE64(v1)) AS sim FROM vecStream INTO simSink;
 ----
 1,1.0
 2,-1.0
@@ -50,15 +50,15 @@ SELECT id AS id, COSSIM(FROM_BASE64(v2), FROM_BASE64(v1)) AS sim FROM vecStream 
 7,0.0
 8,0.0
 
-# Filter in WHERE clause using COSSIM over two stream vectors
-SELECT id AS id FROM vecStream WHERE COSSIM(FROM_BASE64(v1), FROM_BASE64(v2)) > 0.7 INTO idSink;
+# Filter in WHERE clause using COSINE_SIMILARITY over two stream vectors
+SELECT id AS id FROM vecStream WHERE COSINE_SIMILARITY(FROM_BASE64(v1), FROM_BASE64(v2)) > 0.7 INTO idSink;
 ----
 1
 4
 5
 
 # Filter against a constant query vector [3.0, 4.0] ('AABAQAAAgEA=')
-SELECT id AS id FROM vecStream WHERE COSSIM(FROM_BASE64(v1), FROM_BASE64('AABAQAAAgEA=')) > 0.7 INTO idSink;
+SELECT id AS id FROM vecStream WHERE COSINE_SIMILARITY(FROM_BASE64(v1), FROM_BASE64('AABAQAAAgEA=')) > 0.7 INTO idSink;
 ----
 4
 5
@@ -73,23 +73,23 @@ ATTACH INLINE
 
 CREATE SINK unalignedSimSink(id UINT64 NOT NULL, prefix VARSIZED NOT NULL, sim FLOAT64 NOT NULL) TYPE File;
 
-SELECT id AS id, prefix AS prefix, COSSIM(v1, v2) AS sim FROM unalignedVecStream INTO unalignedSimSink;
+SELECT id AS id, prefix AS prefix, COSINE_SIMILARITY(v1, v2) AS sim FROM unalignedVecStream INTO unalignedSimSink;
 ----
 1,hi,1.0
 2,hello,1.0
 3,hello,1.0
 
-# Error cases: wrong arity (CannotDeserialize = 2002) and non-VARSIZED inputs (CannotInferStamp = 2007)
+# Error cases: wrong arity and non-VARSIZED inputs
 CREATE LOGICAL SOURCE invalidInputStream(id UINT64 NOT NULL, v VARSIZED NOT NULL, num FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR invalidInputStream TYPE File;
 ATTACH INLINE
 1,@@@@,1.0
 
-SELECT id AS id, COSSIM(v) AS sim FROM invalidInputStream INTO simSink;
+SELECT id AS id, COSINE_SIMILARITY(v) AS sim FROM invalidInputStream INTO simSink;
 ----
-ERROR 2002
+ERROR CannotDeserialize
 
-SELECT id AS id, COSSIM(v, num) AS sim FROM invalidInputStream INTO simSink;
+SELECT id AS id, COSINE_SIMILARITY(v, num) AS sim FROM invalidInputStream INTO simSink;
 ----
-ERROR 2007
+ERROR CannotInferStamp
 

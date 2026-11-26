@@ -14,4 +14,4 @@ add_source_files(nes-physical-operators
         CosSimPhysicalFunction.cpp
 )
 
-add_registry_entry(PhysicalFunction CosSim)
+add_registry_entry(PhysicalFunction CosSim KEY COSINE_SIMILARITY)

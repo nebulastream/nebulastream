@@ -11,10 +11,10 @@
 # limitations under the License.
 
 
-add_unreflection_entry(LogicalFunction CosSim)
+add_unreflection_entry(LogicalFunction CosSim KEY COSINE_SIMILARITY)
 
 add_source_files(nes-logical-operators
         CosSimLogicalFunction.cpp
 )
 
-add_registry_entry(LogicalFunction CosSim)
+add_registry_entry(LogicalFunction CosSim KEY COSINE_SIMILARITY)

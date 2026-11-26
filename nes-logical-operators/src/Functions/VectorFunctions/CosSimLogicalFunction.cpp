@@ -50,7 +50,7 @@ bool CosSimLogicalFunction::operator==(const CosSimLogicalFunction& rhs) const
 
 std::string CosSimLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("CosSim({}, {})", left.explain(verbosity), right.explain(verbosity));
+    return fmt::format("COSINE_SIMILARITY({}, {})", left.explain(verbosity), right.explain(verbosity));
 }
 
 DataType CosSimLogicalFunction::getDataType() const
@@ -66,7 +66,7 @@ LogicalFunction CosSimLogicalFunction::withInferredDataType(const Schema<Field, 
     if ((!copy.left.getDataType().isType(DataType::Type::VARSIZED)) || (!copy.right.getDataType().isType(DataType::Type::VARSIZED)))
     {
         throw CannotInferStamp(
-            "Can only apply cossim to two VARSIZED vector inputs, but got left: {}, right: {}",
+            "Can only apply COSINE_SIMILARITY to two VARSIZED vector inputs, but got left: {}, right: {}",
             copy.left.getDataType(),
             copy.right.getDataType());
     }
@@ -105,7 +105,8 @@ CosSimLogicalFunction Unreflector<CosSimLogicalFunction>::operator()(const Refle
     return CosSimLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType CosSimLogicalFunction::createCosSim(LogicalFunctionRegistryArguments arguments)
+/// NOLINTNEXTLINE(readability-identifier-naming)
+LogicalFunctionRegistryReturnType CosSimLogicalFunction::createCOSINE_SIMILARITY(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

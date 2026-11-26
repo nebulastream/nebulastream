@@ -57,7 +57,7 @@ double computeCosineSimilarity(
     if (inputSizeLeft % sizeof(float) != 0 || inputSizeRight % sizeof(float) != 0)
     {
         throw FormattingError(
-            "CosSim inputs must have byte sizes that are multiples of sizeof(float) ({}), but got left: {} bytes, right: {} bytes",
+            "COSINE_SIMILARITY inputs must have byte sizes divisible by sizeof(float) ({}), but got left: {} bytes, right: {} bytes",
             sizeof(float),
             inputSizeLeft,
             inputSizeRight);
@@ -124,9 +124,11 @@ VarVal CosSimPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return VarVal{similarity, outputType.nullable, nautilus::val<bool>{false}}.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType CosSimPhysicalFunction::createCosSim(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+/// NOLINTNEXTLINE(readability-identifier-naming)
+PhysicalFunctionRegistryReturnType
+CosSimPhysicalFunction::createCOSINE_SIMILARITY(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "CosSim function must have exactly two child functions");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "COSINE_SIMILARITY requires exactly two child functions");
     return CosSimPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0],
         physicalFunctionRegistryArguments.childFunctions[1],
