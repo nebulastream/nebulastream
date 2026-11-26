@@ -65,11 +65,14 @@ pub mod ffi {
         include!("NetworkBindings.hpp");
         type TupleBufferBuilder;
         #[allow(non_snake_case)]
-        fn setMetadata(self: Pin<&mut TupleBufferBuilder>, meta: &SerializedTupleBufferHeader);
+        fn setMetadata(
+            self: Pin<&mut TupleBufferBuilder>,
+            meta: &SerializedTupleBufferHeader,
+        ) -> Result<()>;
         #[allow(non_snake_case)]
-        fn setData(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn setData(self: Pin<&mut TupleBufferBuilder>, data: &[u8]) -> Result<()>;
         #[allow(non_snake_case)]
-        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]) -> Result<()>;
         #[allow(non_snake_case)]
         fn identifyThread(thread_name: &str, worker_id: &str);
     }
@@ -395,13 +398,13 @@ fn receive_buffer(
             chunk_number: buffer.chunk_number as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
-        });
+        })?;
 
-    buffer_builder.as_mut().setData(&buffer.data);
+    buffer_builder.as_mut().setData(&buffer.data)?;
 
     for child_buffer in buffer.child_buffers.iter() {
         assert!(!child_buffer.is_empty());
-        buffer_builder.as_mut().addChildBuffer(child_buffer);
+        buffer_builder.as_mut().addChildBuffer(child_buffer)?;
     }
 
     Ok(true)
