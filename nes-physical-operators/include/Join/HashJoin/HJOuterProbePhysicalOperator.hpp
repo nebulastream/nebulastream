@@ -51,7 +51,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         ChainedHashMapConfig leftHashMapBasedOptions,
-        ChainedHashMapConfig rightHashMapBasedOptions);
+        ChainedHashMapConfig rightHashMapBasedOptions,
+        std::optional<HJResidual> residual);
 
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {
@@ -63,6 +64,7 @@ protected:
     void probeWindow(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
+    /// Emits every outer tuple that has no partner with an equal key for which the residual holds, NULL-filled on the inner side.
     /// `outerOffset`/`innerOffset` are the absolute child-buffer indices (on the record buffer) at which the outer's
     /// resp. inner's hash map buffers start; left hash maps are stored before right ones.
     void performNullFillProbe(
@@ -74,6 +76,8 @@ private:
         const ChainedHashMapConfig& outerHashMapConfig,
         const ChainedHashMapConfig& innerHashMapConfig,
         const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
+        const std::shared_ptr<PagedVectorTupleLayout>& innerTupleLayout,
+        bool outerIsLeft,
         const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,

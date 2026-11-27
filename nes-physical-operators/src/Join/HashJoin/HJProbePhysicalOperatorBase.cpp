@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -23,6 +24,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -47,13 +49,37 @@ HJProbePhysicalOperatorBase::HJProbePhysicalOperatorBase(
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     ChainedHashMapConfig leftHashMapConfig,
-    ChainedHashMapConfig rightHashMapConfig)
+    ChainedHashMapConfig rightHashMapConfig,
+    std::optional<HJResidual> residual)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))
     , leftTupleLayout(std::move(leftTupleLayout))
     , rightTupleLayout(std::move(rightTupleLayout))
     , leftHashMapConfig(std::move(leftHashMapConfig))
     , rightHashMapConfig(std::move(rightHashMapConfig))
+    , residual(std::move(residual))
 {
+}
+
+nautilus::val<bool> HJProbePhysicalOperatorBase::residualHolds(
+    const Record& leftRecord,
+    const Record& rightRecord,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
+{
+    if (not residual.has_value())
+    {
+        return {true};
+    }
+    const auto residualRecord
+        = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, residual->leftFieldNames, residual->rightFieldNames);
+    /// Same truth test as the NLJ applies to its join function, so a NULL residual rejects the pair in both.
+    nautilus::val<bool> holds{false};
+    if (residual->function.execute(residualRecord, executionCtx.pipelineMemoryProvider.arena))
+    {
+        holds = true;
+    }
+    return holds;
 }
 
 namespace
@@ -120,9 +146,12 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                         {
                             const auto leftRecord = *leftIt;
                             const auto rightRecord = *rightIt;
-                            auto joinedRecord
-                                = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
-                            executeChild(executionCtx, joinedRecord);
+                            if (residualHolds(leftRecord, rightRecord, executionCtx, windowStart, windowEnd))
+                            {
+                                auto joinedRecord
+                                    = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
+                                executeChild(executionCtx, joinedRecord);
+                            }
                         }
                     }
                 }

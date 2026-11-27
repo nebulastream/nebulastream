@@ -16,11 +16,14 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/Record.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -35,6 +38,15 @@
 
 namespace NES
 {
+
+/// The non-equi part of a hash join's function (e.g. `bTime >= aTime` in `id = auction AND bTime >= aTime`), evaluated on every pair whose
+/// keys match. Only the fields it reads are copied into the record it is evaluated on.
+struct HJResidual
+{
+    PhysicalFunction function;
+    std::vector<Record::RecordFieldIdentifier> leftFieldNames;
+    std::vector<Record::RecordFieldIdentifier> rightFieldNames;
+};
 
 /// Shared base for all hash join probe operators (inner, outer).
 /// Holds the HJ-specific state (buffer refs, hash map options) and the match-pairs probe logic.
@@ -51,7 +63,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         ChainedHashMapConfig leftHashMapConfig,
-        ChainedHashMapConfig rightHashMapConfig);
+        ChainedHashMapConfig rightHashMapConfig,
+        std::optional<HJResidual> residual);
 
 protected:
     /// Match-pairs probe: iterates all left hash maps against all right hash maps and emits joined records.
@@ -65,8 +78,18 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
+    /// True if the residual holds for the pair of a left and a right record, or if there is no residual.
+    /// NULL counts as false, as in the NLJ.
+    nautilus::val<bool> residualHolds(
+        const Record& leftRecord,
+        const Record& rightRecord,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
+
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
     ChainedHashMapConfig leftHashMapConfig, rightHashMapConfig;
+    std::optional<HJResidual> residual;
 };
 
 }

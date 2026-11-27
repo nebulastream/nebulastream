@@ -20,4 +20,5 @@ add_unreflection_entry(LogicalOperator Join)
 add_source_files(nes-logical-operators
         WindowedAggregationLogicalOperator.cpp
         JoinLogicalOperator.cpp
+        JoinFunctionSplit.cpp
 )
