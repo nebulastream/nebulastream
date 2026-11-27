@@ -12,3 +12,4 @@
 
 [toolchain]
 channel = "nightly"
+components = ["rustfmt"]
