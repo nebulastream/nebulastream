@@ -17,22 +17,31 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Functions/AsyncLogicalFunction.hpp>
+#include <Functions/AsyncOutputLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sources/AsyncFunction.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Traits/AsyncExecutionTrait.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
@@ -40,11 +49,15 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <rfl/json/write.hpp>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>
+#include <QueryOptimizerAsyncConfiguration.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -59,6 +72,8 @@ struct DecompositionContext
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
+    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
+    const QueryOptimizerAsyncConfiguration& asyncConfig;
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
@@ -206,6 +221,148 @@ LogicalOperator assignOperator(DecompositionContext& context, const LogicalOpera
     return createNetworkChannel(context, assignedChild, childNode, opNode);
 }
 
+/// Flattens the calls of an async stage into the list the Async source runs. Lifting leaves fields, constants
+/// and directly nested calls as arguments; a nested call is listed before the call reading it, and
+/// structurally equal calls are listed once.
+class AsyncCallList
+{
+public:
+    /// `ASYNC_OUTPUT(call, i)` writes the i-th value of its call, any other call its first.
+    void addResult(const Identifier& output, const LogicalFunction& function)
+    {
+        const auto [call, index] = resolve(function);
+        calls[call].outputs.push_back({.index = index, .field = output.asCanonicalString()});
+    }
+
+    [[nodiscard]] const std::vector<AsyncCall>& get() const { return calls; }
+
+private:
+    std::vector<LogicalFunction> described;
+    std::vector<AsyncCall> calls;
+
+    /// The listed call a function reads and which of its values.
+    std::pair<size_t, size_t> resolve(const LogicalFunction& function)
+    {
+        if (const auto output = function.tryGetAs<AsyncOutputLogicalFunction>())
+        {
+            return {describe(output.value()->getCall()), output.value()->getIndex()};
+        }
+        return {describe(function), 0};
+    }
+
+    size_t describe(const LogicalFunction& call)
+    {
+        if (const auto known = std::ranges::find(described, call); known != described.end())
+        {
+            return static_cast<size_t>(std::distance(described.begin(), known));
+        }
+        const auto async = call.tryGetAs<AsyncLogicalFunction>();
+        INVARIANT(async.has_value(), "async stage computes {}, which is not an async call", call);
+        AsyncCall description{
+            .outputs = {},
+            .function = std::string{call.getType()},
+            .configuration = async.value()->get().getAsyncConfiguration(),
+            .arguments = {}};
+        for (const auto& argument : call.getChildren())
+        {
+            if (const auto field = argument.tryGetAs<FieldAccessLogicalFunction>())
+            {
+                description.arguments.push_back(
+                    {.field = field.value()->getField().getLastName().asCanonicalString(),
+                     .constant = std::nullopt,
+                     .call = std::nullopt,
+                     .output = 0});
+            }
+            else if (const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>())
+            {
+                description.arguments.push_back(
+                    {.field = std::nullopt, .constant = constant.value()->getConstantValue(), .call = std::nullopt, .output = 0});
+            }
+            else
+            {
+                INVARIANT(
+                    argument.tryGetAs<AsyncLogicalFunction>().has_value(),
+                    "async call {} has an argument that is neither a field, a constant nor an async call: {}",
+                    call,
+                    argument);
+                const auto [earlierCall, index] = resolve(argument);
+                description.arguments.push_back({.field = std::nullopt, .constant = std::nullopt, .call = earlierCall, .output = index});
+            }
+        }
+        described.push_back(call);
+        calls.push_back(std::move(description));
+        return calls.size() - 1;
+    }
+};
+
+/// Replaces an operator executed asynchronously by a Handoff sink / Async source pair on its own node.
+/// The sink becomes a plan of its own; the source takes the operator's place in the current plan.
+LogicalOperator splitAsyncOperator(DecompositionContext& context, const LogicalOperator& asyncOp)
+{
+    const auto projection = asyncOp.tryGetAs<ProjectionLogicalOperator>();
+    INVARIANT(projection.has_value(), "only projections are executed asynchronously, got {}", asyncOp);
+    INVARIANT(asyncOp.getChildren().size() == 1, "an asynchronously executed operator has exactly one child");
+    const auto child = asyncOp.getChildren().front();
+    const auto node = getPlacementFor(asyncOp);
+    const auto channel = ChannelId(generateUUID()).getRawValue();
+
+    /// Field accesses only forward an input field; everything else is a call.
+    AsyncCallList calls;
+    for (const auto& [field, function] : projection.value()->getProjections())
+    {
+        if (!function.tryGetAs<FieldAccessLogicalFunction>().has_value())
+        {
+            calls.addResult(field.getLastName(), function);
+        }
+    }
+
+    /// Both halves create the channel, whichever starts first, so both need its capacity.
+    std::unordered_map<Identifier, std::string> sinkConfig{
+        {Identifier::parse("channel"), channel}, {Identifier::parse("output_format"), "NATIVE"}};
+    std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("channel"), channel}};
+    if (context.asyncConfig.channelCapacity.has_value())
+    {
+        const auto capacity = std::to_string(*context.asyncConfig.channelCapacity);
+        sinkConfig.emplace(Identifier::parse("channel_capacity"), capacity);
+        sourceConfig.emplace(Identifier::parse("channel_capacity"), capacity);
+    }
+    if (context.asyncConfig.maxConcurrency.has_value())
+    {
+        sourceConfig.emplace(Identifier::parse("max_concurrency"), std::to_string(*context.asyncConfig.maxConcurrency));
+    }
+    if (context.asyncConfig.maxRetries.has_value())
+    {
+        sourceConfig.emplace(Identifier::parse("max_retries"), std::to_string(*context.asyncConfig.maxRetries));
+    }
+
+    const auto inputFields = child.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
+    const auto handoffSinkDescriptor
+        = context.sinkCatalog->getAnonymousSink(inputFields, Identifier::parse("Handoff"), Host(node.getRawValue()), sinkConfig, {});
+    INVARIANT(handoffSinkDescriptor.has_value(), "Invalid sink descriptor config for handoff sink");
+    sourceConfig.emplace(Identifier::parse("calls"), rfl::json::write(calls.get()));
+    sourceConfig.emplace(
+        Identifier::parse("input_fields"),
+        fmt::format(
+            "{}",
+            fmt::join(
+                inputFields | std::views::transform([](const auto& field) { return fmt::format("{}", field.getFullyQualifiedName()); }),
+                ",")));
+    context.addPlanToNode(
+        SinkLogicalOperator::create(child, handoffSinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema(), node);
+
+    const auto asyncSourceDescriptor = context.sourceCatalog->getAnonymousSource(
+        Identifier::parse("Async"),
+        asyncOp.getTraitSet().get<FieldOrderingTrait>()->getOrderedFields(),
+        Host(node.getRawValue()),
+        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
+        sourceConfig);
+    INVARIANT(asyncSourceDescriptor.has_value(), "Failed to add physical source for async operator");
+    const auto sourceTraits = asyncOp.getTraitSet()
+        | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(AsyncExecutionTrait); })
+        | std::ranges::to<TraitSet>();
+    return SourceDescriptorLogicalOperator::create(asyncSourceDescriptor.value())->withTraitSet(sourceTraits);
+}
+
 LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op)
 {
     std::vector<LogicalOperator> assignedChildren;
@@ -216,7 +373,12 @@ LogicalOperator decomposePlanRecursive(DecompositionContext& context, const Logi
         assignedChildren.emplace_back(assignOperator(context, op, child));
     }
 
-    return op.withChildren({std::move(assignedChildren)});
+    auto assigned = op.withChildren({std::move(assignedChildren)});
+    if (hasTrait<AsyncExecutionTrait>(op.getTraitSet()))
+    {
+        return splitAsyncOperator(context, assigned);
+    }
+    return assigned;
 }
 }
 
@@ -226,7 +388,10 @@ QueryDecomposer::QueryDecomposer(
 {
 }
 
-DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
+DistributedLogicalPlan QueryDecomposer::decompose(
+    const LogicalPlan& placedPlan,
+    const QueryOptimizerNetworkConfiguration& configuration,
+    const QueryOptimizerAsyncConfiguration& asyncConfiguration)
 {
     PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(
@@ -237,6 +402,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
     DecompositionContext context{
         .plansByNode = {},
         .config = configuration,
+        .asyncConfig = asyncConfiguration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};
