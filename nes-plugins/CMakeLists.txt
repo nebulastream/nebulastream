@@ -29,6 +29,7 @@ add_plugin("Rules/RedundantUnionRemovalRule")
 add_plugin("Functions/Conditional")
 add_plugin("OutputFormatters/JSONOutputFormatter/Serializers")
 add_plugin("InputFormatters/JSONInputFormatter/Deserializers")
+add_plugin("Codecs/LZ4")
 add_plugin("Codecs/Zstd")
 
 if (NES_ENABLES_TESTS)
