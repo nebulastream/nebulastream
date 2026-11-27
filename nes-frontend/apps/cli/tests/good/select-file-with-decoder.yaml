@@ -1,0 +1,53 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+query: |
+  SELECT
+    *
+  FROM
+    COMPRESSED_STREAM
+  INTO
+    VOID_SINK
+sinks:
+  - name: VOID_SINK
+    host: worker-1:8080
+    schema:
+      - name: ID
+        type: UINT64
+    type: Void
+
+logical:
+  - name: COMPRESSED_STREAM
+    schema:
+      - name: ID
+        type: UINT64
+
+decoders:
+  - name: COMPRESSED
+    type: ZSTD
+
+physical:
+  - logical: COMPRESSED_STREAM
+    host: worker-1:8080
+    type: File
+    decoders:
+      - COMPRESSED
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    source_config:
+      file_path: data.csv.zst
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000

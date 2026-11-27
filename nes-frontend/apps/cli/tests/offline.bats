@@ -276,6 +276,19 @@ TOPEOF
   grep "Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
 }
 
+@test "decoders: physical source references a decoder defined in the topology" {
+  run $NES_CLI -d -t tests/good/select-file-with-decoder.yaml dump
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "Decomposed Plans"
+}
+
+@test "decoders: reject decoders set both as a list and in source_config" {
+  sed 's/^      file_path: data.csv.zst/      file_path: data.csv.zst\n      decoders: COMPRESSED/' tests/good/select-file-with-decoder.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"both as a list and in source_config"* ]]
+}
+
 # --- Error message quality tests ---
 # Each test starts from a valid base topology and introduces exactly one error.
 # The base topology is tests/good/select-gen-into-void.yaml.

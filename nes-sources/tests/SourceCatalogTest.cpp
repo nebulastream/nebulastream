@@ -188,6 +188,51 @@ TEST_F(SourceCatalogTest, DecoderReferencesWithoutCodec)
     EXPECT_TRUE(withoutDecoder->getDecoders().empty());
 }
 
+TEST_F(SourceCatalogTest, DecoderCatalogValidatesDecoders)
+{
+    DecoderCatalog decoders;
+    const auto created = decoders.addDecoder(Identifier::parse("compressed"), Identifier::parse("ZSTD"), {});
+    ASSERT_TRUE(created.has_value()) << created.error();
+    EXPECT_EQ(created->getName(), Identifier::parse("compressed"));
+    EXPECT_EQ(created->getType(), Identifier::parse("ZSTD"));
+
+    const auto duplicate = decoders.addDecoder(Identifier::parse("compressed"), Identifier::parse("ZSTD"), {});
+    ASSERT_FALSE(duplicate.has_value());
+    EXPECT_EQ(duplicate.error().code(), ErrorCode::DecoderAlreadyExists) << duplicate.error().what();
+
+    const auto unknownOption
+        = decoders.addDecoder(Identifier::parse("withOption"), Identifier::parse("ZSTD"), {{Identifier::parse("LEVEL"), "3"}});
+    ASSERT_FALSE(unknownOption.has_value());
+    EXPECT_EQ(unknownOption.error().code(), ErrorCode::InvalidConfigParameter) << unknownOption.error().what();
+
+    EXPECT_EQ(decoders.getAllDecoders().size(), 1);
+    EXPECT_TRUE(decoders.removeDecoder(Identifier::parse("compressed")).has_value());
+    EXPECT_FALSE(decoders.getDecoder(Identifier::parse("compressed")).has_value());
+}
+
+TEST_F(SourceCatalogTest, SourceKeepsResolvedDecoder)
+{
+    auto decoders = std::make_shared<DecoderCatalog>();
+    ASSERT_TRUE(decoders->addDecoder(Identifier::parse("compressed"), Identifier::parse("ZSTD"), {}).has_value());
+    SourceCatalog catalog{decoders};
+    const auto logical = addLogicalSource(catalog);
+
+    const auto withDecoder = addFileSource(catalog, logical, "compressed");
+    ASSERT_TRUE(withDecoder.has_value()) << withDecoder.error();
+    ASSERT_EQ(withDecoder->getDecoders().size(), 1);
+    EXPECT_EQ(withDecoder->getDecoders().front().getType(), Identifier::parse("ZSTD"));
+
+    /// Decoder chains follow with #2188.
+    const auto withChain = addFileSource(catalog, logical, "compressed, compressed");
+    ASSERT_FALSE(withChain.has_value());
+    EXPECT_EQ(withChain.error().code(), ErrorCode::InvalidConfigParameter) << withChain.error().what();
+
+    ASSERT_TRUE(decoders->removeDecoder(Identifier::parse("compressed")).has_value());
+    const auto stored = catalog.getPhysicalSource(withDecoder->getPhysicalSourceId());
+    ASSERT_TRUE(stored.has_value());
+    EXPECT_EQ(stored->getDecoders().size(), 1);
+}
+
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
     auto sourceCatalog = SourceCatalog::create();

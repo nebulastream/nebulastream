@@ -30,3 +30,5 @@ link_plugin_library(nes-codecs zstd_codec_plugin)
 add_registry_entry(Decoder Zstd)
 add_registry_entry(DecoderConfigSchema Zstd)
 add_registry_entry(DecoderConfig Zstd)
+
+add_codec_test(PLUGIN Zstd LIBRARIES ${ZSTD_LIBRARY})

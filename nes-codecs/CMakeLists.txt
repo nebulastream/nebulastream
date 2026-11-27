@@ -36,3 +36,7 @@ create_runtime_registry(DecoderConfig nes-codecs
 add_subdirectory(src)
 get_source(nes-codecs NES_CODECS_SOURCE_FILES)
 target_sources(nes-codecs PRIVATE ${NES_CODECS_SOURCE_FILES})
+
+if (NES_ENABLES_TESTS)
+    add_subdirectory(codec-test)
+endif ()
