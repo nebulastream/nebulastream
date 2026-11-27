@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -25,6 +27,8 @@
 #include <Interface/RecordLayoutUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <InternalCodec.hpp>
+#include <InternalCodecProvider.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 
@@ -46,7 +50,11 @@ Record ColumnTupleBufferRef::readRecord(
     const auto access = FieldAccess::createFieldAccesses(
         fields,
         [bufferAddress, &recordIndex](const auto& field)
-        { return FieldAccess{field.name, field.type, bufferAddress + ((recordIndex * field.dataTypeSize) + field.columnOffset)}; },
+        {
+            /// WIP proper codec support
+            const std::shared_ptr<InternalCodec> noCodec = createInternalCodec(field.type, "None");
+            return FieldAccess{field.name, field.type, bufferAddress + ((recordIndex * field.dataTypeSize) + field.columnOffset), noCodec};
+        },
         [&projections](const auto& field) { return includesField(projections, field.name); });
     return readRecordFields(access, getRecordBufferLoad(recordBuffer));
 }
@@ -55,7 +63,8 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecsMap) const
 {
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
@@ -65,8 +74,14 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
         const auto bufferAddress = recordBuffer.getMemArea();
         const auto access = FieldAccess::createFieldAccesses(
             fields,
-            [bufferAddress, recordIndex](const auto& field)
-            { return FieldAccess{field.name, field.type, bufferAddress + ((recordIndex * field.dataTypeSize) + field.columnOffset)}; });
+            [bufferAddress, recordIndex, internalCodecsMap](const auto& field)
+            {
+                return FieldAccess{
+                    field.name,
+                    field.type,
+                    bufferAddress + ((recordIndex * internalCodecsMap.at(field.name)->getEncodedValueSizeInBytes()) + field.columnOffset),
+                    internalCodecsMap.at(field.name)};
+            });
         writeRecordFields(access, rec, getRecordBufferStore(recordBuffer, bufferProvider));
         writtenRecords = 1;
         successful = true;
@@ -82,6 +97,11 @@ std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldName
 std::vector<DataType> ColumnTupleBufferRef::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
+}
+
+std::vector<std::string> ColumnTupleBufferRef::getAllInternalCodecs() const
+{
+    return fields | std::views::transform([](const Field& field) { return field.internalCodec; }) | std::ranges::to<std::vector>();
 }
 
 }

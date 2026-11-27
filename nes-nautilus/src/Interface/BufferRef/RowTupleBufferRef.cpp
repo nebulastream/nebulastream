@@ -18,6 +18,7 @@
 #include <memory>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -27,6 +28,8 @@
 #include <Interface/RecordLayoutUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <InternalCodec.hpp>
+#include <InternalCodecProvider.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 
@@ -48,7 +51,10 @@ Record RowTupleBufferRef::readRecord(
     const auto access = FieldAccess::createFieldAccesses(
         fields,
         [recordAddress](const auto& field)
-        { return FieldAccess{field.name, field.type, recordAddress + nautilus::val<uint64_t>(field.fieldOffset)}; },
+        {
+            const std::shared_ptr<InternalCodec> noCodec = createInternalCodec(field.type, "None");
+            return FieldAccess{field.name, field.type, recordAddress + nautilus::val<uint64_t>(field.fieldOffset), noCodec};
+        },
         [&projections](const auto& field) { return includesField(projections, field.name); });
     return readRecordFields(access, getRecordBufferLoad(recordBuffer));
 }
@@ -57,18 +63,23 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecMap) const
 {
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
     /// Check if index is in-bounds
     if (recordIndex < capacity)
     {
+        /// We do not encode in row layout, so the record address can be calculated like this despite the new internal codec options
         const auto recordAddress = recordBuffer.getMemArea() + (tupleSize * recordIndex);
         const auto access = FieldAccess::createFieldAccesses(
             fields,
-            [recordAddress](const auto& field)
-            { return FieldAccess{field.name, field.type, recordAddress + nautilus::val<uint64_t>(field.fieldOffset)}; });
+            [recordAddress, internalCodecMap](const auto& field)
+            {
+                return FieldAccess{
+                    field.name, field.type, recordAddress + nautilus::val<uint64_t>(field.fieldOffset), internalCodecMap.at(field.name)};
+            });
         writeRecordFields(access, rec, getRecordBufferStore(recordBuffer, bufferProvider));
         writtenRecords = 1;
         successful = true;
@@ -84,6 +95,12 @@ std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames()
 std::vector<DataType> RowTupleBufferRef::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
+}
+
+std::vector<std::string> RowTupleBufferRef::getAllInternalCodecs() const
+{
+    /// ROW_LAYOUT is currently not elligable for encodings.
+    return fields | std::views::transform([](const Field&) { return std::string("None"); }) | std::ranges::to<std::vector>();
 }
 
 }

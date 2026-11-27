@@ -36,6 +36,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
+#include <InternalCodecProvider.hpp>
 #include <static.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -199,10 +200,13 @@ Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> re
         [&fieldOffset, &recordMemAddress](const auto& field)
         {
             const auto dataType = field.getDataType();
+            /// Create NoneInternalCodec for the field
+            const std::shared_ptr<InternalCodec> noCodec = createInternalCodec(dataType, "None");
             FieldAccess fieldAccess{
                 .name = field.getFullyQualifiedName(),
                 .dataType = dataType,
-                .address = recordMemAddress + nautilus::val<uint64_t>(fieldOffset)};
+                .address = recordMemAddress + nautilus::val<uint64_t>(fieldOffset),
+                .internalCodec = noCodec};
             fieldOffset += dataType.getSizeInBytesWithNull();
             return fieldAccess;
         });
@@ -233,10 +237,12 @@ void DefaultPagedVectorTupleLayout::writeRecord(
         [&fieldOffset, &memoryForRecord](const auto& field)
         {
             const auto dataType = field.getDataType();
+            const std::shared_ptr<InternalCodec> noCodec = createInternalCodec(dataType, "None");
             FieldAccess fieldAccess{
                 .name = field.getFullyQualifiedName(),
                 .dataType = dataType,
-                .address = memoryForRecord + nautilus::val<uint64_t>(fieldOffset)};
+                .address = memoryForRecord + nautilus::val<uint64_t>(fieldOffset),
+                .internalCodec = noCodec};
             fieldOffset += dataType.getSizeInBytesWithNull();
             return fieldAccess;
         });

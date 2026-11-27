@@ -18,6 +18,8 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <string>
+#include <unordered_map>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -27,6 +29,7 @@
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <InternalCodec.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -81,16 +84,19 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
+    /// @param internalCodecsMap Maps each field identifier to the codec that we employ on it.
     virtual WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecsMap) const = 0;
 
     [[nodiscard]] uint64_t getCapacity() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
+    [[nodiscard]] virtual std::vector<std::string> getAllInternalCodecs() const = 0;
     [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;
 
 protected:

@@ -26,7 +26,7 @@
 namespace NES
 {
 
-using InternalCodecRegistryReturnType = std::unique_ptr<InternalCodec>;
+using InternalCodecRegistryReturnType = std::shared_ptr<InternalCodec>;
 
 struct InternalCodecRegistryArguments
 {

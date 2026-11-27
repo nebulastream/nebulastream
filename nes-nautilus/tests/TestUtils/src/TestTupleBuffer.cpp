@@ -276,7 +276,7 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
         record.write(field.getFullyQualifiedName(), fieldValueToVarVal(value, field.getDataType()));
     }
 
-    impl->bufRef->writeRecord(tupleIndex, recordBuffer, record, bufProviderVal);
+    impl->bufRef->writeRecord(tupleIndex, recordBuffer, record, bufProviderVal, TODO);
     impl->buffer.setNumberOfTuples(impl->buffer.getNumberOfTuples() + 1);
 }
 
@@ -320,7 +320,7 @@ FieldView& FieldView::operator=(const FieldValue& value)
     Record record;
     const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
     record.write(fieldId, fieldValueToVarVal(std::optional{value}, dataType));
-    locked->bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal);
+    locked->bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal, TODO);
     return *this;
 }
 
@@ -344,7 +344,7 @@ FieldView& FieldView::operator=(std::nullopt_t)
     Record record;
     const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
     record.write(fieldId, fieldValueToVarVal(std::nullopt, dataType));
-    locked->bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal);
+    locked->bufRef->writeRecord(recordIdx, recordBuffer, record, bufProviderVal, TODO);
     return *this;
 }
 

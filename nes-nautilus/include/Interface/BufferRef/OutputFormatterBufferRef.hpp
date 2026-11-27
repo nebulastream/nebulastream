@@ -59,6 +59,8 @@ public:
 
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
+    [[nodiscard]] std::vector<std::string> getAllInternalCodecs() const override;
+
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
@@ -68,6 +70,7 @@ public:
         nautilus::val<uint64_t>& bytesWritten,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecMap) const override;
 };
 }

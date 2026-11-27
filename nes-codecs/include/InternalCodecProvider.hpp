@@ -22,5 +22,5 @@
 namespace NES
 {
 /// Fetch constructor of internal codec from InternalCodecRegistry, construct codec, and return as unique_ptr.
-std::unique_ptr<InternalCodec> createInternalCodec(DataType fieldType, const std::string& codecIdentifier);
+std::shared_ptr<InternalCodec> createInternalCodec(DataType fieldType, const std::string& codecIdentifier);
 }

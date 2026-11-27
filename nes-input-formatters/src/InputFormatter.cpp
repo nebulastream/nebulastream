@@ -427,8 +427,18 @@ Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifie
     std::unreachable();
 }
 
+std::vector<std::string> InputFormatter::getAllInternalCodecs() const
+{
+    INVARIANT(false, "unsupported operation on InputFormatter");
+    std::unreachable();
+}
+
 TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
-    nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
+    nautilus::val<uint64_t>&,
+    const RecordBuffer&,
+    const Record&,
+    const nautilus::val<AbstractBufferProvider*>&,
+    std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>>) const
 {
     INVARIANT(false, "unsupported operation on InputFormatter");
     std::unreachable();

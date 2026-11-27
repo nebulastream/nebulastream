@@ -16,12 +16,16 @@
 
 
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <InternalCodec.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 
@@ -61,6 +65,8 @@ public:
 
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
+    [[nodiscard]] std::vector<std::string> getAllInternalCodecs() const override;
+
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
@@ -70,7 +76,8 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecMap) const override;
 };
 
 }

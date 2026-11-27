@@ -23,13 +23,15 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
+#include <Interface/VarSizedAccessFn.hpp>
+#include <InternalCodec.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
 
-/// Describes one field of a record as the layout sees it: its identity, its type, and the memory
+/// Describes one field of a record as the layout sees it: its identity, its type, the codec applied to it, and the memory
 /// address of its slot. A memory layout (row, column, paged vector, ...) differs from the others
 /// only in how it resolves these addresses, so the shared read/write loops below operate purely on
 /// a list of FieldAccess and stay layout agnostic.
@@ -38,6 +40,7 @@ struct FieldAccess
     Record::RecordFieldIdentifier name;
     DataType dataType;
     nautilus::val<int8_t*> address;
+    std::shared_ptr<InternalCodec> internalCodec;
 
     /// Builds the addressed-field list by mapping every field through @param calcFieldAccess. Used by write paths,
     /// which address every field (writeRecordFields then skips fields absent from the record).
@@ -57,12 +60,6 @@ struct FieldAccess
             | std::ranges::to<std::vector>();
     }
 };
-
-/// Variable-sized seam used only for the VARSIZED branch, since varsized payloads live outside the
-/// fixed-size slot (in a PagedVector page or a TupleBuffer child buffer, depending on the layout).
-/// Load resolves the (pointer, length) of the payload; store writes the payload at the slot.
-using VarSizedLoadFn = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> slot)>;
-using VarSizedStoreFn = std::function<void(nautilus::val<int8_t*> slot, const VarVal& value)>;
 
 /// Materializes a record from the given already-addressed fields. The caller decides which fields to
 /// pass (e.g. after applying projections), so every field in @param fields is read.

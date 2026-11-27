@@ -24,7 +24,7 @@
 
 namespace NES
 {
-std::unique_ptr<InternalCodec> createInternalCodec(const DataType fieldType, const std::string& codecIdentifier)
+std::shared_ptr<InternalCodec> createInternalCodec(const DataType fieldType, const std::string& codecIdentifier)
 {
     if (const auto codecFactory = InternalCodecRegistry::instance().find(codecIdentifier))
     {

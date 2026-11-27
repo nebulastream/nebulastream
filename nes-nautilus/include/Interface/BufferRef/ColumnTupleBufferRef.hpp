@@ -16,12 +16,16 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <InternalCodec.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 
@@ -42,6 +46,7 @@ class ColumnTupleBufferRef final : public TupleBufferRef
         DataType type;
         size_t dataTypeSize;
         uint64_t columnOffset;
+        std::string internalCodec;
     };
 
     std::vector<Field> fields;
@@ -59,6 +64,7 @@ public:
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
+    [[nodiscard]] std::vector<std::string> getAllInternalCodecs() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -69,7 +75,8 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>>) const override;
 };
 
 }

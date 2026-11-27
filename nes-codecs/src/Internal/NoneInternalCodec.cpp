@@ -41,8 +41,18 @@ std::unique_ptr<EncodedValue> NoneInternalCodec::encodeValue(const VarVal value)
     return std::make_unique<NoneEncodedValue>(value, inputType);
 }
 
-std::unique_ptr<InternalCodec> NoneInternalCodec::provideCodec(InternalCodecRegistryArguments args)
+size_t NoneInternalCodec::getStateSizeInBytes() const
 {
-    return std::make_unique<NoneInternalCodec>(args.fieldType);
+    return 0;
+}
+
+size_t NoneInternalCodec::getEncodedValueSizeInBytes() const
+{
+    return inputType.getSizeInBytesWithNull();
+}
+
+InternalCodecRegistryReturnType NoneInternalCodec::provideCodec(InternalCodecRegistryArguments args)
+{
+    return std::make_shared<NoneInternalCodec>(args.fieldType);
 }
 }

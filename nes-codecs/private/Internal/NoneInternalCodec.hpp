@@ -47,8 +47,10 @@ public:
     explicit NoneInternalCodec(const DataType inputType) : inputType(inputType) { }
 
     [[nodiscard]] std::unique_ptr<EncodedValue> encodeValue(const VarVal value) override;
+    [[nodiscard]] size_t getEncodedValueSizeInBytes() const override;
+    [[nodiscard]] size_t getStateSizeInBytes() const override;
 
-    static std::unique_ptr<InternalCodec> provideCodec(InternalCodecRegistryArguments args);
+    static InternalCodecRegistryReturnType provideCodec(InternalCodecRegistryArguments args);
 
 private:
     /// DataType of the VarVals that this Codec receives

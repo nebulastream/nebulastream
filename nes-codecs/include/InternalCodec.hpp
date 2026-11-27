@@ -14,12 +14,13 @@
 
 #pragma once
 #include <cstddef>
+#include <memory>
 
-#include <Interface/RecordLayoutUtil.hpp>
+#include <DataTypes/VarVal.hpp>
+#include <Interface/VarSizedAccessFn.hpp>
 
 namespace NES
 {
-
 /// A VarVal or composition of VarVals holding a single encoded value.
 class EncodedValue
 {
@@ -56,6 +57,9 @@ public:
 
     /// Encodes the value within the VarVal on-the-fly, based on the Codec and the CodecState.
     /// Returns an EncodedValue object, encapsulating all the VarVals the encoded value is composed of.
-    virtual std::unique_ptr<EncodedValue> encodeValue(const VarVal value) = 0;
+    virtual std::unique_ptr<EncodedValue> encodeValue(VarVal value) = 0;
+
+    [[nodiscard]] virtual size_t getEncodedValueSizeInBytes() const = 0;
+    [[nodiscard]] virtual size_t getStateSizeInBytes() const = 0;
 };
 }

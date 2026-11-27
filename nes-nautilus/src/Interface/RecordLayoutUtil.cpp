@@ -23,6 +23,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
+#include <InternalCodec.hpp>
 #include <static.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
@@ -86,7 +87,7 @@ Record readRecordFields(const std::vector<FieldAccess>& fields, const VarSizedLo
     Record record;
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
-        const auto& [name, dataType, address] = fields.at(i);
+        const auto& [name, dataType, address, _] = fields.at(i);
         record.write(name, readFieldValue(dataType, address, loadVarSized));
     }
     return record;
@@ -96,10 +97,13 @@ void writeRecordFields(const std::vector<FieldAccess>& fields, const Record& rec
 {
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
-        const auto& [name, dataType, address] = fields.at(i);
+        const auto& [name, dataType, address, codec] = fields.at(i);
         if (record.hasField(name))
         {
-            writeFieldValue(dataType, address, record.read(name), storeVarSized);
+            /// Encode the value and write the encoded value
+            const std::unique_ptr<EncodedValue> encodedValue = codec->encodeValue(record.read(name));
+            /// Write encoded value to the buffer.
+            encodedValue->writeEncodedValue(address, storeVarSized);
         }
     }
 }

@@ -53,7 +53,8 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>>) const
 {
     nautilus::val<bool> successful{true};
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
@@ -90,6 +91,12 @@ std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllField
 std::vector<DataType> OutputFormatterBufferRef::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
+}
+
+std::vector<std::string> OutputFormatterBufferRef::getAllInternalCodecs() const
+{
+    /// Formatted buffers are not elligable for internal encodings.
+    return fields | std::views::transform([](const Field&) { return std::string("None"); }) | std::ranges::to<std::vector>();
 }
 
 }

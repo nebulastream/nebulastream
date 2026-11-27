@@ -19,6 +19,7 @@
 #include <memory>
 #include <ostream>
 #include <span>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -35,6 +36,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <InputFormatIndexer.hpp>
+#include <InternalCodec.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -71,6 +73,7 @@ public:
 
     ~InputFormatter() override = default;
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
+    [[nodiscard]] std::vector<std::string> getAllInternalCodecs() const override;
     InputFormatter(const InputFormatter&) = delete;
     InputFormatter& operator=(const InputFormatter&) = delete;
     InputFormatter(InputFormatter&&) = default;
@@ -78,8 +81,12 @@ public:
 
     Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const override;
 
-    WriteRecordResult
-    writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override;
+    WriteRecordResult writeRecord(
+        nautilus::val<uint64_t>&,
+        const RecordBuffer&,
+        const Record&,
+        const nautilus::val<AbstractBufferProvider*>&,
+        std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecsMap) const override;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 

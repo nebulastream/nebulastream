@@ -14,10 +14,15 @@
 
 #include <EmitPhysicalOperator.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -32,6 +37,8 @@
 #include <EmitOperatorHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <InternalCodec.hpp>
+#include <InternalCodecProvider.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <function.hpp>
@@ -43,18 +50,35 @@ namespace NES
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+    explicit EmitState(
+        const RecordBuffer& resultBuffer,
+        const std::vector<Record::RecordFieldIdentifier>& fieldNames,
+        const std::vector<DataType>& fieldTypes,
+        const std::vector<std::string>& fieldInternalCodecs)
+        : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea())
+    {
+        /// For each field, fetch internal codec type, construct it, and store in the map.
+        /// We need to maintain the InternalCodec objects within the EmitState, since the Codecs themselfs also maintain state.
+        /// The state needs to be cleaned up with the rest of the EmitState, once this operator closes.
+        for (size_t i = 0; i < fieldInternalCodecs.size(); ++i)
+        {
+            std::shared_ptr<InternalCodec> codec = createInternalCodec(fieldTypes.at(i), fieldInternalCodecs.at(i));
+            internalCodecMap[fieldNames.at(i)] = std::move(codec);
+        }
+    }
 
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
+    std::unordered_map<Record::RecordFieldIdentifier, std::shared_ptr<InternalCodec>> internalCodecMap;
 };
 
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
     const RecordBuffer resultBuffer{ctx.allocateBuffer()};
-    auto emitState = std::make_unique<EmitState>(resultBuffer);
+    auto emitState = std::make_unique<EmitState>(
+        resultBuffer, bufferRef->getAllFieldNames(), bufferRef->getAllDataTypes(), bufferRef->getAllInternalCodecs());
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
 
@@ -65,8 +89,8 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    auto writeResult
-        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+    auto writeResult = bufferRef->writeRecord(
+        emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider, emitState->internalCodecMap);
     /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
     /// We emit and create a new record buffer
     if (!writeResult.successful)
@@ -77,8 +101,12 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         emitState->outputIndex = uint64_t{0};
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
-        writeResult
-            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        writeResult = bufferRef->writeRecord(
+            emitState->outputIndex,
+            emitState->resultBuffer,
+            record,
+            ctx.pipelineMemoryProvider.bufferProvider,
+            emitState->internalCodecMap);
     }
     emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }

@@ -101,7 +101,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
             for (const auto& field : schema)
             {
                 fields.emplace_back(
-                    field.getFullyQualifiedName(), field.getDataType(), field.getDataType().getSizeInBytesWithNull(), columnOffset);
+                    field.getFullyQualifiedName(), field.getDataType(), field.getDataType().getSizeInBytesWithNull(), columnOffset, "None");
                 columnOffset += (field.getDataType().getSizeInBytesWithNull() * capacity);
             }
 

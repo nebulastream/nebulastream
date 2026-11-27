@@ -26,7 +26,8 @@ target_include_directories(nes-codecs PUBLIC
 # Runtime registries
 create_runtime_registry(InternalCodec nes-codecs
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}InternalCodec::provideCodec"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}InternalCodec.hpp")
+        HEADER_TEMPLATE "\${PLUGIN_NAME}InternalCodec.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
 add_subdirectory(src)
 get_source(nes-codecs NES_CODECS_SOURCE_FILES)
