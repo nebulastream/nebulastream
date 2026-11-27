@@ -1,0 +1,94 @@
+# name: datatype/OptionalTypeFunctor.test
+# description: End-to-end tests for OPTIONAL(T) type functor in schemas, casts, and curried value constructors
+# groups: [DataTypes, Parser]
+
+CREATE LOGICAL SOURCE src(
+    id UINT64 NOT NULL,
+    explicit_opt OPTIONAL(INT32),
+    named_opt OPTIONAL(INT32 AS INNER_TYPE),
+    implicit_opt INT32,
+    strict_val INT32 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR src TYPE FileSource;
+ATTACH INLINE
+1,10,20,30,40
+2,,,,50
+
+CREATE SINK schemaSink(
+    id UINT64 NOT NULL,
+    explicit_opt OPTIONAL(INT32),
+    named_opt OPTIONAL(INT32 AS INNER_TYPE),
+    implicit_opt INT32,
+    strict_val INT32 NOT NULL
+) TYPE FileSink;
+
+CREATE SINK ctorSink(
+    id UINT64 NOT NULL,
+    some_i32 OPTIONAL(INT32),
+    neg_i32 OPTIONAL(INT32),
+    null_i32 OPTIONAL(INT32),
+    named_i32 OPTIONAL(INT32 AS INNER_TYPE),
+    some_str OPTIONAL(VARSIZED),
+    null_str OPTIONAL(VARSIZED),
+    casted_opt OPTIONAL(INT64)
+) TYPE FileSink;
+
+CREATE SINK nullDistinctionSink(
+    id UINT64 NOT NULL,
+    literal_word_is_null BOOLEAN NOT NULL,
+    sql_null_is_null BOOLEAN NOT NULL
+) TYPE FileSink;
+
+# 1. OPTIONAL(T) in source and sink schemas matches SQL default nullability
+SELECT id, explicit_opt, named_opt, implicit_opt, strict_val
+FROM src
+INTO schemaSink;
+----
+1, 10, 20, 30, 40
+2, NULL, NULL, NULL, 50
+
+# 2. Curried OPTIONAL(T)(val) / OPTIONAL(T)(NULL) value constructors and CAST(... AS OPTIONAL(T))
+SELECT
+    id,
+    OPTIONAL(INT32)(42) AS some_i32,
+    OPTIONAL(INT32)(-7) AS neg_i32,
+    OPTIONAL(INT32)(NULL) AS null_i32,
+    OPTIONAL(INT32 AS INNER_TYPE)(99) AS named_i32,
+    OPTIONAL(VARSIZED)('hello') AS some_str,
+    OPTIONAL(VARSIZED)(NULL) AS null_str,
+    CAST(strict_val AS OPTIONAL(INT64)) AS casted_opt
+FROM src
+WHERE id == 1
+INTO ctorSink;
+----
+1, 42, -7, NULL, 99, hello, NULL, 40
+
+# 3. OPTIONAL(VARSIZED)('NULL') (4-char string) vs OPTIONAL(VARSIZED)(NULL) (SQL NULL)
+SELECT
+    id,
+    OPTIONAL(VARSIZED)('NULL') IS NULL AS literal_word_is_null,
+    OPTIONAL(VARSIZED)(NULL) IS NULL AS sql_null_is_null
+FROM src
+WHERE id == 1
+INTO nullDistinctionSink;
+----
+1, false, true
+
+# 4. Non-nullable INT32 constructor rejects NULL
+SELECT INT32(NULL) AS v FROM src INTO FileSink();
+----
+ERROR 2000
+
+# 5. OPTIONAL(INT32) with 0 or >1 value arguments is rejected
+SELECT OPTIONAL(INT32)() AS v FROM src INTO FileSink();
+----
+ERROR 2000
+
+SELECT OPTIONAL(INT32)(1, 2) AS v FROM src INTO FileSink();
+----
+ERROR 2000
+
+# 6. Out-of-range constant for concrete Int8Type is rejected at bind time
+SELECT OPTIONAL(INT8)(999) AS v FROM src INTO FileSink();
+----
+ERROR 2000
