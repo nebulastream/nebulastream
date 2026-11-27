@@ -111,10 +111,9 @@ jobs:
           #   *      → REPL errored (FAIL_FAST on bad statement, etc.) ⇒ fail
           EXIT_CODE=0
           timeout --foreground "${{inputs.runtime_seconds}}" \
-            build/nes-frontend/apps/nes-repl \
+            build/nes-frontend/repl/nes-repl \
               --on-exit WAIT_FOR_QUERY_TERMINATION \
               -e FAIL_FAST \
-              -s localhost:8080 \
             < query.sql || EXIT_CODE=$?
 
           case "${EXIT_CODE}" in

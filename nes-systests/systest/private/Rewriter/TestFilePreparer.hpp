@@ -19,12 +19,12 @@
 
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Model/ParsedTestFile.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
+#include <Runner/Cluster.hpp>
 
 namespace NES
 {
@@ -35,12 +35,13 @@ namespace NES
 class TestFilePreparer
 {
 public:
+    /// Throws if the topology of the run has no worker or an empty allow list.
     explicit TestFilePreparer(const SystestConfiguration& config);
 
     /// Throws when the file cannot be read or parsed.
     [[nodiscard]] std::vector<RunnablePartition> prepare(const DiscoveredTestFile& testFile);
 
-    /// Prefixes declared names with the key, e.g., `stream` becomes `JOIN_STREAM`, because all files share one catalog.
+    /// Prefixes each declared name with the key, e.g., `stream` becomes `JOIN_STREAM`, because files with equal overrides share a catalog.
     [[nodiscard]] static RunnableTestFile rewritePartition(ParsedTestFile partition, const RewriteContext& context);
 
 private:
@@ -50,9 +51,8 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     TestFileKeyFactory keyFactory;
-    /// The worker for a statement that states no placement of its own.
-    Host defaultSourceHost;
-    Host defaultSinkHost;
+    /// Every cluster of the run registers the workers of the topology file, so all files get the same hosts.
+    Placement placement;
     /// Shared across the run, so two files cannot claim the same prefixed name.
     PrefixedNameOwners nameOwners;
 };

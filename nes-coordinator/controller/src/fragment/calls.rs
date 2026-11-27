@@ -41,6 +41,10 @@ pub(crate) enum Call {
     Stop(QueryFragmentId),
 }
 
+/// A runtime that shut down ended a call before the call returned.
+#[derive(Debug)]
+pub(crate) struct Cancelled;
+
 /// The calls to one worker that have not returned yet.
 pub(crate) struct InFlightCalls {
     db: Database,
@@ -80,12 +84,17 @@ impl InFlightCalls {
 
     /// Returns `None` while no call is in flight.
     /// A canceled wait leaves every call in flight.
-    pub(crate) async fn join_next(&mut self) -> Option<(Call, Result<(), CallError>)> {
-        let joined = self.tasks.join_next().await?;
-        // Nothing aborts a call task while the set lives, so it ends with its result or a panic, which is raised again here.
-        let (call, result) = joined.unwrap_or_else(|err| panic::resume_unwind(err.into_panic()));
+    pub(crate) async fn join_next(
+        &mut self,
+    ) -> Option<Result<(Call, Result<(), CallError>), Cancelled>> {
+        let (call, result) = match self.tasks.join_next().await? {
+            Ok(joined) => joined,
+            Err(err) if err.is_panic() => panic::resume_unwind(err.into_panic()),
+            // Nothing aborts a single call while the set exists, so only a runtime that shuts down ends a call without a result.
+            Err(_) => return Some(Err(Cancelled)),
+        };
         self.calls.remove(&call);
-        Some((call, result))
+        Some(Ok((call, result)))
     }
 }
 
@@ -126,4 +135,47 @@ async fn try_start<T: WorkerClient>(
         }
         err => RetryError::permanent(err),
     })
+}
+
+#[cfg(all(test, not(madsim)))]
+mod tests {
+    use super::*;
+    use crate::worker_client::remote::worker_rpc_service::WorkerStatusResponse;
+    use std::future::pending;
+    use tokio::runtime::Builder;
+
+    #[derive(Clone)]
+    struct NeverReturns;
+
+    impl WorkerClient for NeverReturns {
+        async fn start(&self, _plan: SerializableQueryPlan) -> Result<(), CallError> {
+            pending().await
+        }
+
+        async fn stop(&self, _id: QueryFragmentId) -> Result<(), CallError> {
+            pending().await
+        }
+
+        async fn get_status(&self, _after: u64) -> anyhow::Result<WorkerStatusResponse> {
+            pending().await
+        }
+    }
+
+    #[test]
+    fn a_runtime_that_shuts_down_cancels_a_call_instead_of_raising_a_panic() {
+        let waiting = Builder::new_current_thread().enable_time().build().unwrap();
+        let calling = Builder::new_current_thread().build().unwrap();
+        let mut calls = InFlightCalls::new(waiting.block_on(Database::for_test()), Duration::ZERO);
+        {
+            let _context = calling.enter();
+            calls.spawn(&NeverReturns, Call::Stop(QueryFragmentId::new(1)));
+        }
+
+        drop(calling);
+
+        assert!(matches!(
+            waiting.block_on(calls.join_next()),
+            Some(Err(Cancelled))
+        ));
+    }
 }

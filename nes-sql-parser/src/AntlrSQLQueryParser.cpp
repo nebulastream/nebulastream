@@ -14,6 +14,7 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 
+#include <expected>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -32,9 +33,14 @@
 #include <Recognizer.h>
 #include <Token.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <misc/Interval.h>
+#include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::AntlrSQLQueryParser
@@ -99,12 +105,12 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         [[maybe_unused]] auto listener = installErrorListenerAndHandler(queryString, lexer, parser);
         auto* const tree = parser.singleStatement();
         auto* const statement = tree->statement();
-        if (statement == nullptr || statement->queryWithOptions() == nullptr)
+        if (statement == nullptr || statement->query() == nullptr)
         {
             throw InvalidQuerySyntax("Expected a query statement in {}", queryString);
         }
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
-        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, statement->queryWithOptions()->query());
+        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, statement->query());
         auto queryPlan = queryPlanCreator.getQueryPlan();
         queryPlan.setOriginalSql(std::string(queryString));
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
@@ -113,6 +119,37 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
     catch (antlr4::RuntimeException& antlrException)
     {
         throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
+    }
+}
+
+Schema<UnqualifiedUnboundField, Ordered> bindSchemaDefinition(AntlrSQLParser::SchemaDefinitionContext* schemaDefinition)
+{
+    return bindSchema(schemaDefinition);
+}
+
+std::expected<std::vector<std::string>, Exception> splitStatements(const std::string_view sql)
+{
+    try
+    {
+        const auto parser = ManagedAntlrParser::create(sql);
+        return parser->parseMultiple().transform(
+            [](const auto& statements)
+            {
+                return statements
+                    | std::views::transform(
+                           [](const auto& statement)
+                           {
+                               const auto* const start = statement.get()->getStart();
+                               const auto* const stop = statement.get()->getStop();
+                               return start->getInputStream()->getText(
+                                   antlr4::misc::Interval{start->getStartIndex(), stop->getStopIndex()});
+                           })
+                    | std::ranges::to<std::vector>();
+            });
+    }
+    catch (const Exception& exception)
+    {
+        return std::unexpected{exception};
     }
 }
 

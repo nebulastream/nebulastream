@@ -36,6 +36,10 @@ mod sim {
     pub(crate) struct JoinError(tokio::task::JoinError);
 
     impl JoinError {
+        pub(crate) fn is_panic(&self) -> bool {
+            self.0.is_panic()
+        }
+
         pub(crate) fn into_panic(self) -> Box<dyn Any + Send> {
             Box::new(self.0.to_string())
         }

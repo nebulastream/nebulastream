@@ -51,7 +51,6 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
-#include <Util/UUID.hpp>
 #include <BackpressureChannel.hpp>
 #include <Binder.hpp>
 #include <BufferPool.hpp>
@@ -62,7 +61,6 @@
 #include <QueryEngine.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <Reply.hpp>
 #include <SessionCommand.hpp>
@@ -365,7 +363,7 @@ private:
             return errorReply(harnessErrorInfo("start", "HarnessProtocol", "START while the sink is started"));
         }
         const auto& descriptor = **bound;
-        const auto& running = query.emplace(RunningQuery{.id = QueryId::createLocal(LocalQueryId(generateUUID())), .remaining = batches});
+        const auto& running = query.emplace(RunningQuery{.id = QueryId{nextQueryId++}, .remaining = batches});
         observer->reset(running.id);
         try
         {
@@ -556,6 +554,7 @@ private:
     std::shared_ptr<QueryObserver> observer = std::make_shared<QueryObserver>();
     std::shared_ptr<BufferManager> pool;
     std::optional<RunningQuery> query;
+    QueryId::Underlying nextQueryId = INITIAL<QueryId>.getRawValue();
     /// Set once a step timed out.
     bool stuck = false;
     /// Declared last, so that the engine stops its threads before the members that they use are destroyed.

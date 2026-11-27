@@ -31,24 +31,14 @@ pub struct CodedError {
     #[serde(with = "code_number")]
     pub code: ErrorCode,
     pub msg: String,
-    /// A C++ failure's stacktrace, empty for an error from Rust.
-    pub trace: String,
 }
 
 impl CodedError {
-    /// A failure raised in Rust, without stacktrace.
     pub fn new(code: ErrorCode, msg: impl Display) -> Self {
         Self {
             code,
             msg: msg.to_string(),
-            trace: String::new(),
         }
-    }
-
-    /// A failure raised in C++, relayed with the code and stacktrace.
-    #[must_use]
-    pub const fn relayed(code: ErrorCode, msg: String, trace: String) -> Self {
-        Self { code, msg, trace }
     }
 }
 

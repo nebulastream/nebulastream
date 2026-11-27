@@ -30,6 +30,7 @@
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Parser/SystestParser.hpp>
@@ -43,6 +44,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleWorkerTopology.hpp>
 #include <TemporaryDirectory.hpp>
 
 namespace NES
@@ -801,8 +803,7 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
+    config.clusterConfig = Testing::singleWorkerTopology();
 
     const auto everything = TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"Partitioned"}});
     ASSERT_EQ(everything.size(), 2U);
@@ -817,7 +818,7 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
     EXPECT_TRUE(std::get<RewrittenQuery>(runnable.testCases.front().action).sql.contains(runnable.key));
 }
 
-/// All files of a run share one catalog.
+/// Files with equal overrides share one catalog.
 TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
 {
     const Testing::TemporaryDirectory tmp;
@@ -838,8 +839,7 @@ TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
+    config.clusterConfig = Testing::singleWorkerTopology();
 
     TestFilePreparer rewriter{config};
     EXPECT_NO_THROW(std::ignore = rewriter.prepare(DiscoveredTestFile{tmp.get() / "a.test", TestName{"a"}}));
@@ -858,8 +858,7 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
     config.workingDir = tmp.get().string();
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
+    config.clusterConfig = Testing::singleWorkerTopology();
 
     EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}).empty());
 }

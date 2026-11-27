@@ -36,14 +36,18 @@
 
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <nes-coordinator-bridge/coordinator.h>
+#include <BridgeConfig.hpp>
 
 #include <Config/RunPolicy.hpp>
 #include <Discovery/TestDiscovery.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
 #include <Rewriter/TestFilePreparer.hpp>
+#include <Runner/Cluster.hpp>
 #include <Runner/TestRunner.hpp>
 #include <Benchmark.hpp>
 #include <ErrorHandling.hpp>
@@ -130,25 +134,131 @@ PreparedRun prepareAll(const SystestConfiguration& config)
     return run;
 }
 
-RunOutcome runOnce(const SystestConfiguration& config, const RunPolicy& policy, PreparedRun prepared)
+size_t countTestCases(const std::vector<RunnablePartition>& partitions)
+{
+    return std::ranges::fold_left(
+        partitions, size_t{0}, [](const size_t sum, const RunnablePartition& partition) { return sum + partition.file.testCases.size(); });
+}
+
+/// The partitions with equal configuration overrides, which run on the same cluster.
+struct SettingsGroup
+{
+    ConfigurationOverride overrides;
+    std::vector<RunnablePartition> partitions;
+    /// The index of each partition among all partitions of the run.
+    std::vector<size_t> positions;
+};
+
+/// Returns the groups in the order of their first partitions.
+std::vector<SettingsGroup> groupBySettings(std::vector<RunnablePartition> partitions)
+{
+    std::vector<SettingsGroup> groups;
+    for (size_t position = 0; position < partitions.size(); ++position)
+    {
+        auto& partition = partitions.at(position);
+        const auto found = std::ranges::find(groups, partition.overrides, &SettingsGroup::overrides);
+        auto& group = found == groups.end()
+            ? groups.emplace_back(SettingsGroup{.overrides = partition.overrides, .partitions = {}, .positions = {}})
+            : *found;
+        group.positions.push_back(position);
+        group.partitions.push_back(std::move(partition));
+    }
+    return groups;
+}
+
+/// A report entry with the index of its partition among all partitions of the run.
+struct PositionedEntry
+{
+    size_t position;
+    ReportEntry entry;
+};
+
+/// The groups reorder the execution, and the report still follows the order of the partitions.
+std::vector<ReportEntry> orderByPosition(std::vector<PositionedEntry> entries)
+{
+    std::ranges::stable_sort(entries, {}, &PositionedEntry::position);
+    return entries | std::views::transform([](PositionedEntry& positioned) { return std::move(positioned.entry); })
+        | std::ranges::to<std::vector>();
+}
+
+/// The result of running every settings group once.
+struct GroupsOutcome
+{
+    /// The files whose setup failed: one entry for the failure and one skip per test case.
+    std::vector<ReportEntry> rejected;
+    std::vector<ReportEntry> checked;
+};
+
+/// Runs the settings groups one after another, each on its own cluster.
+/// A worker allocates its whole memory budget when it starts, so this function destroys the cluster of one group before it starts the next.
+/// `onRejected` receives the number of test cases that a group does not run, because the setup of their files failed.
+GroupsOutcome runGroups(
+    const SystestConfiguration& config,
+    const Cluster::Config& baseCluster,
+    const size_t concurrency,
+    const std::vector<SettingsGroup>& groups,
+    const TestRunner::Observer& observe,
+    const std::function<void(size_t)>& onRejected)
+{
+    std::vector<PositionedEntry> rejected;
+    std::vector<PositionedEntry> checked;
+    for (const auto& group : groups)
+    {
+        /// A file has at most one partition per set of overrides, so within a group the file identifies the partition.
+        const auto findPosition = [&group](const ReportEntry& entry)
+        {
+            const auto partition = std::ranges::find(
+                group.partitions,
+                entry.id.originFile,
+                [](const RunnablePartition& candidate) -> const std::string& { return candidate.file.name; });
+            INVARIANT(partition != group.partitions.end(), "a group reports only the files that it ran");
+            return group.positions.at(static_cast<size_t>(std::ranges::distance(group.partitions.begin(), partition)));
+        };
+
+        auto clusterConfig = baseCluster;
+        clusterConfig.overrides = group.overrides;
+        const Cluster cluster{clusterConfig};
+        TestRunner runner{config, cluster, group.partitions};
+        for (const auto& entry : runner.getRejected())
+        {
+            rejected.push_back(PositionedEntry{.position = findPosition(entry), .entry = entry});
+        }
+        if (onRejected)
+        {
+            onRejected(countTestCases(group.partitions) - runner.countTestCases());
+        }
+        for (auto& entry : runner.submitAll(concurrency, observe))
+        {
+            const auto position = findPosition(entry);
+            checked.push_back(PositionedEntry{.position = position, .entry = std::move(entry)});
+        }
+    }
+    return GroupsOutcome{.rejected = orderByPosition(std::move(rejected)), .checked = orderByPosition(std::move(checked))};
+}
+
+RunOutcome runOnce(const SystestConfiguration& config, const Cluster::Config& baseCluster, const RunPolicy& policy, PreparedRun prepared)
 {
     std::vector<ReportEntry> report = std::move(prepared.rejected);
-    TestRunner runner{config, std::move(prepared.partitions)};
-    std::ranges::copy(runner.getRejected(), std::back_inserter(report));
-    const auto totalTestCases = runner.countTestCases();
+    const auto totalTestCases = countTestCases(prepared.partitions);
+    const auto groups = groupBySettings(std::move(prepared.partitions));
 
     size_t checkedSoFar = 0;
     const TestRunner::Observer observe
         = [&](const ReportEntry& entry, const RewrittenTestCase&, const std::span<const StatementTiming> timings)
     { printProgress(++checkedSoFar, totalTestCases, entry, timings); };
+    /// The runner never checks the test cases of a rejected file, so the progress counts them here.
+    const auto countRejected = [&](const size_t rejectedTestCases) { checkedSoFar += rejectedTestCases; };
 
-    std::ranges::move(runner.submitAll(policy.concurrency, observe), std::back_inserter(report));
+    auto [rejected, checked] = runGroups(config, baseCluster, policy.concurrency, groups, observe, countRejected);
+    std::ranges::move(rejected, std::back_inserter(report));
+    std::ranges::move(checked, std::back_inserter(report));
     return summarize(report);
 }
 
-/// Sets up once, then resubmits the bound plans every round until the rounds or the time run out, or a round fails.
+/// Runs every settings group once per round, until the rounds or the time run out, or a round fails.
+/// Each round starts new clusters and repeats the setup of the files.
 /// A measuring run keeps each query's best time across rounds.
-RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy, PreparedRun rewritten)
+RunOutcome runRounds(const SystestConfiguration& config, const Cluster::Config& baseCluster, const RunPolicy& policy, PreparedRun rewritten)
 {
     /// A rejected file would shrink every round's set, and an empty set would loop forever, so the run ends here.
     if (not rewritten.rejected.empty() or rewritten.partitions.empty())
@@ -156,11 +266,7 @@ RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy
         return summarize(rewritten.rejected);
     }
     const auto fileCount = rewritten.partitions.size();
-    TestRunner runner{config, std::move(rewritten.partitions)};
-    if (not runner.getRejected().empty())
-    {
-        return summarize(runner.getRejected());
-    }
+    const auto groups = groupBySettings(std::move(rewritten.partitions));
 
     auto benchmark = policy.measureReport.has_value() ? std::optional{Benchmark{}} : std::nullopt;
     const TestRunner::Observer observe
@@ -179,7 +285,13 @@ RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy
     for (uint64_t round = 1; rounds == 0 or round <= rounds; ++round)
     {
         const auto roundStartedAt = std::chrono::steady_clock::now();
-        checked = runner.submitAll(policy.concurrency, observe);
+        auto [rejected, checkedInRound] = runGroups(config, baseCluster, policy.concurrency, groups, observe, {});
+        /// A file whose setup failed would shrink every round's set as well, so the run ends with its report.
+        if (not rejected.empty())
+        {
+            return summarize(rejected);
+        }
+        checked = std::move(checkedInRound);
         const auto failed = std::ranges::count_if(checked, [](const ReportEntry& entry) { return not hasPassed(entry.outcome); });
         fmt::print(
             "round {}: {} passed, {} failed in {} ms\n",
@@ -261,14 +373,23 @@ RunOutcome Executor::execute() const
     /// Protect the working dir during the invocation from concurrent invications on the same dir or a subdir
     const auto guard = WorkingDirectoryGuard{config.workingDir};
 
+    const auto mode = config.remoteWorker ? Bridge::WorkerMode::Remote : Bridge::WorkerMode::Embedded;
+    const auto [optimizerLiterals, workerLiterals] = Bridge::splitOptimizerConfig(config.workerOptimizerConfigLiterals);
+    const Cluster::Config baseCluster{
+        .mode = mode,
+        .topology = config.clusterConfig,
+        .optimizerConfig = optimizerLiterals,
+        .workerConfig = workerLiterals,
+        .overrides = {}};
+
     auto prepared = prepareAll(config);
     if (const auto* ordering = std::get_if<RunInShuffledOrder>(&runPolicy.ordering))
     {
         shuffle(prepared.partitions, *ordering);
     }
 
-    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(config, runPolicy, std::move(prepared))
-                                                                    : runRounds(config, runPolicy, std::move(prepared));
+    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(config, baseCluster, runPolicy, std::move(prepared))
+                                                                    : runRounds(config, baseCluster, runPolicy, std::move(prepared));
 }
 
 }

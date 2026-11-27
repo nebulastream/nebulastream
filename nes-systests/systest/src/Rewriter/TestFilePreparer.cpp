@@ -18,11 +18,11 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include <Runner/Cluster.hpp>
 #include <fmt/format.h>
 
 #include <Config/Config.hpp>
@@ -48,13 +48,6 @@ namespace NES
 namespace
 {
 
-/// Re-checks what the config parser already checks, for configs built in code.
-const Host& getDefaultHost(const std::vector<Host>& allowed, const std::string_view option)
-{
-    PRECONDITION(not allowed.empty(), "Topology must list at least one worker in {} to assign a default host", option);
-    return allowed.front();
-}
-
 /// Warns on a number the file lacks, likely a typo: `-t Filter.test:3,7` on queries 1-5 warns about 7.
 void warnNumbersNotInFile(
     const std::unordered_set<SystestQueryId>& selectedNumbers, const ParsedTestFile& parsedFile, const std::filesystem::path& file)
@@ -77,8 +70,7 @@ TestFilePreparer::TestFilePreparer(const SystestConfiguration& config)
     , testDataDir{config.testDataDir}
     , configDir{config.configDir}
     , keyFactory{config.testDiscoverRoot}
-    , defaultSourceHost{getDefaultHost(config.clusterConfig.allowSourcePlacement, "allow_source_placement")}
-    , defaultSinkHost{getDefaultHost(config.clusterConfig.allowSinkPlacement, "allow_sink_placement")}
+    , placement{choosePlacement(config.clusterConfig)}
 {
 }
 
@@ -126,8 +118,8 @@ std::vector<RunnablePartition> TestFilePreparer::prepare(const DiscoveredTestFil
                 .name = testFile.getName().getRawValue(),
                 .workingDir = workingDir,
                 .testDataDir = testDataDir,
-                .sourceHost = defaultSourceHost,
-                .sinkHost = defaultSinkHost});
+                .sourceHost = placement.sources,
+                .sinkHost = placement.sinks});
         nameOwners.claim(runnable.originalNames, testFile.file);
         rewritten.push_back(RunnablePartition{.overrides = std::move(overrides), .file = std::move(runnable)});
     }

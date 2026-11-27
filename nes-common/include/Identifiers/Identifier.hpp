@@ -36,6 +36,8 @@ class QualifiedIdentifierBase;
 
 /// Representing a SQL compliant identifier.
 /// Automatically uppercases non-quoted identifiers but stores the original version so that we can emulate the behavior of non-SQL-compliant systems (e.g., Postgres) when interacting with them.
+/// The coordinator's catalog parses the same SQL text in `nes-coordinator/model/src/name.rs`.
+/// A change to the parsing rules here must be made there too, together with the tests on both sides.
 class Identifier
 {
 public:

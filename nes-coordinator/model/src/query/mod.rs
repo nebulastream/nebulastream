@@ -433,7 +433,7 @@ mod tests {
             let msg = format!("boom{idx}");
             if internal {
                 let code = ErrorCode::PlacementFailure;
-                QueryFragmentError::Internal(CodedError::relayed(code, msg, "trace".into()))
+                QueryFragmentError::Internal(CodedError::new(code, msg))
             } else {
                 QueryFragmentError::Transport { msg }
             }

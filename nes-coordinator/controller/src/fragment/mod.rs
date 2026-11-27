@@ -16,7 +16,7 @@ use crate::buggify::buggify;
 use crate::config::OBSERVATION_WRITE_INTERVAL;
 use crate::status::{WorkerFragmentState, WorkerStatus};
 use crate::worker_client::{CallError, WorkerClient};
-use calls::{Call, InFlightCalls};
+use calls::{Call, Cancelled, InFlightCalls};
 use model::database::Database;
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment::{self, ManagedFragment, QueryFragmentTransition};
@@ -93,7 +93,9 @@ impl FragmentReconciler {
         self.mark_observed(status, &managed).await;
     }
 
-    pub(crate) async fn join_next(&mut self) -> Option<(Call, Result<(), CallError>)> {
+    pub(crate) async fn join_next(
+        &mut self,
+    ) -> Option<Result<(Call, Result<(), CallError>), Cancelled>> {
         self.in_flight.join_next().await
     }
 
