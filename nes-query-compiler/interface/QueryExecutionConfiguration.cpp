@@ -150,6 +150,16 @@ const ConfigField<bool> NAUTILUS_PERF{
     "jitdump records with their symbols, line tables and unwinding information, so that `perf inject --jit` attributes samples to "
     "them. Keeps the optimization level, so the profile shows production code.",
     false};
+
+const ConfigField<uint64_t> MAX_WATERMARK_GAP_IN_MS{
+    Identifier::parse("max_watermark_gap_in_ms"),
+    "Maximum event-time gap in milliseconds between the slowest input origin of a window-based operator and its other input origins. "
+    "The operator backpressures the sources of an input origin that is more than this gap ahead of the slowest. 0 disables this "
+    "backpressure. The gap limits the state that input origins at different event times cause. It does not limit the state that the "
+    "window size causes. Operators that use ingestion time ignore this option.",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
+    uint64_t{0}};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -166,6 +176,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
         NAUTILUS_PERF,
+        MAX_WATERMARK_GAP_IN_MS,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -189,7 +200,8 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(TUPLE_BUFFER_INLINING),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
-        config.get(NAUTILUS_PERF)};
+        config.get(NAUTILUS_PERF),
+        config.get(MAX_WATERMARK_GAP_IN_MS)};
 }
 
 }

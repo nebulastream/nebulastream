@@ -34,7 +34,6 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <TCPChannel.hpp>
@@ -108,9 +107,8 @@ std::expected<TCPSinkConfig, Exception> TCPSinkConfig::fromConfig(const Instanti
         .maxQueuedBuffers = config.get(MAX_QUEUED_BUFFERS)};
 }
 
-TCPSink::TCPSink(BackpressureController backpressureController, const TCPSinkConfig& config, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , channel(
+TCPSink::TCPSink(const TCPSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : channel(
           config.socketHost,
           config.socketPort,
           std::chrono::milliseconds{config.connectTimeoutMs},
@@ -120,8 +118,9 @@ TCPSink::TCPSink(BackpressureController backpressureController, const TCPSinkCon
 {
 }
 
-void TCPSink::start(PipelineExecutionContext&)
+void TCPSink::start(PipelineExecutionContext& pec)
 {
+    backpressureHandler.start(pec.newExternalBackpressureVoter());
     channel.start();
 }
 
@@ -135,11 +134,11 @@ void TCPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCont
         switch (channel.trySend(*currentBuffer))
         {
             case TCPChannel::SendResult::Accepted: {
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
+                currentBuffer = backpressureHandler.onSuccess(*currentBuffer);
                 continue;
             }
             case TCPChannel::SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(*currentBuffer))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }

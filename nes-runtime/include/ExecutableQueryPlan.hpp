@@ -21,6 +21,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <BackpressureManager.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryId.hpp>
 
@@ -35,11 +36,15 @@ struct ExecutableQueryPlan
     static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
 
     ExecutableQueryPlan(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
+        QueryId queryId,
+        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+        std::vector<SourceWithSuccessor> instantiatedSources,
+        std::shared_ptr<const BackpressureManager> backpressure);
 
     QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
+    std::shared_ptr<const BackpressureManager> backpressure;
     friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan);
 };
 }

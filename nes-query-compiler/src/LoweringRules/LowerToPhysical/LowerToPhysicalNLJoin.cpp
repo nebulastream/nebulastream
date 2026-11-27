@@ -64,6 +64,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Watermark/WatermarkGapThrottle.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
@@ -189,8 +190,12 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         std::unreachable();
     };
 
-    auto handler
-        = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds,
+        watermarkGapFor(conf.maxWatermarkGapInMs, {timeStampFieldLeft, timeStampFieldRight}),
+        outputOriginId,
+        std::move(sliceAndWindowStore),
+        createTriggerStrategy());
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};

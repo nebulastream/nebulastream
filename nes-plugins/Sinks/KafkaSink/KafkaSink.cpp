@@ -39,7 +39,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <librdkafka/rdkafkacpp.h>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -160,9 +159,8 @@ std::expected<KafkaSinkConfig, Exception> KafkaSinkConfig::fromConfig(const Inst
     };
 }
 
-KafkaSink::KafkaSink(BackpressureController backpressureController, const KafkaSinkConfig& config, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , bootstrapServers(config.bootstrapServers)
+KafkaSink::KafkaSink(const KafkaSinkConfig& config, const SinkDescriptor& sinkDescriptor)
+    : bootstrapServers(config.bootstrapServers)
     , topic(config.topic)
     , maxOutstandingMessages(static_cast<int32_t>(config.maxOutstandingMessages))
     , deliveryTimeoutMs(static_cast<int32_t>(config.deliveryTimeoutMs))
@@ -181,8 +179,9 @@ std::ostream& KafkaSink::toString(std::ostream& os) const
     return os;
 }
 
-void KafkaSink::start(PipelineExecutionContext&)
+void KafkaSink::start(PipelineExecutionContext& pec)
 {
+    backpressureHandler.start(pec.newExternalBackpressureVoter());
     NES_INFO("Opening KafkaSink at {} for topic {}.", bootstrapServers, topic);
     auto conf = std::unique_ptr<RdKafka::Conf>(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
 
@@ -265,11 +264,11 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
         switch (tryProduce(*currentBuffer))
         {
             case PublishResult::Ok: {
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
+                currentBuffer = backpressureHandler.onSuccess(*currentBuffer);
                 continue;
             }
             case PublishResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
+                if (const auto emit = backpressureHandler.onFull(*currentBuffer))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }

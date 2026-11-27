@@ -30,7 +30,6 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -53,7 +52,7 @@ class FileSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "File";
-    explicit FileSink(BackpressureController backpressureController, const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor);
+    explicit FileSink(const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~FileSink() override = default;
 
     FileSink(const FileSink&) = delete;

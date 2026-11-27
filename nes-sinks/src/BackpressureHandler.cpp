@@ -21,7 +21,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BackpressureChannel.hpp>
+#include <BackpressureManager.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -36,7 +37,12 @@ BackpressureHandler::BackpressureHandler(size_t upperThreshold, size_t lowerThre
     }
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
+void BackpressureHandler::start(ExternalBackpressureVoter voter)
+{
+    stateLock.wlock()->voter = std::move(voter);
+}
+
+std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer)
 {
     auto rstate = stateLock.ulock();
     const BufferId bufferId{
@@ -52,11 +58,13 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     wstate->buffered.emplace_back(std::move(buffer));
 
     /// Apply backpressure when the buffer count reaches the upper hysteresis threshold.
-    if (!wstate->hasBackpressure && wstate->buffered.size() >= upperThreshold)
+    if (wstate->buffered.size() >= upperThreshold)
     {
-        backpressureController.applyPressure();
-        NES_DEBUG("Backpressure acquired: {} buffered (upper threshold: {})", wstate->buffered.size(), upperThreshold);
-        wstate->hasBackpressure = true;
+        INVARIANT(wstate->voter.has_value(), "The sink did not start its backpressure handler");
+        if (wstate->voter->applyBackpressureToAll())
+        {
+            NES_DEBUG("Backpressure acquired: {} buffered (upper threshold: {})", wstate->buffered.size(), upperThreshold);
+        }
     }
 
     /// Ensure there is always one pending buffer being retried to avoid deadlocks.
@@ -72,7 +80,7 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     return {};
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buffer, BackpressureController& backpressureController)
+std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buffer)
 {
     const auto state = stateLock.wlock();
     const BufferId bufferId{
@@ -84,11 +92,13 @@ std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buf
     state->pending.reset();
 
     /// Release backpressure when the buffer count drops to the lower hysteresis threshold.
-    if (state->hasBackpressure && state->buffered.size() <= lowerThreshold)
+    if (state->buffered.size() <= lowerThreshold)
     {
-        backpressureController.releasePressure();
-        NES_DEBUG("Backpressure released: {} buffered (lower threshold: {})", state->buffered.size(), lowerThreshold);
-        state->hasBackpressure = false;
+        INVARIANT(state->voter.has_value(), "The sink did not start its backpressure handler");
+        if (state->voter->releaseBackpressureToAll())
+        {
+            NES_DEBUG("Backpressure released: {} buffered (lower threshold: {})", state->buffered.size(), lowerThreshold);
+        }
     }
 
     if (not state->buffered.empty())

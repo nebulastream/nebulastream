@@ -86,12 +86,19 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     WorkEmitter& emitter,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<ExecutablePipelineStage> stage,
+    std::shared_ptr<const BackpressureManager> backpressure,
     std::function<void(Exception)> unregisterWithError,
     CallbackRef planRef,
     CallbackRef setupCallback)
 {
     auto node = std::shared_ptr<RunningQueryPlanNode>(
-        new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
+        new RunningQueryPlanNode(
+            pipelineId,
+            std::move(successors),
+            std::move(stage),
+            std::move(backpressure),
+            std::move(unregisterWithError),
+            std::move(planRef)),
         RunningQueryPlanNodeDeleter{.emitter = emitter, .queryId = queryId});
     emitter.emitPipelineStart(
         queryId,
@@ -153,6 +160,7 @@ std::
             emitter,
             std::move(successors),
             std::move(pipeline->stage),
+            queryPlan.backpressure,
             unregisterWithError,
             terminationCallbackRef,
             pipelineSetupCallbackRef);

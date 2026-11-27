@@ -1,0 +1,65 @@
+# name: milestone/Nexmark_stacked.test
+# description: Window-based operators stacked on top of each other over the Nexmark streams.
+# bid holds about 8x more data per second of event time than auction or person,
+# so the outputs of the lower windows run far ahead of bid in event time, and the upper windows hold them until bid catches up.
+# Watermark backpressure must throttle the sources below a lower window from the window above it.
+# groups: [milestone, benchmark, large, Join]
+
+# Watermark backpressure bounds the state of the upper windows by the gap instead of the input size.
+GlobalConfiguration worker.default_query_execution.max_watermark_gap_in_ms: [10000]
+
+CREATE LOGICAL SOURCE bid(timestamp_bid UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE LOGICAL SOURCE auction(timestamp_auction UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_707MB.csv
+
+CREATE LOGICAL SOURCE person(id INT32 NOT NULL, name VARSIZED NOT NULL, email_address VARSIZED NOT NULL, credit_card VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, timestamp_person UINT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR person TYPE File;
+ATTACH FILE large/nexmark/person_840MB.csv
+
+CREATE SINK windowOverWindowCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, auction_id INT32 NOT NULL, timestamp_auction UINT64 NOT NULL, timestamp_bid UINT64 NOT NULL, price FLOAT64 NOT NULL) TYPE Checksum;
+CREATE SINK joinTreeCheckSum(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, name VARSIZED NOT NULL, auction_id INT32 NOT NULL, price FLOAT64 NOT NULL) TYPE Checksum;
+
+
+# Window over window: W1 joins person and auction, W2 joins the output of W1 with bid.
+Configuration worker.default_query_execution.page_size: [512]
+Configuration worker.default_query_execution.operator_buffer_size: [512]
+SELECT start, end, auction_id, timestamp_auction, timestamp_bid, price
+FROM (SELECT auction_id, timestamp_auction
+      FROM (SELECT * FROM (SELECT * FROM person)
+            INNER JOIN (SELECT id AS auction_id, timestamp_auction, seller FROM auction)
+            ON id = seller WINDOW TUMBLING (timestamp_person, timestamp_auction, size 10 sec)))
+INNER JOIN (SELECT timestamp_bid, auctionId, price FROM bid WHERE auctionId % 1000 = 0)
+ON auction_id = auctionId WINDOW TUMBLING (timestamp_auction, timestamp_bid, size 10 sec)
+INTO windowOverWindowCheckSum;
+----
+8785798 32286664423
+
+
+# Join tree: J1 joins person and auction, J2 joins auction and bid, J3 joins J1 and J2, and J4 joins person with J3.
+# Every read of a stream is a source of its own.
+Configuration worker.default_query_execution.page_size: [512]
+Configuration worker.default_query_execution.operator_buffer_size: [512]
+SELECT start, end, id, name, auction_id, price
+FROM (SELECT id, name, timestamp_person FROM person)
+INNER JOIN (
+    SELECT seller, auction_id, timestamp_auction, price
+    FROM (SELECT * FROM
+            (SELECT seller, auction_id, timestamp_auction
+             FROM (SELECT * FROM (SELECT id, timestamp_person FROM person)
+                   INNER JOIN (SELECT id AS auction_id, timestamp_auction, seller FROM auction)
+                   ON id = seller WINDOW TUMBLING (timestamp_person, timestamp_auction, size 10 sec)))
+          INNER JOIN
+            (SELECT j2_auction, timestamp_bid, price
+             FROM (SELECT * FROM (SELECT id AS j2_auction, timestamp_auction AS ts_auction FROM auction)
+                   INNER JOIN (SELECT auctionId, timestamp_bid, price FROM bid WHERE auctionId % 1000 = 0)
+                   ON j2_auction = auctionId WINDOW TUMBLING (ts_auction, timestamp_bid, size 10 sec)))
+          ON auction_id = j2_auction WINDOW TUMBLING (timestamp_auction, timestamp_bid, size 10 sec)))
+ON id = seller WINDOW TUMBLING (timestamp_person, timestamp_auction, size 10 sec)
+INTO joinTreeCheckSum;
+----
+8785798 34143130511
+

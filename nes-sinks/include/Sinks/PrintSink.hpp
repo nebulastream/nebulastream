@@ -28,7 +28,6 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -51,7 +50,7 @@ class PrintSink final : public Sink
 public:
     static constexpr std::string_view NAME = "Print";
 
-    explicit PrintSink(BackpressureController backpressureController, const PrintSinkConfig& config);
+    explicit PrintSink(const PrintSinkConfig& config);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;

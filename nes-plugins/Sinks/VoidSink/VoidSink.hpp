@@ -25,7 +25,6 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -47,7 +46,7 @@ class VoidSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Void";
-    explicit VoidSink(BackpressureController backpressureController, const VoidSinkConfig& config);
+    explicit VoidSink(const VoidSinkConfig& config);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
