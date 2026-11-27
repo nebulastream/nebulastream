@@ -72,6 +72,7 @@ let
         ../../vcpkg/vcpkg-registry/ports/openvino/multimap-first-entry.patch
         ../../vcpkg/vcpkg-registry/ports/openvino/no-sigaltstack.patch
         ../../vcpkg/vcpkg-registry/ports/openvino/onednn-acl-no-primitive-cache.patch
+        ../../vcpkg/vcpkg-registry/ports/openvino/vm-cache-topology.patch
       ];
 
       postPatch = ''
