@@ -20,7 +20,7 @@ sinks:
   - name: VOID_SINK
     host: worker-a:8080
     schema:
-      - name: stream$value
+      - name: value
         type: UINT64
     type: Void
 
