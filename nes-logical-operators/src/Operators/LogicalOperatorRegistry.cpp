@@ -32,22 +32,41 @@ namespace NES
 
 namespace
 {
-struct LogicalOperatorValueTag
+struct LogicalOperatorValueNESType
 {
-    bool operator==(const LogicalOperatorValueTag&) const = default;
+    using ValueType = LogicalOperator;
+    bool operator==(const LogicalOperatorValueNESType&) const = default;
 };
 
-struct LogicalOperatorParametrizedTag
+struct LogicalOperatorParametrizedTypeClass
 {
-    bool operator==(const LogicalOperatorParametrizedTag&) const = default;
+    bool operator==(const LogicalOperatorParametrizedTypeClass&) const = default;
+
+    [[nodiscard]] std::expected<NESTypeClass, Exception> instantiate(const NESTypeClassParameters& params) const
+    {
+        if (params.size() > 1)
+        {
+            return std::unexpected{
+                TypeInferenceException("LogicalOperator type class accepts at most 1 optional schema parameter")};
+        }
+        if (params.size() == 1)
+        {
+            const auto& p = params.getParameters();
+            const auto valOpt = p.isNamed() ? p.getValueByName(QualifiedIdentifier::parse("SCHEMA")) : p.getValueAt(0);
+            if (!valOpt.has_value() || valOpt->tryGetAs<Schema<UnqualifiedUnboundField, Ordered>>() == nullptr)
+            {
+                return std::unexpected{
+                    TypeInferenceException("LogicalOperator type class parameter must be a Schema")};
+            }
+        }
+        return LogicalOperatorRegistry::logicalOperatorTypeClass();
+    }
 };
 }
 
 NESValue makeLogicalOperatorValue(LogicalOperator op)
 {
-    static const NESType opType
-        = NESType::createUnconstructible<LogicalOperatorValueTag, LogicalOperator>(LogicalOperatorValueTag{})
-              .withTrait(LogicalOperatorTrait{});
+    static const NESType opType = NESType{LogicalOperatorValueNESType{}}.withTypeTrait(LogicalOperatorTypeTrait{});
     return NESValue::create(opType, std::move(op));
 }
 
@@ -59,34 +78,14 @@ LogicalOperatorRegistry& LogicalOperatorRegistry::instance()
 
 NESTypeClass LogicalOperatorRegistry::logicalOperatorTypeClass()
 {
-    return NESTypeClass::forTrait<LogicalOperatorTrait>();
+    return NESTypeClass::forTypeTrait<LogicalOperatorTypeTrait>();
 }
 
 NamedNESParametrizedTypeClass LogicalOperatorRegistry::getParametrizedTypeClass()
 {
     return NamedNESParametrizedTypeClass{
         QualifiedIdentifier::parse("LogicalOperator"),
-        NESParametrizedTypeClass{
-            LogicalOperatorParametrizedTag{},
-            [](const LogicalOperatorParametrizedTag&, const NESTypeClassParameters& params) -> std::expected<NESTypeClass, Exception>
-            {
-                if (params.size() > 1)
-                {
-                    return std::unexpected{
-                        TypeInferenceException("LogicalOperator type class accepts at most 1 optional schema parameter")};
-                }
-                if (params.size() == 1)
-                {
-                    const auto& p = params.getParameters();
-                    const auto valOpt = p.isNamed() ? p.getValueByName(QualifiedIdentifier::parse("SCHEMA")) : p.getValueAt(0);
-                    if (!valOpt.has_value() || valOpt->tryGetAs<Schema<UnqualifiedUnboundField, Ordered>>() == nullptr)
-                    {
-                        return std::unexpected{
-                            TypeInferenceException("LogicalOperator type class parameter must be a Schema")};
-                    }
-                }
-                return logicalOperatorTypeClass();
-            }}};
+        NESParametrizedTypeClass{LogicalOperatorParametrizedTypeClass{}}};
 }
 
 std::vector<NamedNESParametrizedTypeClass> LogicalOperatorRegistry::getParametrizedTypeClasses()

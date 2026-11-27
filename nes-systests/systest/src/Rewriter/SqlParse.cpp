@@ -61,20 +61,101 @@ std::vector<std::string> extractQualifiedParts(const AntlrSQLParser::QualifiedId
     return parts;
 }
 
-AntlrSQLParser::IdentifierContext* extractScalarFunctionReference(AntlrSQLParser::FunctionCallArgumentContext* arg)
+void collectCatalogReferencesFromCall(
+    AntlrSQLParser::FunctionCallContext* fnCall, std::vector<AntlrSQLParser::IdentifierContext*>& refs)
 {
-    auto* scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(arg);
-    if (scalarArg == nullptr)
+    if (fnCall == nullptr)
     {
-        return nullptr;
+        return;
     }
-    auto* fnScalar = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression());
-    if (fnScalar == nullptr)
+    if (auto* directRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(fnCall))
     {
-        return nullptr;
+        refs.push_back(directRef->identifier());
+        return;
     }
-    auto* ref = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(fnScalar->functionCall());
-    return ref != nullptr ? ref->identifier() : nullptr;
+    if (auto* posCall = dynamic_cast<AntlrSQLParser::PositionalFunctionCallContext*>(fnCall))
+    {
+        for (auto* arg : posCall->functionCallArgument())
+        {
+            if (auto* scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(arg))
+            {
+                if (auto* fnScalar = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression()))
+                {
+                    collectCatalogReferencesFromCall(fnScalar->functionCall(), refs);
+                }
+            }
+        }
+    }
+    else if (auto* namedCall = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(fnCall))
+    {
+        for (auto* namedArg : namedCall->namedFunctionCallArgument())
+        {
+            if (auto* scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(namedArg->functionCallArgument()))
+            {
+                if (auto* fnScalar = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression()))
+                {
+                    collectCatalogReferencesFromCall(fnScalar->functionCall(), refs);
+                }
+            }
+        }
+    }
+}
+
+bool isNonSourceRelationalCallee(const std::string_view calleeName)
+{
+    return Sql::sameName(calleeName, Sql::ModelInference) or Sql::sameName(calleeName, Sql::OpenVinoModel);
+}
+
+void collectAnonymousSourcesFromCall(
+    AntlrSQLParser::FunctionCallContext* fnCall, std::vector<AnonymousSourceCall>& sources)
+{
+    if (fnCall == nullptr)
+    {
+        return;
+    }
+    if (auto* emptyCall = dynamic_cast<AntlrSQLParser::EmptyFunctionCallContext*>(fnCall))
+    {
+        if (auto* calleeRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(emptyCall->callee);
+            calleeRef != nullptr and not isNonSourceRelationalCallee(calleeRef->identifier()->getText()))
+        {
+            sources.push_back(AnonymousSourceCall{
+                .callee = calleeRef->identifier(), .arguments = {}, .closeParen = emptyCall->CLOSE_PARANTHESIS()->getSymbol()});
+        }
+    }
+    else if (auto* posCall = dynamic_cast<AntlrSQLParser::PositionalFunctionCallContext*>(fnCall))
+    {
+        for (auto* arg : posCall->functionCallArgument())
+        {
+            if (auto* scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(arg))
+            {
+                if (auto* fnScalar = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression()))
+                {
+                    collectAnonymousSourcesFromCall(fnScalar->functionCall(), sources);
+                }
+            }
+        }
+    }
+    else if (auto* namedCall = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(fnCall))
+    {
+        if (auto* calleeRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(namedCall->callee);
+            calleeRef != nullptr and not isNonSourceRelationalCallee(calleeRef->identifier()->getText()))
+        {
+            sources.push_back(AnonymousSourceCall{
+                .callee = calleeRef->identifier(),
+                .arguments = namedCall->namedFunctionCallArgument(),
+                .closeParen = namedCall->CLOSE_PARANTHESIS()->getSymbol()});
+        }
+        for (auto* namedArg : namedCall->namedFunctionCallArgument())
+        {
+            if (auto* scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(namedArg->functionCallArgument()))
+            {
+                if (auto* fnScalar = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression()))
+                {
+                    collectAnonymousSourcesFromCall(fnScalar->functionCall(), sources);
+                }
+            }
+        }
+    }
 }
 
 }
@@ -186,36 +267,7 @@ std::vector<AntlrSQLParser::IdentifierContext*> catalogReferencesInFrom(antlr4::
     std::vector<AntlrSQLParser::IdentifierContext*> refs;
     for (auto* closed : findAll<AntlrSQLParser::ClosedRelationalExpressionContext>(tree))
     {
-        auto* fnCall = closed->functionCall();
-        if (fnCall == nullptr)
-        {
-            continue;
-        }
-        if (auto* directRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(fnCall))
-        {
-            refs.push_back(directRef->identifier());
-            continue;
-        }
-        if (auto* posCall = dynamic_cast<AntlrSQLParser::PositionalFunctionCallContext*>(fnCall))
-        {
-            for (auto* arg : posCall->functionCallArgument())
-            {
-                if (auto* argRef = extractScalarFunctionReference(arg))
-                {
-                    refs.push_back(argRef);
-                }
-            }
-        }
-        else if (auto* namedCall = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(fnCall))
-        {
-            for (auto* namedArg : namedCall->namedFunctionCallArgument())
-            {
-                if (auto* argRef = extractScalarFunctionReference(namedArg->functionCallArgument()))
-                {
-                    refs.push_back(argRef);
-                }
-            }
-        }
+        collectCatalogReferencesFromCall(closed->functionCall(), refs);
     }
     return refs;
 }
@@ -225,31 +277,7 @@ std::vector<AnonymousSourceCall> anonymousSourcesInFrom(antlr4::tree::ParseTree*
     std::vector<AnonymousSourceCall> sources;
     for (auto* closed : findAll<AntlrSQLParser::ClosedRelationalExpressionContext>(tree))
     {
-        auto* fnCall = closed->functionCall();
-        if (fnCall == nullptr)
-        {
-            continue;
-        }
-        if (auto* emptyCall = dynamic_cast<AntlrSQLParser::EmptyFunctionCallContext*>(fnCall))
-        {
-            if (auto* calleeRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(emptyCall->callee);
-                calleeRef != nullptr and not Sql::sameName(calleeRef->identifier()->getText(), Sql::ModelInference))
-            {
-                sources.push_back(AnonymousSourceCall{
-                    .callee = calleeRef->identifier(), .arguments = {}, .closeParen = emptyCall->CLOSE_PARANTHESIS()->getSymbol()});
-            }
-        }
-        else if (auto* namedCall = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(fnCall))
-        {
-            if (auto* calleeRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(namedCall->callee);
-                calleeRef != nullptr and not Sql::sameName(calleeRef->identifier()->getText(), Sql::ModelInference))
-            {
-                sources.push_back(AnonymousSourceCall{
-                    .callee = calleeRef->identifier(),
-                    .arguments = namedCall->namedFunctionCallArgument(),
-                    .closeParen = namedCall->CLOSE_PARANTHESIS()->getSymbol()});
-            }
-        }
+        collectAnonymousSourcesFromCall(closed->functionCall(), sources);
     }
     return sources;
 }

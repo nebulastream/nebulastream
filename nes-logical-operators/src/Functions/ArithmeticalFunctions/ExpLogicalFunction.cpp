@@ -14,6 +14,7 @@
 
 #include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
 
+#include <numbers>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -21,6 +22,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -50,15 +52,20 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> ExpLogicalFunction::inferResultType(const NESType& input)
+{
+    return PowLogicalFunction::inferResultType(Float64Type::makeNESType(), input);
+}
+
 LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChild = child.withInferredDataType(schema);
-    const std::string eulerNumber = "2.7182818284590452353602874713527";
-    const ConstantValueLogicalFunction expConstantValue{
-        DataTypeProvider::provideDataType(
-            DataType::Type::FLOAT64, newChild.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE),
-        eulerNumber};
-    return PowLogicalFunction(expConstantValue, newChild).withInferredDataType(schema);
+    auto eulerVal = Float64Type::createValue(std::numbers::e);
+    if (newChild.getDataType().nullable)
+    {
+        eulerVal = OptionalType::make(Float64Type::makeNESType()).construct(NESValueParameters::positional({eulerVal})).value();
+    }
+    return PowLogicalFunction(ConstantValueLogicalFunction{std::move(eulerVal)}, newChild).withInferredDataType(schema);
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const

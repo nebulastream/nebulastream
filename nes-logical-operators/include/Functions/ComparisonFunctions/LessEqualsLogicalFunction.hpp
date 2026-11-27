@@ -50,6 +50,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createLessEquals(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& left, const NESType& right);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&LessEqualsLogicalFunction::createLessEquals, &LessEqualsLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     LogicalFunction left, right;

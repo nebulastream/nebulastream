@@ -23,6 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -45,18 +46,23 @@ DataType FloorLogicalFunction::getDataType() const
     return dataType;
 };
 
+/// ISO/IEC 9075-2 (<numeric value function>): FLOOR of an exact numeric type is exact numeric, FLOOR of an approximate numeric
+/// type is approximate numeric. PostgreSQL, MySQL, and SQLite implement this by preserving the input type: floats stay floats and
+/// integers pass through unchanged (FLOOR of an integer is the identity), so we do the same and never cast to INT64.
+std::expected<NESType, Exception> FloorLogicalFunction::inferResultType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Cannot apply floor function on non-numeric input type")};
+    }
+    return input;
+}
+
 LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (!copy.child.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("Cannot apply floor function on non-numeric input function {}", copy.child);
-    }
-    /// ISO/IEC 9075-2 (<numeric value function>): FLOOR of an exact numeric type is exact numeric, FLOOR of an approximate numeric
-    /// type is approximate numeric. PostgreSQL, MySQL, and SQLite implement this by preserving the input type: floats stay floats and
-    /// integers pass through unchanged (FLOOR of an integer is the identity), so we do the same and never cast to INT64.
-    copy.dataType = copy.child.getDataType();
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 };
 

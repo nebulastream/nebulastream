@@ -43,35 +43,99 @@ namespace NES
 
 namespace
 {
-struct RegisteredModelTypeTag
+struct RegisteredModelNESType
 {
-    bool operator==(const RegisteredModelTypeTag&) const = default;
+    using ValueType = RegisteredModel;
+    bool operator==(const RegisteredModelNESType&) const = default;
 };
 
-struct ModelBackendDescriptor
+struct RegisteredModelTypeTraitImpl
+{
+    [[nodiscard]] static ModelSchema getSchema(const NESValue& val) { return val.getAs<RegisteredModel>().getSchema(); }
+
+    [[nodiscard]] static std::expected<LogicalOperator, Exception>
+    createInferenceOperator(const NESValue& val, LogicalOperator child)
+    {
+        const auto* modelPtr = val.tryGetAs<RegisteredModel>();
+        if (modelPtr == nullptr)
+        {
+            return std::unexpected{TypeInferenceException("Invalid RegisteredModel value representation")};
+        }
+        auto op = TypedLogicalOperator<InferModelLogicalOperator>{*modelPtr};
+        return LogicalOperator{op.withChildrenUnsafe({std::move(child)})};
+    }
+};
+
+struct DelegatingModelBackendTypeTraitImpl
+{
+    [[nodiscard]] static ModelSchema getSchema(const NESValue& outerVal)
+    {
+        const auto& innerVal = outerVal.getAs<NESValue>();
+        const auto* typeTrait = innerVal.getType().tryGetTypeTrait<MLModelTypeTrait>();
+        PRECONDITION(typeTrait != nullptr, "Constructed model value must implement MLModelTypeTrait");
+        return typeTrait->getSchema(innerVal);
+    }
+
+    [[nodiscard]] static std::expected<LogicalOperator, Exception>
+    createInferenceOperator(const NESValue& outerVal, LogicalOperator child)
+    {
+        const auto* innerVal = outerVal.tryGetAs<NESValue>();
+        if (innerVal == nullptr)
+        {
+            return std::unexpected{TypeInferenceException("Invalid model value wrapper")};
+        }
+        const auto* typeTrait = innerVal->getType().tryGetTypeTrait<MLModelTypeTrait>();
+        if (typeTrait == nullptr)
+        {
+            return std::unexpected{TypeInferenceException("Model value does not implement MLModelTypeTrait")};
+        }
+        return typeTrait->createInferenceOperator(*innerVal, std::move(child));
+    }
+};
+
+struct ModelBackendNESType
 {
     Identifier backendName;
     ModelFactoryFn factory;
-    bool operator==(const ModelBackendDescriptor& other) const { return backendName == other.backendName; }
+
+    bool operator==(const ModelBackendNESType& other) const { return backendName == other.backendName; }
+
+    [[nodiscard]] std::expected<NESValue, Exception> construct(const NESValueParameters& params) const
+    {
+        auto constructed = factory(params);
+        if (!constructed.has_value())
+        {
+            return constructed;
+        }
+        if (!constructed->getType().hasTypeTrait<MLModelTypeTrait>())
+        {
+            return std::unexpected{
+                TypeInferenceException("Model backend '{}' did not produce an ML_MODEL value", backendName)};
+        }
+        return constructed;
+    }
+};
+
+struct ModelBackendFunctor
+{
+    Identifier backendName;
+    ModelFactoryFn factory;
+
+    [[nodiscard]] const ModelFactoryFn& getRegistryEntry() const noexcept { return factory; }
+    [[nodiscard]] static ExpectedNESTypeArguments getExpectedArguments() { return ExpectedNESTypeArguments{}; }
+    bool operator==(const ModelBackendFunctor& other) const { return backendName == other.backendName; }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters&) const
+    {
+        return NESType{ModelBackendNESType{.backendName = backendName, .factory = factory}}
+            .withTypeTrait(MLModelTypeTrait{DelegatingModelBackendTypeTraitImpl{}});
+    }
 };
 
 NESType registeredModelNESType()
 {
     static const NESType instance
-        = NESType::createUnconstructible<RegisteredModelTypeTag, RegisteredModel>(RegisteredModelTypeTag{})
-              .withTrait(MLModelTrait{
-                  .getSchema = [](const NESValue& val) -> ModelSchema { return val.getAs<RegisteredModel>().getSchema(); },
-                  .createInferenceOperator =
-                      [](const NESValue& val, LogicalOperator child) -> std::expected<LogicalOperator, Exception>
-                  {
-                      const auto* modelPtr = val.tryGetAs<RegisteredModel>();
-                      if (modelPtr == nullptr)
-                      {
-                          return std::unexpected{TypeInferenceException("Invalid RegisteredModel value representation")};
-                      }
-                      auto op = TypedLogicalOperator<InferModelLogicalOperator>{*modelPtr};
-                      return LogicalOperator{op.withChildrenUnsafe({std::move(child)})};
-                  }});
+        = NESType{RegisteredModelNESType{}}.withTypeTrait(MLModelTypeTrait{RegisteredModelTypeTraitImpl{}});
     return instance;
 }
 
@@ -80,13 +144,6 @@ std::expected<std::string, Exception> extractPathString(const NESValue& val)
     if (const auto* s = val.tryGetAs<std::string>())
     {
         return *s;
-    }
-    if (const auto* lit = val.tryGetAs<ScalarLiteralValue>())
-    {
-        if (const auto* s = std::get_if<std::string>(lit))
-        {
-            return *s;
-        }
     }
     if (const auto* cfg = val.tryGetAs<ConfigLiteral>())
     {
@@ -99,13 +156,10 @@ std::expected<std::string, Exception> extractPathString(const NESValue& val)
     {
         if (const auto constFn = fn->tryGetAs<ConstantValueLogicalFunction>())
         {
-            auto str = constFn->get().getConstantValue();
-            if (constFn->get().getDataType().type == DataType::Type::UNDEFINED && str.size() >= 2 && str.front() == '\''
-                && str.back() == '\'')
+            if (const auto* s = constFn->get().getValue().tryGetAs<std::string>())
             {
-                return str.substr(1, str.size() - 2);
+                return *s;
             }
-            return str;
         }
     }
     return std::unexpected{InvalidQuerySyntax("Model PATH argument must be a string literal")};
@@ -124,6 +178,31 @@ Schema<UnqualifiedUnboundField, Ordered> normalizeNonNullableModelFields(const S
         | std::ranges::to<std::vector>();
     return Schema<UnqualifiedUnboundField, Ordered>{std::move(normalized)};
 }
+std::expected<Schema<UnqualifiedUnboundField, Ordered>, Exception> extractModelSchema(const NESValue& val, const std::string_view argName)
+{
+    if (const auto* schema = val.tryGetAs<Schema<UnqualifiedUnboundField, Ordered>>())
+    {
+        return *schema;
+    }
+    return std::unexpected{InvalidQuerySyntax("OPENVINO_MODEL {} argument must be a SCHEMA(...)", argName)};
+}
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
+const NESValueParameter<std::string> PATH{
+    Identifier::parse("PATH"),
+    "Filesystem path to the ONNX model",
+    &extractPathString};
+
+const NESValueParameter<Schema<UnqualifiedUnboundField, Ordered>> INPUT{
+    Identifier::parse("INPUT"),
+    "Model input schema",
+    [](const NESValue& val) { return extractModelSchema(val, "INPUT"); }};
+
+const NESValueParameter<Schema<UnqualifiedUnboundField, Ordered>> OUTPUT{
+    Identifier::parse("OUTPUT"),
+    "Model output schema",
+    [](const NESValue& val) { return extractModelSchema(val, "OUTPUT"); }};
+/// NOLINTEND(bugprone-throwing-static-initialization)
 }
 
 NESValue makeRegisteredModelValue(RegisteredModel model)
@@ -133,40 +212,16 @@ NESValue makeRegisteredModelValue(RegisteredModel model)
 
 std::expected<NESValue, Exception> OpenVinoModelPlugin::create(const NESValueParameters& params)
 {
-    static const std::array<QualifiedIdentifier, 3> formalParams{
-        QualifiedIdentifier::parse("PATH"),
-        QualifiedIdentifier::parse("INPUT"),
-        QualifiedIdentifier::parse("OUTPUT")};
-
-    const auto boundExp = params.bindAgainst(formalParams);
-    if (!boundExp.has_value())
+    const auto resolvedExp = createExpectedNESValueArguments(PATH, INPUT, OUTPUT).resolve(params);
+    if (!resolvedExp.has_value())
     {
-        return std::unexpected{InvalidQuerySyntax(
-            "OPENVINO_MODEL expects arguments (PATH, INPUT, OUTPUT): {}", boundExp.error().what())};
+        return std::unexpected{std::move(resolvedExp).error()};
     }
-    const auto& bound = *boundExp;
+    const auto pathStr = resolvedExp->get(PATH);
+    const auto inputSchema = resolvedExp->get(INPUT);
+    const auto outputSchema = resolvedExp->get(OUTPUT);
 
-    const auto pathVal = bound.getFieldByName(formalParams[0]).value().getValue();
-    const auto inputVal = bound.getFieldByName(formalParams[1]).value().getValue();
-    const auto outputVal = bound.getFieldByName(formalParams[2]).value().getValue();
-
-    const auto pathExp = extractPathString(pathVal);
-    if (!pathExp.has_value())
-    {
-        return std::unexpected{pathExp.error()};
-    }
-    const auto* inputSchema = inputVal.tryGetAs<Schema<UnqualifiedUnboundField, Ordered>>();
-    if (inputSchema == nullptr)
-    {
-        return std::unexpected{InvalidQuerySyntax("OPENVINO_MODEL INPUT argument must be a SCHEMA(...)")};
-    }
-    const auto* outputSchema = outputVal.tryGetAs<Schema<UnqualifiedUnboundField, Ordered>>();
-    if (outputSchema == nullptr)
-    {
-        return std::unexpected{InvalidQuerySyntax("OPENVINO_MODEL OUTPUT argument must be a SCHEMA(...)")};
-    }
-
-    const std::filesystem::path fsPath{*pathExp};
+    const std::filesystem::path fsPath{pathStr};
     const auto modelName = fsPath.stem().empty() ? std::string{"inline_openvino_model"} : fsPath.stem().string();
 
     try
@@ -175,8 +230,8 @@ std::expected<NESValue, Exception> OpenVinoModelPlugin::create(const NESValuePar
             modelName,
             fsPath,
             ModelSchema{
-                .inputs = normalizeNonNullableModelFields(*inputSchema),
-                .outputs = normalizeNonNullableModelFields(*outputSchema)});
+                .inputs = normalizeNonNullableModelFields(inputSchema),
+                .outputs = normalizeNonNullableModelFields(outputSchema)});
         return makeRegisteredModelValue(std::move(registered));
     }
     catch (const Exception& ex)
@@ -193,7 +248,7 @@ ModelRegistry& ModelRegistry::instance()
 
 NESTypeClass ModelRegistry::mlModelTypeClass()
 {
-    return NESTypeClass::forTrait<MLModelTrait>();
+    return NESTypeClass::forTypeTrait<MLModelTypeTrait>();
 }
 
 std::vector<NamedNESParametrizedTypeClass> ModelRegistry::getParametrizedTypeClasses()
@@ -203,40 +258,7 @@ std::vector<NamedNESParametrizedTypeClass> ModelRegistry::getParametrizedTypeCla
 
 NESFunctor makeModelFunctor(const std::string_view key, ModelFactoryFn factory)
 {
-    const auto backendId = Identifier::parse(std::string{key});
-    return NESFunctor::nullary<ModelFactoryFn>(
-        std::move(factory),
-        [backendId](const ModelFactoryFn& fn) -> std::expected<NESType, Exception>
-        {
-            return NESType::create<ModelBackendDescriptor, NESValue>(
-                       ModelBackendDescriptor{.backendName = backendId, .factory = fn},
-                       [](const ModelBackendDescriptor& desc, const NESValueParameters& params) -> std::expected<NESValue, Exception>
-                       { return desc.factory(params); })
-                .withTrait(MLModelTrait{
-                    .getSchema =
-                        [](const NESValue& outerVal) -> ModelSchema
-                    {
-                        const auto& innerVal = outerVal.getAs<NESValue>();
-                        const auto* trait = innerVal.getType().tryGetTrait<MLModelTrait>();
-                        PRECONDITION(trait != nullptr, "Constructed model value must implement MLModelTrait");
-                        return trait->getSchema(innerVal);
-                    },
-                    .createInferenceOperator =
-                        [](const NESValue& outerVal, LogicalOperator child) -> std::expected<LogicalOperator, Exception>
-                    {
-                        const auto* innerVal = outerVal.tryGetAs<NESValue>();
-                        if (innerVal == nullptr)
-                        {
-                            return std::unexpected{TypeInferenceException("Invalid model value wrapper")};
-                        }
-                        const auto* trait = innerVal->getType().tryGetTrait<MLModelTrait>();
-                        if (trait == nullptr)
-                        {
-                            return std::unexpected{TypeInferenceException("Model value does not implement MLModelTrait")};
-                        }
-                        return trait->createInferenceOperator(*innerVal, std::move(child));
-                    }});
-        });
+    return NESFunctor{ModelBackendFunctor{.backendName = Identifier::parse(std::string{key}), .factory = std::move(factory)}};
 }
 
 }

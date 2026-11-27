@@ -20,6 +20,7 @@
 #include <utility>
 
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
@@ -273,118 +274,96 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.nullable);
 }
 
+namespace
+{
+struct GenericLegacyDataTypeTrait
+{
+    DataType dataType;
+
+    [[nodiscard]] DataType getDataType() const { return dataType; }
+
+    [[nodiscard]] static std::expected<std::optional<std::string>, Exception> formatConstantValue(const NESValue& value)
+    {
+        if (value.tryGetAs<std::monostate>() != nullptr)
+        {
+            return std::optional<std::string>{std::nullopt};
+        }
+        if (const auto* s = value.tryGetAs<std::string>())
+        {
+            return std::optional<std::string>{*s};
+        }
+        if (const auto* b = value.tryGetAs<bool>())
+        {
+            return std::optional<std::string>{*b ? "true" : "false"};
+        }
+        if (const auto* c = value.tryGetAs<char>())
+        {
+            return std::optional<std::string>{std::string{1, *c}};
+        }
+        if (const auto signedInt = tryExtractSignedInteger(value); signedInt.has_value())
+        {
+            return std::optional<std::string>{std::to_string(*signedInt)};
+        }
+        if (const auto* u = value.tryGetAs<uint64_t>())
+        {
+            return std::optional<std::string>{std::to_string(*u)};
+        }
+        if (const auto flt = tryExtractFloatingPoint(value); flt.has_value())
+        {
+            return std::optional<std::string>{fmt::format("{}", *flt)};
+        }
+        return std::unexpected{TypeInferenceException("NESValue payload cannot be formatted as a scalar constant")};
+    }
+};
+}
+
+LegacyDataTypeTrait LegacyDataTypeTrait::forDataType(const DataType dataType)
+{
+    return LegacyDataTypeTrait{GenericLegacyDataTypeTrait{.dataType = dataType}};
+}
+
 NESType DataType::toNESType() const
 {
-    return NESType::create<DataType, ScalarLiteralValue>(
-               *this,
-               [](const DataType&, const NESValueParameters& params) -> std::expected<ScalarLiteralValue, Exception>
-               {
-                   if (params.size() != 1)
-                   {
-                       return std::unexpected{
-                           InvalidQuerySyntax("Scalar data type constructor expects exactly 1 argument, but got {}", params.size())};
-                   }
-                   const auto arg = params.at(0).value();
-                   if (const auto* lit = arg.tryGetAs<ScalarLiteralValue>())
-                   {
-                       return *lit;
-                   }
-                   if (const auto* b = arg.tryGetAs<bool>())
-                   {
-                       return ScalarLiteralValue{*b};
-                   }
-                   if (const auto* i = arg.tryGetAs<int64_t>())
-                   {
-                       return ScalarLiteralValue{*i};
-                   }
-                   if (const auto* u = arg.tryGetAs<uint64_t>())
-                   {
-                       return ScalarLiteralValue{*u};
-                   }
-                   if (const auto* d = arg.tryGetAs<double>())
-                   {
-                       return ScalarLiteralValue{*d};
-                   }
-                   if (const auto* s = arg.tryGetAs<std::string>())
-                   {
-                       return ScalarLiteralValue{*s};
-                   }
-                   return std::unexpected{
-                       InvalidQuerySyntax("Unsupported argument value passed to scalar data type constructor")};
-               })
-        .withTrait(ScalarTypeTrait{
-            .tryGetDataType = [](const ExplicitAny& desc) -> std::optional<DataType>
-            {
-                if (const auto* dt = desc.tryGetAs<DataType>())
-                {
-                    return *dt;
-                }
-                return std::nullopt;
-            }});
-}
-
-NESValue DataType::makeBooleanValue(const bool value)
-{
-    return NESValue::create(DataType{Type::BOOLEAN, NULLABLE::NOT_NULLABLE}.toNESType(), ScalarLiteralValue{value});
-}
-
-NESValue DataType::makeIntegerValue(const int64_t value)
-{
-    return NESValue::create(DataType{Type::INT64, NULLABLE::NOT_NULLABLE}.toNESType(), ScalarLiteralValue{value});
-}
-
-NESFunctor DataType::makeRegistryFunctor(DataTypeFn factory)
-{
-    return NESFunctor{
-        std::move(factory),
-        [](const DataTypeFn& lhs, const DataTypeFn& rhs) { return &lhs == &rhs; },
-        [](const DataTypeFn& fn, const NESTypeParameters& parameters) -> std::expected<NESType, Exception>
+    auto baseType = [&]() -> NESType
+    {
+        switch (this->type)
         {
-            if (parameters.size() > 1)
-            {
-                return std::unexpected{
-                    TypeInferenceException("Scalar data type functor expects at most 1 parameter (NULLABLE), but got {}", parameters.size())};
-            }
-            auto nullable = NULLABLE::NOT_NULLABLE;
-            if (parameters.size() == 1)
-            {
-                const auto valOpt = parameters.isNamed()
-                    ? parameters.getValueByName(QualifiedIdentifier::parse("NULLABLE"))
-                    : parameters.getValueAt(0);
-                if (!valOpt.has_value())
-                {
-                    return std::unexpected{
-                        TypeInferenceException("Scalar data type functor expects a boolean NULLABLE value parameter")};
-                }
-                if (const auto* lit = valOpt->tryGetAs<ScalarLiteralValue>())
-                {
-                    if (const auto* b = std::get_if<bool>(lit))
-                    {
-                        nullable = *b ? NULLABLE::IS_NULLABLE : NULLABLE::NOT_NULLABLE;
-                    }
-                    else
-                    {
-                        return std::unexpected{
-                            TypeInferenceException("Scalar data type NULLABLE parameter must be a boolean")};
-                    }
-                }
-                else if (const auto* b = valOpt->tryGetAs<bool>())
-                {
-                    nullable = *b ? NULLABLE::IS_NULLABLE : NULLABLE::NOT_NULLABLE;
-                }
-                else
-                {
-                    return std::unexpected{
-                        TypeInferenceException("Scalar data type NULLABLE parameter must be a boolean")};
-                }
-            }
-            return fn(DataTypeRegistryArguments{.nullable = nullable}).toNESType();
-        }};
-}
-
-NESFunctor DataType::functorOf(const DataType::Type type)
-{
-    return makeRegistryFunctor([type](const DataTypeRegistryArguments arguments) { return DataType{type, arguments.nullable}; });
+            case Type::INT8:
+                return Int8Type::makeNESType();
+            case Type::INT16:
+                return Int16Type::makeNESType();
+            case Type::INT32:
+                return Int32Type::makeNESType();
+            case Type::INT64:
+                return Int64Type::makeNESType();
+            case Type::UINT8:
+                return UInt8Type::makeNESType();
+            case Type::UINT16:
+                return UInt16Type::makeNESType();
+            case Type::UINT32:
+                return UInt32Type::makeNESType();
+            case Type::UINT64:
+                return UInt64Type::makeNESType();
+            case Type::FLOAT32:
+                return Float32Type::makeNESType();
+            case Type::FLOAT64:
+                return Float64Type::makeNESType();
+            case Type::BOOLEAN:
+                return BooleanType::makeNESType();
+            case Type::CHAR:
+                return CharType::makeNESType();
+            case Type::VARSIZED:
+                return VarSizedType::makeNESType();
+            case Type::UNDEFINED:
+                return UndefinedType::makeNESType();
+        }
+        std::unreachable();
+    }();
+    if (!this->nullable)
+    {
+        return baseType;
+    }
+    return OptionalType::make(std::move(baseType));
 }
 
 }

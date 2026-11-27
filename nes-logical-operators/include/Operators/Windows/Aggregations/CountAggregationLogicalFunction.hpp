@@ -49,6 +49,13 @@ public:
     [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& other) const;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferAggregateType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return aggregationLogicalFunctionFunctor<
+            &CountAggregationLogicalFunction::create,
+            &CountAggregationLogicalFunction::inferAggregateType>(NAME);
+    }
 
 private:
     AggregationFieldAccess inputFunction;

@@ -105,39 +105,31 @@ Once accepted, the catalog stores the IR — the XML as the primary payload and
 the weights as the auxiliary payload, both refcounted byte buffers — keyed by
 name.
 
-### 2. Query parsing
+### 2. Query binding and polymorphic model resolution
 
-A query references a model with the table-valued function
+A query references either a catalog-registered model or an inline model backend constructor (satisfying the `ML_MODEL` type class in `ModelRegistry`) with the table-valued function `MODEL_INFERENCE`:
 
 ```sql
 SELECT * FROM MODEL_INFERENCE(model_name, upstream_stream) INTO sink;
+
+SELECT *
+FROM MODEL_INFERENCE(
+    OPENVINO_MODEL('/tmp/model.onnx' AS PATH, SCHEMA(x FLOAT32) AS INPUT, SCHEMA(y FLOAT32) AS OUTPUT),
+    upstream_stream)
+INTO sink;
 ```
 
-The parser does not resolve `model_name` — it builds an
-`InferModelNameLogicalOperator` that carries only the literal name string
-plus the list of input field names. The model itself is not yet attached.
+During recursive query binding (`StatementBinder`), `MODEL_INFERENCE` validates its first argument against the `ML_MODEL` type class (`MLModelTypeTrait`) and its second argument against `LogicalOperator`, immediately constructing an `InferModelLogicalOperator` holding the resolved `RegisteredModel` (imported IR + validated schema) without requiring a deferred placeholder operator or semantic resolution pass.
 
 The contract for input/output handling at this stage is:
 
 - Every field name listed in the model's input schema must be present in
   the upstream stream's schema. Aliasing or projection upstream is the
   caller's responsibility.
-- The model's output fields are appended to the operator's output schema.
+- The model's output fields are appended to the operator's output schema during `TypeInferenceRule`.
 - Every other upstream field is passed through unchanged.
 
-### 3. Resolution
-
-`InferModelResolutionRule` (a semantic-analyzer rule, see
-`nes-query-optimizer/src/Rules/Semantic/`) walks the plan, looks each
-`InferModelNameLogicalOperator` up in the catalog, and replaces it with
-an `InferModelLogicalOperator` that owns the resolved `RegisteredModel`
-(imported IR + validated schema).
-
-The rule must run *before* `TypeInferenceRule`, because schema inference for the operator
-depends on knowing the model's output fields, which only exist after
-resolution. This ordering is enforced by `requiredBy()` in the rule.
-
-### 4. Lowering
+### 3. Lowering
 
 `LowerToPhysicalInferModel` in `nes-query-compiler` moves the model from its
 imported stage to its executable stage via `compileModel(imported)` and
@@ -150,7 +142,7 @@ lifecycle stage. Device-specific compilation happens inside OpenVINO when the
 worker calls `ov::Core::compile_model` at pipeline setup, which is also why the
 IR stays portable across heterogeneous workers.
 
-### 5. Per-record execution
+### 4. Per-record execution
 
 `InferModelPhysicalOperator` owns a `ThreadLocalRuntimeWrapper` (a
 `shared_ptr` for pointer stability). At pipeline setup, the wrapper

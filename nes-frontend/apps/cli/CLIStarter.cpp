@@ -680,8 +680,11 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
                        })
                 | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
         };
-        statements.emplace_back(
-            NES::CreateModelStatement{.name = name, .path = path, .inputs = toModelFields(input), .outputs = toModelFields(output)});
+        statements.emplace_back(NES::CreateModelStatement{
+            .name = bindIdentifierName(name).asCanonicalString(),
+            .path = path,
+            .inputs = toModelFields(input),
+            .outputs = toModelFields(output)});
     }
     return statements;
 }
@@ -851,12 +854,17 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
-            auto planExp = queryBinder.parseAndBindQuery(query);
-            if (!planExp.has_value())
+            auto stmtExp = queryBinder.parseAndBindSingle(query);
+            if (!stmtExp.has_value())
             {
-                throw std::move(planExp).error();
+                throw std::move(stmtExp).error();
             }
-            auto result = queryStatementHandler(NES::QueryStatement{std::move(*planExp), std::nullopt});
+            auto* queryStmt = std::get_if<NES::QueryStatement>(&*stmtExp);
+            if (queryStmt == nullptr)
+            {
+                throw NES::InvalidStatement("Expected query statement, got '{}'", query);
+            }
+            auto result = queryStatementHandler(std::move(*queryStmt));
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -875,12 +883,24 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
-            auto planExp = queryBinder.parseAndBindQuery(query);
-            if (!planExp.has_value())
+            auto stmtExp = queryBinder.parseAndBindSingle(query);
+            if (!stmtExp.has_value())
             {
-                throw std::move(planExp).error();
+                throw std::move(stmtExp).error();
             }
-            auto result = queryStatementHandler(NES::ExplainQueryStatement{.plan = std::move(*planExp)});
+            auto explainStmt = [&]() -> NES::ExplainQueryStatement
+            {
+                if (auto* queryStmt = std::get_if<NES::QueryStatement>(&*stmtExp))
+                {
+                    return NES::ExplainQueryStatement{.plan = std::move(queryStmt->plan)};
+                }
+                if (auto* existingExplain = std::get_if<NES::ExplainQueryStatement>(&*stmtExp))
+                {
+                    return std::move(*existingExplain);
+                }
+                throw NES::InvalidStatement("Expected query statement, got '{}'", query);
+            }();
+            auto result = queryStatementHandler(std::move(explainStmt));
             if (result)
             {
                 std::cout << result->explainString << "\n";

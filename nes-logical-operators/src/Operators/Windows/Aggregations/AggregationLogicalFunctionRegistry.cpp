@@ -21,18 +21,11 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <DataTypeRegistry.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <Operators/LogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Schema/Field.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Types/NESType.hpp>
-#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -40,72 +33,118 @@ namespace NES
 
 namespace
 {
-struct AggregationTypeDescriptor
+struct AggregationNESType
 {
     Identifier aggregationName;
+    std::optional<NESType> instantiatedInputType;
     std::optional<NESType> inferredResultType;
     AggregationLogicalFunctionFn factory;
 
-    bool operator==(const AggregationTypeDescriptor& other) const
+    bool operator==(const AggregationNESType& other) const
     {
-        return aggregationName == other.aggregationName && inferredResultType == other.inferredResultType;
+        return aggregationName == other.aggregationName && instantiatedInputType == other.instantiatedInputType
+            && inferredResultType == other.inferredResultType;
+    }
+
+    [[nodiscard]] std::expected<BoundAggregationCall, Exception> construct(const NESValueParameters& params) const
+    {
+        if (params.isNamed())
+        {
+            return std::unexpected{
+                InvalidQuerySyntax("Aggregation function '{}' does not accept named arguments", aggregationName)};
+        }
+        if (params.size() != 1)
+        {
+            return std::unexpected{InvalidQuerySyntax(
+                "Aggregation function '{}' expects exactly 1 argument, got {}", aggregationName, params.size())};
+        }
+        const auto argVal = params.at(0).value();
+        if (argVal.tryGetAs<AsteriskTag>() != nullptr)
+        {
+            if (aggregationName != Identifier::parse("COUNT"))
+            {
+                return std::unexpected{InvalidQuerySyntax(
+                    "Star argument (*) is only supported for COUNT(*), not {}()", aggregationName)};
+            }
+            return BoundAggregationCall{
+                .aggregationName = aggregationName,
+                .factory = factory,
+                .argument = AsteriskTag{},
+                .includeNullValues = true};
+        }
+        auto exprExp = nesValueToLogicalFunction(argVal);
+        if (!exprExp.has_value())
+        {
+            return std::unexpected{std::move(exprExp).error()};
+        }
+        return BoundAggregationCall{
+            .aggregationName = aggregationName,
+            .factory = factory,
+            .argument = std::move(*exprExp),
+            .includeNullValues = false};
     }
 };
 
-NESType makeAggregationNESType(Identifier aggName, std::optional<NESType> inferredResult, AggregationLogicalFunctionFn factory)
+NESType makeAggregationNESType(
+    Identifier aggName,
+    std::optional<NESType> instantiatedInput,
+    std::optional<NESType> inferredResult,
+    AggregationLogicalFunctionFn factory)
 {
-    return NESType::create<AggregationTypeDescriptor, BoundAggregationCall>(
-               AggregationTypeDescriptor{
-                   .aggregationName = aggName,
-                   .inferredResultType = inferredResult,
-                   .factory = std::move(factory)},
-               [](const AggregationTypeDescriptor& desc, const NESValueParameters& params)
-                   -> std::expected<BoundAggregationCall, Exception>
-               {
-                   if (params.isNamed())
-                   {
-                       return std::unexpected{
-                           InvalidQuerySyntax("Aggregation function '{}' does not accept named arguments", desc.aggregationName)};
-                   }
-                   if (params.size() != 1)
-                   {
-                       return std::unexpected{InvalidQuerySyntax(
-                           "Aggregation function '{}' expects exactly 1 argument, got {}", desc.aggregationName, params.size())};
-                   }
-                   const auto argVal = params.at(0).value();
-                   if (argVal.tryGetAs<AsteriskTag>() != nullptr)
-                   {
-                       if (desc.aggregationName != Identifier::parse("COUNT"))
-                       {
-                           return std::unexpected{InvalidQuerySyntax(
-                               "Star argument (*) is only supported for COUNT(*), not {}()", desc.aggregationName)};
-                       }
-                       return BoundAggregationCall{
-                           .aggregationName = desc.aggregationName,
-                           .factory = desc.factory,
-                           .argument = AsteriskTag{},
-                           .includeNullValues = true};
-                   }
-                   auto exprExp = nesValueToLogicalFunction(argVal);
-                   if (!exprExp.has_value())
-                   {
-                       return std::unexpected{std::move(exprExp).error()};
-                   }
-                   return BoundAggregationCall{
-                       .aggregationName = desc.aggregationName,
-                       .factory = desc.factory,
-                       .argument = std::move(*exprExp),
-                       .includeNullValues = false};
-               })
-        .withTrait(AggregationLogicalFunctionTypeTrait{
+    return NESType{AggregationNESType{
+                       .aggregationName = aggName,
+                       .instantiatedInputType = std::move(instantiatedInput),
+                       .inferredResultType = inferredResult,
+                       .factory = std::move(factory)}}
+        .withTypeTrait(AggregationLogicalFunctionTypeTrait{
             .aggregationName = aggName,
             .resultScalarType = std::move(inferredResult)});
 }
+
+/// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
+const NESOptionalTypeParameter INPUT_TYPE{
+    Identifier::parse("INPUT_TYPE"),
+    "Input scalar type aggregated over the window",
+    &DataTypeRegistry::scalarDataTypeClass};
+
+struct AggregationLogicalFunctionFunctor
+{
+    Identifier aggregationName;
+    AggregationTypeInferenceFn inferAggregateType;
+    AggregationLogicalFunctionFn factory;
+
+    [[nodiscard]] const AggregationLogicalFunctionFn& getRegistryEntry() const noexcept { return factory; }
+
+    bool operator==(const AggregationLogicalFunctionFunctor& other) const
+    {
+        return aggregationName == other.aggregationName;
+    }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters& typeParams) const
+    {
+        const auto resolvedExp = createExpectedNESTypeArguments(INPUT_TYPE).resolve(typeParams);
+        if (!resolvedExp.has_value())
+        {
+            return std::unexpected{resolvedExp.error()};
+        }
+        const auto argTypeOpt = resolvedExp->get(INPUT_TYPE);
+        if (!argTypeOpt.has_value())
+        {
+            return makeAggregationNESType(aggregationName, std::nullopt, std::nullopt, factory);
+        }
+        auto inferredExp = inferAggregateType(*argTypeOpt);
+        if (!inferredExp.has_value())
+        {
+            return std::unexpected{std::move(inferredExp).error()};
+        }
+        return makeAggregationNESType(aggregationName, *argTypeOpt, std::move(*inferredExp), factory);
+    }
+};
 }
 
 NESValue makeAsteriskValue()
 {
-    static const NESType asteriskType = NESType::createUnconstructible<AsteriskTag, AsteriskTag>(AsteriskTag{});
+    static const NESType asteriskType{AsteriskTag{}};
     return NESValue::create(asteriskType, AsteriskTag{});
 }
 
@@ -130,7 +169,7 @@ AggregationLogicalFunctionRegistry& AggregationLogicalFunctionRegistry::instance
 
 NESTypeClass AggregationLogicalFunctionRegistry::aggregationLogicalFunctionTypeClass()
 {
-    return NESTypeClass::forTrait<AggregationLogicalFunctionTypeTrait>();
+    return NESTypeClass::forTypeTrait<AggregationLogicalFunctionTypeTrait>();
 }
 
 std::vector<NamedNESParametrizedTypeClass> AggregationLogicalFunctionRegistry::getParametrizedTypeClasses()
@@ -139,60 +178,18 @@ std::vector<NamedNESParametrizedTypeClass> AggregationLogicalFunctionRegistry::g
         QualifiedIdentifier::parse("AggregationLogicalFunction"), aggregationLogicalFunctionTypeClass())};
 }
 
-NESFunctor makeAggregationLogicalFunctionFunctor(const std::string_view key, AggregationLogicalFunctionFn factory)
+namespace detail
 {
-    const auto aggId = Identifier::parse(std::string{key});
-    return NESFunctor{
-        std::move(factory),
-        [](const AggregationLogicalFunctionFn& lhs, const AggregationLogicalFunctionFn& rhs) { return &lhs == &rhs; },
-        [aggId](const AggregationLogicalFunctionFn& fn, const NESTypeParameters& typeParams) -> std::expected<NESType, Exception>
-        {
-            if (typeParams.empty())
-            {
-                return makeAggregationNESType(aggId, std::nullopt, fn);
-            }
-            if (typeParams.size() != 1)
-            {
-                return std::unexpected{TypeInferenceException(
-                    "Aggregation '{}' expects at most 1 input scalar type parameter, got {}", aggId, typeParams.size())};
-            }
-            const auto argTypeOpt = typeParams.isNamed()
-                ? typeParams.getTypeByName(QualifiedIdentifier::parse("INPUT_TYPE"))
-                : typeParams.getTypeAt(0);
-            if (!argTypeOpt.has_value())
-            {
-                return std::unexpected{
-                    TypeInferenceException("Aggregation '{}' expects a ScalarDatatype type parameter", aggId)};
-            }
-            const auto* scalarTrait = argTypeOpt->tryGetTrait<ScalarTypeTrait>();
-            if (scalarTrait == nullptr)
-            {
-                return std::unexpected{TypeInferenceException(
-                    "Aggregation '{}' parameter does not satisfy ScalarDatatype", aggId)};
-            }
-            const auto dtOpt = scalarTrait->tryGetDataType(argTypeOpt->getDescriptor());
-            if (!dtOpt.has_value())
-            {
-                return std::unexpected{TypeInferenceException(
-                    "Built-in aggregation '{}' does not support custom non-DataType scalar parameter", aggId)};
-            }
-
-            try
-            {
-                const LogicalOperator dummyProducer{SourceNameLogicalOperator::create(Identifier::parse("_agg_probe"))};
-                Field dummyField{dummyProducer, Identifier::parse("_agg_field"), *dtOpt};
-                const Schema<Field, Unordered> dummySchema{dummyField};
-                auto agg = fn(AggregationLogicalFunctionRegistryArguments{
-                    .on = {TypedLogicalFunction<FieldAccessLogicalFunction>{FieldAccessLogicalFunction{dummyField}}},
-                    .includeNullValues = false});
-                auto inferred = agg.withInferredType(dummySchema);
-                return makeAggregationNESType(aggId, inferred.getAggregateType().toNESType(), fn);
-            }
-            catch (const Exception& ex)
-            {
-                return std::unexpected{ex};
-            }
-        }};
+NESFunctor makeAggregationLogicalFunctionFunctorImpl(
+    const std::string_view key,
+    AggregationLogicalFunctionFn factory,
+    AggregationTypeInferenceFn inferAggregateType)
+{
+    return NESFunctor{AggregationLogicalFunctionFunctor{
+        .aggregationName = Identifier::parse(std::string{key}),
+        .inferAggregateType = inferAggregateType,
+        .factory = std::move(factory)}};
+}
 }
 
 }

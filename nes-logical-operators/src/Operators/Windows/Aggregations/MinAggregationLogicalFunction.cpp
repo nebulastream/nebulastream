@@ -22,6 +22,7 @@
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -36,6 +37,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -84,10 +86,20 @@ bool MinAggregationLogicalFunction::operator==(const MinAggregationLogicalFuncti
     return inputFunction == other.inputFunction && aggregateType == other.aggregateType;
 }
 
+std::expected<NESType, Exception> MinAggregationLogicalFunction::inferAggregateType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{UnsupportedQuery("{} is only supported on numeric fields", NAME)};
+    }
+    return input;
+}
+
 MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
     auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    if (!newInputFunction->getDataType().isNumeric())
+    auto inferred = inferAggregateType(newInputFunction->getDataType().toNESType());
+    if (!inferred.has_value())
     {
         throw UnsupportedQuery(
             "{} is only supported on numeric fields, but field {} has type {}",
@@ -95,7 +107,7 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredType(co
             newInputFunction->getField().getLastName(),
             magic_enum::enum_name(newInputFunction->getDataType().type));
     }
-    return MinAggregationLogicalFunction{newInputFunction, newInputFunction->getDataType()};
+    return MinAggregationLogicalFunction{newInputFunction, requireLegacyDataType(std::move(inferred))};
 }
 
 Reflected

@@ -14,11 +14,11 @@
 
 #include <LogicalFunctionRegistry.hpp>
 
-#include <array>
-#include <cstdint>
+#include <cstddef>
 #include <expected>
+#include <memory>
 #include <optional>
-#include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -26,147 +26,251 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Operators/LogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Schema/Field.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Types/NESType.hpp>
-#include <Types/NESTypeCatalog.hpp>
-#include <Util/Overloaded.hpp>
-#include <Util/Strings.hpp>
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 
 namespace NES
 {
 
 namespace
 {
-struct LogicalFunctionDescriptor
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
+const NESFunctorParameter FUNCTION{
+    Identifier::parse("FUNCTION"),
+    "Binary function functor required to be closed over the constrained type"};
+
+const NESTypeParameter INPUT_TYPE{
+    Identifier::parse("INPUT_TYPE"),
+    "Input scalar type of the unary function",
+    &DataTypeRegistry::scalarDataTypeClass};
+
+const NESTypeParameter LEFT_TYPE{
+    Identifier::parse("LEFT_TYPE"),
+    "Left operand scalar type of the binary function",
+    &DataTypeRegistry::scalarDataTypeClass};
+
+const NESTypeParameter RIGHT_TYPE{
+    Identifier::parse("RIGHT_TYPE"),
+    "Right operand scalar type of the binary function",
+    &DataTypeRegistry::scalarDataTypeClass};
+/// NOLINTEND(bugprone-throwing-static-initialization)
+
+struct ConstructibleLogicalFunctionNESType
 {
-    std::string functionKey;
+    std::shared_ptr<const int> identityToken;
+    bool sqlCallable = true;
+    std::string diagnosticName;
+    std::vector<NESType> instantiatedArgTypes;
     std::optional<NESType> inferredResultType;
     LogicalFunctionFn factory;
 
-    bool operator==(const LogicalFunctionDescriptor& other) const
+    bool operator==(const ConstructibleLogicalFunctionNESType& other) const
     {
-        return toUpperCase(functionKey) == toUpperCase(other.functionKey) && inferredResultType == other.inferredResultType;
+        return identityToken == other.identityToken && instantiatedArgTypes == other.instantiatedArgTypes
+            && inferredResultType == other.inferredResultType;
     }
-};
 
-struct ClosedBinaryFunctionDescriptor
-{
-    QualifiedIdentifier functionName;
-    bool operator==(const ClosedBinaryFunctionDescriptor&) const = default;
-};
-
-struct ClosedBinaryParametrizedTag
-{
-    bool operator==(const ClosedBinaryParametrizedTag&) const = default;
-};
-
-bool isInternalAstOnlyFunction(const std::string_view key)
-{
-    const auto upper = toUpperCase(key);
-    return upper == "CONSTANTVALUE" || upper == "FIELDACCESS" || upper == "UNBOUNDFIELDACCESS" || upper == "CASTTOTYPE"
-        || upper == "VARSIZEDTONUMERIC";
-}
-
-std::string scalarLiteralToConstantString(const ScalarLiteralValue& literal)
-{
-    return std::visit(
-        Overloaded{
-            [](const std::string& s) { return s; },
-            [](const int64_t i) { return std::to_string(i); },
-            [](const uint64_t u) { return std::to_string(u); },
-            [](const double d) { return fmt::format("{}", d); },
-            [](const bool b) -> std::string { return b ? "true" : "false"; },
-            [](const std::monostate) -> std::string { return "NULL"; }},
-        literal);
-}
-
-std::expected<QualifiedIdentifier, Exception> extractFunctionNameFromParam(const NESTypeParameters& params)
-{
-    if (params.size() != 1)
+    [[nodiscard]] std::expected<LogicalFunction, Exception> construct(const NESValueParameters& params) const
     {
-        return std::unexpected{
-            TypeInferenceException("ClosedBinaryFunction expects exactly 1 parameter (FUNCTION_NAME), got {}", params.size())};
-    }
-    const auto valOpt
-        = params.isNamed() ? params.getValueByName(QualifiedIdentifier::parse("FUNCTION_NAME")) : params.getValueAt(0);
-    if (!valOpt.has_value())
-    {
-        return std::unexpected{
-            TypeInferenceException("ClosedBinaryFunction expects a value parameter naming the binary function")};
-    }
-    if (const auto* qid = valOpt->tryGetAs<QualifiedIdentifier>())
-    {
-        return *qid;
-    }
-    if (const auto* s = valOpt->tryGetAs<std::string>())
-    {
-        return QualifiedIdentifier::tryParse(*s);
-    }
-    if (const auto* lit = valOpt->tryGetAs<ScalarLiteralValue>())
-    {
-        if (const auto* s = std::get_if<std::string>(lit))
+        if (!sqlCallable)
         {
-            return QualifiedIdentifier::tryParse(*s);
+            return std::unexpected{
+                InvalidQuerySyntax("Function '{}' cannot be called directly as a SQL function", diagnosticName)};
+        }
+        if (params.isNamed())
+        {
+            return std::unexpected{
+                InvalidQuerySyntax("Scalar function '{}' does not accept named arguments", diagnosticName)};
+        }
+        std::vector<LogicalFunction> children;
+        children.reserve(params.size());
+        for (size_t i = 0; i < params.size(); ++i)
+        {
+            auto childExp = nesValueToLogicalFunction(params.at(i).value());
+            if (!childExp.has_value())
+            {
+                return std::unexpected{std::move(childExp).error()};
+            }
+            children.push_back(std::move(*childExp));
+        }
+        try
+        {
+            return factory(LogicalFunctionRegistryArguments{.children = std::move(children)});
+        }
+        catch (const Exception& ex)
+        {
+            return std::unexpected{ex};
         }
     }
-    return std::unexpected{TypeInferenceException("ClosedBinaryFunction parameter must be a function identifier or string")};
+};
+
+struct BoundLogicalFunctionNESType
+{
+    using ValueType = LogicalFunction;
+
+    std::string functionKey;
+    std::optional<NESType> inferredResultType;
+
+    bool operator==(const BoundLogicalFunctionNESType& other) const = default;
+};
+
+NESType makeExpressionNESType(
+    std::shared_ptr<const int> identityToken,
+    const bool sqlCallable,
+    std::string diagnosticName,
+    std::vector<NESType> instantiatedArgTypes,
+    std::optional<NESType> inferredResult,
+    LogicalFunctionFn factory)
+{
+    return NESType{ConstructibleLogicalFunctionNESType{
+                       .identityToken = std::move(identityToken),
+                       .sqlCallable = sqlCallable,
+                       .diagnosticName = std::move(diagnosticName),
+                       .instantiatedArgTypes = std::move(instantiatedArgTypes),
+                       .inferredResultType = inferredResult,
+                       .factory = std::move(factory)}}
+        .withTypeTrait(LogicalFunctionTypeTrait{.resultScalarType = std::move(inferredResult)});
 }
 
-NESType makeExpressionNESType(std::string key, std::optional<NESType> inferredResult, LogicalFunctionFn factory)
+struct ClosedBinaryFunctionTypeClass
 {
-    return NESType::create<LogicalFunctionDescriptor, LogicalFunction>(
-               LogicalFunctionDescriptor{
-                   .functionKey = std::move(key),
-                   .inferredResultType = inferredResult,
-                   .factory = std::move(factory)},
-               [](const LogicalFunctionDescriptor& desc, const NESValueParameters& params)
-                   -> std::expected<LogicalFunction, Exception>
-               {
-                   if (isInternalAstOnlyFunction(desc.functionKey))
-                   {
-                       return std::unexpected{
-                           InvalidQuerySyntax("Function '{}' cannot be called directly as a SQL function", desc.functionKey)};
-                   }
-                   if (params.isNamed())
-                   {
-                       return std::unexpected{
-                           InvalidQuerySyntax("Scalar function '{}' does not accept named arguments", desc.functionKey)};
-                   }
-                   std::vector<LogicalFunction> children;
-                   children.reserve(params.size());
-                   for (size_t i = 0; i < params.size(); ++i)
-                   {
-                       auto childExp = nesValueToLogicalFunction(params.at(i).value());
-                       if (!childExp.has_value())
-                       {
-                           return std::unexpected{std::move(childExp).error()};
-                       }
-                       children.push_back(std::move(*childExp));
-                   }
-                   try
-                   {
-                       return desc.factory(LogicalFunctionRegistryArguments{.children = std::move(children)});
-                   }
-                   catch (const Exception& ex)
-                   {
-                       return std::unexpected{ex};
-                   }
-               })
-        .withTrait(LogicalFunctionTypeTrait{.resultScalarType = std::move(inferredResult)});
-}
+    NESFunctor functionFunctor;
+    bool operator==(const ClosedBinaryFunctionTypeClass&) const = default;
+
+    [[nodiscard]] bool validate(const NESType& candidate) const
+    {
+        if (!DataTypeRegistry::scalarDataTypeClass().validate(candidate))
+        {
+            return false;
+        }
+        const auto instantiatedExp = functionFunctor.instantiate(NESTypeParameters::fromTypes({candidate, candidate}));
+        if (!instantiatedExp.has_value())
+        {
+            return false;
+        }
+        if (const auto* fnTrait = instantiatedExp->tryGetTypeTrait<LogicalFunctionTypeTrait>();
+            fnTrait != nullptr && fnTrait->resultScalarType.has_value())
+        {
+            return *fnTrait->resultScalarType == candidate;
+        }
+        return *instantiatedExp == candidate;
+    }
+};
+
+struct ClosedBinaryParametrizedTypeClass
+{
+    bool operator==(const ClosedBinaryParametrizedTypeClass&) const = default;
+
+    [[nodiscard]] static ExpectedNESTypeArguments getExpectedArguments()
+    {
+        return createExpectedNESTypeArguments(FUNCTION);
+    }
+
+    [[nodiscard]] static std::expected<NESTypeClass, Exception> instantiate(const InstantiatedNESTypeParameters& params)
+    {
+        return LogicalFunctionRegistry::closedBinaryFunctionTypeClass(params.get(FUNCTION));
+    }
+};
+
+struct LogicalFunctionFunctor
+{
+    std::shared_ptr<const int> identityToken;
+    bool sqlCallable = true;
+    std::string diagnosticName;
+    LogicalFunctionTypeInference typeInference;
+    LogicalFunctionFn factory;
+
+    [[nodiscard]] const LogicalFunctionFn& getRegistryEntry() const noexcept { return factory; }
+
+    bool operator==(const LogicalFunctionFunctor& other) const
+    {
+        return identityToken == other.identityToken;
+    }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters& typeParams) const
+    {
+        if (typeParams.empty())
+        {
+            return makeExpressionNESType(identityToken, sqlCallable, diagnosticName, {}, std::nullopt, factory);
+        }
+        if (!sqlCallable || std::holds_alternative<std::monostate>(typeInference))
+        {
+            return std::unexpected{
+                TypeInferenceException("Internal function '{}' cannot be instantiated over type arguments", diagnosticName)};
+        }
+
+        if (const auto* unaryFn = std::get_if<UnaryTypeInferenceFn>(&typeInference))
+        {
+            const auto resolvedExp = createExpectedNESTypeArguments(INPUT_TYPE).resolve(typeParams);
+            if (!resolvedExp.has_value())
+            {
+                return std::unexpected{resolvedExp.error()};
+            }
+            const auto& inputType = resolvedExp->get(INPUT_TYPE);
+            auto inferredExp = (*unaryFn)(inputType);
+            if (!inferredExp.has_value())
+            {
+                return std::unexpected{std::move(inferredExp).error()};
+            }
+            return makeExpressionNESType(identityToken, sqlCallable, diagnosticName, {inputType}, std::move(*inferredExp), factory);
+        }
+
+        if (const auto* binaryFn = std::get_if<BinaryTypeInferenceFn>(&typeInference))
+        {
+            const auto resolvedExp = createExpectedNESTypeArguments(LEFT_TYPE, RIGHT_TYPE).resolve(typeParams);
+            if (!resolvedExp.has_value())
+            {
+                return std::unexpected{resolvedExp.error()};
+            }
+            const auto& leftType = resolvedExp->get(LEFT_TYPE);
+            const auto& rightType = resolvedExp->get(RIGHT_TYPE);
+            auto inferredExp = (*binaryFn)(leftType, rightType);
+            if (!inferredExp.has_value())
+            {
+                return std::unexpected{std::move(inferredExp).error()};
+            }
+            return makeExpressionNESType(
+                identityToken, sqlCallable, diagnosticName, {leftType, rightType}, std::move(*inferredExp), factory);
+        }
+
+        const auto& variadicFn = std::get<VariadicTypeInferenceFn>(typeInference);
+        if (typeParams.isNamed())
+        {
+            return std::unexpected{
+                TypeInferenceException("Variadic function '{}' expects positional type arguments", diagnosticName)};
+        }
+        std::vector<NESType> argTypes;
+        argTypes.reserve(typeParams.size());
+        for (size_t i = 0; i < typeParams.size(); ++i)
+        {
+            const auto argTypeOpt = typeParams.getTypeAt(i);
+            if (!argTypeOpt.has_value())
+            {
+                return std::unexpected{
+                    TypeInferenceException("Function '{}' expects type parameters at index {}", diagnosticName, i)};
+            }
+            if (!DataTypeRegistry::scalarDataTypeClass().validate(*argTypeOpt))
+            {
+                return std::unexpected{TypeInferenceException(
+                    "Function '{}' argument {} does not satisfy ScalarDatatype", diagnosticName, i)};
+            }
+            argTypes.push_back(*argTypeOpt);
+        }
+        auto inferredExp = (*variadicFn)(argTypes);
+        if (!inferredExp.has_value())
+        {
+            return std::unexpected{std::move(inferredExp).error()};
+        }
+        return makeExpressionNESType(
+            identityToken, sqlCallable, diagnosticName, std::move(argTypes), std::move(*inferredExp), factory);
+    }
+};
 }
 
 std::expected<LogicalFunction, Exception> nesValueToLogicalFunction(const NESValue& value)
@@ -175,19 +279,10 @@ std::expected<LogicalFunction, Exception> nesValueToLogicalFunction(const NESVal
     {
         return *fn;
     }
-    if (const auto* trait = value.getType().tryGetTrait<ScalarTypeTrait>())
+    if (DataTypeRegistry::scalarDataTypeClass().validate(value.getType()))
     {
-        if (const auto dtOpt = trait->tryGetDataType(value.getType().getDescriptor()))
-        {
-            if (const auto* lit = value.tryGetAs<ScalarLiteralValue>())
-            {
-                return LogicalFunction{ConstantValueLogicalFunction{*dtOpt, scalarLiteralToConstantString(*lit)}};
-            }
-            if (const auto* s = value.tryGetAs<std::string>())
-            {
-                return LogicalFunction{ConstantValueLogicalFunction{*dtOpt, *s}};
-            }
-        }
+        return ConstantValueLogicalFunction::tryCreate(value).transform(
+            [](ConstantValueLogicalFunction&& constFn) { return LogicalFunction{std::move(constFn)}; });
     }
     return std::unexpected{InvalidQuerySyntax("Expected a scalar expression or literal argument")};
 }
@@ -200,12 +295,45 @@ NESValue makeLogicalFunctionValue(LogicalFunction function)
     {
         resultType = dt.toNESType();
     }
-    auto exprType = NESType::createUnconstructible<LogicalFunctionDescriptor, LogicalFunction>(LogicalFunctionDescriptor{
-                        .functionKey = std::string{function.getType()},
-                        .inferredResultType = resultType,
-                        .factory = {}})
-                        .withTrait(LogicalFunctionTypeTrait{.resultScalarType = resultType});
+    auto exprType = NESType{BoundLogicalFunctionNESType{
+                                .functionKey = std::string{function.getType()},
+                                .inferredResultType = resultType}}
+                        .withTypeTrait(LogicalFunctionTypeTrait{.resultScalarType = resultType});
     return NESValue::create(std::move(exprType), std::move(function));
+}
+
+std::expected<NESType, Exception>
+joinNumericNESTypes(const NESType& left, const NESType& right, const std::string_view functionName)
+{
+    if (!left.hasTypeTrait<NumericTypeTrait>() || !right.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Cannot apply {} to non-numeric input types", functionName)};
+    }
+    const auto* leftLegacy = left.tryGetTypeTrait<LegacyDataTypeTrait>();
+    const auto* rightLegacy = right.tryGetTypeTrait<LegacyDataTypeTrait>();
+    if (leftLegacy == nullptr || rightLegacy == nullptr)
+    {
+        return std::unexpected{
+            CannotInferStamp("Built-in function '{}' does not have an overload for custom numeric types", functionName)};
+    }
+    const auto joined = leftLegacy->getDataType().join(rightLegacy->getDataType());
+    if (!joined.has_value())
+    {
+        return std::unexpected{CannotInferStamp(
+            "Could not join data types in {}: left={}, right={}", functionName, leftLegacy->getDataType(), rightLegacy->getDataType())};
+    }
+    return joined->toNESType();
+}
+
+DataType requireLegacyDataType(std::expected<NESType, Exception> inferredType)
+{
+    if (!inferredType.has_value())
+    {
+        throw std::move(inferredType).error();
+    }
+    const auto* legacyTrait = inferredType->tryGetTypeTrait<LegacyDataTypeTrait>();
+    INVARIANT(legacyTrait != nullptr, "Expected LegacyDataTypeTrait on inferred built-in scalar NESType");
+    return legacyTrait->getDataType();
 }
 
 LogicalFunctionRegistry& LogicalFunctionRegistry::instance()
@@ -216,44 +344,12 @@ LogicalFunctionRegistry& LogicalFunctionRegistry::instance()
 
 NESTypeClass LogicalFunctionRegistry::logicalFunctionTypeClass()
 {
-    return NESTypeClass::forTrait<LogicalFunctionTypeTrait>() || DataTypeRegistry::scalarDataTypeClass();
+    return NESTypeClass::forTypeTrait<LogicalFunctionTypeTrait>() || DataTypeRegistry::scalarDataTypeClass();
 }
 
-NESTypeClass LogicalFunctionRegistry::closedBinaryFunctionTypeClass(QualifiedIdentifier functionName)
+NESTypeClass LogicalFunctionRegistry::closedBinaryFunctionTypeClass(NESFunctor functionFunctor)
 {
-    return NESTypeClass{
-        ClosedBinaryFunctionDescriptor{.functionName = std::move(functionName)},
-        [](const ClosedBinaryFunctionDescriptor& desc, const NESType& candidate)
-        {
-            if (!DataTypeRegistry::scalarDataTypeClass().validate(candidate))
-            {
-                return false;
-            }
-            auto functorOpt = NESTypeCatalog::instance().findSqlFunctor(desc.functionName);
-            if (!functorOpt.has_value())
-            {
-                const auto flatName = fmt::format(
-                    "{}",
-                    fmt::join(
-                        desc.functionName | std::views::transform([](const Identifier& part) { return part.getOriginalString(); }), "."));
-                functorOpt = LogicalFunctionRegistry::instance().findFunctor(flatName);
-            }
-            if (!functorOpt.has_value())
-            {
-                return false;
-            }
-            const auto instantiatedExp = functorOpt->instantiate(NESTypeParameters::fromTypes({candidate, candidate}));
-            if (!instantiatedExp.has_value())
-            {
-                return false;
-            }
-            if (const auto* fnTrait = instantiatedExp->tryGetTrait<LogicalFunctionTypeTrait>();
-                fnTrait != nullptr && fnTrait->resultScalarType.has_value())
-            {
-                return *fnTrait->resultScalarType == candidate;
-            }
-            return *instantiatedExp == candidate;
-        }};
+    return NESTypeClass{ClosedBinaryFunctionTypeClass{.functionFunctor = std::move(functionFunctor)}};
 }
 
 std::vector<NamedNESParametrizedTypeClass> LogicalFunctionRegistry::getParametrizedTypeClasses()
@@ -262,85 +358,24 @@ std::vector<NamedNESParametrizedTypeClass> LogicalFunctionRegistry::getParametri
         NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("LogicalFunction"), logicalFunctionTypeClass()),
         NamedNESParametrizedTypeClass{
             QualifiedIdentifier::parse("ClosedBinaryFunction"),
-            NESParametrizedTypeClass{
-                ClosedBinaryParametrizedTag{},
-                [](const ClosedBinaryParametrizedTag&, const NESTypeClassParameters& params) -> std::expected<NESTypeClass, Exception>
-                {
-                    auto fnNameExp = extractFunctionNameFromParam(params.getParameters());
-                    if (!fnNameExp.has_value())
-                    {
-                        return std::unexpected{std::move(fnNameExp).error()};
-                    }
-                    return closedBinaryFunctionTypeClass(std::move(*fnNameExp));
-                }}}};
+            NESParametrizedTypeClass{ClosedBinaryParametrizedTypeClass{}}}};
 }
 
-NESFunctor makeLogicalFunctionFunctor(const std::string_view key, LogicalFunctionFn factory)
+namespace detail
 {
-    const std::string keyCopy{key};
-    return NESFunctor{
-        std::move(factory),
-        [](const LogicalFunctionFn& lhs, const LogicalFunctionFn& rhs) { return &lhs == &rhs; },
-        [keyCopy](const LogicalFunctionFn& fn, const NESTypeParameters& typeParams) -> std::expected<NESType, Exception>
-        {
-            if (typeParams.empty())
-            {
-                return makeExpressionNESType(keyCopy, std::nullopt, fn);
-            }
-            if (isInternalAstOnlyFunction(keyCopy))
-            {
-                return std::unexpected{
-                    TypeInferenceException("Internal function '{}' cannot be instantiated over type arguments", keyCopy)};
-            }
-            if (typeParams.isNamed())
-            {
-                return std::unexpected{
-                    TypeInferenceException("Function '{}' expects positional type arguments", keyCopy)};
-            }
-
-            const LogicalOperator dummyProducer{SourceNameLogicalOperator::create(Identifier::parse("_type_probe"))};
-            std::vector<Field> dummyFields;
-            std::vector<LogicalFunction> dummyChildren;
-            dummyFields.reserve(typeParams.size());
-            dummyChildren.reserve(typeParams.size());
-
-            for (size_t i = 0; i < typeParams.size(); ++i)
-            {
-                const auto argTypeOpt = typeParams.getTypeAt(i);
-                if (!argTypeOpt.has_value())
-                {
-                    return std::unexpected{
-                        TypeInferenceException("Function '{}' expects type parameters, got value at index {}", keyCopy, i)};
-                }
-                const auto* scalarTrait = argTypeOpt->tryGetTrait<ScalarTypeTrait>();
-                if (scalarTrait == nullptr)
-                {
-                    return std::unexpected{TypeInferenceException(
-                        "Function '{}' argument {} does not satisfy ScalarDatatype", keyCopy, i)};
-                }
-                const auto dtOpt = scalarTrait->tryGetDataType(argTypeOpt->getDescriptor());
-                if (!dtOpt.has_value())
-                {
-                    return std::unexpected{TypeInferenceException(
-                        "Built-in function '{}' does not have an overload for custom non-DataType scalar argument {}", keyCopy, i)};
-                }
-                Field dummyField{dummyProducer, Identifier::parse(fmt::format("_arg_{}", i)), *dtOpt};
-                dummyFields.push_back(dummyField);
-                dummyChildren.emplace_back(FieldAccessLogicalFunction{dummyField});
-            }
-
-            try
-            {
-                const Schema<Field, Unordered> dummySchema{std::move(dummyFields)};
-                auto constructed = fn(LogicalFunctionRegistryArguments{.children = std::move(dummyChildren)});
-                auto inferred = constructed.withInferredDataType(dummySchema);
-                return makeExpressionNESType(keyCopy, inferred.getDataType().toNESType(), fn);
-            }
-            catch (const Exception& ex)
-            {
-                return std::unexpected{ex};
-            }
-        }};
+NESFunctor makeLogicalFunctionFunctorImpl(
+    LogicalFunctionFn factory,
+    LogicalFunctionTypeInference typeInference,
+    const bool sqlCallable,
+    const std::string_view diagnosticName)
+{
+    return NESFunctor{LogicalFunctionFunctor{
+        .identityToken = std::make_shared<const int>(0),
+        .sqlCallable = sqlCallable,
+        .diagnosticName = std::string{diagnosticName},
+        .typeInference = typeInference,
+        .factory = std::move(factory)}};
+}
 }
 
 }

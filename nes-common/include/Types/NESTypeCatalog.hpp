@@ -15,6 +15,7 @@
 #pragma once
 
 #include <optional>
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -31,6 +32,7 @@ namespace NES
 /// Also provides scoped registration helpers for dynamic/test-only functors and type classes.
 class NESTypeCatalog
 {
+    mutable std::shared_mutex mutex;
     std::unordered_map<QualifiedIdentifier, NamedNESParametrizedTypeClass> typeClasses;
     std::unordered_map<QualifiedIdentifier, std::unordered_map<QualifiedIdentifier, NamedNESFunctor>> functorsByRegistry;
     std::unordered_map<QualifiedIdentifier, NamedNESFunctor> sqlExposedFunctors;

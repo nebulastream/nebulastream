@@ -51,6 +51,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createIsNaN(const LogicalFunctionRegistryArguments& arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&IsNaNLogicalFunction::createIsNaN, &IsNaNLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

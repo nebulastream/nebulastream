@@ -30,12 +30,17 @@ requires std::is_integral_v<T> || std::is_floating_point_v<T>
 class ConstantValuePhysicalFunction final
 {
 public:
-    explicit ConstantValuePhysicalFunction(T value) : value(value) { }
+    explicit ConstantValuePhysicalFunction(T value, bool nullable = false, bool isNull = false)
+        : value(value), nullable(nullable), isNull(isNull)
+    {
+    }
 
-    VarVal execute(const Record&, ArenaRef&) const { return VarVal(value); }
+    VarVal execute(const Record&, ArenaRef&) const { return VarVal(value, nullable, isNull); }
 
 private:
     const T value;
+    const bool nullable;
+    const bool isNull;
 };
 
 using ConstantCharValueFunction = ConstantValuePhysicalFunction<char>;

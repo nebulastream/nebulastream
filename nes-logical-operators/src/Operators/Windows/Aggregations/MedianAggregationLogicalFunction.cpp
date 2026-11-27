@@ -30,6 +30,7 @@
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -38,6 +39,7 @@
 #include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -82,10 +84,20 @@ bool MedianAggregationLogicalFunction::operator==(const MedianAggregationLogical
     return inputFunction == other.inputFunction;
 }
 
+std::expected<NESType, Exception> MedianAggregationLogicalFunction::inferAggregateType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{UnsupportedQuery("{} is only supported on numeric fields", NAME)};
+    }
+    return wrapOptionalNESTypeIf(Float64Type::makeNESType(), isOptionalNESType(input));
+}
+
 MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
     auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    if (!newInputFunction->getDataType().isNumeric())
+    auto inferred = inferAggregateType(newInputFunction->getDataType().toNESType());
+    if (!inferred.has_value())
     {
         throw UnsupportedQuery(
             "{} is only supported on numeric fields, but field {} has type {}",
@@ -94,7 +106,7 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredT
             magic_enum::enum_name(newInputFunction->getDataType().type));
     }
     MedianAggregationLogicalFunction newAgg{newInputFunction};
-    newAgg.nullable = newInputFunction->getDataType().nullable;
+    newAgg.nullable = requireLegacyDataType(std::move(inferred)).nullable;
     return newAgg;
 }
 

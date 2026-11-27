@@ -51,7 +51,7 @@ _NULL_SCHEMA = [
 def test_parse_source_schema() -> None:
     sql = (
         "CREATE LOGICAL SOURCE conntest_rows (k INT64 NOT NULL, a INT32 NOT NULL, "
-        "b INT64 NOT NULL, c FLOAT64 NOT NULL); CREATE PHYSICAL SOURCE ... TYPE TCP;"
+        "b INT64 NOT NULL, c FLOAT64 NOT NULL); CREATE PHYSICAL SOURCE ... TYPE TCPSource;"
     )
     assert parse_source_schema(sql) == _SRC_ROW_SCHEMA
     assert parse_source_schema("CREATE LOGICAL SOURCE smoke_input (data UINT8);") == [

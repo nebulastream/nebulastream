@@ -33,6 +33,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -60,79 +61,105 @@ InferModelLogicalOperator::InferModelLogicalOperator(WeakLogicalOperator self, R
     inferLocalSchema();
 }
 
+namespace
+{
+/// NOLINTBEGIN(bugprone-throwing-static-initialization)
+const NESValueParameter<NESValue> MODEL{
+    Identifier::parse("MODEL"),
+    "Model satisfying ML_MODEL",
+    [](const NESValue& modelVal) -> std::expected<NESValue, Exception>
+    {
+        if (!ModelRegistry::mlModelTypeClass().validate(modelVal.getType()))
+        {
+            if (const auto* op = modelVal.tryGetAs<LogicalOperator>())
+            {
+                if (const auto srcNameOp = op->tryGetAs<SourceNameLogicalOperator>())
+                {
+                    return std::unexpected{
+                        UnknownModelName("Model '{}' is not registered", srcNameOp->get().getLogicalSourceName())};
+                }
+            }
+            return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE first argument (MODEL) must satisfy type class ML_MODEL")};
+        }
+        return modelVal;
+    }};
+
+const NESValueParameter<LogicalOperator> STREAM{
+    Identifier::parse("STREAM"),
+    "Input relational stream",
+    &LogicalOperatorRegistry::logicalOperatorTypeClass};
+
+const NESTypeParameter MODEL_TYPE{
+    Identifier::parse("MODEL"),
+    "Model type satisfying ML_MODEL",
+    &ModelRegistry::mlModelTypeClass};
+
+const NESTypeParameter STREAM_TYPE{
+    Identifier::parse("STREAM"),
+    "Stream type satisfying LogicalOperator",
+    &LogicalOperatorRegistry::logicalOperatorTypeClass};
+/// NOLINTEND(bugprone-throwing-static-initialization)
+}
+
 std::expected<LogicalOperator, Exception> InferModelLogicalOperator::create(const NESValueParameters& params)
 {
-    static const std::array<QualifiedIdentifier, 2> formalParams{
-        QualifiedIdentifier::parse("MODEL"),
-        QualifiedIdentifier::parse("STREAM")};
-
-    const auto boundExp = params.bindAgainst(formalParams);
-    if (!boundExp.has_value())
+    const auto resolvedExp = createExpectedNESValueArguments(MODEL, STREAM).resolve(params);
+    if (!resolvedExp.has_value())
     {
-        return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE expects arguments (MODEL, STREAM): {}", boundExp.error().what())};
+        return std::unexpected{std::move(resolvedExp).error()};
     }
-    const auto& bound = *boundExp;
-    const auto modelVal = bound.getFieldByName(formalParams[0]).value().getValue();
-    const auto streamVal = bound.getFieldByName(formalParams[1]).value().getValue();
-
-    if (!ModelRegistry::mlModelTypeClass().validate(modelVal.getType()))
-    {
-        return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE first argument (MODEL) must satisfy type class ML_MODEL")};
-    }
-    if (!LogicalOperatorRegistry::logicalOperatorTypeClass().validate(streamVal.getType()))
-    {
-        return std::unexpected{InvalidQuerySyntax("MODEL_INFERENCE second argument (STREAM) must satisfy type class LogicalOperator")};
-    }
-
-    const auto* mlTrait = modelVal.getType().tryGetTrait<MLModelTrait>();
-    const auto* childOp = streamVal.tryGetAs<LogicalOperator>();
-    if (mlTrait == nullptr || childOp == nullptr)
+    const auto modelVal = resolvedExp->get(MODEL);
+    const auto childOp = resolvedExp->get(STREAM);
+    const auto* mlTypeTrait = modelVal.getType().tryGetTypeTrait<MLModelTypeTrait>();
+    if (mlTypeTrait == nullptr)
     {
         return std::unexpected{InvalidQuerySyntax("Invalid arguments passed to MODEL_INFERENCE")};
     }
-    return mlTrait->createInferenceOperator(modelVal, *childOp);
+    return mlTypeTrait->createInferenceOperator(modelVal, std::move(childOp));
+}
+
+namespace
+{
+struct ModelInferenceNESType
+{
+    std::string key;
+    LogicalOperatorFn factory;
+
+    bool operator==(const ModelInferenceNESType& other) const { return key == other.key; }
+
+    [[nodiscard]] std::expected<LogicalOperator, Exception> construct(const NESValueParameters& params) const
+    {
+        return factory(params);
+    }
+};
+
+struct ModelInferenceFunctor
+{
+    std::string key;
+    LogicalOperatorFn factory;
+
+    [[nodiscard]] const LogicalOperatorFn& getRegistryEntry() const noexcept { return factory; }
+    bool operator==(const ModelInferenceFunctor& other) const { return key == other.key; }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters& typeParams) const
+    {
+        if (!typeParams.empty())
+        {
+            const auto validated = createExpectedNESTypeArguments(MODEL_TYPE, STREAM_TYPE).resolve(typeParams);
+            if (!validated.has_value())
+            {
+                return std::unexpected{validated.error()};
+            }
+        }
+        return NESType{ModelInferenceNESType{.key = key, .factory = factory}}
+            .withTypeTrait(LogicalOperatorTypeTrait{});
+    }
+};
 }
 
 NESFunctor InferModelLogicalOperator::functorOf(const std::string_view key)
 {
-    struct ModelInferenceDescriptor
-    {
-        std::string key;
-        LogicalOperatorFn factory;
-        bool operator==(const ModelInferenceDescriptor& other) const { return key == other.key; }
-    };
-
-    const std::string keyCopy{key};
-    LogicalOperatorFn fn = &InferModelLogicalOperator::create;
-    return NESFunctor{
-        std::move(fn),
-        [](const LogicalOperatorFn& lhs, const LogicalOperatorFn& rhs) { return &lhs == &rhs; },
-        [keyCopy](const LogicalOperatorFn& factory, const NESTypeParameters& typeParams) -> std::expected<NESType, Exception>
-        {
-            if (!typeParams.empty())
-            {
-                const ExpectedNESTypeArguments expectedTypeArgs{Schema<ExpectedNESTypeParameter, Ordered>{
-                    ExpectedNESTypeParameter{
-                        .name = QualifiedIdentifier::parse("MODEL"),
-                        .constraint = ModelRegistry::mlModelTypeClass(),
-                        .kind = ExpectedNESTypeParameter::Kind::TypeParameter},
-                    ExpectedNESTypeParameter{
-                        .name = QualifiedIdentifier::parse("STREAM"),
-                        .constraint = LogicalOperatorRegistry::logicalOperatorTypeClass(),
-                        .kind = ExpectedNESTypeParameter::Kind::TypeParameter}}};
-                const auto validated = expectedTypeArgs.validateAndBind(typeParams);
-                if (!validated.has_value())
-                {
-                    return std::unexpected{validated.error()};
-                }
-            }
-            return NESType::create<ModelInferenceDescriptor, LogicalOperator>(
-                       ModelInferenceDescriptor{.key = keyCopy, .factory = factory},
-                       [](const ModelInferenceDescriptor& desc, const NESValueParameters& params)
-                           -> std::expected<LogicalOperator, Exception>
-                       { return desc.factory(params); })
-                .withTrait(LogicalOperatorTrait{});
-        }};
+    return NESFunctor{ModelInferenceFunctor{.key = std::string{key}, .factory = &InferModelLogicalOperator::create}};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static

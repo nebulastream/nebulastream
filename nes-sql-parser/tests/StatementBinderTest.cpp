@@ -25,6 +25,9 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypeRegistry.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -170,7 +173,7 @@ TEST_F(StatementBinderTest, BindQueryWithRawStringAndBooleanLiterals)
     ASSERT_EQ(selectionOperators.size(), 1);
 
     const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
-    EXPECT_EQ(predicate, "TEXT = '123' AND FLAG = false AND FALSE = FALSE");
+    EXPECT_EQ(predicate, "TEXT = 123 AND FLAG = false AND false = false");
 }
 
 TEST_F(StatementBinderTest, BindQueryWithDoubleNegativeTypedFloatLiteralInWherePredicate)
@@ -1277,35 +1280,53 @@ TEST_F(StatementBinderTest, BindPolymorphicIreeModelBackendInSqlQuery)
         bool operator==(const SqlIreeModel&) const = default;
     };
 
+    struct SqlIreeModelNESType
+    {
+        using ValueType = SqlIreeModel;
+        bool operator==(const SqlIreeModelNESType&) const = default;
+    };
+
+    struct SqlIreeModelTypeTrait
+    {
+        [[nodiscard]] static ModelSchema getSchema(const NESValue&) { return ModelSchema{}; }
+
+        [[nodiscard]] static std::expected<LogicalOperator, Exception>
+        createInferenceOperator(const NESValue&, LogicalOperator child)
+        {
+            auto proj = ProjectionLogicalOperator::create({}, ProjectionLogicalOperator::Asterisk{true});
+            return LogicalOperator{proj.withChildrenUnsafe({std::move(child)})};
+        }
+    };
+
     const auto ireeModelType
-        = NESType::createUnconstructible<std::string, SqlIreeModel>(std::string{"SQL_IREE_MODEL"})
-              .withTrait(MLModelTrait{
-                  .getSchema = [](const NESValue&) { return ModelSchema{}; },
-                  .createInferenceOperator =
-                      [](const NESValue&, LogicalOperator child) -> std::expected<LogicalOperator, Exception>
-                  {
-                      auto proj = ProjectionLogicalOperator::create({}, ProjectionLogicalOperator::Asterisk{true});
-                      return LogicalOperator{proj.withChildrenUnsafe({std::move(child)})};
-                  }});
+        = NESType{SqlIreeModelNESType{}}.withTypeTrait(MLModelTypeTrait{SqlIreeModelTypeTrait{}});
+
+    const NESValueParameter<std::string> IREE_PATH{Identifier::parse("PATH"), "Path to IREE model"};
 
     auto ireeFunctor = makeModelFunctor(
         "IREE_MODEL_SQL_TEST",
-        [ireeModelType](const NESValueParameters& params) -> std::expected<NESValue, Exception>
+        [ireeModelType, &IREE_PATH](const NESValueParameters& params) -> std::expected<NESValue, Exception>
         {
-            static const std::array<QualifiedIdentifier, 1> formal{QualifiedIdentifier::parse("PATH")};
-            const auto bound = params.bindAgainst(formal);
-            if (!bound.has_value())
+            const auto resolved = createExpectedNESValueArguments(IREE_PATH).resolve(params);
+            if (!resolved.has_value())
             {
-                return std::unexpected{bound.error()};
+                return std::unexpected{resolved.error()};
             }
-            const auto pathVal = bound->getFieldByName(formal[0]).value().getValue();
-            return NESValue::create(ireeModelType, SqlIreeModel{.path = "/tmp/iree_model.onnx"});
+            return NESValue::create(ireeModelType, SqlIreeModel{.path = resolved->get(IREE_PATH)});
         });
 
-    (void)NESTypeCatalog::instance().registerFunctor(
-        QualifiedIdentifier::parse("ModelRegistry"),
-        NamedNESFunctor{QualifiedIdentifier::parse("IREE_MODEL_SQL_TEST"), std::move(ireeFunctor)},
-        /*exposeToSqlScope=*/true);
+    struct FunctorUnregisterGuard
+    {
+        QualifiedIdentifier registry;
+        QualifiedIdentifier name;
+        ~FunctorUnregisterGuard() { NESTypeCatalog::instance().unregisterFunctor(registry, name); }
+    };
+
+    const auto regName = QualifiedIdentifier::parse("ModelRegistry");
+    const auto fnName = QualifiedIdentifier::parse("IREE_MODEL_SQL_TEST");
+    ASSERT_TRUE(NESTypeCatalog::instance().registerFunctor(
+        regName, NamedNESFunctor{fnName, std::move(ireeFunctor)}, /*exposeToSqlScope=*/true));
+    const FunctorUnregisterGuard cleanup{.registry = regName, .name = fnName};
 
     const std::string sql = R"(
         SELECT *
@@ -1317,6 +1338,209 @@ TEST_F(StatementBinderTest, BindPolymorphicIreeModelBackendInSqlQuery)
     const auto stmtExp = binder->parseAndBindSingle(sql);
     ASSERT_TRUE(stmtExp.has_value()) << stmtExp.error().what();
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*stmtExp));
+}
+
+TEST_F(StatementBinderTest, ModelNamesCaseSensitivityDropModelAndNoColumnShadowing)
+{
+    /// Unregistered model identifier in MODEL_INFERENCE reports UnknownModelName (2040)
+    const auto missingModelRes = binder->parseAndBindSingle("SELECT * FROM MODEL_INFERENCE(unknown_model_xyz, input_stream) INTO s");
+    ASSERT_FALSE(missingModelRes.has_value());
+    EXPECT_EQ(missingModelRes.error().code(), ErrorCode::UnknownModelName);
+
+    /// Quoted model name preserves exact case; DROP MODEL normalizes unquoted names
+    const auto quotedCreate = binder->parseAndBindSingle(
+        "CREATE MODEL \"myCaseModel\" ('/tmp/m.onnx') INPUT (x FLOAT32) OUTPUT (y FLOAT32)");
+    ASSERT_TRUE(quotedCreate.has_value());
+    EXPECT_EQ(std::get<CreateModelStatement>(*quotedCreate).name, "myCaseModel");
+
+    const auto unquotedDrop = binder->parseAndBindSingle("DROP MODEL WHERE name = 'mnist'");
+    ASSERT_TRUE(unquotedDrop.has_value());
+    EXPECT_EQ(std::get<DropModelStatement>(*unquotedDrop).name, "MNIST");
+
+    /// Unqualified 'CSV' AS TYPE on sinks resolves CSV formatter rather than silently falling back to NATIVE,
+    /// and duplicate formatter keys fail with InvalidConfigParameter.
+    const auto sinkShortType = binder->parseAndBindSingle(
+        "CREATE SINK s_csv(x INT32) TYPE FileSink SET ('/tmp/a.csv' AS FILE_PATH, 'localhost:8080' AS HOST, 'CSV' AS TYPE)");
+    ASSERT_TRUE(sinkShortType.has_value()) << sinkShortType.error().what();
+    EXPECT_FALSE(std::get<CreateSinkStatement>(*sinkShortType).outputFormatterDescriptor.isNative());
+
+    const auto dupSourceFmt = binder->parseAndBindSingle(
+        "CREATE PHYSICAL SOURCE FOR src TYPE FileSource SET ('/tmp/a.csv' AS FILE_PATH, 'localhost:8080' AS HOST, "
+        "'CSV' AS INPUT_FORMATTER.TYPE, 'JSON' AS INPUT_FORMATTER.TYPE)");
+    ASSERT_FALSE(dupSourceFmt.has_value());
+    EXPECT_EQ(dupSourceFmt.error().code(), ErrorCode::InvalidConfigParameter);
+
+    /// Multiple sinks in INTO throws NotImplemented; unknown sink with (*) throws UnknownSinkType
+    const auto multiSink = binder->parseAndBindSingle("SELECT x FROM src INTO s1, s2");
+    ASSERT_FALSE(multiSink.has_value());
+    EXPECT_EQ(multiSink.error().code(), ErrorCode::NotImplemented);
+
+    const auto starSink = binder->parseAndBindSingle("SELECT x FROM src INTO NonExistentSink(*)");
+    ASSERT_FALSE(starSink.has_value());
+    EXPECT_EQ(starSink.error().code(), ErrorCode::UnknownSinkType);
+
+    /// parseAndBindEach propagates exceptions thrown by caller's onStatement callback
+    EXPECT_THROW(
+        {
+            const auto res = binder->parseAndBindEach(
+                "SHOW VERSION;", [](std::expected<Statement, Exception>) { throw InvalidConfigParameter("caller callback error"); });
+            (void)res;
+        },
+        Exception);
+}
+
+TEST_F(StatementBinderTest, CurriedParameterizedScalarFunctorInSql)
+{
+    struct TestFixedArrayNESType
+    {
+        NESType elemType;
+        int64_t size = 0;
+        bool operator==(const TestFixedArrayNESType&) const = default;
+
+        [[nodiscard]] std::expected<std::vector<NESValue>, Exception> construct(const NESValueParameters& vals) const
+        {
+            if (vals.size() != static_cast<size_t>(size))
+            {
+                return std::unexpected{InvalidQuerySyntax("Expected {} elements, got {}", size, vals.size())};
+            }
+            std::vector<NESValue> elements;
+            elements.reserve(vals.size());
+            for (size_t i = 0; i < vals.size(); ++i)
+            {
+                auto elemExp = elemType.construct(NESValueParameters::positional({vals.at(i).value()}));
+                if (!elemExp.has_value())
+                {
+                    return std::unexpected{elemExp.error()};
+                }
+                elements.push_back(std::move(*elemExp));
+            }
+            return elements;
+        }
+    };
+
+    const NESTypeParameter ELEMENT_TYPE{
+        Identifier::parse("ELEMENT_TYPE"),
+        "Element scalar type",
+        DataTypeRegistry::scalarDataTypeClass()};
+
+    const NESNonTypeParameter<int64_t> SIZE{
+        Identifier::parse("SIZE"),
+        "Array size",
+        DataTypeRegistry::integerDataTypeClass(),
+        &tryExtractSignedInteger};
+
+    struct TestFixedArrayFunctor
+    {
+        const NESTypeParameter* elemParam;
+        const NESNonTypeParameter<int64_t>* sizeParam;
+
+        bool operator==(const TestFixedArrayFunctor& other) const = default;
+
+        [[nodiscard]] ExpectedNESTypeArguments getExpectedArguments() const
+        {
+            return createExpectedNESTypeArguments(*elemParam, *sizeParam);
+        }
+
+        [[nodiscard]] std::expected<NESType, Exception> instantiate(const InstantiatedNESTypeParameters& bound) const
+        {
+            return NESType{TestFixedArrayNESType{.elemType = bound.get(*elemParam), .size = bound.get(*sizeParam)}}
+                .withTypeTrait(ScalarTypeTrait{})
+                .withTypeTrait(LegacyDataTypeTrait::forDataType(DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}));
+        }
+    };
+
+    struct FunctorUnregisterGuard
+    {
+        QualifiedIdentifier registry;
+        QualifiedIdentifier name;
+        ~FunctorUnregisterGuard() { NESTypeCatalog::instance().unregisterFunctor(registry, name); }
+    };
+
+    NESFunctor fixedArrayFunctor{TestFixedArrayFunctor{.elemParam = &ELEMENT_TYPE, .sizeParam = &SIZE}};
+
+    const auto regName = QualifiedIdentifier::parse("DataTypeRegistry");
+    const auto fnName = QualifiedIdentifier::parse("TEST_FIXED_ARRAY");
+    ASSERT_TRUE(NESTypeCatalog::instance().registerFunctor(
+        regName, NamedNESFunctor{fnName, std::move(fixedArrayFunctor)}, /*exposeToSqlScope=*/true));
+    const FunctorUnregisterGuard cleanup{.registry = regName, .name = fnName};
+
+    /// Curried positional and named functor calls in SELECT, plus OPTIONAL(...) and custom parameterized typeDefinitions
+    const auto curriedPos = binder->parseAndBindSingle("SELECT TEST_FIXED_ARRAY(INT32, 3)(10, 20, 30) AS arr FROM src INTO s");
+    ASSERT_TRUE(curriedPos.has_value()) << curriedPos.error().what();
+
+    const auto curriedNamed = binder->parseAndBindSingle(
+        "SELECT TEST_FIXED_ARRAY(OPTIONAL(INT32) AS ELEMENT_TYPE, 2 AS SIZE)(10, 20) AS arr FROM src INTO s");
+    ASSERT_TRUE(curriedNamed.has_value()) << curriedNamed.error().what();
+
+    const auto wrongLen = binder->parseAndBindSingle("SELECT TEST_FIXED_ARRAY(INT32, 3)(10, 20) AS arr FROM src INTO s");
+    EXPECT_FALSE(wrongLen.has_value());
+
+    const auto paramSchema = binder->parseAndBindSingle(
+        "CREATE LOGICAL SOURCE arr_src(a TEST_FIXED_ARRAY(INT32, 4) NOT NULL, b OPTIONAL(INT32), c INT32, d INT32 NOT NULL)");
+    ASSERT_TRUE(paramSchema.has_value()) << paramSchema.error().what();
+    const auto& boundSchema = std::get<CreateLogicalSourceStatement>(*paramSchema).schema;
+    EXPECT_FALSE(boundSchema.getFieldByName(Identifier::parse("A"))->getDataType().nullable);
+    EXPECT_TRUE(boundSchema.getFieldByName(Identifier::parse("B"))->getDataType().nullable);
+    EXPECT_TRUE(boundSchema.getFieldByName(Identifier::parse("C"))->getDataType().nullable);
+    EXPECT_FALSE(boundSchema.getFieldByName(Identifier::parse("D"))->getDataType().nullable);
+
+    /// Contradictory OPTIONAL(INT32) NOT NULL is rejected
+    const auto contradictory = binder->parseAndBindSingle("CREATE LOGICAL SOURCE bad_src(x OPTIONAL(INT32) NOT NULL)");
+    EXPECT_FALSE(contradictory.has_value());
+
+    /// Curried OPTIONAL(...) value constructors in SQL expressions
+    const auto optQuery = binder->parseAndBindSingle(
+        "SELECT OPTIONAL(INT32)(42) AS x, OPTIONAL(INT32)(NULL) AS y, CAST(a AS OPTIONAL(INT64)) AS z FROM src INTO s");
+    ASSERT_TRUE(optQuery.has_value()) << optQuery.error().what();
+
+    const auto nonNullRejectsNull = binder->parseAndBindSingle("SELECT INT32(NULL) AS x FROM src INTO s");
+    EXPECT_FALSE(nonNullRejectsNull.has_value());
+
+    /// Higher-kinded NESFunctorParameter in SQL type definitions and curried expressions
+    const NESFunctorParameter WRAPPER_FUNCTOR{Identifier::parse("WRAPPER"), "Unary type functor to apply"};
+    const NESTypeParameter INNER_ELEM{Identifier::parse("INNER_TYPE"), "Inner scalar type", &DataTypeRegistry::scalarDataTypeClass};
+
+    struct TestApplyFunctor
+    {
+        const NESFunctorParameter* wrapperParam;
+        const NESTypeParameter* innerParam;
+
+        bool operator==(const TestApplyFunctor&) const = default;
+
+        [[nodiscard]] ExpectedNESTypeArguments getExpectedArguments() const
+        {
+            return createExpectedNESTypeArguments(*wrapperParam, *innerParam);
+        }
+
+        [[nodiscard]] std::expected<NESType, Exception> instantiate(const InstantiatedNESTypeParameters& bound) const
+        {
+            return bound.get(*wrapperParam).instantiate(NESTypeParameters::fromTypes({bound.get(*innerParam)}));
+        }
+    };
+
+    const auto applyName = QualifiedIdentifier::parse("TEST_APPLY_FUNCTOR");
+    ASSERT_TRUE(NESTypeCatalog::instance().registerFunctor(
+        regName,
+        NamedNESFunctor{applyName, NESFunctor{TestApplyFunctor{.wrapperParam = &WRAPPER_FUNCTOR, .innerParam = &INNER_ELEM}}},
+        /*exposeToSqlScope=*/true));
+    const FunctorUnregisterGuard cleanupApply{.registry = regName, .name = applyName};
+
+    const auto higherOrderSchema = binder->parseAndBindSingle(
+        "CREATE LOGICAL SOURCE ho_src(x TEST_APPLY_FUNCTOR(OPTIONAL, INT32), y TEST_APPLY_FUNCTOR(OPTIONAL AS WRAPPER, INT64 AS INNER_TYPE))");
+    ASSERT_TRUE(higherOrderSchema.has_value()) << higherOrderSchema.error().what();
+    const auto& hoFields = std::get<CreateLogicalSourceStatement>(*higherOrderSchema).schema;
+    EXPECT_TRUE(hoFields.getFieldByName(Identifier::parse("X"))->getDataType().nullable);
+    EXPECT_EQ(hoFields.getFieldByName(Identifier::parse("X"))->getDataType().type, DataType::Type::INT32);
+    EXPECT_TRUE(hoFields.getFieldByName(Identifier::parse("Y"))->getDataType().nullable);
+    EXPECT_EQ(hoFields.getFieldByName(Identifier::parse("Y"))->getDataType().type, DataType::Type::INT64);
+
+    const auto higherOrderCurried = binder->parseAndBindSingle(
+        "SELECT TEST_APPLY_FUNCTOR(OPTIONAL, INT32)(NULL) AS a, TEST_APPLY_FUNCTOR(OPTIONAL AS WRAPPER, INT32 AS INNER_TYPE)(42) AS b FROM src INTO s");
+    ASSERT_TRUE(higherOrderCurried.has_value()) << higherOrderCurried.error().what();
+
+    /// Passing an already-instantiated type OPTIONAL(INT32) where an unapplied functor is expected fails
+    EXPECT_FALSE(binder->parseAndBindSingle("CREATE LOGICAL SOURCE bad_ho(x TEST_APPLY_FUNCTOR(OPTIONAL(INT32), INT32))").has_value());
+    EXPECT_FALSE(binder->parseAndBindSingle("SELECT TEST_APPLY_FUNCTOR(OPTIONAL(INT32), INT32)(42) AS a FROM src INTO s").has_value());
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

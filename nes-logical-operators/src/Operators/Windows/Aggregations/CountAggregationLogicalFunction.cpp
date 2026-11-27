@@ -23,6 +23,8 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
+#include <DataTypeRegistry.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -78,6 +80,15 @@ std::string CountAggregationLogicalFunction::explain(ExplainVerbosity verbosity)
 bool CountAggregationLogicalFunction::operator==(const CountAggregationLogicalFunction& other) const
 {
     return inputFunction == other.inputFunction;
+}
+
+std::expected<NESType, Exception> CountAggregationLogicalFunction::inferAggregateType(const NESType& input)
+{
+    if (!DataTypeRegistry::scalarDataTypeClass().validate(input))
+    {
+        return std::unexpected{UnsupportedQuery("{} expects a scalar input type", NAME)};
+    }
+    return UInt64Type::makeNESType();
 }
 
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const

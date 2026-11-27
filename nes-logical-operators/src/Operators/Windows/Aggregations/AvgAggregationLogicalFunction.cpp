@@ -23,6 +23,7 @@
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -37,6 +38,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -80,11 +82,20 @@ bool AvgAggregationLogicalFunction::operator==(const AvgAggregationLogicalFuncti
     return inputFunction == other.inputFunction;
 }
 
+std::expected<NESType, Exception> AvgAggregationLogicalFunction::inferAggregateType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{UnsupportedQuery("{} is only supported on numeric fields", NAME)};
+    }
+    return wrapOptionalNESTypeIf(Float64Type::makeNESType(), isOptionalNESType(input));
+}
+
 AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
-    /// We first infer the dataType of the input field and set the output dataType as the same.
     const auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    if (!newInputFunction->getDataType().isNumeric())
+    auto inferred = inferAggregateType(newInputFunction->getDataType().toNESType());
+    if (!inferred.has_value())
     {
         throw UnsupportedQuery(
             "{} is only supported on numeric fields, but field {} has type {}",
@@ -93,7 +104,7 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(co
             magic_enum::enum_name(newInputFunction->getDataType().type));
     }
     auto newAggFunction = AvgAggregationLogicalFunction{newInputFunction};
-    newAggFunction.nullable = newInputFunction->getDataType().nullable;
+    newAggFunction.nullable = requireLegacyDataType(std::move(inferred)).nullable;
     return newAggFunction;
 }
 

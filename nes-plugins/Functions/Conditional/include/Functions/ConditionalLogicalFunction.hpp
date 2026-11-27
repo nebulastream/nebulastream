@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <expected>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -62,6 +64,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createConditional(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(std::span<const NESType> args);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&ConditionalLogicalFunction::createConditional, &ConditionalLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

@@ -26,7 +26,9 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -46,13 +48,6 @@ namespace NES
 
 namespace
 {
-struct SourceTypeDescriptor
-{
-    Identifier sourceType;
-    SourceConfigSchemaProviderFn schemaProvider;
-    bool operator==(const SourceTypeDescriptor& other) const { return sourceType == other.sourceType; }
-};
-
 std::expected<ConfigLiteral, Exception> nesValueToConfigLiteral(const NESValue& val)
 {
     if (const auto* cfgLit = val.tryGetAs<ConfigLiteral>())
@@ -63,37 +58,37 @@ std::expected<ConfigLiteral, Exception> nesValueToConfigLiteral(const NESValue& 
     {
         return ConfigLiteral{*schema};
     }
-    if (const auto* scalar = val.tryGetAs<ScalarLiteralValue>())
+    if (val.tryGetAs<std::monostate>() != nullptr)
     {
-        return std::visit(
-            Overloaded{
-                [](const uint64_t unsignedInt) -> std::expected<ConfigLiteral, Exception>
-                {
-                    if (!std::in_range<int64_t>(unsignedInt))
-                    {
-                        return std::unexpected{
-                            InvalidQuerySyntax("Integer literal {} exceeds the supported signed integer range", unsignedInt)};
-                    }
-                    return ConfigLiteral{static_cast<int64_t>(unsignedInt)};
-                },
-                [](const auto& other) -> std::expected<ConfigLiteral, Exception> { return ConfigLiteral{other}; }},
-            *scalar);
+        return ConfigLiteral{std::monostate{}};
     }
     if (const auto* s = val.tryGetAs<std::string>())
     {
         return ConfigLiteral{*s};
     }
-    if (const auto* i = val.tryGetAs<int64_t>())
+    if (const auto* c = val.tryGetAs<char>())
     {
-        return ConfigLiteral{*i};
+        return ConfigLiteral{std::string{1, *c}};
     }
     if (const auto* b = val.tryGetAs<bool>())
     {
         return ConfigLiteral{*b};
     }
-    if (const auto* d = val.tryGetAs<double>())
+    if (val.getType().hasTypeTrait<IntegerTypeTrait>())
     {
-        return ConfigLiteral{*d};
+        return tryExtractSignedInteger(val).transform([](const int64_t v) { return ConfigLiteral{v}; });
+    }
+    if (val.getType().hasTypeTrait<FloatTypeTrait>())
+    {
+        return tryExtractFloatingPoint(val).transform([](const double v) { return ConfigLiteral{v}; });
+    }
+    if (const auto signedInt = tryExtractSignedInteger(val); signedInt.has_value())
+    {
+        return ConfigLiteral{*signedInt};
+    }
+    if (const auto flt = tryExtractFloatingPoint(val); flt.has_value())
+    {
+        return ConfigLiteral{*flt};
     }
     return std::unexpected{InvalidQuerySyntax("Invalid config argument value passed to source constructor")};
 }
@@ -106,9 +101,23 @@ BoundAnonymousSource::resolve(
     const Schema<ConfigFieldDefault, Ordered>& configDefaults,
     const Schema<ConfigFieldTransformation, Unordered>& configTransformations) const
 {
+    const auto peekInputFormatter = [&]() -> std::optional<LiteralConfigValue>
+    {
+        static const auto fqType = QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE");
+        static const auto shortType = QualifiedIdentifier::parse("TYPE");
+        for (const auto& opt : configOptions)
+        {
+            if (opt.getFullyQualifiedName() == fqType || opt.getFullyQualifiedName() == shortType)
+            {
+                return opt;
+            }
+        }
+        return std::nullopt;
+    };
+
     const auto inputFormatterTypeExp
         = optionalToExpected(
-              configOptions.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"))
+              peekInputFormatter()
                   .or_else(
                       [&]
                       {
@@ -156,7 +165,7 @@ SourceConfigSchemaRegistry& SourceConfigSchemaRegistry::instance()
 
 NESTypeClass SourceConfigSchemaRegistry::sourceTypeClass()
 {
-    return NESTypeClass::forTrait<SourceTypeTrait>();
+    return NESTypeClass::forTypeTrait<SourceTypeTrait>();
 }
 
 std::vector<NamedNESParametrizedTypeClass> SourceConfigSchemaRegistry::getParametrizedTypeClasses()
@@ -166,46 +175,72 @@ std::vector<NamedNESParametrizedTypeClass> SourceConfigSchemaRegistry::getParame
         NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("SourceConfigSchema"), sourceTypeClass())};
 }
 
+namespace
+{
+struct AnonymousSourceNESType
+{
+    Identifier sourceType;
+    SourceConfigSchemaProviderFn schemaProvider;
+
+    bool operator==(const AnonymousSourceNESType& other) const { return sourceType == other.sourceType; }
+
+    [[nodiscard]] std::expected<BoundAnonymousSource, Exception> construct(const NESValueParameters& params) const
+    {
+        std::vector<LiteralConfigValue> options;
+        if (!params.empty())
+        {
+            const auto* namedSchema = params.tryGetNamedSchema();
+            if (namedSchema == nullptr)
+            {
+                return std::unexpected{InvalidQuerySyntax(
+                    "Source constructor '{}' requires named config arguments ('val' AS GROUP.KEY)", sourceType)};
+            }
+            options.reserve(namedSchema->size());
+            for (const auto& namedArg : *namedSchema)
+            {
+                auto litExp = nesValueToConfigLiteral(namedArg.getValue());
+                if (!litExp.has_value())
+                {
+                    return std::unexpected{std::move(litExp).error()};
+                }
+                options.emplace_back(namedArg.getFullyQualifiedName(), std::move(*litExp));
+            }
+        }
+        try
+        {
+            return BoundAnonymousSource{
+                .sourceType = sourceType,
+                .configOptions = createConfigLiteralSchema(std::move(options))};
+        }
+        catch (const Exception& ex)
+        {
+            return std::unexpected{ex};
+        }
+    }
+};
+
+struct SourceConfigSchemaFunctor
+{
+    Identifier sourceType;
+    SourceConfigSchemaProviderFn schemaProvider;
+
+    [[nodiscard]] const SourceConfigSchemaProviderFn& getRegistryEntry() const noexcept { return schemaProvider; }
+    [[nodiscard]] static ExpectedNESTypeArguments getExpectedArguments() { return ExpectedNESTypeArguments{}; }
+    bool operator==(const SourceConfigSchemaFunctor& other) const { return sourceType == other.sourceType; }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters&) const
+    {
+        return NESType{AnonymousSourceNESType{.sourceType = sourceType, .schemaProvider = schemaProvider}}
+            .withTypeTrait(SourceTypeTrait{.sourceType = sourceType});
+    }
+};
+}
+
 NESFunctor makeSourceConfigSchemaFunctor(const std::string_view sourceTypeName, SourceConfigSchemaProviderFn provider)
 {
-    const std::string nameCopy{sourceTypeName};
-    return NESFunctor::nullary<SourceConfigSchemaProviderFn>(
-        std::move(provider),
-        [nameCopy](const SourceConfigSchemaProviderFn& schemaFn) -> std::expected<NESType, Exception>
-        {
-            const auto sourceId = Identifier::parse(nameCopy);
-            return NESType::create<SourceTypeDescriptor, BoundAnonymousSource>(
-                       SourceTypeDescriptor{.sourceType = sourceId, .schemaProvider = schemaFn},
-                       [](const SourceTypeDescriptor& desc, const NESValueParameters& params)
-                           -> std::expected<BoundAnonymousSource, Exception>
-                       {
-                           std::vector<LiteralConfigValue> options;
-                           if (!params.empty())
-                           {
-                               const auto* namedSchema = params.tryGetNamedSchema();
-                               if (namedSchema == nullptr)
-                               {
-                                   return std::unexpected{InvalidQuerySyntax(
-                                       "Source constructor '{}' requires named config arguments ('val' AS GROUP.KEY)",
-                                       desc.sourceType)};
-                               }
-                               options.reserve(namedSchema->size());
-                               for (const auto& namedArg : *namedSchema)
-                               {
-                                   auto litExp = nesValueToConfigLiteral(namedArg.getValue());
-                                   if (!litExp.has_value())
-                                   {
-                                       return std::unexpected{std::move(litExp).error()};
-                                   }
-                                   options.emplace_back(namedArg.getFullyQualifiedName(), std::move(*litExp));
-                               }
-                           }
-                           return BoundAnonymousSource{
-                               .sourceType = desc.sourceType,
-                               .configOptions = Schema<LiteralConfigValue, Ordered>{std::move(options)}};
-                       })
-                .withTrait(SourceTypeTrait{.sourceType = sourceId});
-        });
+    return NESFunctor{SourceConfigSchemaFunctor{
+        .sourceType = Identifier::parse(std::string{sourceTypeName}),
+        .schemaProvider = std::move(provider)}};
 }
 
 }

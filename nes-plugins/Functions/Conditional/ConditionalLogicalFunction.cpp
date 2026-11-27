@@ -14,8 +14,11 @@
 
 #include <Functions/ConditionalLogicalFunction.hpp>
 
+#include <cstddef>
+#include <expected>
 #include <iterator>
 #include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -23,6 +26,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -115,32 +119,53 @@ std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("{}({})", NAME, fmt::join(explained, ", "));
 }
 
+std::expected<NESType, Exception> ConditionalLogicalFunction::inferResultType(const std::span<const NESType> args)
+{
+    if (args.size() < 3 || args.size() % 2 == 0)
+    {
+        return std::unexpected{CannotDeserialize(
+            "Conditional requires an odd number of arguments >= 3 (condition/result pairs plus a default), but got {}",
+            args.size())};
+    }
+    const auto& defaultBase = unwrapOptionalNESType(args.back());
+    bool nullable = isOptionalNESType(args.back());
+    for (size_t i = 0; i + 1 < args.size(); i += 2)
+    {
+        const auto& whenType = args[i];
+        const auto& thenType = args[i + 1];
+        if (unwrapOptionalNESType(whenType).tryGetAs<BooleanType>() == nullptr)
+        {
+            return std::unexpected{DifferentFieldTypeExpected("CASE WHEN condition must be BOOLEAN")};
+        }
+        if (unwrapOptionalNESType(thenType) != defaultBase)
+        {
+            return std::unexpected{
+                DifferentFieldTypeExpected("CASE WHEN results must all share the default result's base type")};
+        }
+        nullable = nullable || isOptionalNESType(thenType);
+    }
+    return wrapOptionalNESTypeIf(defaultBase, nullable);
+}
+
 LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    /// The default result carries the type of the whole expression.
     const auto inferredElseCase = elseCase.withInferredDataType(schema);
-    auto resultType = inferredElseCase.getDataType();
 
     std::vector<WhenThenLogicalFunction> inferredWhenThens;
     inferredWhenThens.reserve(whenThens.size());
+    std::vector<NESType> argTypes;
+    argTypes.reserve((whenThens.size() * 2) + 1);
     for (const auto& [when, then] : whenThens)
     {
         auto inferredWhen = when.withInferredDataType(schema);
         auto inferredThen = then.withInferredDataType(schema);
-        if (not inferredWhen.getDataType().isType(DataType::Type::BOOLEAN))
-        {
-            throw DifferentFieldTypeExpected("CASE WHEN condition must be BOOLEAN, but got {}", inferredWhen.getDataType());
-        }
-        if (not inferredThen.getDataType().isType(resultType.type))
-        {
-            throw DifferentFieldTypeExpected(
-                "CASE WHEN results must all share the default result's type {}, but got {}", resultType, inferredThen.getDataType());
-        }
-        /// A branch that can produce a null makes the whole expression nullable, as in SQL.
-        resultType = DataTypeProvider::provideDataType(resultType.type, resultType.joinNullable(inferredThen.getDataType()));
+        argTypes.push_back(inferredWhen.getDataType().toNESType());
+        argTypes.push_back(inferredThen.getDataType().toNESType());
         inferredWhenThens.push_back(WhenThenLogicalFunction{.when = std::move(inferredWhen), .then = std::move(inferredThen)});
     }
+    argTypes.push_back(inferredElseCase.getDataType().toNESType());
 
+    const auto resultType = requireLegacyDataType(inferResultType(argTypes));
     auto inferred = ConditionalLogicalFunction{std::move(inferredWhenThens), inferredElseCase};
     inferred.dataType = resultType;
     return inferred;

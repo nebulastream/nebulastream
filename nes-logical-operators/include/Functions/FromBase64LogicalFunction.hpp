@@ -56,6 +56,11 @@ public:
 
     /// NOLINTNEXTLINE(readability-identifier-naming)
     static LogicalFunctionRegistryReturnType createFROM_BASE64(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&FromBase64LogicalFunction::createFROM_BASE64, &FromBase64LogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

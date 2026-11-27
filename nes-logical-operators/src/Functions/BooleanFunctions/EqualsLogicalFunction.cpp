@@ -24,6 +24,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -54,20 +55,26 @@ DataType EqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> EqualsLogicalFunction::inferResultType(const NESType& left, const NESType& right)
+{
+    if (unwrapOptionalNESType(left) != unwrapOptionalNESType(right))
+    {
+        const auto* leftLegacy = left.tryGetTypeTrait<LegacyDataTypeTrait>();
+        const auto* rightLegacy = right.tryGetTypeTrait<LegacyDataTypeTrait>();
+        if (leftLegacy == nullptr || rightLegacy == nullptr || !leftLegacy->getDataType().join(rightLegacy->getDataType()).has_value())
+        {
+            return std::unexpected{CannotInferStamp("Could not join operand types in Equals")};
+        }
+    }
+    return wrapOptionalNESTypeIf(BooleanType::makeNESType(), isOptionalNESType(left) || isOptionalNESType(right));
+}
+
 LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.left = copy.left.withInferredDataType(schema);
     copy.right = copy.right.withInferredDataType(schema);
-    if (copy.left.getDataType() != copy.right.getDataType())
-    {
-        if (!copy.left.getDataType().join(copy.right.getDataType()).has_value())
-        {
-            throw CannotInferStamp("Could not join data types of input functions, left: {}, right: {}", copy.left, copy.right);
-        }
-    }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.left.getDataType().toNESType(), copy.right.getDataType().toNESType()));
     return copy;
 };
 

@@ -22,6 +22,8 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
+#include <DataTypeRegistry.hpp>
 #include <Functions/ConditionalLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -87,6 +89,32 @@ TEST(ConditionalLogicalFunctionTest, ExplainUsesFunctionCallForm)
     EXPECT_TRUE(explanation.starts_with("Conditional("));
     EXPECT_EQ(explanation.find("CASE"), std::string::npos);
     EXPECT_EQ(explanation.find("WHEN"), std::string::npos);
+}
+
+TEST(ConditionalLogicalFunctionTest, TypeLevelInferenceSupportsCustomScalarTypes)
+{
+    struct CustomVec2fType
+    {
+        bool operator==(const CustomVec2fType&) const = default;
+    };
+    const auto vec2f = NESType{CustomVec2fType{}}.withTypeTrait(ScalarTypeTrait{});
+    const auto optVec2f = OptionalType::make(vec2f);
+
+    const auto inferredExp = ConditionalLogicalFunction::functor().instantiate(
+        NESTypeParameters::fromTypes({BooleanType::makeNESType(), optVec2f, vec2f}));
+    ASSERT_TRUE(inferredExp.has_value());
+    ASSERT_NE(inferredExp->tryGetTypeTrait<LogicalFunctionTypeTrait>(), nullptr);
+    EXPECT_EQ(inferredExp->tryGetTypeTrait<LogicalFunctionTypeTrait>()->resultScalarType, optVec2f);
+
+    /// Mismatched branch type or non-boolean condition fails cleanly via std::expected
+    EXPECT_FALSE(
+        ConditionalLogicalFunction::functor()
+            .instantiate(NESTypeParameters::fromTypes({Int32Type::makeNESType(), vec2f, vec2f}))
+            .has_value());
+    EXPECT_FALSE(
+        ConditionalLogicalFunction::functor()
+            .instantiate(NESTypeParameters::fromTypes({BooleanType::makeNESType(), Int32Type::makeNESType(), vec2f}))
+            .has_value());
 }
 
 }

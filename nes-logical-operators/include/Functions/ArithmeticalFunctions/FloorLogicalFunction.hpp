@@ -49,6 +49,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createFloor(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&FloorLogicalFunction::createFloor, &FloorLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

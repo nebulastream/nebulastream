@@ -30,11 +30,11 @@ namespace NES
 using LogicalOperatorRegistryReturnType = std::expected<LogicalOperator, Exception>;
 using LogicalOperatorFn = std::function<LogicalOperatorRegistryReturnType(const NESValueParameters&)>;
 
-struct LogicalOperatorTrait
+struct LogicalOperatorTypeTrait
 {
 };
 
-/// Wraps a `LogicalOperator` into a `NESValue` carrying `LogicalOperatorTrait` (`LogicalOperator` type class).
+/// Wraps a `LogicalOperator` into a `NESValue` carrying `LogicalOperatorTypeTrait` (`LogicalOperator` type class).
 [[nodiscard]] NESValue makeLogicalOperatorValue(LogicalOperator op);
 
 /// Frontend-exposed registry for table-valued functions / relational operator constructors (e.g. `MODEL_INFERENCE`).

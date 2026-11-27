@@ -66,13 +66,12 @@ find_package(PahoMqttCpp CONFIG REQUIRED) # <-- We depend on the paho-mqtt lib
 target_link_libraries(mqtt_source_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 
 link_plugin_library(nes-sources mqtt_source_plugin_library)
-add_registry_entry(Source MQTT)
-add_registry_entry(SourceValidation MQTT)
+add_registry_entry(Source MQTT KEY MQTTSource)
+add_registry_entry(SourceConfig MQTTSource)
+add_registry_entry(SourceConfigSchema MQTTSource)
 ```
 Notes:
-- The plugin name `MQTT` must match the C++ type: the registries derive the type `MQTTSource` and the
-  header `MQTTSource.hpp` from `${PLUGIN_NAME}Source`. It is also the key under which the source is
-  looked up in the registry.
+- The plugin name `MQTT` matches the C++ type prefix (`MQTTSource`), and `KEY MQTTSource` is the collision-free key under which the source is looked up in the registry and SQL frontend.
 - The library name is freely chosen;
 - Use `FetchContent` for third-party dependencies not already included in our internal `vcpkg/vcpkg.json`.
 

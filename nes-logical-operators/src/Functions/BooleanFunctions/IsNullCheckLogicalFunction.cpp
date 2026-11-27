@@ -20,6 +20,8 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
+#include <DataTypeRegistry.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -49,10 +51,20 @@ std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("ISNULL({})", child.explain(verbosity));
 }
 
+std::expected<NESType, Exception> IsNullCheckLogicalFunction::inferResultType(const NESType& input)
+{
+    if (!DataTypeRegistry::scalarDataTypeClass().validate(input))
+    {
+        return std::unexpected{CannotInferStamp("ISNULL expects a scalar input type")};
+    }
+    return BooleanType::makeNESType();
+}
+
 LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 }
 

@@ -47,6 +47,7 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -128,7 +129,7 @@ namespace NES
 
 namespace
 {
-using Literal = ScalarLiteralValue;
+using Literal = std::variant<std::string, int64_t, uint64_t, double, bool, std::monostate>;
 using ConfigMap
     = std::unordered_map<Identifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
 using ConfigMultiMap = std::vector<std::pair<QualifiedIdentifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
@@ -166,44 +167,53 @@ struct BinaryWindowDefinition
     std::array<Windowing::UnboundTimeCharacteristic, 2> timeCharacteristics;
 };
 
-struct TimeIntervalTag
+struct TimeIntervalNESType
 {
-    bool operator==(const TimeIntervalTag&) const = default;
+    using ValueType = TimeInterval;
+    bool operator==(const TimeIntervalNESType&) const = default;
 };
 
-struct UnaryWindowTag
+struct SchemaValueNESType
 {
-    bool operator==(const UnaryWindowTag&) const = default;
+    using ValueType = Schema<UnqualifiedUnboundField, Ordered>;
+    bool operator==(const SchemaValueNESType&) const = default;
 };
 
-struct BinaryWindowTag
+template <NESTypeConcept WindowNESType>
+struct NullaryWindowFunctor
 {
-    bool operator==(const BinaryWindowTag&) const = default;
-};
+    bool operator==(const NullaryWindowFunctor&) const = default;
+    [[nodiscard]] static ExpectedNESTypeArguments getExpectedArguments() { return ExpectedNESTypeArguments{}; }
 
-struct SchemaValueTag
-{
-    bool operator==(const SchemaValueTag&) const = default;
+    [[nodiscard]] static std::expected<NESType, Exception> instantiate(const NESTypeParameters&)
+    {
+        return NESType{WindowNESType{}};
+    }
 };
 
 NESValue makeTimeIntervalValue(TimeInterval interval)
 {
-    static const NESType intervalType = NESType::createUnconstructible<TimeIntervalTag, TimeInterval>(TimeIntervalTag{});
+    static const NESType intervalType{TimeIntervalNESType{}};
     return NESValue::create(intervalType, interval);
 }
 
 NESValue makeSchemaNESValue(Schema<UnqualifiedUnboundField, Ordered> schema)
 {
-    static const NESType schemaType
-        = NESType::createUnconstructible<SchemaValueTag, Schema<UnqualifiedUnboundField, Ordered>>(SchemaValueTag{});
+    static const NESType schemaType{SchemaValueNESType{}};
     return NESValue::create(schemaType, std::move(schema));
 }
 
 NESValue makeScalarLiteralNESValue(Literal lit)
 {
-    static const NESType rawLitType
-        = DataType{DataType::Type::UNDEFINED, DataType::NULLABLE::NOT_NULLABLE}.toNESType();
-    return NESValue::create(rawLitType, std::move(lit));
+    return std::visit(
+        Overloaded{
+            [](std::string s) { return VarSizedType::createValue(std::move(s)); },
+            [](const int64_t i) { return Int64Type::createValue(i); },
+            [](const uint64_t u) { return UInt64Type::createValue(u); },
+            [](const double d) { return Float64Type::createValue(d); },
+            [](const bool b) { return BooleanType::createValue(b); },
+            [](const std::monostate) { return OptionalType::createNullValue(UndefinedType::makeNESType()); }},
+        std::move(lit));
 }
 
 std::expected<TypedLogicalFunction<UnboundFieldAccessLogicalFunction>, Exception>
@@ -219,228 +229,228 @@ extractTimestampField(const NESValue& val, const std::string_view windowKind)
     return std::unexpected{InvalidQuerySyntax("{} window timestamp argument must be a field identifier", windowKind)};
 }
 
+struct UnaryTumblingWindowNESType
+{
+    bool operator==(const UnaryTumblingWindowNESType&) const = default;
+
+    [[nodiscard]] static std::expected<UnaryWindowDefinition, Exception> construct(const NESValueParameters& params)
+    {
+        if (params.isNamed())
+        {
+            return std::unexpected{InvalidQuerySyntax("TUMBLING window does not accept named arguments")};
+        }
+        if (params.size() == 1)
+        {
+            const auto arg0 = params.at(0).value();
+            const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr)
+            {
+                return std::unexpected{InvalidQuerySyntax("TUMBLING(interval) expects a time interval")};
+            }
+            return UnaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
+                .timeCharacteristic = Windowing::IngestionTimeCharacteristic{}};
+        }
+        if (params.size() == 2)
+        {
+            auto tsExp = extractTimestampField(params.at(0).value(), "Unary TUMBLING");
+            if (!tsExp.has_value())
+            {
+                return std::unexpected{tsExp.error()};
+            }
+            const auto arg1 = params.at(1).value();
+            const auto* sizePtr = arg1.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr)
+            {
+                return std::unexpected{InvalidQuerySyntax("TUMBLING(timestamp, interval) expects a time interval")};
+            }
+            return UnaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
+                .timeCharacteristic = Windowing::UnboundEventTimeCharacteristic{.field = *tsExp}};
+        }
+        return std::unexpected{
+            InvalidQuerySyntax("Unary TUMBLING window expects 1 or 2 arguments, got {}", params.size())};
+    }
+};
+
+struct UnarySlidingWindowNESType
+{
+    bool operator==(const UnarySlidingWindowNESType&) const = default;
+
+    [[nodiscard]] static std::expected<UnaryWindowDefinition, Exception> construct(const NESValueParameters& params)
+    {
+        if (params.isNamed())
+        {
+            return std::unexpected{InvalidQuerySyntax("SLIDING window does not accept named arguments")};
+        }
+        if (params.size() == 2)
+        {
+            const auto arg0 = params.at(0).value();
+            const auto arg1 = params.at(1).value();
+            const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
+            const auto* slidePtr = arg1.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr || slidePtr == nullptr)
+            {
+                return std::unexpected{InvalidQuerySyntax("SLIDING(size, advance) expects two time intervals")};
+            }
+            return UnaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
+                .timeCharacteristic = Windowing::IngestionTimeCharacteristic{}};
+        }
+        if (params.size() == 3)
+        {
+            auto tsExp = extractTimestampField(params.at(0).value(), "Unary SLIDING");
+            if (!tsExp.has_value())
+            {
+                return std::unexpected{tsExp.error()};
+            }
+            const auto arg1 = params.at(1).value();
+            const auto arg2 = params.at(2).value();
+            const auto* sizePtr = arg1.tryGetAs<TimeInterval>();
+            const auto* slidePtr = arg2.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr || slidePtr == nullptr)
+            {
+                return std::unexpected{
+                    InvalidQuerySyntax("SLIDING(timestamp, size, advance) expects two time intervals")};
+            }
+            return UnaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
+                .timeCharacteristic = Windowing::UnboundEventTimeCharacteristic{.field = *tsExp}};
+        }
+        return std::unexpected{
+            InvalidQuerySyntax("Unary SLIDING window expects 2 or 3 arguments, got {}", params.size())};
+    }
+};
+
+struct BinaryTumblingWindowNESType
+{
+    bool operator==(const BinaryTumblingWindowNESType&) const = default;
+
+    [[nodiscard]] static std::expected<BinaryWindowDefinition, Exception> construct(const NESValueParameters& params)
+    {
+        if (params.isNamed())
+        {
+            return std::unexpected{InvalidQuerySyntax("Join TUMBLING window does not accept named arguments")};
+        }
+        if (params.size() == 1)
+        {
+            const auto arg0 = params.at(0).value();
+            const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr)
+            {
+                return std::unexpected{InvalidQuerySyntax("BINARY_WINDOW TUMBLING(interval) expects a time interval")};
+            }
+            return BinaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
+                .timeCharacteristics
+                = {Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}}};
+        }
+        if (params.size() == 3)
+        {
+            auto leftTsExp = extractTimestampField(params.at(0).value(), "Binary TUMBLING");
+            if (!leftTsExp.has_value())
+            {
+                return std::unexpected{leftTsExp.error()};
+            }
+            auto rightTsExp = extractTimestampField(params.at(1).value(), "Binary TUMBLING");
+            if (!rightTsExp.has_value())
+            {
+                return std::unexpected{rightTsExp.error()};
+            }
+            const auto arg2 = params.at(2).value();
+            const auto* sizePtr = arg2.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr)
+            {
+                return std::unexpected{
+                    InvalidQuerySyntax("BINARY_WINDOW TUMBLING(ts1, ts2, interval) expects a time interval")};
+            }
+            return BinaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
+                .timeCharacteristics = {
+                    Windowing::UnboundEventTimeCharacteristic{.field = *leftTsExp},
+                    Windowing::UnboundEventTimeCharacteristic{.field = *rightTsExp}}};
+        }
+        return std::unexpected{
+            InvalidQuerySyntax("Join TUMBLING window expects 1 or 3 arguments, got {}", params.size())};
+    }
+};
+
+struct BinarySlidingWindowNESType
+{
+    bool operator==(const BinarySlidingWindowNESType&) const = default;
+
+    [[nodiscard]] static std::expected<BinaryWindowDefinition, Exception> construct(const NESValueParameters& params)
+    {
+        if (params.isNamed())
+        {
+            return std::unexpected{InvalidQuerySyntax("Join SLIDING window does not accept named arguments")};
+        }
+        if (params.size() == 2)
+        {
+            const auto arg0 = params.at(0).value();
+            const auto arg1 = params.at(1).value();
+            const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
+            const auto* slidePtr = arg1.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr || slidePtr == nullptr)
+            {
+                return std::unexpected{
+                    InvalidQuerySyntax("BINARY_WINDOW SLIDING(size, advance) expects two time intervals")};
+            }
+            return BinaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
+                .timeCharacteristics
+                = {Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}}};
+        }
+        if (params.size() == 4)
+        {
+            auto leftTsExp = extractTimestampField(params.at(0).value(), "Binary SLIDING");
+            if (!leftTsExp.has_value())
+            {
+                return std::unexpected{leftTsExp.error()};
+            }
+            auto rightTsExp = extractTimestampField(params.at(1).value(), "Binary SLIDING");
+            if (!rightTsExp.has_value())
+            {
+                return std::unexpected{rightTsExp.error()};
+            }
+            const auto arg2 = params.at(2).value();
+            const auto arg3 = params.at(3).value();
+            const auto* sizePtr = arg2.tryGetAs<TimeInterval>();
+            const auto* slidePtr = arg3.tryGetAs<TimeInterval>();
+            if (sizePtr == nullptr || slidePtr == nullptr)
+            {
+                return std::unexpected{
+                    InvalidQuerySyntax("BINARY_WINDOW SLIDING(ts1, ts2, size, advance) expects two time intervals")};
+            }
+            return BinaryWindowDefinition{
+                .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
+                .timeCharacteristics = {
+                    Windowing::UnboundEventTimeCharacteristic{.field = *leftTsExp},
+                    Windowing::UnboundEventTimeCharacteristic{.field = *rightTsExp}}};
+        }
+        return std::unexpected{
+            InvalidQuerySyntax("Join SLIDING window expects 2 or 4 arguments, got {}", params.size())};
+    }
+};
+
 NESFunctor makeUnaryTumblingFunctor()
 {
-    return NESFunctor::nullary<UnaryWindowTag>(
-        UnaryWindowTag{},
-        [](const UnaryWindowTag&) -> std::expected<NESType, Exception>
-        {
-            return NESType::create<UnaryWindowTag, UnaryWindowDefinition>(
-                UnaryWindowTag{},
-                [](const UnaryWindowTag&, const NESValueParameters& params) -> std::expected<UnaryWindowDefinition, Exception>
-                {
-                    if (params.isNamed())
-                    {
-                        return std::unexpected{InvalidQuerySyntax("TUMBLING window does not accept named arguments")};
-                    }
-                    if (params.size() == 1)
-                    {
-                        const auto arg0 = params.at(0).value();
-                        const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr)
-                        {
-                            return std::unexpected{InvalidQuerySyntax("TUMBLING(interval) expects a time interval")};
-                        }
-                        return UnaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
-                            .timeCharacteristic = Windowing::IngestionTimeCharacteristic{}};
-                    }
-                    if (params.size() == 2)
-                    {
-                        auto tsExp = extractTimestampField(params.at(0).value(), "Unary TUMBLING");
-                        if (!tsExp.has_value())
-                        {
-                            return std::unexpected{tsExp.error()};
-                        }
-                        const auto arg1 = params.at(1).value();
-                        const auto* sizePtr = arg1.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr)
-                        {
-                            return std::unexpected{InvalidQuerySyntax("TUMBLING(timestamp, interval) expects a time interval")};
-                        }
-                        return UnaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
-                            .timeCharacteristic = Windowing::UnboundEventTimeCharacteristic{.field = *tsExp}};
-                    }
-                    return std::unexpected{
-                        InvalidQuerySyntax("Unary TUMBLING window expects 1 or 2 arguments, got {}", params.size())};
-                });
-        });
+    return NESFunctor{NullaryWindowFunctor<UnaryTumblingWindowNESType>{}};
 }
 
 NESFunctor makeUnarySlidingFunctor()
 {
-    return NESFunctor::nullary<UnaryWindowTag>(
-        UnaryWindowTag{},
-        [](const UnaryWindowTag&) -> std::expected<NESType, Exception>
-        {
-            return NESType::create<UnaryWindowTag, UnaryWindowDefinition>(
-                UnaryWindowTag{},
-                [](const UnaryWindowTag&, const NESValueParameters& params) -> std::expected<UnaryWindowDefinition, Exception>
-                {
-                    if (params.isNamed())
-                    {
-                        return std::unexpected{InvalidQuerySyntax("SLIDING window does not accept named arguments")};
-                    }
-                    if (params.size() == 2)
-                    {
-                        const auto arg0 = params.at(0).value();
-                        const auto arg1 = params.at(1).value();
-                        const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
-                        const auto* slidePtr = arg1.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr || slidePtr == nullptr)
-                        {
-                            return std::unexpected{InvalidQuerySyntax("SLIDING(size, advance) expects two time intervals")};
-                        }
-                        return UnaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
-                            .timeCharacteristic = Windowing::IngestionTimeCharacteristic{}};
-                    }
-                    if (params.size() == 3)
-                    {
-                        auto tsExp = extractTimestampField(params.at(0).value(), "Unary SLIDING");
-                        if (!tsExp.has_value())
-                        {
-                            return std::unexpected{tsExp.error()};
-                        }
-                        const auto arg1 = params.at(1).value();
-                        const auto arg2 = params.at(2).value();
-                        const auto* sizePtr = arg1.tryGetAs<TimeInterval>();
-                        const auto* slidePtr = arg2.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr || slidePtr == nullptr)
-                        {
-                            return std::unexpected{
-                                InvalidQuerySyntax("SLIDING(timestamp, size, advance) expects two time intervals")};
-                        }
-                        return UnaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
-                            .timeCharacteristic = Windowing::UnboundEventTimeCharacteristic{.field = *tsExp}};
-                    }
-                    return std::unexpected{
-                        InvalidQuerySyntax("Unary SLIDING window expects 2 or 3 arguments, got {}", params.size())};
-                });
-        });
+    return NESFunctor{NullaryWindowFunctor<UnarySlidingWindowNESType>{}};
 }
 
 NESFunctor makeBinaryTumblingFunctor()
 {
-    return NESFunctor::nullary<BinaryWindowTag>(
-        BinaryWindowTag{},
-        [](const BinaryWindowTag&) -> std::expected<NESType, Exception>
-        {
-            return NESType::create<BinaryWindowTag, BinaryWindowDefinition>(
-                BinaryWindowTag{},
-                [](const BinaryWindowTag&, const NESValueParameters& params) -> std::expected<BinaryWindowDefinition, Exception>
-                {
-                    if (params.isNamed())
-                    {
-                        return std::unexpected{InvalidQuerySyntax("Join TUMBLING window does not accept named arguments")};
-                    }
-                    if (params.size() == 1)
-                    {
-                        const auto arg0 = params.at(0).value();
-                        const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr)
-                        {
-                            return std::unexpected{InvalidQuerySyntax("BINARY_WINDOW TUMBLING(interval) expects a time interval")};
-                        }
-                        return BinaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
-                            .timeCharacteristics
-                            = {Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}}};
-                    }
-                    if (params.size() == 3)
-                    {
-                        auto leftTsExp = extractTimestampField(params.at(0).value(), "Binary TUMBLING");
-                        if (!leftTsExp.has_value())
-                        {
-                            return std::unexpected{leftTsExp.error()};
-                        }
-                        auto rightTsExp = extractTimestampField(params.at(1).value(), "Binary TUMBLING");
-                        if (!rightTsExp.has_value())
-                        {
-                            return std::unexpected{rightTsExp.error()};
-                        }
-                        const auto arg2 = params.at(2).value();
-                        const auto* sizePtr = arg2.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr)
-                        {
-                            return std::unexpected{
-                                InvalidQuerySyntax("BINARY_WINDOW TUMBLING(ts1, ts2, interval) expects a time interval")};
-                        }
-                        return BinaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::TumblingWindow{sizePtr->measure}},
-                            .timeCharacteristics = {
-                                Windowing::UnboundEventTimeCharacteristic{.field = *leftTsExp},
-                                Windowing::UnboundEventTimeCharacteristic{.field = *rightTsExp}}};
-                    }
-                    return std::unexpected{
-                        InvalidQuerySyntax("Join TUMBLING window expects 1 or 3 arguments, got {}", params.size())};
-                });
-        });
+    return NESFunctor{NullaryWindowFunctor<BinaryTumblingWindowNESType>{}};
 }
 
 NESFunctor makeBinarySlidingFunctor()
 {
-    return NESFunctor::nullary<BinaryWindowTag>(
-        BinaryWindowTag{},
-        [](const BinaryWindowTag&) -> std::expected<NESType, Exception>
-        {
-            return NESType::create<BinaryWindowTag, BinaryWindowDefinition>(
-                BinaryWindowTag{},
-                [](const BinaryWindowTag&, const NESValueParameters& params) -> std::expected<BinaryWindowDefinition, Exception>
-                {
-                    if (params.isNamed())
-                    {
-                        return std::unexpected{InvalidQuerySyntax("Join SLIDING window does not accept named arguments")};
-                    }
-                    if (params.size() == 2)
-                    {
-                        const auto arg0 = params.at(0).value();
-                        const auto arg1 = params.at(1).value();
-                        const auto* sizePtr = arg0.tryGetAs<TimeInterval>();
-                        const auto* slidePtr = arg1.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr || slidePtr == nullptr)
-                        {
-                            return std::unexpected{
-                                InvalidQuerySyntax("BINARY_WINDOW SLIDING(size, advance) expects two time intervals")};
-                        }
-                        return BinaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
-                            .timeCharacteristics
-                            = {Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}}};
-                    }
-                    if (params.size() == 4)
-                    {
-                        auto leftTsExp = extractTimestampField(params.at(0).value(), "Binary SLIDING");
-                        if (!leftTsExp.has_value())
-                        {
-                            return std::unexpected{leftTsExp.error()};
-                        }
-                        auto rightTsExp = extractTimestampField(params.at(1).value(), "Binary SLIDING");
-                        if (!rightTsExp.has_value())
-                        {
-                            return std::unexpected{rightTsExp.error()};
-                        }
-                        const auto arg2 = params.at(2).value();
-                        const auto arg3 = params.at(3).value();
-                        const auto* sizePtr = arg2.tryGetAs<TimeInterval>();
-                        const auto* slidePtr = arg3.tryGetAs<TimeInterval>();
-                        if (sizePtr == nullptr || slidePtr == nullptr)
-                        {
-                            return std::unexpected{
-                                InvalidQuerySyntax("BINARY_WINDOW SLIDING(ts1, ts2, size, advance) expects two time intervals")};
-                        }
-                        return BinaryWindowDefinition{
-                            .windowType = Windowing::TimeBasedWindowType{Windowing::SlidingWindow(sizePtr->measure, slidePtr->measure)},
-                            .timeCharacteristics = {
-                                Windowing::UnboundEventTimeCharacteristic{.field = *leftTsExp},
-                                Windowing::UnboundEventTimeCharacteristic{.field = *rightTsExp}}};
-                    }
-                    return std::unexpected{
-                        InvalidQuerySyntax("Join SLIDING window expects 2 or 4 arguments, got {}", params.size())};
-                });
-        });
+    return NESFunctor{NullaryWindowFunctor<BinarySlidingWindowNESType>{}};
 }
 
 using ScopeSymbol = std::variant<NESValue, NESFunctor>;
@@ -565,27 +575,46 @@ std::string describeAggregation(
     return fmt::format("{}({})", toUpperCase(aggregation.getName()), field);
 }
 
-LogicalFunction createRawLiteralFunction(std::string literal)
+NESValue makeNarrowestUnsignedLiteralNESValue(const uint64_t value)
 {
-    return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(literal));
+    if (value <= std::numeric_limits<uint8_t>::max())
+    {
+        return UInt8Type::createValue(static_cast<uint8_t>(value));
+    }
+    if (value <= std::numeric_limits<uint16_t>::max())
+    {
+        return UInt16Type::createValue(static_cast<uint16_t>(value));
+    }
+    if (value <= std::numeric_limits<uint32_t>::max())
+    {
+        return UInt32Type::createValue(static_cast<uint32_t>(value));
+    }
+    return UInt64Type::createValue(value);
 }
 
-LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
+NESValue makeNarrowestSignedLiteralNESValue(const int64_t value)
 {
-    auto constantValue = constantFunction.getConstantValue();
-    if (constantValue.starts_with('-'))
+    if (value >= std::numeric_limits<int8_t>::min() && value <= std::numeric_limits<int8_t>::max())
     {
-        constantValue.erase(0, 1);
+        return Int8Type::createValue(static_cast<int8_t>(value));
     }
-    else
+    if (value >= std::numeric_limits<int16_t>::min() && value <= std::numeric_limits<int16_t>::max())
     {
-        constantValue.insert(0, 1, '-');
+        return Int16Type::createValue(static_cast<int16_t>(value));
     }
-    return ConstantValueLogicalFunction(constantFunction.getDataType(), std::move(constantValue));
+    if (value >= std::numeric_limits<int32_t>::min() && value <= std::numeric_limits<int32_t>::max())
+    {
+        return Int32Type::createValue(static_cast<int32_t>(value));
+    }
+    return Int64Type::createValue(value);
 }
 
 bool isDirectNumericLiteralAst(AntlrSQLParser::OpenScalarExpressionContext* expr)
 {
+    if (auto* parenCtx = dynamic_cast<AntlrSQLParser::ParenthesizedScalarExpressionContext*>(expr))
+    {
+        return isDirectNumericLiteralAst(parenCtx->openScalarExpression());
+    }
     if (auto* litCtx = dynamic_cast<AntlrSQLParser::LiteralScalarExpressionContext*>(expr))
     {
         if (auto* scalarLit = litCtx->literal()->scalarLiteral())
@@ -722,7 +751,16 @@ public:
         {
             for (const auto& model : modelCatalog->getRegisteredModels())
             {
-                const auto modelQid = QualifiedIdentifier::create(Identifier::parse(model.getName()));
+                if (model.getName().empty())
+                {
+                    continue;
+                }
+                const auto modelIdExp = Identifier::tryParse(fmt::format("\"{}\"", model.getName()));
+                if (!modelIdExp.has_value())
+                {
+                    continue;
+                }
+                const auto modelQid = QualifiedIdentifier::create(*modelIdExp);
                 /// Catalog models override only if no built-in SQL functor owns the same identifier.
                 const auto existing = std::ranges::find_if(
                     entries, [&modelQid](const NamedScopeEntry& entry) { return entry.getFullyQualifiedName() == modelQid; });
@@ -855,7 +893,127 @@ public:
         std::unreachable();
     }
 
-    NESType bindNESType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable) const
+    NESFunctor bindNESFunctor(AntlrSQLParser::TypeDefinitionContext* typeDefAST) const
+    {
+        if (auto* const builtinAST = dynamic_cast<AntlrSQLParser::BuiltinTypeDefinitionContext*>(typeDefAST))
+        {
+            if (!builtinAST->typeParameter().empty())
+            {
+                throw TypeInferenceException(
+                    "Parameter expects an unapplied functor, but received instantiated type '{}'", typeDefAST->getText());
+            }
+            bool translated = false;
+            const auto normalized = normalizeBuiltinDataTypeName(builtinAST->DATA_TYPE()->getText(), &translated);
+            const auto functorOpt = NESTypeCatalog::instance().findSqlFunctor(QualifiedIdentifier::create(Identifier::parse(normalized)));
+            if (!functorOpt.has_value())
+            {
+                throw UnknownDataType("{}", typeDefAST->getText());
+            }
+            return functorOpt->getUnderlyingFunctor();
+        }
+
+        auto* const customAST = dynamic_cast<AntlrSQLParser::CustomTypeDefinitionContext*>(typeDefAST);
+        INVARIANT(customAST != nullptr, "Unknown TypeDefinitionContext subclass");
+        if (!customAST->typeParameter().empty())
+        {
+            throw TypeInferenceException(
+                "Parameter expects an unapplied functor, but received instantiated type '{}'", typeDefAST->getText());
+        }
+        const auto functorName = bindIdentifier(customAST->identifier());
+        const auto functorOpt = NESTypeCatalog::instance().findSqlFunctor(QualifiedIdentifier::create(functorName));
+        if (!functorOpt.has_value())
+        {
+            throw UnknownDataType("{}", typeDefAST->getText());
+        }
+        return functorOpt->getUnderlyingFunctor();
+    }
+
+    NESTypeParameters bindTypeParameterList(
+        const std::vector<AntlrSQLParser::TypeParameterContext*>& paramASTs,
+        const NamedNESFunctor& functor) const
+    {
+        if (paramASTs.empty())
+        {
+            return NESTypeParameters{};
+        }
+
+        const bool anyNamed = std::ranges::any_of(paramASTs, [](const auto* p) { return p->name != nullptr; });
+        const bool allNamed = std::ranges::all_of(paramASTs, [](const auto* p) { return p->name != nullptr; });
+        if (anyNamed && !allNamed)
+        {
+            throw InvalidQuerySyntax("Cannot mix positional and named type parameters in '{}'", functor.getFullyQualifiedName());
+        }
+
+        const auto& expectedArgs = functor.getUnderlyingFunctor().getExpectedArguments();
+
+        const auto bindSingleElement = [this](
+                                           AntlrSQLParser::TypeParameterContext* paramAST,
+                                           const std::optional<QualifiedErasedNESTypeParameter::Kind>& expectedKind)
+            -> NESTypeParameters::Element
+        {
+            if (auto* const nestedTypeAST = paramAST->typeDefinition())
+            {
+                if (expectedKind == QualifiedErasedNESTypeParameter::Kind::FunctorParameter)
+                {
+                    return bindNESFunctor(nestedTypeAST);
+                }
+                return bindNESType(nestedTypeAST);
+            }
+            auto* const cfgLitAST = paramAST->configLiteral();
+            INVARIANT(cfgLitAST != nullptr, "TypeParameterContext must hold either typeDefinition or configLiteral");
+            if (auto* const scalarAST = cfgLitAST->configScalarLiteral())
+            {
+                return makeScalarLiteralNESValue(bindConfigScalarLiteral(scalarAST));
+            }
+            auto* const schemaAST = cfgLitAST->schemaCtor();
+            INVARIANT(schemaAST != nullptr, "Unknown configLiteral inside typeParameter");
+            return makeSchemaNESValue(bindSchema(schemaAST->schemaDefinition()));
+        };
+
+        if (allNamed)
+        {
+            std::vector<NamedNESTypeParameter> namedParams;
+            namedParams.reserve(paramASTs.size());
+            for (auto* const paramAST : paramASTs)
+            {
+                const auto paramName = bindQualifiedIdentifier(paramAST->name);
+                std::optional<QualifiedErasedNESTypeParameter::Kind> expectedKind;
+                if (expectedArgs.has_value())
+                {
+                    if (const auto spec = expectedArgs->getParameters().getFieldByName(paramName); spec.has_value())
+                    {
+                        expectedKind = spec->getKind();
+                    }
+                }
+                namedParams.emplace_back(paramName, bindSingleElement(paramAST, expectedKind));
+            }
+            auto namedSchemaExp = Schema<NamedNESTypeParameter, Ordered>::tryCreateCollisionFree(std::move(namedParams));
+            if (!namedSchemaExp.has_value())
+            {
+                throw InvalidConfigParameter(
+                    "Duplicate named type parameter in '{}'", functor.getFullyQualifiedName());
+            }
+            return NESTypeParameters::named(std::move(*namedSchemaExp));
+        }
+
+        std::vector<NESTypeParameters::Element> posParams;
+        posParams.reserve(paramASTs.size());
+        for (size_t i = 0; i < paramASTs.size(); ++i)
+        {
+            std::optional<QualifiedErasedNESTypeParameter::Kind> expectedKind;
+            if (expectedArgs.has_value())
+            {
+                if (const auto spec = expectedArgs->getParameters()[i]; spec.has_value())
+                {
+                    expectedKind = spec->getKind();
+                }
+            }
+            posParams.push_back(bindSingleElement(paramASTs[i], expectedKind));
+        }
+        return NESTypeParameters{std::move(posParams)};
+    }
+
+    NESType bindNESType(AntlrSQLParser::TypeDefinitionContext* typeDefAST) const
     {
         if (auto* const builtinAST = dynamic_cast<AntlrSQLParser::BuiltinTypeDefinitionContext*>(typeDefAST))
         {
@@ -870,8 +1028,7 @@ public:
                 }
                 throw UnknownDataType("{}", typeDefAST->getText());
             }
-            auto instantiated = functorOpt->instantiate(
-                NESTypeParameters::fromValues({DataType::makeBooleanValue(isNullable == DataType::NULLABLE::IS_NULLABLE)}));
+            auto instantiated = functorOpt->instantiate(bindTypeParameterList(builtinAST->typeParameter(), *functorOpt));
             if (!instantiated.has_value())
             {
                 throw std::move(instantiated).error();
@@ -889,48 +1046,7 @@ public:
             throw UnknownDataType("{}", typeDefAST->getText());
         }
 
-        std::vector<NESTypeParameters::Element> params;
-        for (auto* const paramAST : customAST->typeParameter())
-        {
-            if (auto* const nestedTypeAST = paramAST->typeDefinition())
-            {
-                params.emplace_back(bindNESType(nestedTypeAST, DataType::NULLABLE::NOT_NULLABLE));
-            }
-            else if (auto* const cfgLitAST = paramAST->configLiteral())
-            {
-                if (auto* const scalarAST = cfgLitAST->configScalarLiteral())
-                {
-                    const auto lit = bindConfigScalarLiteral(scalarAST);
-                    if (const auto* u = std::get_if<uint64_t>(&lit); u != nullptr && std::in_range<int64_t>(*u))
-                    {
-                        params.emplace_back(DataType::makeIntegerValue(static_cast<int64_t>(*u)));
-                    }
-                    else if (const auto* i = std::get_if<int64_t>(&lit))
-                    {
-                        params.emplace_back(DataType::makeIntegerValue(*i));
-                    }
-                    else if (const auto* b = std::get_if<bool>(&lit))
-                    {
-                        params.emplace_back(DataType::makeBooleanValue(*b));
-                    }
-                    else
-                    {
-                        params.emplace_back(makeScalarLiteralNESValue(lit));
-                    }
-                }
-                else if (auto* const schemaAST = cfgLitAST->schemaCtor())
-                {
-                    params.emplace_back(makeSchemaNESValue(bindSchema(schemaAST->schemaDefinition())));
-                }
-            }
-        }
-
-        if (params.empty() && functorOpt->getUnderlyingFunctor().tryGetStructureAs<DataTypeFn>() != nullptr)
-        {
-            params.emplace_back(DataType::makeBooleanValue(isNullable == DataType::NULLABLE::IS_NULLABLE));
-        }
-
-        auto instantiated = functorOpt->instantiate(NESTypeParameters{std::move(params)});
+        auto instantiated = functorOpt->instantiate(bindTypeParameterList(customAST->typeParameter(), *functorOpt));
         if (!instantiated.has_value())
         {
             throw std::move(instantiated).error();
@@ -938,29 +1054,50 @@ public:
         return *instantiated;
     }
 
-    DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const DataType::NULLABLE isNullable) const
+    DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST) const
     {
-        const auto nesType = bindNESType(typeDefAST, isNullable);
-        if (const auto* trait = nesType.tryGetTrait<ScalarTypeTrait>())
+        const auto nesType = bindNESType(typeDefAST);
+        if (const auto* legacyTrait = nesType.tryGetTypeTrait<LegacyDataTypeTrait>())
         {
-            if (const auto dtOpt = trait->tryGetDataType(nesType.getDescriptor()))
-            {
-                return *dtOpt;
-            }
+            return legacyTrait->getDataType();
         }
         throw UnknownDataType("{}", typeDefAST->getText());
     }
 
     Schema<UnqualifiedUnboundField, Ordered> bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST) const
     {
+        const auto optionalFunctorOpt = NESTypeCatalog::instance().findSqlFunctor(QualifiedIdentifier::parse("OPTIONAL"));
+        INVARIANT(optionalFunctorOpt.has_value(), "Built-in OPTIONAL functor must be registered in NESTypeCatalog");
+
         std::vector<UnqualifiedUnboundField> fields{};
         for (auto* const column : schemaDefAST->columnDefinition())
         {
-            const auto isNullable
-                = column->nullableDefinition() == nullptr ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
-            auto dataType = bindDataType(column->typeDefinition(), isNullable);
+            auto nesType = bindNESType(column->typeDefinition());
+            const bool hasNotNullClause = column->nullableDefinition() != nullptr;
+            const bool isExplicitlyOptional = nesType.tryGetAs<OptionalType>() != nullptr;
+
+            if (hasNotNullClause && isExplicitlyOptional)
+            {
+                throw InvalidQuerySyntax(
+                    "Column '{}' cannot be declared both OPTIONAL(...) and NOT NULL", column->identifier()->getText());
+            }
+            if (!hasNotNullClause && !isExplicitlyOptional)
+            {
+                auto optExp = optionalFunctorOpt->instantiate(NESTypeParameters::fromTypes({std::move(nesType)}));
+                if (!optExp.has_value())
+                {
+                    throw std::move(optExp).error();
+                }
+                nesType = std::move(*optExp);
+            }
+
+            const auto* legacyTrait = nesType.tryGetTypeTrait<LegacyDataTypeTrait>();
+            if (legacyTrait == nullptr)
+            {
+                throw UnknownDataType("{}", column->typeDefinition()->getText());
+            }
             auto columnName = bindIdentifier(column->identifier());
-            fields.emplace_back(columnName, dataType);
+            fields.emplace_back(columnName, legacyTrait->getDataType());
         }
         const auto boundSchema = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(fields));
         if (!boundSchema.has_value())
@@ -1034,7 +1171,7 @@ public:
                 std::move(value))};
             options.emplace_back(std::move(configKey), std::move(literalValue));
         }
-        return Schema<LiteralConfigValue, Ordered>{std::move(options)};
+        return createConfigLiteralSchema(std::move(options));
     }
 
     ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigLiteralContext*>& configOptions) const
@@ -1087,11 +1224,25 @@ public:
     {
         const auto configOptions = bindConfigValues(configOptionsAst);
 
+        const auto peekTypeField = [&](const std::string_view fqName) -> std::optional<LiteralConfigValue>
+        {
+            const auto fqId = QualifiedIdentifier::parse(fqName);
+            static const auto shortType = QualifiedIdentifier::parse("TYPE");
+            for (const auto& opt : configOptions)
+            {
+                if (opt.getFullyQualifiedName() == fqId || opt.getFullyQualifiedName() == shortType)
+                {
+                    return opt;
+                }
+            }
+            return std::nullopt;
+        };
+
         const auto inputFormatterType = [&]
         {
             auto expected
                 = optionalToExpected(
-                      configOptions.getFieldByName(QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"))
+                      peekTypeField("INPUT_FORMATTER.TYPE")
                           .or_else(
                               [&]
                               {
@@ -1127,10 +1278,24 @@ public:
     {
         const auto configOptions = bindConfigValues(configOptionsAst);
 
+        const auto peekOutputFormatter = [&]() -> std::optional<LiteralConfigValue>
+        {
+            static const auto fqId = QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE");
+            static const auto shortType = QualifiedIdentifier::parse("TYPE");
+            for (const auto& opt : configOptions)
+            {
+                if (opt.getFullyQualifiedName() == fqId || opt.getFullyQualifiedName() == shortType)
+                {
+                    return opt;
+                }
+            }
+            return std::nullopt;
+        };
+
         const auto outputFormatterType = [&]
         {
             const auto typeLiteral
-                = configOptions.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
+                = peekOutputFormatter()
                       .or_else(
                           [&]
                           {
@@ -1198,78 +1363,78 @@ public:
     {
         auto configs = bindConfigOptionsWithDuplicates(getConfigOptions(workerDefAST->optionsClause()));
 
-        const auto maxOperators = [&] -> std::optional<size_t>
-        {
-            auto it = std::ranges::find_if(
-                configs,
-                [](const auto& key)
-                { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("MAX_OPERATORS"); });
-            if (it != configs.end())
-            {
-                const auto* literalOpt = std::get_if<Literal>(&it->second);
-                if (literalOpt != nullptr && std::holds_alternative<uint64_t>(*literalOpt))
-                {
-                    return static_cast<size_t>(std::get<uint64_t>(*literalOpt));
-                }
-                throw InvalidQuerySyntax("MAX_OPERATORS must be an unsigned integer literal");
-            }
-            return std::nullopt;
-        }();
-
-        auto dataAddress = [&] -> std::string
-        {
-            auto it = std::ranges::find_if(
-                configs,
-                [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("DATA"); });
-            if (it != configs.end())
-            {
-                const Literal* literalOpt = std::get_if<Literal>(&it->second);
-                if (literalOpt != nullptr && std::holds_alternative<std::string>(*literalOpt))
-                {
-                    return URI(std::get<std::string>(*literalOpt)).toString();
-                }
-                throw InvalidQuerySyntax("DATA must be a string literal");
-            }
-            return {};
-        }();
-
-        auto downStreams = [&] -> std::vector<std::string>
-        {
-            return configs
-                | std::views::filter(
-                       [](const auto& option)
-                       { return option.first.size() == 1 && *std::ranges::begin(option.first) == Identifier::parse("DOWNSTREAM"); })
-                | std::views::values
-                | std::views::transform(
-                       [](const auto& value)
-                       {
-                           const Literal* literalOpt = std::get_if<Literal>(&value);
-                           if (literalOpt != nullptr && std::holds_alternative<std::string>(*literalOpt))
-                           {
-                               return URI(std::get<std::string>(*literalOpt)).toString();
-                           }
-                           throw InvalidQuerySyntax("DOWNSTREAM must be a string literal");
-                       })
-                | std::ranges::to<std::vector<std::string>>();
-        }();
-
+        std::optional<size_t> maxOperators;
+        std::optional<std::string> dataAddressOpt;
+        std::vector<std::string> downStreams;
         std::unordered_map<std::string, std::string> workerConfigMap;
+
+        static const auto MaxOpsId = Identifier::parse("MAX_OPERATORS");
+        static const auto DataId = Identifier::parse("DATA");
+        static const auto DownstreamId = Identifier::parse("DOWNSTREAM");
+
         for (const auto& [key, val] : configs)
         {
-            if (key.size() > 1)
+            const auto* litOpt = std::get_if<Literal>(&val);
+            if (litOpt == nullptr)
             {
-                if (const auto* litOpt = std::get_if<Literal>(&val))
+                throw InvalidConfigParameter("SCHEMA(...) is not a valid CREATE WORKER option: {}", key);
+            }
+            if (key.size() == 1)
+            {
+                const auto& singleKey = *std::ranges::begin(key);
+                if (singleKey == MaxOpsId)
                 {
-                    const auto dotted = fmt::format(
-                        "{}", fmt::join(key | std::views::transform([](const Identifier& id) { return toLowerCase(id.asCanonicalString()); }), "."));
-                    workerConfigMap.emplace(dotted, literalToString(*litOpt));
+                    if (maxOperators.has_value())
+                    {
+                        throw InvalidConfigParameter("Duplicate option: MAX_OPERATORS");
+                    }
+                    if (!std::holds_alternative<uint64_t>(*litOpt))
+                    {
+                        throw InvalidQuerySyntax("MAX_OPERATORS must be an unsigned integer literal");
+                    }
+                    maxOperators = static_cast<size_t>(std::get<uint64_t>(*litOpt));
+                }
+                else if (singleKey == DataId)
+                {
+                    if (dataAddressOpt.has_value())
+                    {
+                        throw InvalidConfigParameter("Duplicate option: DATA");
+                    }
+                    if (!std::holds_alternative<std::string>(*litOpt))
+                    {
+                        throw InvalidQuerySyntax("DATA must be a string literal");
+                    }
+                    dataAddressOpt = URI(std::get<std::string>(*litOpt)).toString();
+                }
+                else if (singleKey == DownstreamId)
+                {
+                    if (!std::holds_alternative<std::string>(*litOpt))
+                    {
+                        throw InvalidQuerySyntax("DOWNSTREAM must be a string literal");
+                    }
+                    downStreams.push_back(URI(std::get<std::string>(*litOpt)).toString());
+                }
+                else
+                {
+                    throw InvalidConfigParameter("Unknown CREATE WORKER option: {}", singleKey);
+                }
+            }
+            else
+            {
+                const auto dotted = fmt::format(
+                    "{}",
+                    fmt::join(
+                        key | std::views::transform([](const Identifier& id) { return toLowerCase(id.asCanonicalString()); }), "."));
+                if (!workerConfigMap.emplace(dotted, literalToString(*litOpt)).second)
+                {
+                    throw InvalidConfigParameter("Duplicate option: {}", dotted);
                 }
             }
         }
 
         return CreateWorkerStatement{
             .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
-            .dataAddress = std::move(dataAddress),
+            .dataAddress = dataAddressOpt.value_or(std::string{}),
             .maxOperators = maxOperators,
             .downstream = std::move(downStreams),
             .config = std::move(workerConfigMap)};
@@ -1303,7 +1468,10 @@ public:
         auto inputs = normalizeNonNullableModelFields(bindSchema(modelDefAST->inputSchema));
         auto outputs = normalizeNonNullableModelFields(bindSchema(modelDefAST->outputSchema));
         return CreateModelStatement{
-            .name = fmt::format("{}", modelName), .path = modelPath, .inputs = std::move(inputs), .outputs = std::move(outputs)};
+            .name = modelName.asCanonicalString(),
+            .path = modelPath,
+            .inputs = std::move(inputs),
+            .outputs = std::move(outputs)};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
@@ -1530,7 +1698,16 @@ public:
 
     DropModelStatement bindDropModel(const std::pair<Identifier, Literal>& filter) const
     {
-        return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
+        auto rawName = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL");
+        if (modelCatalog != nullptr && modelCatalog->hasModel(rawName))
+        {
+            return DropModelStatement{.name = std::move(rawName)};
+        }
+        if (const auto idExp = Identifier::tryParse(rawName); idExp.has_value())
+        {
+            return DropModelStatement{.name = idExp->asCanonicalString()};
+        }
+        return DropModelStatement{.name = std::move(rawName)};
     }
 
     DropWorkerStatement bindDropWorker(const std::pair<Identifier, Literal>& filter) const
@@ -1700,7 +1877,7 @@ public:
             const auto fn = bindOpenScalarExpression(nestedScalar, scope, queryState, clauseMode);
             if (const auto constFn = fn.tryGetAs<ConstantValueLogicalFunction>())
             {
-                const auto parsed = from_chars<uint64_t>(constFn->get().getConstantValue());
+                const auto parsed = tryExtractUnsignedInteger(constFn->get().getValue());
                 if (!parsed.has_value())
                 {
                     throw InvalidQuerySyntax("Window interval duration must be a non-negative integer, got {}", intervalAST->getText());
@@ -1715,16 +1892,19 @@ public:
         return TimeInterval{.measure = bindIntervalUnit(intervalAST->unit, amount)};
     }
 
-    std::string extractTypedConstantArgument(AntlrSQLParser::OpenScalarExpressionContext* exprAST, bool negated = false) const
+    NESValue extractConstantNESValue(
+        AntlrSQLParser::OpenScalarExpressionContext* exprAST,
+        const bool allowUntypedNull,
+        const bool negated = false) const
     {
         if (auto* const parenAST = dynamic_cast<AntlrSQLParser::ParenthesizedScalarExpressionContext*>(exprAST))
         {
-            return extractTypedConstantArgument(parenAST->openScalarExpression(), negated);
+            return extractConstantNESValue(parenAST->openScalarExpression(), allowUntypedNull, negated);
         }
         if (auto* const unaryAST = dynamic_cast<AntlrSQLParser::UnaryArithmeticExpressionContext*>(exprAST))
         {
             const bool nextNegated = (unaryAST->op->getType() == AntlrSQLLexer::MINUS) ? !negated : negated;
-            return extractTypedConstantArgument(unaryAST->openScalarExpression(), nextNegated);
+            return extractConstantNESValue(unaryAST->openScalarExpression(), allowUntypedNull, nextNegated);
         }
         if (auto* const litAST = dynamic_cast<AntlrSQLParser::LiteralScalarExpressionContext*>(exprAST))
         {
@@ -1742,15 +1922,25 @@ public:
                             "A constant string literal must contain at least two quotes and must not be empty at {}",
                             exprAST->getText());
                     }
-                    return bindStringLiteral(strAST);
+                    return VarSizedType::createValue(bindStringLiteral(strAST));
                 }
                 if (auto* const uintAST = scalarLit->unsignedIntLiteral())
                 {
-                    return negated ? ("-" + uintAST->getText()) : uintAST->getText();
+                    if (!negated)
+                    {
+                        return makeNarrowestUnsignedLiteralNESValue(from_chars_with_exception<uint64_t>(uintAST->getText()));
+                    }
+                    const auto signedVal = from_chars_with_exception<int64_t>("-" + uintAST->getText());
+                    if (signedVal < 0)
+                    {
+                        return makeNarrowestSignedLiteralNESValue(signedVal);
+                    }
+                    return makeNarrowestUnsignedLiteralNESValue(static_cast<uint64_t>(signedVal));
                 }
                 if (auto* const fltAST = scalarLit->floatLiteral())
                 {
-                    return negated ? ("-" + fltAST->getText()) : fltAST->getText();
+                    const auto text = negated ? ("-" + fltAST->getText()) : fltAST->getText();
+                    return Float64Type::createValue(from_chars_with_exception<double>(text));
                 }
                 if (auto* const boolAST = scalarLit->boolLiteral())
                 {
@@ -1758,7 +1948,19 @@ public:
                     {
                         throw InvalidQuerySyntax("Cannot negate boolean literal in typed constant: {}", exprAST->getText());
                     }
-                    return boolAST->getText();
+                    return BooleanType::createValue(bindBooleanLiteral(boolAST));
+                }
+                if (scalarLit->null() != nullptr)
+                {
+                    if (negated)
+                    {
+                        throw InvalidQuerySyntax("Cannot negate NULL literal: {}", exprAST->getText());
+                    }
+                    if (!allowUntypedNull)
+                    {
+                        throw InvalidQuerySyntax("Untyped NULL literal is not supported; use OPTIONAL(<TYPE>)(NULL)");
+                    }
+                    return OptionalType::createNullValue(UndefinedType::makeNESType());
                 }
             }
         }
@@ -1793,6 +1995,209 @@ public:
         std::unreachable();
     }
 
+    NESTypeParameters::Element bindFunctionArgumentAsTypeParameter(
+        AntlrSQLParser::FunctionCallArgumentContext* argAST,
+        const NestedScope& scope,
+        const std::optional<QualifiedErasedNESTypeParameter::Kind>& expectedKind = std::nullopt) const
+    {
+        if (auto* const dtArg = dynamic_cast<AntlrSQLParser::DataTypeFunctionArgContext*>(argAST))
+        {
+            bool translated = false;
+            const auto normalized = normalizeBuiltinDataTypeName(dtArg->dataType->getText(), &translated);
+            const auto functorOpt = NESTypeCatalog::instance().findSqlFunctor(QualifiedIdentifier::create(Identifier::parse(normalized)));
+            if (!functorOpt.has_value())
+            {
+                throw UnknownDataType("{}", dtArg->getText());
+            }
+            if (expectedKind == QualifiedErasedNESTypeParameter::Kind::FunctorParameter)
+            {
+                return functorOpt->getUnderlyingFunctor();
+            }
+            auto instExp = functorOpt->instantiate(NESTypeParameters{});
+            if (!instExp.has_value())
+            {
+                throw std::move(instExp).error();
+            }
+            return *instExp;
+        }
+        if (auto* const scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(argAST))
+        {
+            if (auto* const callExpr = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression()))
+            {
+                if (expectedKind == QualifiedErasedNESTypeParameter::Kind::FunctorParameter)
+                {
+                    if (auto* const refAST = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(callExpr->functionCall()))
+                    {
+                        const auto foundOpt = scope.find(QualifiedIdentifier::create(bindIdentifier(refAST->identifier())));
+                        if (!foundOpt.has_value() || !std::holds_alternative<NESFunctor>(*foundOpt))
+                        {
+                            throw UnknownDataType("{}", refAST->getText());
+                        }
+                        return std::get<NESFunctor>(*foundOpt);
+                    }
+                    throw TypeInferenceException(
+                        "Parameter expects an unapplied functor, but received '{}'", callExpr->getText());
+                }
+                if (auto nestedType = tryBindFunctionCallAsNESType(callExpr->functionCall(), scope); nestedType.has_value())
+                {
+                    return std::move(*nestedType);
+                }
+            }
+            return bindScalarExpressionToValue(scalarArg->openScalarExpression(), scope, /*queryState=*/nullptr, ScalarClauseMode::Where);
+        }
+        throw InvalidQuerySyntax("Unsupported type parameter '{}' in parameterized constructor", argAST->getText());
+    }
+
+    std::optional<NESType>
+    tryBindFunctionCallAsNESType(AntlrSQLParser::FunctionCallContext* typeCallAST, const NestedScope& scope) const
+    {
+        if (auto* const refAST = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(typeCallAST))
+        {
+            const auto id = bindIdentifier(refAST->identifier());
+            const auto foundOpt = scope.find(QualifiedIdentifier::create(id));
+            if (!foundOpt.has_value() || !std::holds_alternative<NESFunctor>(*foundOpt))
+            {
+                return std::nullopt;
+            }
+            auto instExp = std::get<NESFunctor>(*foundOpt).instantiate(NESTypeParameters{});
+            if (!instExp.has_value())
+            {
+                throw std::move(instExp).error();
+            }
+            return *instExp;
+        }
+        if (auto* const dtCallAST = dynamic_cast<AntlrSQLParser::DataTypeFunctionCallContext*>(typeCallAST))
+        {
+            const auto normalized = normalizeBuiltinDataTypeName(dtCallAST->dataType->getText());
+            const auto functorOpt = NESTypeCatalog::instance().findSqlFunctor(QualifiedIdentifier::create(Identifier::parse(normalized)));
+            if (!functorOpt.has_value())
+            {
+                throw UnknownDataType("{}", dtCallAST->dataType->getText());
+            }
+            const auto& expectedArgs = functorOpt->getUnderlyingFunctor().getExpectedArguments();
+            const auto& argASTs = dtCallAST->functionCallArgument();
+            std::vector<NESTypeParameters::Element> posParams;
+            posParams.reserve(argASTs.size());
+            for (size_t i = 0; i < argASTs.size(); ++i)
+            {
+                std::optional<QualifiedErasedNESTypeParameter::Kind> expectedKind;
+                if (expectedArgs.has_value())
+                {
+                    if (const auto spec = expectedArgs->getParameters()[i]; spec.has_value())
+                    {
+                        expectedKind = spec->getKind();
+                    }
+                }
+                posParams.push_back(bindFunctionArgumentAsTypeParameter(argASTs[i], scope, expectedKind));
+            }
+            auto instExp = functorOpt->instantiate(NESTypeParameters{std::move(posParams)});
+            if (!instExp.has_value())
+            {
+                throw std::move(instExp).error();
+            }
+            return *instExp;
+        }
+        if (auto* const emptyCall = dynamic_cast<AntlrSQLParser::EmptyFunctionCallContext*>(typeCallAST))
+        {
+            auto* const innerRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(emptyCall->callee);
+            if (innerRef == nullptr)
+            {
+                return std::nullopt;
+            }
+            const auto foundOpt = scope.find(QualifiedIdentifier::create(bindIdentifier(innerRef->identifier())));
+            if (!foundOpt.has_value() || !std::holds_alternative<NESFunctor>(*foundOpt))
+            {
+                return std::nullopt;
+            }
+            auto instExp = std::get<NESFunctor>(*foundOpt).instantiate(NESTypeParameters{});
+            if (!instExp.has_value())
+            {
+                throw std::move(instExp).error();
+            }
+            return *instExp;
+        }
+        if (auto* const posCall = dynamic_cast<AntlrSQLParser::PositionalFunctionCallContext*>(typeCallAST))
+        {
+            auto* const innerRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(posCall->callee);
+            if (innerRef == nullptr)
+            {
+                return std::nullopt;
+            }
+            const auto foundOpt = scope.find(QualifiedIdentifier::create(bindIdentifier(innerRef->identifier())));
+            if (!foundOpt.has_value() || !std::holds_alternative<NESFunctor>(*foundOpt))
+            {
+                return std::nullopt;
+            }
+            const auto& calleeFunctor = std::get<NESFunctor>(*foundOpt);
+            const auto& expectedArgs = calleeFunctor.getExpectedArguments();
+            const auto& argASTs = posCall->functionCallArgument();
+            std::vector<NESTypeParameters::Element> posParams;
+            posParams.reserve(argASTs.size());
+            for (size_t i = 0; i < argASTs.size(); ++i)
+            {
+                std::optional<QualifiedErasedNESTypeParameter::Kind> expectedKind;
+                if (expectedArgs.has_value())
+                {
+                    if (const auto spec = expectedArgs->getParameters()[i]; spec.has_value())
+                    {
+                        expectedKind = spec->getKind();
+                    }
+                }
+                posParams.push_back(bindFunctionArgumentAsTypeParameter(argASTs[i], scope, expectedKind));
+            }
+            auto instExp = calleeFunctor.instantiate(NESTypeParameters{std::move(posParams)});
+            if (!instExp.has_value())
+            {
+                throw std::move(instExp).error();
+            }
+            return *instExp;
+        }
+        if (auto* const namedCall = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(typeCallAST))
+        {
+            auto* const innerRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(namedCall->callee);
+            if (innerRef == nullptr)
+            {
+                return std::nullopt;
+            }
+            const auto foundOpt = scope.find(QualifiedIdentifier::create(bindIdentifier(innerRef->identifier())));
+            if (!foundOpt.has_value() || !std::holds_alternative<NESFunctor>(*foundOpt))
+            {
+                return std::nullopt;
+            }
+            const auto& calleeFunctor = std::get<NESFunctor>(*foundOpt);
+            const auto& expectedArgs = calleeFunctor.getExpectedArguments();
+            std::vector<NamedNESTypeParameter> namedParams;
+            namedParams.reserve(namedCall->namedFunctionCallArgument().size());
+            for (auto* const namedArgAST : namedCall->namedFunctionCallArgument())
+            {
+                const auto paramName = bindQualifiedIdentifier(namedArgAST->name);
+                std::optional<QualifiedErasedNESTypeParameter::Kind> expectedKind;
+                if (expectedArgs.has_value())
+                {
+                    if (const auto spec = expectedArgs->getParameters().getFieldByName(paramName); spec.has_value())
+                    {
+                        expectedKind = spec->getKind();
+                    }
+                }
+                namedParams.emplace_back(
+                    paramName,
+                    bindFunctionArgumentAsTypeParameter(namedArgAST->functionCallArgument(), scope, expectedKind));
+            }
+            auto namedSchemaExp = Schema<NamedNESTypeParameter, Ordered>::tryCreateCollisionFree(std::move(namedParams));
+            if (!namedSchemaExp.has_value())
+            {
+                throw InvalidConfigParameter("Duplicate named type parameter in '{}'", innerRef->getText());
+            }
+            auto instExp = calleeFunctor.instantiate(NESTypeParameters::named(std::move(*namedSchemaExp)));
+            if (!instExp.has_value())
+            {
+                throw std::move(instExp).error();
+            }
+            return *instExp;
+        }
+        return std::nullopt;
+    }
+
     NESType resolveCalleeToInstantiatedType(
         AntlrSQLParser::FunctionCallContext* calleeAST,
         const NestedScope& scope,
@@ -1802,6 +2207,10 @@ public:
         auto* const refAST = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(calleeAST);
         if (refAST == nullptr)
         {
+            if (auto curriedType = tryBindFunctionCallAsNESType(calleeAST, scope); curriedType.has_value())
+            {
+                return std::move(*curriedType);
+            }
             throw InvalidQuerySyntax("Unsupported chained function call target '{}'", calleeAST->getText());
         }
 
@@ -1829,7 +2238,7 @@ public:
                 for (const auto& nv : *namedValues)
                 {
                     const auto paramSpec = expectedArgs->getParameters().getFieldByName(nv.getFullyQualifiedName());
-                    if (paramSpec.has_value() && paramSpec->kind == ExpectedNESTypeParameter::Kind::ValueParameter)
+                    if (paramSpec.has_value() && paramSpec->getKind() == QualifiedErasedNESTypeParameter::Kind::ValueParameter)
                     {
                         namedTypeParams.emplace_back(nv.getFullyQualifiedName(), nv.getValue());
                     }
@@ -1851,7 +2260,7 @@ public:
             for (size_t i = 0; i < positionalValues.size(); ++i)
             {
                 const auto paramSpec = expectedArgs->getParameters()[i];
-                if (paramSpec.has_value() && paramSpec->kind == ExpectedNESTypeParameter::Kind::ValueParameter)
+                if (paramSpec.has_value() && paramSpec->getKind() == QualifiedErasedNESTypeParameter::Kind::ValueParameter)
                 {
                     posTypeParams.emplace_back(positionalValues[i]);
                 }
@@ -1957,9 +2366,12 @@ public:
                 return makeLogicalOperatorValue(LogicalOperator{SourceNameLogicalOperator::create(id)});
             }
 
-            if (const auto found = scope.find(qid); found.has_value() && std::holds_alternative<NESValue>(*found))
+            if (clauseMode != ScalarClauseMode::Window)
             {
-                return std::get<NESValue>(*found);
+                if (const auto found = scope.find(qid); found.has_value() && std::holds_alternative<NESValue>(*found))
+                {
+                    return std::get<NESValue>(*found);
+                }
             }
             return makeLogicalFunctionValue(LogicalFunction{UnboundFieldAccessLogicalFunction{id}});
         }
@@ -1991,11 +2403,13 @@ public:
             {
                 throw InvalidQuerySyntax("Expected scalar literal inside type constructor {} at {}", normalized, dtCallAST->getText());
             }
-            auto constStr = extractTypedConstantArgument(scalarArg->openScalarExpression());
-            const auto* trait = dtNesTypeExp->tryGetTrait<ScalarTypeTrait>();
-            PRECONDITION(trait != nullptr, "Built-in DataType NESType must carry ScalarTypeTrait");
-            const auto dataType = trait->tryGetDataType(dtNesTypeExp->getDescriptor()).value();
-            return makeLogicalFunctionValue(LogicalFunction{ConstantValueLogicalFunction{dataType, std::move(constStr)}});
+            auto argVal = extractConstantNESValue(scalarArg->openScalarExpression(), /*allowUntypedNull=*/true);
+            auto constructedExp = dtNesTypeExp->construct(NESValueParameters::positional({std::move(argVal)}));
+            if (!constructedExp.has_value())
+            {
+                throw std::move(constructedExp).error();
+            }
+            return std::move(*constructedExp);
         }
 
         const auto childMode
@@ -2024,15 +2438,66 @@ public:
             return finalizeConstructedCallValue(std::move(*constructedExp), queryState, clauseMode, starCallAST->getText());
         }
 
+        const auto extractBareRefArgId = [this](AntlrSQLParser::FunctionCallArgumentContext* argAST) -> std::optional<Identifier>
+        {
+            if (auto* const scalarArg = dynamic_cast<AntlrSQLParser::ScalarFunctionArgContext*>(argAST))
+            {
+                if (auto* const callExpr = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(scalarArg->openScalarExpression()))
+                {
+                    if (auto* const bareRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(callExpr->functionCall()))
+                    {
+                        return bindIdentifier(bareRef->identifier());
+                    }
+                }
+            }
+            return std::nullopt;
+        };
+
         if (auto* const posCallAST = dynamic_cast<AntlrSQLParser::PositionalFunctionCallContext*>(callAST))
         {
+            if (dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(posCallAST->callee) == nullptr)
+            {
+                const auto calleeType = resolveCalleeToInstantiatedType(posCallAST->callee, scope, {}, nullptr);
+                const bool expectsConstantLiterals = !calleeType.hasTypeTrait<LogicalFunctionTypeTrait>()
+                    && !calleeType.hasTypeTrait<AggregationLogicalFunctionTypeTrait>()
+                    && !calleeType.hasTypeTrait<LogicalOperatorTypeTrait>();
+                auto* const argQueryState = expectsConstantLiterals ? nullptr : queryState;
+                std::vector<NESValue> argValues;
+                argValues.reserve(posCallAST->functionCallArgument().size());
+                for (auto* const argAST : posCallAST->functionCallArgument())
+                {
+                    argValues.push_back(bindFunctionArgumentValue(argAST, scope, argQueryState, childMode));
+                }
+                auto constructedExp = calleeType.construct(NESValueParameters::positional(std::move(argValues)));
+                if (!constructedExp.has_value())
+                {
+                    throw std::move(constructedExp).error();
+                }
+                return finalizeConstructedCallValue(std::move(*constructedExp), queryState, clauseMode, posCallAST->getText());
+            }
+
             std::vector<NESValue> argValues;
+            std::vector<std::optional<Identifier>> bareIds;
             argValues.reserve(posCallAST->functionCallArgument().size());
+            bareIds.reserve(posCallAST->functionCallArgument().size());
             for (auto* const argAST : posCallAST->functionCallArgument())
             {
+                bareIds.push_back(extractBareRefArgId(argAST));
                 argValues.push_back(bindFunctionArgumentValue(argAST, scope, queryState, childMode));
             }
             const auto calleeType = resolveCalleeToInstantiatedType(posCallAST->callee, scope, argValues, nullptr);
+            if (queryState != nullptr
+                && (calleeType.hasTypeTrait<LogicalFunctionTypeTrait>()
+                    || calleeType.hasTypeTrait<AggregationLogicalFunctionTypeTrait>()))
+            {
+                for (size_t i = 0; i < argValues.size(); ++i)
+                {
+                    if (bareIds[i].has_value() && !nesValueToLogicalFunction(argValues[i]).has_value())
+                    {
+                        argValues[i] = makeLogicalFunctionValue(LogicalFunction{UnboundFieldAccessLogicalFunction{*bareIds[i]}});
+                    }
+                }
+            }
             auto constructedExp = calleeType.construct(NESValueParameters::positional(std::move(argValues)));
             if (!constructedExp.has_value())
             {
@@ -2044,14 +2509,17 @@ public:
         if (auto* const namedCallAST = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(callAST))
         {
             std::vector<NamedNESValue> namedArgs;
+            std::vector<std::optional<Identifier>> bareIds;
             namedArgs.reserve(namedCallAST->namedFunctionCallArgument().size());
+            bareIds.reserve(namedCallAST->namedFunctionCallArgument().size());
             for (auto* const namedArgAST : namedCallAST->namedFunctionCallArgument())
             {
+                bareIds.push_back(extractBareRefArgId(namedArgAST->functionCallArgument()));
                 auto argName = bindQualifiedIdentifier(namedArgAST->name);
                 auto argVal = bindFunctionArgumentValue(namedArgAST->functionCallArgument(), scope, queryState, childMode);
                 namedArgs.emplace_back(std::move(argName), std::move(argVal));
             }
-            auto namedSchemaExp = Schema<NamedNESValue, Ordered>::tryCreateCollisionFree(std::move(namedArgs));
+            auto namedSchemaExp = Schema<NamedNESValue, Ordered>::tryCreateCollisionFree(namedArgs);
             if (!namedSchemaExp.has_value())
             {
                 throw InvalidConfigParameter(
@@ -2060,6 +2528,21 @@ public:
                     fmt::join(namedSchemaExp.error() | std::views::keys, ", "));
             }
             const auto calleeType = resolveCalleeToInstantiatedType(namedCallAST->callee, scope, {}, &*namedSchemaExp);
+            if (queryState != nullptr
+                && (calleeType.hasTypeTrait<LogicalFunctionTypeTrait>()
+                    || calleeType.hasTypeTrait<AggregationLogicalFunctionTypeTrait>()))
+            {
+                for (size_t i = 0; i < namedArgs.size(); ++i)
+                {
+                    if (bareIds[i].has_value() && !nesValueToLogicalFunction(namedArgs[i].getValue()).has_value())
+                    {
+                        namedArgs[i] = NamedNESValue{
+                            namedArgs[i].getFullyQualifiedName(),
+                            makeLogicalFunctionValue(LogicalFunction{UnboundFieldAccessLogicalFunction{*bareIds[i]}})};
+                    }
+                }
+                namedSchemaExp = Schema<NamedNESValue, Ordered>{std::move(namedArgs)};
+            }
             auto constructedExp = calleeType.construct(NESValueParameters::named(std::move(*namedSchemaExp)));
             if (!constructedExp.has_value())
             {
@@ -2093,35 +2576,18 @@ public:
             {
                 return makeSchemaNESValue(bindSchema(schemaCtorAST->schemaDefinition()));
             }
-            auto* const scalarLit = litAST->literal()->scalarLiteral();
             if (queryState == nullptr)
             {
-                return makeScalarLiteralNESValue(bindScalarLiteral(scalarLit));
+                return makeScalarLiteralNESValue(bindScalarLiteral(litAST->literal()->scalarLiteral()));
             }
-            if (auto* const strAST = scalarLit->stringLiteral())
-            {
-                if (strAST->getText().size() <= 2)
-                {
-                    throw InvalidQuerySyntax(
-                        "A constant string literal must contain at least two quotes and must not be empty at {}",
-                        exprAST->getText());
-                }
-            }
-            return makeLogicalFunctionValue(createRawLiteralFunction(scalarLit->getText()));
+            return makeLogicalFunctionValue(
+                LogicalFunction{ConstantValueLogicalFunction{extractConstantNESValue(litAST, /*allowUntypedNull=*/false)}});
         }
         if (auto* const unaryAST = dynamic_cast<AntlrSQLParser::UnaryArithmeticExpressionContext*>(exprAST))
         {
             if (queryState == nullptr && isDirectNumericLiteralAst(unaryAST))
             {
-                const auto constStr = extractTypedConstantArgument(unaryAST);
-                if (const auto intVal = from_chars<int64_t>(constStr))
-                {
-                    return makeScalarLiteralNESValue(Literal{*intVal});
-                }
-                if (const auto dblVal = from_chars<double>(constStr))
-                {
-                    return makeScalarLiteralNESValue(Literal{*dblVal});
-                }
+                return extractConstantNESValue(unaryAST, /*allowUntypedNull=*/false);
             }
         }
         if (auto* const callAST = dynamic_cast<AntlrSQLParser::FunctionCallScalarExpressionContext*>(exprAST))
@@ -2150,22 +2616,12 @@ public:
             {
                 throw InvalidQuerySyntax("SCHEMA(...) is not a scalar expression: {}", exprAST->getText());
             }
-            auto* const scalarLit = litAST->literal()->scalarLiteral();
-            if (auto* const strAST = scalarLit->stringLiteral())
-            {
-                if (strAST->getText().size() <= 2)
-                {
-                    throw InvalidQuerySyntax(
-                        "A constant string literal must contain at least two quotes and must not be empty at {}",
-                        exprAST->getText());
-                }
-            }
-            return createRawLiteralFunction(scalarLit->getText());
+            return ConstantValueLogicalFunction{extractConstantNESValue(litAST, /*allowUntypedNull=*/false)};
         }
 
         if (auto* const castAST = dynamic_cast<AntlrSQLParser::CastScalarExpressionContext*>(exprAST))
         {
-            const auto targetType = bindDataType(castAST->targetType, DataType::NULLABLE::NOT_NULLABLE);
+            const auto targetType = bindDataType(castAST->targetType);
             auto innerFn = bindOpenScalarExpression(castAST->openScalarExpression(), scope, queryState, nestedMode);
             return CastToTypeLogicalFunction{targetType, std::move(innerFn)};
         }
@@ -2187,6 +2643,11 @@ public:
             auto fnExp = nesValueToLogicalFunction(val);
             if (!fnExp.has_value())
             {
+                if (auto* const bareRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(callExprAST->functionCall());
+                    bareRef != nullptr && queryState != nullptr)
+                {
+                    return UnboundFieldAccessLogicalFunction{bindIdentifier(bareRef->identifier())};
+                }
                 throw std::move(fnExp).error();
             }
             return std::move(*fnExp);
@@ -2194,20 +2655,16 @@ public:
 
         if (auto* const unaryAST = dynamic_cast<AntlrSQLParser::UnaryArithmeticExpressionContext*>(exprAST))
         {
+            if (isDirectNumericLiteralAst(unaryAST))
+            {
+                return ConstantValueLogicalFunction{extractConstantNESValue(unaryAST, /*allowUntypedNull=*/false)};
+            }
             auto innerFn = bindOpenScalarExpression(unaryAST->openScalarExpression(), scope, queryState, nestedMode);
             if (unaryAST->op->getType() == AntlrSQLLexer::PLUS)
             {
                 return innerFn;
             }
-            if (isDirectNumericLiteralAst(unaryAST->openScalarExpression()))
-            {
-                if (const auto constFn = innerFn.tryGetAs<ConstantValueLogicalFunction>())
-                {
-                    return createNegatedNumericLiteralFunction(constFn->get());
-                }
-            }
-            return MulLogicalFunction{
-                ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::INT64), "-1"}, std::move(innerFn)};
+            return MulLogicalFunction{ConstantValueLogicalFunction{Int64Type::createValue(-1)}, std::move(innerFn)};
         }
 
         if (auto* const mulAST = dynamic_cast<AntlrSQLParser::BinaryMultiplicativeExpressionContext*>(exprAST))
@@ -2374,6 +2831,10 @@ public:
         if (auto* const emptyCall = dynamic_cast<AntlrSQLParser::EmptyFunctionCallContext*>(callAST))
         {
             callee = emptyCall->callee;
+        }
+        else if (auto* const starCall = dynamic_cast<AntlrSQLParser::StarFunctionCallContext*>(callAST))
+        {
+            callee = starCall->callee;
         }
         else if (auto* const namedCall = dynamic_cast<AntlrSQLParser::NamedFunctionCallContext*>(callAST))
         {
@@ -2805,6 +3266,10 @@ public:
         {
             throw InvalidQuerySyntax("INTO must be followed by at least one sink");
         }
+        if (intoAST->sink().size() > 1)
+        {
+            throw NotImplemented("Multiple sinks in INTO clause are not supported");
+        }
         auto* const firstSinkCall = intoAST->sink().front()->functionCall();
         if (auto* const bareRef = dynamic_cast<AntlrSQLParser::FunctionReferenceContext*>(firstSinkCall))
         {
@@ -2946,29 +3411,25 @@ std::expected<void, Exception> StatementBinder::parseAndBindEach(
     const std::string_view statementString,
     const std::function<void(std::expected<Statement, Exception>)>& onStatement) const
 {
+    ThrowingSyntaxErrorListener errorListener;
+    antlr4::ANTLRInputStream input(statementString.data(), statementString.length());
+    AntlrSQLLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    AntlrSQLParser parser(&tokens);
+    lexer.removeErrorListeners();
+    parser.removeErrorListeners();
+    lexer.addErrorListener(&errorListener);
+    parser.addErrorListener(&errorListener);
+    parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
+
+    AntlrSQLParser::MultipleStatementsContext* tree = nullptr;
     try
     {
-        ThrowingSyntaxErrorListener errorListener;
-        antlr4::ANTLRInputStream input(statementString.data(), statementString.length());
-        AntlrSQLLexer lexer(&input);
-        antlr4::CommonTokenStream tokens(&lexer);
-        AntlrSQLParser parser(&tokens);
-        lexer.removeErrorListeners();
-        parser.removeErrorListeners();
-        lexer.addErrorListener(&errorListener);
-        parser.addErrorListener(&errorListener);
-        parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-        AntlrSQLParser::MultipleStatementsContext* tree = parser.multipleStatements();
+        tree = parser.multipleStatements();
         if (tree == nullptr)
         {
             return std::unexpected{InvalidQuerySyntax("{}", statementString)};
         }
-
-        for (auto* const statementAST : tree->statement())
-        {
-            onStatement(impl->bind(statementAST));
-        }
-        return {};
     }
     catch (const Exception& e)
     {
@@ -2978,6 +3439,12 @@ std::expected<void, Exception> StatementBinder::parseAndBindEach(
     {
         return std::unexpected{InvalidQuerySyntax("{}", e)};
     }
+
+    for (auto* const statementAST : tree->statement())
+    {
+        onStatement(impl->bind(statementAST));
+    }
+    return {};
 }
 
 std::expected<std::vector<std::expected<Statement, Exception>>, Exception>

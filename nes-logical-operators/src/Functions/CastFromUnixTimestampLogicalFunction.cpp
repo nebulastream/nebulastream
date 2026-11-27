@@ -23,6 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -59,20 +60,22 @@ CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withD
     return copy;
 }
 
+std::expected<NESType, Exception> CastFromUnixTimestampLogicalFunction::inferResultType(const NESType& input)
+{
+    const auto& inner = unwrapOptionalNESType(input);
+    if (inner.tryGetAs<UInt64Type>() == nullptr && inner.tryGetAs<UndefinedType>() == nullptr)
+    {
+        return std::unexpected{DifferentFieldTypeExpected("CASTFROMUNIXTS expects a UINT64 input")};
+    }
+    return wrapOptionalNESTypeIf(VarSizedType::makeNESType(), isOptionalNESType(input));
+}
+
 LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 1, "CeilLogicalFunction expects exactly one child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType();
-    if (newDataType.type != DataType::Type::UNDEFINED && newDataType.type != DataType::Type::UINT64)
-    {
-        throw DifferentFieldTypeExpected("CASTFROMUNIXTS expects a UINT64 input, but got {}", newDataType);
-    }
-
-    /// Output is ISO-8601 UTC string => VARSIZED
-    newDataType.type = DataType::Type::VARSIZED;
-    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    INVARIANT(newChildren.size() == 1, "CastFromUnixTimestampLogicalFunction expects exactly one child function but has {}", newChildren.size());
+    const auto newDataType = requireLegacyDataType(inferResultType(newChildren[0].getDataType().toNESType()));
     return withDataType(newDataType).withChildren(newChildren);
 }
 

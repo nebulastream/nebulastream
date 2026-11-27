@@ -47,23 +47,17 @@ DataType AddLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> AddLogicalFunction::inferResultType(const NESType& left, const NESType& right)
+{
+    return joinNumericNESTypes(left, right, NAME);
+}
+
 LogicalFunction AddLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     AddLogicalFunction copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-
-    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("Cannot apply addition to non-numeric input function left: {}, right: {}", copy.left, copy.right);
-    }
-    auto newType = copy.left.getDataType().join(copy.right.getDataType());
-    if (not newType.has_value())
-    {
-        throw CannotInferStamp("Could not join data types of input functions, left: {}, right: {}", copy.left, copy.right);
-    }
-    copy.dataType = std::move(newType).value();
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.left.getDataType().toNESType(), copy.right.getDataType().toNESType()));
     return copy;
 }
 

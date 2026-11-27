@@ -24,6 +24,8 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
@@ -84,30 +86,35 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
 /// PostgreSQL: integers are promoted to the widest available integer type (sum(int2/int4) -> int8), while floats keep their type
 /// (sum(real) -> real) since they saturate to infinity instead of wrapping around. Sums exceeding the 64-bit integer range still
 /// wrap around silently.
-DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType, const Identifier& inputFieldName)
+std::expected<NESType, Exception> SumAggregationLogicalFunction::inferAggregateType(const NESType& input)
 {
-    if (inputType.type == DataType::Type::UNDEFINED)
+    if (unwrapOptionalNESType(input).tryGetAs<UndefinedType>() != nullptr)
     {
-        return DataTypeProvider::provideDataType(
-            DataType::Type::UNDEFINED, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        return wrapOptionalNESTypeIf(UndefinedType::makeNESType(), isOptionalNESType(input));
     }
-    const auto widenedType = [&]() -> DataType
+    const auto widenedType = [&]() -> NESType
     {
-        const auto nullability = inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
-        if (inputType.isSignedInteger())
+        if (const auto* intTrait = input.tryGetTypeTrait<IntegerTypeTrait>())
         {
-            return DataTypeProvider::provideDataType(DataType::Type::INT64, nullability);
+            return wrapOptionalNESTypeIf(
+                intTrait->isSigned ? Int64Type::makeNESType() : UInt64Type::makeNESType(), isOptionalNESType(input));
         }
-        if (inputType.isInteger())
-        {
-            return DataTypeProvider::provideDataType(DataType::Type::UINT64, nullability);
-        }
-        return inputType;
+        return input;
     }();
-    const auto addableConstraint = LogicalFunctionRegistry::closedBinaryFunctionTypeClass(QualifiedIdentifier::parse("Add"));
-    if (addableConstraint.validate(widenedType.toNESType()))
+    const auto addableConstraint = LogicalFunctionRegistry::closedBinaryFunctionTypeClass(AddLogicalFunction::functor());
+    if (addableConstraint.validate(widenedType))
     {
         return widenedType;
+    }
+    return std::unexpected{UnsupportedQuery("{} is only supported on numeric fields", NAME)};
+}
+
+DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType, const Identifier& inputFieldName)
+{
+    auto inferred = inferAggregateType(inputType.toNESType());
+    if (inferred.has_value())
+    {
+        return requireLegacyDataType(std::move(inferred));
     }
     throw UnsupportedQuery(
         "{} is only supported on numeric fields, but field {} has type {}", NAME, inputFieldName, magic_enum::enum_name(inputType.type));

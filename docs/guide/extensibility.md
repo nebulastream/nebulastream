@@ -44,14 +44,15 @@ For instance, the `TCPSource` plugin looks like this:
 add_library(tcp_source_plugin_library STATIC TCPSource.cpp TCPDataServer.cpp)
 target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
 link_plugin_library(nes-sources tcp_source_plugin_library)
-add_registry_entry(Source TCP)
-add_registry_entry(SourceValidation TCP)
+add_registry_entry(Source TCP KEY TCPSource)
+add_registry_entry(SourceConfig TCPSource)
+add_registry_entry(SourceConfigSchema TCPSource)
 ```
 Where:
-- `TCP` is the unique identifier used to instantiate the plugin from the registry (the entry
+- `TCPSource` is the unique identifier used to instantiate the plugin from the registry (the entry
   expression is defined by the registry's `create_runtime_registry` declaration and references
   the plugin's type, e.g. `TCPSource`).
-- `Source`/`SourceValidation` are the registries the plugin contributes to.
+- `Source`/`SourceConfig`/`SourceConfigSchema` are the registries the plugin contributes to.
 
 Plugins may declare additional dependencies, which will be exclusive to the plugin library.
 These can be added, for example, using `FetchContent` in the plugin's root `CMakeLists.txt`.

@@ -50,6 +50,13 @@ public:
     [[nodiscard]] bool operator==(const SumAggregationLogicalFunction& other) const;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferAggregateType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return aggregationLogicalFunctionFunctor<
+            &SumAggregationLogicalFunction::create,
+            &SumAggregationLogicalFunction::inferAggregateType>(NAME);
+    }
 
 private:
     [[nodiscard]] static DataType inferFromInput(DataType inputType, const Identifier& inputFieldName);

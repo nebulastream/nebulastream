@@ -26,7 +26,9 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -45,13 +47,6 @@ namespace NES
 
 namespace
 {
-struct SinkTypeDescriptor
-{
-    Identifier sinkType;
-    SinkConfigSchemaProviderFn schemaProvider;
-    bool operator==(const SinkTypeDescriptor& other) const { return sinkType == other.sinkType; }
-};
-
 std::expected<ConfigLiteral, Exception> nesValueToSinkConfigLiteral(const NESValue& val)
 {
     if (const auto* cfgLit = val.tryGetAs<ConfigLiteral>())
@@ -62,37 +57,37 @@ std::expected<ConfigLiteral, Exception> nesValueToSinkConfigLiteral(const NESVal
     {
         return ConfigLiteral{*schema};
     }
-    if (const auto* scalar = val.tryGetAs<ScalarLiteralValue>())
+    if (val.tryGetAs<std::monostate>() != nullptr)
     {
-        return std::visit(
-            Overloaded{
-                [](const uint64_t unsignedInt) -> std::expected<ConfigLiteral, Exception>
-                {
-                    if (!std::in_range<int64_t>(unsignedInt))
-                    {
-                        return std::unexpected{
-                            InvalidQuerySyntax("Integer literal {} exceeds the supported signed integer range", unsignedInt)};
-                    }
-                    return ConfigLiteral{static_cast<int64_t>(unsignedInt)};
-                },
-                [](const auto& other) -> std::expected<ConfigLiteral, Exception> { return ConfigLiteral{other}; }},
-            *scalar);
+        return ConfigLiteral{std::monostate{}};
     }
     if (const auto* s = val.tryGetAs<std::string>())
     {
         return ConfigLiteral{*s};
     }
-    if (const auto* i = val.tryGetAs<int64_t>())
+    if (const auto* c = val.tryGetAs<char>())
     {
-        return ConfigLiteral{*i};
+        return ConfigLiteral{std::string{1, *c}};
     }
     if (const auto* b = val.tryGetAs<bool>())
     {
         return ConfigLiteral{*b};
     }
-    if (const auto* d = val.tryGetAs<double>())
+    if (val.getType().hasTypeTrait<IntegerTypeTrait>())
     {
-        return ConfigLiteral{*d};
+        return tryExtractSignedInteger(val).transform([](const int64_t v) { return ConfigLiteral{v}; });
+    }
+    if (val.getType().hasTypeTrait<FloatTypeTrait>())
+    {
+        return tryExtractFloatingPoint(val).transform([](const double v) { return ConfigLiteral{v}; });
+    }
+    if (const auto signedInt = tryExtractSignedInteger(val); signedInt.has_value())
+    {
+        return ConfigLiteral{*signedInt};
+    }
+    if (const auto flt = tryExtractFloatingPoint(val); flt.has_value())
+    {
+        return ConfigLiteral{*flt};
     }
     return std::unexpected{InvalidQuerySyntax("Invalid config argument value passed to sink constructor")};
 }
@@ -103,8 +98,22 @@ BoundAnonymousSink::resolve(
     const Schema<ConfigFieldDefault, Ordered>& configDefaults,
     const Schema<ConfigFieldTransformation, Unordered>& configTransformations) const
 {
+    const auto peekOutputFormatter = [&]() -> std::optional<LiteralConfigValue>
+    {
+        static const auto fqType = QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE");
+        static const auto shortType = QualifiedIdentifier::parse("TYPE");
+        for (const auto& opt : configOptions)
+        {
+            if (opt.getFullyQualifiedName() == fqType || opt.getFullyQualifiedName() == shortType)
+            {
+                return opt;
+            }
+        }
+        return std::nullopt;
+    };
+
     const auto typeLiteral
-        = configOptions.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
+        = peekOutputFormatter()
               .or_else(
                   [&]
                   {
@@ -139,7 +148,7 @@ SinkConfigSchemaRegistry& SinkConfigSchemaRegistry::instance()
 
 NESTypeClass SinkConfigSchemaRegistry::sinkTypeClass()
 {
-    return NESTypeClass::forTrait<SinkTypeTrait>();
+    return NESTypeClass::forTypeTrait<SinkTypeTrait>();
 }
 
 std::vector<NamedNESParametrizedTypeClass> SinkConfigSchemaRegistry::getParametrizedTypeClasses()
@@ -149,45 +158,72 @@ std::vector<NamedNESParametrizedTypeClass> SinkConfigSchemaRegistry::getParametr
         NamedNESParametrizedTypeClass::constant(QualifiedIdentifier::parse("SinkConfigSchema"), sinkTypeClass())};
 }
 
+namespace
+{
+struct AnonymousSinkNESType
+{
+    Identifier sinkType;
+    SinkConfigSchemaProviderFn schemaProvider;
+
+    bool operator==(const AnonymousSinkNESType& other) const { return sinkType == other.sinkType; }
+
+    [[nodiscard]] std::expected<BoundAnonymousSink, Exception> construct(const NESValueParameters& params) const
+    {
+        std::vector<LiteralConfigValue> options;
+        if (!params.empty())
+        {
+            const auto* namedSchema = params.tryGetNamedSchema();
+            if (namedSchema == nullptr)
+            {
+                return std::unexpected{InvalidQuerySyntax(
+                    "Sink constructor '{}' requires named config arguments ('val' AS GROUP.KEY)", sinkType)};
+            }
+            options.reserve(namedSchema->size());
+            for (const auto& namedArg : *namedSchema)
+            {
+                auto litExp = nesValueToSinkConfigLiteral(namedArg.getValue());
+                if (!litExp.has_value())
+                {
+                    return std::unexpected{std::move(litExp).error()};
+                }
+                options.emplace_back(namedArg.getFullyQualifiedName(), std::move(*litExp));
+            }
+        }
+        try
+        {
+            return BoundAnonymousSink{
+                .sinkType = sinkType,
+                .configOptions = createConfigLiteralSchema(std::move(options))};
+        }
+        catch (const Exception& ex)
+        {
+            return std::unexpected{ex};
+        }
+    }
+};
+
+struct SinkConfigSchemaFunctor
+{
+    Identifier sinkType;
+    SinkConfigSchemaProviderFn schemaProvider;
+
+    [[nodiscard]] const SinkConfigSchemaProviderFn& getRegistryEntry() const noexcept { return schemaProvider; }
+    [[nodiscard]] static ExpectedNESTypeArguments getExpectedArguments() { return ExpectedNESTypeArguments{}; }
+    bool operator==(const SinkConfigSchemaFunctor& other) const { return sinkType == other.sinkType; }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters&) const
+    {
+        return NESType{AnonymousSinkNESType{.sinkType = sinkType, .schemaProvider = schemaProvider}}
+            .withTypeTrait(SinkTypeTrait{.sinkType = sinkType});
+    }
+};
+}
+
 NESFunctor makeSinkConfigSchemaFunctor(const std::string_view sinkTypeName, SinkConfigSchemaProviderFn provider)
 {
-    const std::string nameCopy{sinkTypeName};
-    return NESFunctor::nullary<SinkConfigSchemaProviderFn>(
-        std::move(provider),
-        [nameCopy](const SinkConfigSchemaProviderFn& schemaFn) -> std::expected<NESType, Exception>
-        {
-            const auto sinkId = Identifier::parse(nameCopy);
-            return NESType::create<SinkTypeDescriptor, BoundAnonymousSink>(
-                       SinkTypeDescriptor{.sinkType = sinkId, .schemaProvider = schemaFn},
-                       [](const SinkTypeDescriptor& desc, const NESValueParameters& params)
-                           -> std::expected<BoundAnonymousSink, Exception>
-                       {
-                           std::vector<LiteralConfigValue> options;
-                           if (!params.empty())
-                           {
-                               const auto* namedSchema = params.tryGetNamedSchema();
-                               if (namedSchema == nullptr)
-                               {
-                                   return std::unexpected{InvalidQuerySyntax(
-                                       "Sink constructor '{}' requires named config arguments ('val' AS GROUP.KEY)", desc.sinkType)};
-                               }
-                               options.reserve(namedSchema->size());
-                               for (const auto& namedArg : *namedSchema)
-                               {
-                                   auto litExp = nesValueToSinkConfigLiteral(namedArg.getValue());
-                                   if (!litExp.has_value())
-                                   {
-                                       return std::unexpected{std::move(litExp).error()};
-                                   }
-                                   options.emplace_back(namedArg.getFullyQualifiedName(), std::move(*litExp));
-                               }
-                           }
-                           return BoundAnonymousSink{
-                               .sinkType = desc.sinkType,
-                               .configOptions = Schema<LiteralConfigValue, Ordered>{std::move(options)}};
-                       })
-                .withTrait(SinkTypeTrait{.sinkType = sinkId});
-        });
+    return NESFunctor{SinkConfigSchemaFunctor{
+        .sinkType = Identifier::parse(std::string{sinkTypeName}),
+        .schemaProvider = std::move(provider)}};
 }
 
 }

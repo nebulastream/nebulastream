@@ -49,6 +49,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createMul(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& left, const NESType& right);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&MulLogicalFunction::createMul, &MulLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

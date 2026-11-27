@@ -59,6 +59,10 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createUnboundFieldAccess(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return internalLogicalFunctionFunctor<&UnboundFieldAccessLogicalFunction::createUnboundFieldAccess>(NAME);
+    }
 
 private:
     /// For now its unqualified, but when we have aliased relations, this would become an identifier list

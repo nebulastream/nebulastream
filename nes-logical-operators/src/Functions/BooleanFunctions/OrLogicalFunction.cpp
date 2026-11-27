@@ -22,6 +22,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -76,17 +77,22 @@ std::string_view OrLogicalFunction::getType() const
     return NAME;
 }
 
+std::expected<NESType, Exception> OrLogicalFunction::inferResultType(const NESType& left, const NESType& right)
+{
+    if (unwrapOptionalNESType(left).tryGetAs<BooleanType>() == nullptr
+        || unwrapOptionalNESType(right).tryGetAs<BooleanType>() == nullptr)
+    {
+        return std::unexpected{CannotInferStamp("Can only apply Or to two boolean input types")};
+    }
+    return wrapOptionalNESTypeIf(BooleanType::makeNESType(), isOptionalNESType(left) || isOptionalNESType(right));
+}
+
 LogicalFunction OrLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-    if (!copy.left.getDataType().isType(DataType::Type::BOOLEAN) || !copy.right.getDataType().isType(DataType::Type::BOOLEAN))
-    {
-        throw CannotInferStamp("Can only apply or to two boolean input function, but got left: {}, right: {}", copy.left, copy.right);
-    }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.left.getDataType().toNESType(), copy.right.getDataType().toNESType()));
     return copy;
 }
 

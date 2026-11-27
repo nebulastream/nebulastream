@@ -31,11 +31,13 @@ namespace NES
 class ConstantValueVariableSizePhysicalFunction final
 {
 public:
-    explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
+    explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size, bool nullable = false, bool isNull = false);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     std::vector<int8_t> data;
+    bool nullable = false;
+    bool isNull = false;
 };
 
 static_assert(PhysicalFunctionConcept<ConstantValueVariableSizePhysicalFunction>);

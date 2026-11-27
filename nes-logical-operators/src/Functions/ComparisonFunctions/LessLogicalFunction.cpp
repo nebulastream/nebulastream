@@ -22,6 +22,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -56,18 +57,21 @@ DataType LessLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> LessLogicalFunction::inferResultType(const NESType& left, const NESType& right)
+{
+    if (!left.hasTypeTrait<NumericTypeTrait>() || !right.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Can only apply Less to two numeric input types")};
+    }
+    return wrapOptionalNESTypeIf(BooleanType::makeNESType(), isOptionalNESType(left) || isOptionalNESType(right));
+}
+
 LogicalFunction LessLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.left = copy.left.withInferredDataType(schema);
     copy.right = copy.right.withInferredDataType(schema);
-    if (!copy.left.getDataType().isNumeric() or !copy.right.getDataType().isNumeric())
-    {
-        throw CannotInferStamp(
-            "Can only apply less than to two functions with numeric data types, but got left: {}, right: {}", copy.left, copy.right);
-    }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.left.getDataType().toNESType(), copy.right.getDataType().toNESType()));
     return copy;
 };
 

@@ -20,11 +20,11 @@ SINK sinkStream1Stream2 UINT64 stream1stream2$start UINT64 stream1stream2$end UI
 SELECT * FROM (SELECT * FROM stream1)
 INNER JOIN (SELECT * FROM stream2)
   ON key1_s1 == key1_s2 AND key2_s1 == key2_s2
-  WINDOW TUMBLING (ts, size 1 sec)
+  BINARY_WINDOW TUMBLING (ts, size 1 sec)
 INTO sinkStream1Stream2;
 ====
 SELECT * FROM (SELECT * FROM stream1)
 INNER JOIN (SELECT * FROM stream2)
   ON NOT (key1_s1 != key1_s2 OR key2_s1 != key2_s2)
-  WINDOW TUMBLING (ts, size 1 sec)
+  BINARY_WINDOW TUMBLING (ts, size 1 sec)
 INTO sinkStream1Stream2;

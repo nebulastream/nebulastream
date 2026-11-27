@@ -262,7 +262,16 @@ std::string Schema<FieldType, IsOrdered>::createCollisionString(const std::unord
                                 pair.second
                                     | std::views::transform(
                                         [](const FieldType& field) -> std::string
-                                        { return fmt::format("{}:{}", field.getFullyQualifiedName(), field.getDataType()); }),
+                                        {
+                                            if constexpr (requires { field.getDataType(); })
+                                            {
+                                                return fmt::format("{}:{}", field.getFullyQualifiedName(), field.getDataType());
+                                            }
+                                            else
+                                            {
+                                                return fmt::format("{}", field.getFullyQualifiedName());
+                                            }
+                                        }),
                                 ", "));
                     }),
             ", "));

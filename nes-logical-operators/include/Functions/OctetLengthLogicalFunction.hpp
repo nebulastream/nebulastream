@@ -52,6 +52,11 @@ public:
 
     /// NOLINTNEXTLINE(readability-identifier-naming)
     static LogicalFunctionRegistryReturnType createOCTET_LENGTH(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&OctetLengthLogicalFunction::createOCTET_LENGTH, &OctetLengthLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

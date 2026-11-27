@@ -60,6 +60,10 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createFieldAccess(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return internalLogicalFunctionFunctor<&FieldAccessLogicalFunction::createFieldAccess>(NAME);
+    }
 
 private:
     Field field;

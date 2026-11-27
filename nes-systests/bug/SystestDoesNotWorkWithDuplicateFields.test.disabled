@@ -6,7 +6,7 @@
 # TODO #1002
 
 CREATE LOGICAL SOURCE stream(id UINT64);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 1
 2
@@ -16,7 +16,7 @@ ATTACH INLINE
 6
 7
 
-CREATE SINK stream_sink(id UINT64, id UINT64)  TYPE File;
+CREATE SINK stream_sink(id UINT64, id UINT64)  TYPE FileSink;
 
 SELECT id, id FROM stream INTO stream_sink
 ----

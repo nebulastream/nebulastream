@@ -48,6 +48,13 @@ public:
     [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& other) const;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferAggregateType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return aggregationLogicalFunctionFunctor<
+            &MedianAggregationLogicalFunction::create,
+            &MedianAggregationLogicalFunction::inferAggregateType>(NAME);
+    }
 
 private:
     AggregationFieldAccess inputFunction;

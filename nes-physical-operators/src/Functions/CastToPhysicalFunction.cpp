@@ -33,8 +33,12 @@ CastToPhysicalFunction::CastToPhysicalFunction(PhysicalFunction childFunction, D
 
 VarVal CastToPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction.execute(record, arena);
-    return value.castToType(castToType.type);
+    const auto value = childFunction.execute(record, arena).castToType(castToType.type);
+    if (castToType.nullable && !value.isNullable())
+    {
+        return value.customVisit([](const auto& rawVal) { return VarVal{rawVal, true, nautilus::val<bool>{false}}; });
+    }
+    return value;
 }
 
 PhysicalFunctionRegistryReturnType

@@ -20,6 +20,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -48,16 +49,20 @@ std::string CharLengthLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CHAR_LENGTH({})", child.explain(verbosity));
 }
 
+std::expected<NESType, Exception> CharLengthLogicalFunction::inferResultType(const NESType& input)
+{
+    if (unwrapOptionalNESType(input).tryGetAs<VarSizedType>() == nullptr)
+    {
+        return std::unexpected{DifferentFieldTypeExpected("CHAR_LENGTH expects a VARSIZED input")};
+    }
+    return wrapOptionalNESTypeIf(UInt64Type::makeNESType(), isOptionalNESType(input));
+}
+
 LogicalFunction CharLengthLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (not copy.child.getDataType().isType(DataType::Type::VARSIZED))
-    {
-        throw DifferentFieldTypeExpected("CHAR_LENGTH expects a VARSIZED input but got {}", copy.child.getDataType());
-    }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
-    copy.dataType.nullable = copy.child.getDataType().nullable;
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 }
 

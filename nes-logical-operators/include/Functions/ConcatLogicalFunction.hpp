@@ -50,6 +50,11 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createConcat(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& left, const NESType& right);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&ConcatLogicalFunction::createConcat, &ConcatLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

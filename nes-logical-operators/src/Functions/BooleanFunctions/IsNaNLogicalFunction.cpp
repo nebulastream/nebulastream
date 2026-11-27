@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
@@ -53,13 +54,19 @@ std::string IsNaNLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ISNAN({})", child.explain(verbosity));
 }
 
+std::expected<NESType, Exception> IsNaNLogicalFunction::inferResultType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("IS NaN expects a numeric input type")};
+    }
+    return wrapOptionalNESTypeIf(BooleanType::makeNESType(), isOptionalNESType(input));
+}
+
 LogicalFunction IsNaNLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto inferredChild = child.withInferredDataType(schema);
-    if (not inferredChild.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("IS NaN expects a numeric input function but got {}", inferredChild.getDataType());
-    }
+    std::ignore = requireLegacyDataType(inferResultType(inferredChild.getDataType().toNESType()));
 
     /// NaN is the only value that does not compare equal to itself, so IS NaN desugars into NOT(x = x) and needs no physical
     /// function of its own. Comparing against a NaN constant would not work, as every comparison with NaN is false, NaN = NaN
@@ -68,10 +75,12 @@ LogicalFunction IsNaNLogicalFunction::withInferredDataType(const Schema<Field, U
     /// propagate NULL, so the desugared form keeps that behaviour.
     if (inferredChild.getDataType().isInteger())
     {
-        const DataType trueDataType{
-            DataType::Type::BOOLEAN,
-            inferredChild.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE};
-        return ConstantValueLogicalFunction{trueDataType, "false"};
+        auto falseVal = BooleanType::createValue(false);
+        if (inferredChild.getDataType().nullable)
+        {
+            falseVal = OptionalType::make(BooleanType::makeNESType()).construct(NESValueParameters::positional({falseVal})).value();
+        }
+        return ConstantValueLogicalFunction{std::move(falseVal)};
     }
     return NegateLogicalFunction{EqualsLogicalFunction{inferredChild, inferredChild}}.withInferredDataType(schema);
 }

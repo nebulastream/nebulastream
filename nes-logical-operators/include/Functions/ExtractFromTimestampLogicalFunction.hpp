@@ -68,6 +68,30 @@ public:
     /// NOLINTNEXTLINE(readability-identifier-naming)
     static LogicalFunctionRegistryReturnType createYear_Of(LogicalFunctionRegistryArguments arguments);
 
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    [[nodiscard]] static NESFunctor functorDay_Of()
+    {
+        return logicalFunctionFunctor<
+            &ExtractFromTimestampLogicalFunction::createDay_Of,
+            &ExtractFromTimestampLogicalFunction::inferResultType>("Day_Of");
+    }
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    [[nodiscard]] static NESFunctor functorMonth_Of()
+    {
+        return logicalFunctionFunctor<
+            &ExtractFromTimestampLogicalFunction::createMonth_Of,
+            &ExtractFromTimestampLogicalFunction::inferResultType>("Month_Of");
+    }
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    [[nodiscard]] static NESFunctor functorYear_Of()
+    {
+        return logicalFunctionFunctor<
+            &ExtractFromTimestampLogicalFunction::createYear_Of,
+            &ExtractFromTimestampLogicalFunction::inferResultType>("Year_Of");
+    }
+
 private:
     TimestampUnit unit;
     DataType outputType;

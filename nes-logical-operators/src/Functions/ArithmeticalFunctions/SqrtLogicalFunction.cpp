@@ -23,6 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -59,16 +60,20 @@ DataType SqrtLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> SqrtLogicalFunction::inferResultType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Cannot apply sqrt function on non-numeric input type")};
+    }
+    return wrapOptionalNESTypeIf(Float64Type::makeNESType(), isOptionalNESType(input));
+}
+
 LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (!copy.child.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("Cannot apply sqrt function on non-numeric input function {}", copy.child);
-    }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 };
 

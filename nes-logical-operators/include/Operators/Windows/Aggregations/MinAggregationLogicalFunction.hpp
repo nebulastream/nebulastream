@@ -48,6 +48,13 @@ public:
     [[nodiscard]] bool operator==(const MinAggregationLogicalFunction& other) const;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferAggregateType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return aggregationLogicalFunctionFunctor<
+            &MinAggregationLogicalFunction::create,
+            &MinAggregationLogicalFunction::inferAggregateType>(NAME);
+    }
 
 private:
     AggregationFieldAccess inputFunction;

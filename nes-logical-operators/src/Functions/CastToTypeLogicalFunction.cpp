@@ -70,6 +70,7 @@ LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema<Fie
 
     auto copy = *this;
     copy.child = inferredChild;
+    copy.castToType.nullable = copy.castToType.nullable || childDataType.nullable;
     return copy;
 }
 

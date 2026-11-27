@@ -68,7 +68,7 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 {
     SystestParser parser{};
     const std::string sourceIn = "CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64 timestamp);\n"
-                                 "CREATE PHYSICAL SOURCE FOR window TYPE File";
+                                 "CREATE PHYSICAL SOURCE FOR window TYPE FileSource";
 
     bool isCreateCallbackCalled = false;
 
@@ -233,11 +233,11 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
 
     static constexpr std::string_view TestContent = R"(
 CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp INT64);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;
 ATTACH INLINE
 5,1,1000
 
-CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64) TYPE File;
+CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64) TYPE FileSink;
 
 SELECT id * 10 AS id, value, timestamp FROM stream INTO streamSink;
 ====

@@ -1007,4 +1007,38 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     EXPECT_TRUE(TestFilePreparer{config}.prepare(DiscoveredTestFile{file, TestName{"SetupOnly"}}).empty());
 }
 
+TEST_F(TestFilePreparerTest, RewritesNestedModelInferenceAndNestedInlineFileSource)
+{
+    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
+        "CREATE LOGICAL SOURCE stream(x FLOAT32 NOT NULL);\n"
+        "CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;\n"
+        "ATTACH INLINE\n"
+        "1.0\n"
+        "\n"
+        "CREATE MODEL m1 ('model/m1.onnx') INPUT (x FLOAT32) OUTPUT (y FLOAT32);\n"
+        "CREATE MODEL m2 ('model/m2.onnx') INPUT (y FLOAT32) OUTPUT (z FLOAT32);\n"
+        "CREATE SINK result(x FLOAT32 NOT NULL, y FLOAT32 NOT NULL, z FLOAT32 NOT NULL) TYPE FileSink;\n"
+        "\n"
+        "SELECT * FROM MODEL_INFERENCE(m2, MODEL_INFERENCE(m1, stream)) INTO result;\n"
+        "----\n"
+        "1.0,2.0,3.0\n"
+        "\n"
+        "SELECT * FROM MODEL_INFERENCE(m1, FileSource('small/s.csv' AS FILE_SOURCE.FILE_PATH, "
+        "SCHEMA(x FLOAT32 NOT NULL) AS SOURCE.SCHEMA)) INTO FileSink();\n"
+        "----\n"
+        "1.0,2.0\n");
+
+    ASSERT_EQ(queries.size(), 2U);
+    const auto& nestedQuery = std::get<RewrittenQuery>(queries.at(0).action);
+    EXPECT_TRUE(nestedQuery.sql.contains("MODEL_INFERENCE(TESTKEY_M2, MODEL_INFERENCE(TESTKEY_M1, TESTKEY_STREAM))"))
+        << nestedQuery.sql;
+    EXPECT_EQ(nestedQuery.inputFiles.size(), 1U);
+
+    const auto& inlineSourceQuery = std::get<RewrittenQuery>(queries.at(1).action);
+    EXPECT_TRUE(inlineSourceQuery.sql.contains("MODEL_INFERENCE(TESTKEY_M1, FileSource(")) << inlineSourceQuery.sql;
+    EXPECT_TRUE(inlineSourceQuery.sql.contains("'/data/small/s.csv'")) << inlineSourceQuery.sql;
+    EXPECT_TRUE(inlineSourceQuery.sql.contains(R"('localhost:8080' AS "SOURCE"."HOST")")) << inlineSourceQuery.sql;
+    EXPECT_TRUE(inlineSourceQuery.sql.contains(R"('CSV' AS "INPUT_FORMATTER"."TYPE")")) << inlineSourceQuery.sql;
+}
+
 }

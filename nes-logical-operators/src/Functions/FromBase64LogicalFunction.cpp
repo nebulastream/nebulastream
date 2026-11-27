@@ -20,6 +20,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -64,6 +65,15 @@ FromBase64LogicalFunction FromBase64LogicalFunction::withDataType(const DataType
     return copy;
 };
 
+std::expected<NESType, Exception> FromBase64LogicalFunction::inferResultType(const NESType& input)
+{
+    if (unwrapOptionalNESType(input).tryGetAs<VarSizedType>() == nullptr)
+    {
+        return std::unexpected{DifferentFieldTypeExpected("FROM_BASE64 expects a VARSIZED input")};
+    }
+    return wrapOptionalNESTypeIf(VarSizedType::makeNESType(), isOptionalNESType(input));
+}
+
 LogicalFunction FromBase64LogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     std::vector<LogicalFunction> newChildren;
@@ -72,12 +82,7 @@ LogicalFunction FromBase64LogicalFunction::withInferredDataType(const Schema<Fie
         newChildren.push_back(chr.withInferredDataType(schema));
     }
     INVARIANT(newChildren.size() == 1, "FromBase64LogicalFunction expects exactly one child but has {}", newChildren.size());
-    if (not newChildren[0].getDataType().isType(DataType::Type::VARSIZED))
-    {
-        throw DifferentFieldTypeExpected("FROM_BASE64 expects a VARSIZED input but got {}", newChildren[0].getDataType());
-    }
-    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
-    newDataType.nullable = newChildren[0].getDataType().nullable;
+    const auto newDataType = requireLegacyDataType(inferResultType(newChildren[0].getDataType().toNESType()));
     return withDataType(newDataType).withChildren(newChildren);
 };
 

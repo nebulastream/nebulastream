@@ -45,6 +45,13 @@ public:
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferAggregateType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return aggregationLogicalFunctionFunctor<
+            &AvgAggregationLogicalFunction::create,
+            &AvgAggregationLogicalFunction::inferAggregateType>(NAME);
+    }
 
 private:
     AggregationFieldAccess inputFunction;

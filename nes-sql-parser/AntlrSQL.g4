@@ -100,10 +100,10 @@ schemaDefinition: OPEN_PARANTHESIS columnDefinition (COMMA columnDefinition)* CL
 columnDefinition: identifier typeDefinition nullableDefinition?;
 
 typeDefinition
-    : DATA_TYPE                                                                             # builtinTypeDefinition
+    : DATA_TYPE (OPEN_PARANTHESIS typeParameter (COMMA typeParameter)* CLOSE_PARANTHESIS)?  # builtinTypeDefinition
     | identifier (OPEN_PARANTHESIS typeParameter (COMMA typeParameter)* CLOSE_PARANTHESIS)? # customTypeDefinition
     ;
-typeParameter: typeDefinition | configLiteral;
+typeParameter: (typeDefinition | configLiteral) (AS name=qualifiedIdentifier)?;
 
 nullableDefinition: NOT NULL;
 
@@ -309,7 +309,7 @@ nonReserved
     | MS
     ;
 
-qualifiedIdentifier: identifier (DOT (identifier | SCHEMA))*;
+qualifiedIdentifier: (identifier | SCHEMA) (DOT (identifier | SCHEMA))*;
 identifier: IDENTIFIER | nonReserved;
 
 /// Punctuation & Operators

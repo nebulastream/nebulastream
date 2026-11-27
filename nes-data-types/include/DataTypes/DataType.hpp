@@ -29,14 +29,8 @@
 namespace NES
 {
 
-/// Open trait attached to all scalar `NESType`s (both built-in `DataType`s and custom scalar type constructors).
-struct ScalarTypeTrait
-{
-    std::function<std::optional<struct DataType>(const ExplicitAny&)> tryGetDataType;
-};
-
-/// Canonical scalar literal payload carried by scalar constant `NESValue`s.
-using ScalarLiteralValue = std::variant<std::string, int64_t, uint64_t, double, bool, std::monostate>;
+struct ScalarTypeTrait;
+class LegacyDataTypeTrait;
 
 struct DataType final
 {
@@ -145,11 +139,79 @@ struct DataType final
     Type type;
     bool nullable;
 
+    /// Bridges this IR/physical `DataType` into its concrete `NESType` representation (`Int32Type`, `OptionalType{Int32Type}`, etc.).
     [[nodiscard]] NESType toNESType() const;
-    static NESValue makeBooleanValue(bool value);
-    static NESValue makeIntegerValue(int64_t value);
-    static NESFunctor makeRegistryFunctor(std::function<DataType(struct DataTypeRegistryArguments)> factory);
-    static NESFunctor functorOf(DataType::Type type);
+};
+
+/// Open `TypeTrait` marker attached to all scalar/column `NESType`s (satisfying the `ScalarDatatype` type class).
+struct ScalarTypeTrait
+{
+};
+
+/// Concept fulfilled by scalar types that bridge down to the legacy IR/physical `struct DataType`.
+template <typename T>
+concept LegacyDataTypeTraitConcept = (!std::same_as<std::remove_cvref_t<T>, LegacyDataTypeTrait>)
+    && requires(const std::remove_cvref_t<T>& typeTrait, const NESValue& value) {
+           { typeTrait.getDataType() } -> std::same_as<DataType>;
+           { typeTrait.formatConstantValue(value) } -> std::same_as<std::expected<std::optional<std::string>, Exception>>;
+       };
+
+namespace detail
+{
+struct ErasedLegacyDataTypeTrait
+{
+    virtual ~ErasedLegacyDataTypeTrait() = default;
+    [[nodiscard]] virtual DataType getDataType() const = 0;
+    [[nodiscard]] virtual std::expected<std::optional<std::string>, Exception> formatConstantValue(const NESValue& value) const = 0;
+};
+
+template <LegacyDataTypeTraitConcept T>
+struct LegacyDataTypeTraitModel final : ErasedLegacyDataTypeTrait
+{
+    T impl;
+
+    explicit LegacyDataTypeTraitModel(T impl) : impl(std::move(impl)) { }
+
+    [[nodiscard]] DataType getDataType() const override { return impl.getDataType(); }
+
+    [[nodiscard]] std::expected<std::optional<std::string>, Exception> formatConstantValue(const NESValue& value) const override
+    {
+        return impl.formatConstantValue(value);
+    }
+};
+}
+
+/// Open `TypeTrait` wrapper attached only to scalar `NESType`s that lower to a legacy `struct DataType`.
+class LegacyDataTypeTrait
+{
+    std::shared_ptr<const detail::ErasedLegacyDataTypeTrait> self;
+
+public:
+    template <LegacyDataTypeTraitConcept T>
+    explicit LegacyDataTypeTrait(T typeTraitImpl)
+        : self(std::make_shared<detail::LegacyDataTypeTraitModel<std::remove_cvref_t<T>>>(std::move(typeTraitImpl)))
+    {
+    }
+
+    static LegacyDataTypeTrait forDataType(DataType dataType);
+
+    template <typename T>
+    [[nodiscard]] const std::remove_cvref_t<T>* tryGetAs() const noexcept
+    {
+        using CleanT = std::remove_cvref_t<T>;
+        if (const auto* model = dynamic_cast<const detail::LegacyDataTypeTraitModel<CleanT>*>(self.get()))
+        {
+            return &model->impl;
+        }
+        return nullptr;
+    }
+
+    [[nodiscard]] DataType getDataType() const { return self->getDataType(); }
+
+    [[nodiscard]] std::expected<std::optional<std::string>, Exception> formatConstantValue(const NESValue& value) const
+    {
+        return self->formatConstantValue(value);
+    }
 };
 
 template <>

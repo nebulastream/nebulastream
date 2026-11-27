@@ -52,6 +52,13 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createCastToUnixTs(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<
+            &CastToUnixTimestampLogicalFunction::createCastToUnixTs,
+            &CastToUnixTimestampLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType outputType;

@@ -50,6 +50,10 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createCastToType(const LogicalFunctionRegistryArguments& arguments);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return internalLogicalFunctionFunctor<&CastToTypeLogicalFunction::createCastToType>(NAME);
+    }
 
 private:
     DataType castToType;

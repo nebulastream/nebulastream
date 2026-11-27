@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <expected>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -24,6 +25,7 @@
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Types/NESType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -32,16 +34,22 @@
 namespace NES
 {
 
-/// This function node represents a constant value and a fixed data type.
-/// Thus, the dataType of this function is always fixed.
+/// Represents a constant scalar value in the logical expression tree, wrapping a `NESValue` whose `NESType`
+/// satisfies the `ScalarDatatype` type class.
 class ConstantValueLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "ConstantValue";
 
-    ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString);
+    explicit ConstantValueLogicalFunction(NESValue value);
+    ConstantValueLogicalFunction(DataType dataType, std::string_view constantValueAsString, bool isNull = false);
 
+    [[nodiscard]] static std::expected<ConstantValueLogicalFunction, Exception> tryCreate(NESValue value);
+    [[nodiscard]] static ConstantValueLogicalFunction createNull(DataType dataType);
+
+    [[nodiscard]] const NESValue& getValue() const noexcept;
     [[nodiscard]] std::string getConstantValue() const;
+    [[nodiscard]] bool isNullValue() const noexcept;
 
     [[nodiscard]] bool operator==(const ConstantValueLogicalFunction& rhs) const;
 
@@ -56,10 +64,13 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     static LogicalFunctionRegistryReturnType createConstantValue(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return internalLogicalFunctionFunctor<&ConstantValueLogicalFunction::createConstantValue>(NAME);
+    }
 
 private:
-    const std::string constantValue;
-    DataType dataType;
+    NESValue value;
 };
 
 template <>
@@ -83,6 +94,7 @@ struct ReflectedConstantValueLogicalFunction
 {
     std::string value;
     DataType dataType;
+    bool isNull = false;
 };
 }
 

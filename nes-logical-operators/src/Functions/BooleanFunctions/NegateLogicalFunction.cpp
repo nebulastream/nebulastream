@@ -20,6 +20,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -49,15 +50,20 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
+std::expected<NESType, Exception> NegateLogicalFunction::inferResultType(const NESType& input)
+{
+    if (unwrapOptionalNESType(input).tryGetAs<BooleanType>() == nullptr)
+    {
+        return std::unexpected{CannotInferSchema("Negate Function Node: the dataType of child must be boolean")};
+    }
+    return input;
+}
+
 LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (not copy.child.getDataType().isType(DataType::Type::BOOLEAN))
-    {
-        throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", copy.child.getDataType());
-    }
-    copy.dataType = copy.child.getDataType();
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 }
 

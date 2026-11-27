@@ -46,6 +46,8 @@ struct AggregationLogicalFunctionRegistryArguments
 using AggregationLogicalFunctionFn
     = std::function<AggregationLogicalFunctionRegistryReturnType(AggregationLogicalFunctionRegistryArguments)>;
 
+using AggregationTypeInferenceFn = std::expected<NESType, Exception> (*)(const NESType&);
+
 /// Marker value representing `(*)` in SQL function calls such as `COUNT(*)`.
 struct AsteriskTag
 {
@@ -93,6 +95,20 @@ public:
     static std::vector<NamedNESParametrizedTypeClass> getParametrizedTypeClasses();
 };
 
-NESFunctor makeAggregationLogicalFunctionFunctor(std::string_view key, AggregationLogicalFunctionFn factory);
+namespace detail
+{
+[[nodiscard]] NESFunctor makeAggregationLogicalFunctionFunctorImpl(
+    std::string_view key,
+    AggregationLogicalFunctionFn factory,
+    AggregationTypeInferenceFn inferAggregateType);
+}
+
+template <auto CreateFn, auto InferAggregateFn>
+[[nodiscard]] NESFunctor aggregationLogicalFunctionFunctor(std::string_view name)
+{
+    static const NESFunctor instance = detail::makeAggregationLogicalFunctionFunctorImpl(
+        name, AggregationLogicalFunctionFn{CreateFn}, AggregationTypeInferenceFn{InferAggregateFn});
+    return instance;
+}
 
 }

@@ -29,3 +29,4 @@ add_nes_logical_operators_test(nes-join-logical-operator-test "JoinLogicalOperat
 add_nes_logical_operators_test(aggregation-input-type-test "AggregationInputTypeTest.cpp")
 
 add_nes_logical_operators_test(nes-type-system-test "NESTypeSystemTest.cpp")
+target_link_libraries(nes-type-system-test nes-query-compiler nes-query-optimizer)

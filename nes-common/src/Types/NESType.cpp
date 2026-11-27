@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <expected>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -39,63 +38,99 @@
 namespace NES
 {
 
+namespace detail
+{
+struct NESValueImpl
+{
+    NESType type;
+    ExplicitAny internalRepresentation;
+};
+}
+
 namespace
 {
-struct AnyTypeClassTag
+struct AnyNESTypeClass
 {
-    bool operator==(const AnyTypeClassTag&) const = default;
+    bool operator==(const AnyNESTypeClass&) const = default;
+    [[nodiscard]] static bool validate(const NESType&) { return true; }
 };
 
-struct ConjunctionTypeClassDescriptor
-{
-    NESTypeClass left;
-    NESTypeClass right;
-    bool operator==(const ConjunctionTypeClassDescriptor&) const = default;
-};
-
-struct DisjunctionTypeClassDescriptor
+struct ConjunctionNESTypeClass
 {
     NESTypeClass left;
     NESTypeClass right;
-    bool operator==(const DisjunctionTypeClassDescriptor&) const = default;
+    bool operator==(const ConjunctionNESTypeClass&) const = default;
+
+    [[nodiscard]] bool validate(const NESType& type) const { return left.validate(type) && right.validate(type); }
 };
 
-struct ConstantParametrizedTypeClassDescriptor
+struct DisjunctionNESTypeClass
+{
+    NESTypeClass left;
+    NESTypeClass right;
+    bool operator==(const DisjunctionNESTypeClass&) const = default;
+
+    [[nodiscard]] bool validate(const NESType& type) const { return left.validate(type) || right.validate(type); }
+};
+
+struct ConstantNESParametrizedTypeClass
 {
     NESTypeClass constantClass;
-    bool operator==(const ConstantParametrizedTypeClassDescriptor&) const = default;
+    bool operator==(const ConstantNESParametrizedTypeClass&) const = default;
+
+    [[nodiscard]] std::expected<NESTypeClass, Exception> instantiate(const NESTypeClassParameters& params) const
+    {
+        if (!params.empty())
+        {
+            return std::unexpected{
+                TypeInferenceException("Unparameterized type class expects 0 arguments, but got {}", params.size())};
+        }
+        return constantClass;
+    }
 };
+
+template <typename FieldT>
+std::optional<QualifiedIdentifier> findDuplicateFieldName(const Schema<FieldT, Ordered>& schema)
+{
+    std::unordered_set<QualifiedIdentifier> seen;
+    seen.reserve(schema.size());
+    for (const auto& field : schema)
+    {
+        if (!seen.insert(field.getFullyQualifiedName()).second)
+        {
+            return field.getFullyQualifiedName();
+        }
+    }
+    return std::nullopt;
+}
+
+template <typename FieldT>
+std::optional<FieldT> findExactNamedField(const Schema<FieldT, Ordered>& schema, const QualifiedIdentifier& formalName)
+{
+    for (const auto& field : schema)
+    {
+        if (field.getFullyQualifiedName() == formalName)
+        {
+            return field;
+        }
+    }
+    return std::nullopt;
+}
 }
 
 /// --- NESType & NamedNESType ---
 
-NESType::NESType(std::shared_ptr<const detail::NESTypeImpl> impl) : impl(std::move(impl))
-{
-    PRECONDITION(this->impl != nullptr, "NESType implementation pointer must not be null");
-}
-
 NESType::NESType(
-    ExplicitAny typeDescriptor,
-    detail::NESTypeImpl::RawValueConstructor valueConstructor,
-    detail::NESTypeImpl::RawBinaryPred typeEquals,
-    detail::NESTypeImpl::RawBinaryPred valueEquals)
-    : impl(std::make_shared<detail::NESTypeImpl>(detail::NESTypeImpl{
-          .typeDescriptor = std::move(typeDescriptor),
-          .traits = {},
-          .valueConstructor = std::move(valueConstructor),
-          .typeEquals = std::move(typeEquals),
-          .valueEquals = std::move(valueEquals)}))
+    std::shared_ptr<const detail::ErasedNESType> self,
+    std::shared_ptr<const detail::TypeTraitMap> typeTraits)
+    : self(std::move(self)), typeTraits(std::move(typeTraits))
 {
-}
-
-NESType::NESType(NamedNESType namedType)
-    : NESType(NESType::createUnconstructible<NamedNESType>(std::move(namedType)))
-{
+    PRECONDITION(this->self != nullptr, "NESType implementation pointer must not be null");
 }
 
 std::expected<NESValue, Exception> NESType::construct(const NESValueParameters& params) const
 {
-    return impl->valueConstructor(impl->typeDescriptor, params)
+    return self->constructRaw(params)
         .transform([this](ExplicitAny&& representation) { return NESValue{*this, std::move(representation)}; });
 }
 
@@ -106,21 +141,16 @@ std::expected<NESValue, Exception> NESType::construct() const
 
 bool NESType::operator==(const NESType& other) const
 {
-    if (impl == other.impl)
+    if (self == other.self)
     {
         return true;
     }
-    return impl->typeEquals(impl->typeDescriptor, other.impl->typeDescriptor);
+    return self->equals(*other.self);
 }
 
 bool NESType::equalsValue(const ExplicitAny& lhs, const ExplicitAny& rhs) const
 {
-    return impl->valueEquals(lhs, rhs);
-}
-
-const ExplicitAny& NESType::getDescriptor() const
-{
-    return impl->typeDescriptor;
+    return self->equalsValue(lhs, rhs);
 }
 
 NamedNESType::NamedNESType(QualifiedIdentifier name, NESType underlying)
@@ -151,23 +181,29 @@ std::ostream& operator<<(std::ostream& os, const NamedNESType& obj)
 /// --- NESValue, NamedNESValue & NESValueParameters ---
 
 NESValue::NESValue(NESType type, ExplicitAny internalRepresentation)
-    : type(std::move(type)), internalRepresentation(std::move(internalRepresentation))
+    : impl(std::make_shared<detail::NESValueImpl>(detail::NESValueImpl{
+          .type = std::move(type),
+          .internalRepresentation = std::move(internalRepresentation)}))
 {
 }
 
 const ExplicitAny& NESValue::getInternalRepresentation() const
 {
-    return internalRepresentation;
+    return impl->internalRepresentation;
 }
 
 const NESType& NESValue::getType() const
 {
-    return type;
+    return impl->type;
 }
 
 bool NESValue::operator==(const NESValue& other) const
 {
-    return type == other.type && type.equalsValue(internalRepresentation, other.internalRepresentation);
+    if (impl == other.impl)
+    {
+        return true;
+    }
+    return impl->type == other.impl->type && impl->type.equalsValue(impl->internalRepresentation, other.impl->internalRepresentation);
 }
 
 NamedNESValue::NamedNESValue(QualifiedIdentifier name, NESValue value)
@@ -270,46 +306,6 @@ const std::vector<NESValue>* NESValueParameters::tryGetPositional() const noexce
     return std::get_if<std::vector<NESValue>>(&storage);
 }
 
-std::expected<Schema<NamedNESValue, Ordered>, Exception>
-NESValueParameters::bindAgainst(const std::span<const QualifiedIdentifier> formalNames) const
-{
-    if (const auto* pos = std::get_if<std::vector<NESValue>>(&storage))
-    {
-        if (pos->size() != formalNames.size())
-        {
-            return std::unexpected{
-                InvalidQuerySyntax("Expected {} argument(s), but got {}", formalNames.size(), pos->size())};
-        }
-        std::vector<NamedNESValue> bound;
-        bound.reserve(formalNames.size());
-        for (size_t i = 0; i < formalNames.size(); ++i)
-        {
-            bound.emplace_back(formalNames[i], (*pos)[i]);
-        }
-        return Schema<NamedNESValue, Ordered>{std::move(bound)};
-    }
-
-    const auto& namedSchema = std::get<Schema<NamedNESValue, Ordered>>(storage);
-    if (namedSchema.size() != formalNames.size())
-    {
-        return std::unexpected{
-            InvalidQuerySyntax("Expected {} named argument(s), but got {}", formalNames.size(), namedSchema.size())};
-    }
-
-    std::vector<NamedNESValue> orderedBound;
-    orderedBound.reserve(formalNames.size());
-    for (const auto& formalName : formalNames)
-    {
-        const auto found = namedSchema.getFieldByName(formalName);
-        if (!found.has_value())
-        {
-            return std::unexpected{InvalidQuerySyntax("Missing required argument '{}'", formalName)};
-        }
-        orderedBound.emplace_back(formalName, found->getValue());
-    }
-    return Schema<NamedNESValue, Ordered>{std::move(orderedBound)};
-}
-
 /// --- NamedNESTypeParameter & NESTypeParameters ---
 
 NamedNESTypeParameter::NamedNESTypeParameter(QualifiedIdentifier name, NESType type)
@@ -332,7 +328,17 @@ NamedNESTypeParameter::NamedNESTypeParameter(NESValue val, QualifiedIdentifier n
 {
 }
 
-NamedNESTypeParameter::NamedNESTypeParameter(QualifiedIdentifier name, std::variant<NESType, NESValue> param)
+NamedNESTypeParameter::NamedNESTypeParameter(QualifiedIdentifier name, NESFunctor functor)
+    : value(std::move(functor)), name(std::move(name))
+{
+}
+
+NamedNESTypeParameter::NamedNESTypeParameter(NESFunctor functor, QualifiedIdentifier name)
+    : value(std::move(functor)), name(std::move(name))
+{
+}
+
+NamedNESTypeParameter::NamedNESTypeParameter(QualifiedIdentifier name, Element param)
     : value(std::move(param)), name(std::move(name))
 {
 }
@@ -352,6 +358,11 @@ bool NamedNESTypeParameter::isValue() const noexcept
     return std::holds_alternative<NESValue>(value);
 }
 
+bool NamedNESTypeParameter::isFunctor() const noexcept
+{
+    return std::holds_alternative<NESFunctor>(value);
+}
+
 const NESType* NamedNESTypeParameter::tryGetType() const noexcept
 {
     return std::get_if<NESType>(&value);
@@ -362,7 +373,12 @@ const NESValue* NamedNESTypeParameter::tryGetValue() const noexcept
     return std::get_if<NESValue>(&value);
 }
 
-const std::variant<NESType, NESValue>& NamedNESTypeParameter::getUnderlying() const noexcept
+const NESFunctor* NamedNESTypeParameter::tryGetFunctor() const noexcept
+{
+    return std::get_if<NESFunctor>(&value);
+}
+
+const NamedNESTypeParameter::Element& NamedNESTypeParameter::getUnderlying() const noexcept
 {
     return value;
 }
@@ -407,6 +423,17 @@ NESTypeParameters NESTypeParameters::fromValues(std::vector<NESValue> values)
     for (auto& val : values)
     {
         elements.emplace_back(std::move(val));
+    }
+    return NESTypeParameters{std::move(elements)};
+}
+
+NESTypeParameters NESTypeParameters::fromFunctors(std::vector<NESFunctor> functors)
+{
+    std::vector<Element> elements;
+    elements.reserve(functors.size());
+    for (auto& functor : functors)
+    {
+        elements.emplace_back(std::move(functor));
     }
     return NESTypeParameters{std::move(elements)};
 }
@@ -474,6 +501,18 @@ std::optional<NESValue> NESTypeParameters::getValueAt(const size_t index) const
     return std::nullopt;
 }
 
+std::optional<NESFunctor> NESTypeParameters::getFunctorAt(const size_t index) const
+{
+    if (const auto elem = at(index); elem.has_value())
+    {
+        if (const auto* functor = std::get_if<NESFunctor>(&*elem))
+        {
+            return *functor;
+        }
+    }
+    return std::nullopt;
+}
+
 std::optional<NamedNESTypeParameter> NESTypeParameters::getByName(const QualifiedIdentifier& name) const
 {
     if (const auto* namedSchema = std::get_if<Schema<NamedNESTypeParameter, Ordered>>(&storage))
@@ -501,44 +540,23 @@ std::optional<NESValue> NESTypeParameters::getValueByName(const QualifiedIdentif
     return std::nullopt;
 }
 
-std::expected<Schema<NamedNESTypeParameter, Ordered>, Exception>
-NESTypeParameters::bindAgainst(const std::span<const QualifiedIdentifier> formalNames) const
+std::optional<NESFunctor> NESTypeParameters::getFunctorByName(const QualifiedIdentifier& name) const
 {
-    if (const auto* pos = std::get_if<std::vector<Element>>(&storage))
+    if (const auto found = getByName(name); found.has_value() && found->isFunctor())
     {
-        if (pos->size() != formalNames.size())
-        {
-            return std::unexpected{
-                TypeInferenceException("Expected {} type argument(s), but got {}", formalNames.size(), pos->size())};
-        }
-        std::vector<NamedNESTypeParameter> bound;
-        bound.reserve(formalNames.size());
-        for (size_t i = 0; i < formalNames.size(); ++i)
-        {
-            bound.emplace_back(formalNames[i], (*pos)[i]);
-        }
-        return Schema<NamedNESTypeParameter, Ordered>{std::move(bound)};
+        return *found->tryGetFunctor();
     }
+    return std::nullopt;
+}
 
-    const auto& namedSchema = std::get<Schema<NamedNESTypeParameter, Ordered>>(storage);
-    if (namedSchema.size() != formalNames.size())
-    {
-        return std::unexpected{
-            TypeInferenceException("Expected {} named type argument(s), but got {}", formalNames.size(), namedSchema.size())};
-    }
+const Schema<NamedNESTypeParameter, Ordered>* NESTypeParameters::tryGetNamedSchema() const noexcept
+{
+    return std::get_if<Schema<NamedNESTypeParameter, Ordered>>(&storage);
+}
 
-    std::vector<NamedNESTypeParameter> orderedBound;
-    orderedBound.reserve(formalNames.size());
-    for (const auto& formalName : formalNames)
-    {
-        const auto found = namedSchema.getFieldByName(formalName);
-        if (!found.has_value())
-        {
-            return std::unexpected{TypeInferenceException("Missing required type argument '{}'", formalName)};
-        }
-        orderedBound.push_back(*found);
-    }
-    return Schema<NamedNESTypeParameter, Ordered>{std::move(orderedBound)};
+const std::vector<NESTypeParameters::Element>* NESTypeParameters::tryGetPositional() const noexcept
+{
+    return std::get_if<std::vector<Element>>(&storage);
 }
 
 bool NESTypeParameters::operator==(const NESTypeParameters& other) const
@@ -548,45 +566,33 @@ bool NESTypeParameters::operator==(const NESTypeParameters& other) const
 
 /// --- NESTypeClass & Parameterized Type Classes ---
 
-NESTypeClass::NESTypeClass(
-    ExplicitAny typeClassDescriptor,
-    std::function<bool(const ExplicitAny&, const NESType&)> predicate,
-    std::function<bool(const ExplicitAny&, const ExplicitAny&)> typeClassEquals)
-    : typeClassDescriptor(std::move(typeClassDescriptor))
-    , predicate(std::move(predicate))
-    , typeClassEquals(std::move(typeClassEquals))
-{
-}
-
 NESTypeClass NESTypeClass::any()
 {
-    return NESTypeClass{AnyTypeClassTag{}, [](const AnyTypeClassTag&, const NESType&) { return true; }};
+    return NESTypeClass{AnyNESTypeClass{}};
 }
 
 bool NESTypeClass::validate(const NESType& type) const
 {
-    return predicate(typeClassDescriptor, type);
+    return self->validate(type);
 }
 
 bool NESTypeClass::operator==(const NESTypeClass& other) const
 {
-    return typeClassEquals(typeClassDescriptor, other.typeClassDescriptor);
+    if (self == other.self)
+    {
+        return true;
+    }
+    return self->equals(*other.self);
 }
 
 NESTypeClass operator&&(const NESTypeClass& lhs, const NESTypeClass& rhs)
 {
-    return NESTypeClass{
-        ConjunctionTypeClassDescriptor{.left = lhs, .right = rhs},
-        [](const ConjunctionTypeClassDescriptor& desc, const NESType& type)
-        { return desc.left.validate(type) && desc.right.validate(type); }};
+    return NESTypeClass{ConjunctionNESTypeClass{.left = lhs, .right = rhs}};
 }
 
 NESTypeClass operator||(const NESTypeClass& lhs, const NESTypeClass& rhs)
 {
-    return NESTypeClass{
-        DisjunctionTypeClassDescriptor{.left = lhs, .right = rhs},
-        [](const DisjunctionTypeClassDescriptor& desc, const NESType& type)
-        { return desc.left.validate(type) || desc.right.validate(type); }};
+    return NESTypeClass{DisjunctionNESTypeClass{.left = lhs, .right = rhs}};
 }
 
 NamedNESTypeClass::NamedNESTypeClass(QualifiedIdentifier name, NESTypeClass typeClass)
@@ -640,23 +646,17 @@ size_t NESTypeClassParameters::size() const noexcept
 
 NESParametrizedTypeClass NESParametrizedTypeClass::constant(NESTypeClass constantTypeClass)
 {
-    return NESParametrizedTypeClass{
-        ConstantParametrizedTypeClassDescriptor{.constantClass = std::move(constantTypeClass)},
-        [](const ConstantParametrizedTypeClassDescriptor& desc, const NESTypeClassParameters& params)
-            -> std::expected<NESTypeClass, Exception>
-        {
-            if (!params.empty())
-            {
-                return std::unexpected{TypeInferenceException(
-                    "Unparameterized type class expects 0 arguments, but got {}", params.size())};
-            }
-            return desc.constantClass;
-        }};
+    return NESParametrizedTypeClass{ConstantNESParametrizedTypeClass{.constantClass = std::move(constantTypeClass)}};
 }
 
 std::expected<NESTypeClass, Exception> NESParametrizedTypeClass::instantiate(const NESTypeClassParameters& params) const
 {
-    return typeClassConstructor(structure, params);
+    return self->instantiate(params);
+}
+
+const std::optional<ExpectedNESTypeArguments>& NESParametrizedTypeClass::getExpectedArguments() const noexcept
+{
+    return self->getExpectedArguments();
 }
 
 NESTypeClass NESParametrizedTypeClass::unparametrized() const
@@ -668,7 +668,11 @@ NESTypeClass NESParametrizedTypeClass::unparametrized() const
 
 bool NESParametrizedTypeClass::operator==(const NESParametrizedTypeClass& other) const
 {
-    return structureEquals(structure, other.structure);
+    if (self == other.self)
+    {
+        return true;
+    }
+    return self->equals(*other.self);
 }
 
 NamedNESParametrizedTypeClass::NamedNESParametrizedTypeClass(QualifiedIdentifier name, NESParametrizedTypeClass underlying)
@@ -696,6 +700,11 @@ std::expected<NESTypeClass, Exception> NamedNESParametrizedTypeClass::instantiat
     return underlying.instantiate(params);
 }
 
+const std::optional<ExpectedNESTypeArguments>& NamedNESParametrizedTypeClass::getExpectedArguments() const noexcept
+{
+    return underlying.getExpectedArguments();
+}
+
 NESTypeClass NamedNESParametrizedTypeClass::unparametrized() const
 {
     return underlying.unparametrized();
@@ -711,35 +720,270 @@ std::ostream& operator<<(std::ostream& os, const NamedNESParametrizedTypeClass& 
     return os << fmt::format("NamedNESParametrizedTypeClass({})", obj.name);
 }
 
-/// --- ExpectedNESTypeArguments ---
+/// --- NESParameterId, NESTypeParameter, ExpectedNESTypeArguments & ExpectedNESValueArguments ---
 
-std::ostream& operator<<(std::ostream& os, const ExpectedNESTypeParameter& obj)
+/// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) - a parameter instance's identity is its address
+NESParameterId::NESParameterId(const NESTypeParameter& param) noexcept
+    : parameterAddress(reinterpret_cast<uintptr_t>(std::addressof(param)))
 {
-    return os << fmt::format("ExpectedNESTypeParameter({})", obj.name);
 }
 
-ExpectedNESTypeArguments::ExpectedNESTypeArguments(Schema<ExpectedNESTypeParameter, Ordered> expectedParameters)
+/// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) - a parameter instance's identity is its address
+NESParameterId::NESParameterId(const NESOptionalTypeParameter& param) noexcept
+    : parameterAddress(reinterpret_cast<uintptr_t>(std::addressof(param)))
+{
+}
+
+/// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) - a parameter instance's identity is its address
+NESParameterId::NESParameterId(const NESFunctorParameter& param) noexcept
+    : parameterAddress(reinterpret_cast<uintptr_t>(std::addressof(param)))
+{
+}
+
+/// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) - a parameter instance's identity is its address
+NESParameterId::NESParameterId(const NESOptionalFunctorParameter& param) noexcept
+    : parameterAddress(reinterpret_cast<uintptr_t>(std::addressof(param)))
+{
+}
+
+std::ostream& operator<<(std::ostream& os, const NESParameterId& id)
+{
+    return os << fmt::format("NESParameterId(0x{:x})", id.parameterAddress);
+}
+
+NESTypeParameter::NESTypeParameter(Identifier name, std::string description, NESTypeClass constraint)
+    : name(std::move(name))
+    , description(std::move(description))
+    , constraintSupplier([c = std::move(constraint)] { return c; })
+    , defaultSupplier(std::nullopt)
+{
+}
+
+NESTypeParameter::NESTypeParameter(Identifier name, std::string description, std::function<NESTypeClass()> constraintSupplier)
+    : name(std::move(name))
+    , description(std::move(description))
+    , constraintSupplier(std::move(constraintSupplier))
+    , defaultSupplier(std::nullopt)
+{
+}
+
+NESTypeParameter::NESTypeParameter(Identifier name, std::string description, NESTypeClass constraint, NESType defaultType)
+    : name(std::move(name))
+    , description(std::move(description))
+    , constraintSupplier([c = std::move(constraint)] { return c; })
+    , defaultSupplier([d = std::move(defaultType)] { return d; })
+{
+}
+
+NESTypeParameter::NESTypeParameter(
+    Identifier name,
+    std::string description,
+    std::function<NESTypeClass()> constraintSupplier,
+    std::function<NESType()> defaultSupplier)
+    : name(std::move(name))
+    , description(std::move(description))
+    , constraintSupplier(std::move(constraintSupplier))
+    , defaultSupplier(std::move(defaultSupplier))
+{
+}
+
+NESOptionalTypeParameter::NESOptionalTypeParameter(Identifier name, std::string description, NESTypeClass constraint)
+    : name(std::move(name))
+    , description(std::move(description))
+    , constraintSupplier([c = std::move(constraint)] { return c; })
+{
+}
+
+NESOptionalTypeParameter::NESOptionalTypeParameter(
+    Identifier name, std::string description, std::function<NESTypeClass()> constraintSupplier)
+    : name(std::move(name))
+    , description(std::move(description))
+    , constraintSupplier(std::move(constraintSupplier))
+{
+}
+
+NESFunctorParameter::NESFunctorParameter(Identifier name, std::string description)
+    : name(std::move(name))
+    , description(std::move(description))
+    , validator([](const NESFunctor& f) -> std::expected<NESFunctor, Exception> { return f; })
+    , defaultSupplier(std::nullopt)
+{
+}
+
+NESFunctorParameter::NESFunctorParameter(
+    Identifier name,
+    std::string description,
+    std::function<std::expected<NESFunctor, Exception>(const NESFunctor&)> validator)
+    : name(std::move(name))
+    , description(std::move(description))
+    , validator(std::move(validator))
+    , defaultSupplier(std::nullopt)
+{
+}
+
+NESFunctorParameter::NESFunctorParameter(Identifier name, std::string description, NESFunctor defaultFunctor)
+    : name(std::move(name))
+    , description(std::move(description))
+    , validator([](const NESFunctor& f) -> std::expected<NESFunctor, Exception> { return f; })
+    , defaultSupplier([d = std::move(defaultFunctor)] { return d; })
+{
+}
+
+NESFunctorParameter::NESFunctorParameter(Identifier name, std::string description, std::function<NESFunctor()> defaultSupplier)
+    : name(std::move(name))
+    , description(std::move(description))
+    , validator([](const NESFunctor& f) -> std::expected<NESFunctor, Exception> { return f; })
+    , defaultSupplier(std::move(defaultSupplier))
+{
+}
+
+NESOptionalFunctorParameter::NESOptionalFunctorParameter(Identifier name, std::string description)
+    : name(std::move(name))
+    , description(std::move(description))
+    , validator([](const NESFunctor& f) -> std::expected<NESFunctor, Exception> { return f; })
+{
+}
+
+NESOptionalFunctorParameter::NESOptionalFunctorParameter(
+    Identifier name,
+    std::string description,
+    std::function<std::expected<NESFunctor, Exception>(const NESFunctor&)> validator)
+    : name(std::move(name))
+    , description(std::move(description))
+    , validator(std::move(validator))
+{
+}
+
+QualifiedErasedNESTypeParameter::QualifiedErasedNESTypeParameter(
+    QualifiedIdentifier name,
+    const NESParameterId originalParameterId,
+    const Kind kind,
+    std::function<NESTypeClass()> constraintSupplier,
+    std::function<std::expected<ExplicitAny, Exception>(const NESTypeParameters::Element&)> factory,
+    std::optional<std::function<ExplicitAny()>> defaultSupplier,
+    const bool optionalWithoutDefault,
+    std::string description)
+    : name(std::move(name))
+    , originalParameterId(originalParameterId)
+    , kind(kind)
+    , constraintSupplier(std::move(constraintSupplier))
+    , factory(std::move(factory))
+    , defaultSupplier(std::move(defaultSupplier))
+    , optionalWithoutDefault(optionalWithoutDefault)
+    , description(std::move(description))
+{
+}
+
+ExplicitAny QualifiedErasedNESTypeParameter::getDefault() const
+{
+    PRECONDITION(defaultSupplier.has_value(), "Parameter '{}' has no default supplier", name);
+    return (*defaultSupplier)();
+}
+
+std::expected<ExplicitAny, Exception> QualifiedErasedNESTypeParameter::apply(const NESTypeParameters::Element& arg) const
+{
+    return factory(arg);
+}
+
+bool QualifiedErasedNESTypeParameter::operator==(const QualifiedErasedNESTypeParameter& other) const noexcept
+{
+    return name == other.name && originalParameterId == other.originalParameterId && kind == other.kind
+        && optionalWithoutDefault == other.optionalWithoutDefault;
+}
+
+std::ostream& operator<<(std::ostream& os, const QualifiedErasedNESTypeParameter& obj)
+{
+    return os << fmt::format("QualifiedErasedNESTypeParameter({})", obj.name);
+}
+
+InstantiatedNESTypeParameter::InstantiatedNESTypeParameter(
+    QualifiedIdentifier name, const NESParameterId originalParameterId, ExplicitAny value)
+    : name(std::move(name)), originalParameterId(originalParameterId), value(std::move(value))
+{
+    PRECONDITION(this->value.hasValue(), "InstantiatedNESTypeParameter '{}' must hold a value", this->name);
+}
+
+bool InstantiatedNESTypeParameter::operator==(const InstantiatedNESTypeParameter& other) const noexcept
+{
+    return name == other.name && originalParameterId == other.originalParameterId;
+}
+
+std::ostream& operator<<(std::ostream& os, const InstantiatedNESTypeParameter& obj)
+{
+    return os << fmt::format("InstantiatedNESTypeParameter({})", obj.name);
+}
+
+InstantiatedNESTypeParameters::InstantiatedNESTypeParameters(const Schema<InstantiatedNESTypeParameter, Ordered>& entries)
+{
+    values.reserve(entries.size());
+    for (const auto& entry : entries)
+    {
+        values.emplace(entry.getOriginalParameterId(), entry.getErasedValue());
+    }
+}
+
+const ExplicitAny* InstantiatedNESTypeParameters::findRaw(const NESParameterId id) const noexcept
+{
+    if (const auto it = values.find(id); it != values.end())
+    {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+NESType InstantiatedNESTypeParameters::get(const NESTypeParameter& param) const
+{
+    const auto* raw = findRaw(NESParameterId{param});
+    PRECONDITION(raw != nullptr, "Could not find instantiated type for parameter '{}'", param.getName());
+    return raw->getAs<NESType>();
+}
+
+std::optional<NESType> InstantiatedNESTypeParameters::get(const NESOptionalTypeParameter& param) const
+{
+    if (const auto* raw = findRaw(NESParameterId{param}))
+    {
+        return raw->getAs<NESType>();
+    }
+    return std::nullopt;
+}
+
+NESFunctor InstantiatedNESTypeParameters::get(const NESFunctorParameter& param) const
+{
+    const auto* raw = findRaw(NESParameterId{param});
+    PRECONDITION(raw != nullptr, "Could not find instantiated functor for parameter '{}'", param.getName());
+    return raw->getAs<NESFunctor>();
+}
+
+std::optional<NESFunctor> InstantiatedNESTypeParameters::get(const NESOptionalFunctorParameter& param) const
+{
+    if (const auto* raw = findRaw(NESParameterId{param}))
+    {
+        return raw->getAs<NESFunctor>();
+    }
+    return std::nullopt;
+}
+
+ExpectedNESTypeArguments::ExpectedNESTypeArguments(Schema<QualifiedErasedNESTypeParameter, Ordered> expectedParameters)
     : expectedParameters(std::move(expectedParameters))
 {
+    bool seenOptional = false;
+    for (const auto& param : this->expectedParameters)
+    {
+        if (param.isOptional())
+        {
+            seenOptional = true;
+        }
+        else
+        {
+            PRECONDITION(
+                !seenOptional,
+                "Required functor parameter '{}' cannot follow an optional parameter",
+                param.getFullyQualifiedName());
+        }
+    }
 }
 
-ExpectedNESTypeArguments::ExpectedNESTypeArguments(const Schema<NamedNESTypeClass, Ordered>& expectedTypeClasses)
-    : expectedParameters(
-          expectedTypeClasses
-          | std::views::transform(
-              [](const NamedNESTypeClass& namedTc)
-              {
-                  return ExpectedNESTypeParameter{
-                      .name = namedTc.getFullyQualifiedName(),
-                      .constraint = namedTc.getTypeClass(),
-                      .kind = ExpectedNESTypeParameter::Kind::TypeParameter,
-                      .optional = false};
-              })
-          | std::ranges::to<Schema<ExpectedNESTypeParameter, Ordered>>())
-{
-}
-
-const Schema<ExpectedNESTypeParameter, Ordered>& ExpectedNESTypeArguments::getParameters() const noexcept
+const Schema<QualifiedErasedNESTypeParameter, Ordered>& ExpectedNESTypeArguments::getParameters() const noexcept
 {
     return expectedParameters;
 }
@@ -754,144 +998,323 @@ bool ExpectedNESTypeArguments::empty() const noexcept
     return expectedParameters.size() == 0;
 }
 
-std::expected<NESTypeParameters, Exception> ExpectedNESTypeArguments::validateAndBind(const NESTypeParameters& passed) const
+std::expected<InstantiatedNESTypeParameters, Exception> ExpectedNESTypeArguments::resolve(const NESTypeParameters& passed) const
 {
     const auto requiredCount = std::ranges::count_if(
-        expectedParameters, [](const ExpectedNESTypeParameter& param) { return !param.optional; });
+        expectedParameters, [](const QualifiedErasedNESTypeParameter& param) { return !param.isOptional(); });
+
+    std::vector<InstantiatedNESTypeParameter> instantiated;
+    instantiated.reserve(expectedParameters.size());
 
     if (!passed.isNamed())
     {
         if (passed.size() < static_cast<size_t>(requiredCount) || passed.size() > expectedParameters.size())
         {
             return std::unexpected{TypeInferenceException(
-                "Functor expects between {} and {} argument(s), but got {}",
-                requiredCount,
-                expectedParameters.size(),
-                passed.size())};
+                "Functor expects between {} and {} argument(s), but got {}", requiredCount, expectedParameters.size(), passed.size())};
         }
 
-        std::vector<NamedNESTypeParameter> bound;
-        bound.reserve(passed.size());
-        for (size_t i = 0; i < passed.size(); ++i)
+        for (size_t i = 0; i < expectedParameters.size(); ++i)
         {
             const auto expectedParam = expectedParameters[i].value();
-            const auto elem = passed.at(i).value();
-            if (expectedParam.kind == ExpectedNESTypeParameter::Kind::TypeParameter)
+            if (i < passed.size())
             {
-                const auto* typePtr = std::get_if<NESType>(&elem);
-                if (typePtr == nullptr)
+                auto applied = expectedParam.apply(passed.at(i).value());
+                if (!applied.has_value())
                 {
-                    return std::unexpected{TypeInferenceException(
-                        "Parameter '{}' expects a type argument, but received a value", expectedParam.name)};
+                    return std::unexpected{std::move(applied).error()};
                 }
-                if (!expectedParam.constraint.validate(*typePtr))
-                {
-                    return std::unexpected{TypeInferenceException(
-                        "Type argument for parameter '{}' does not satisfy expected type class constraint", expectedParam.name)};
-                }
+                instantiated.emplace_back(
+                    expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), std::move(*applied));
             }
-            else
+            else if (expectedParam.hasDefault())
             {
-                const auto* valPtr = std::get_if<NESValue>(&elem);
-                if (valPtr == nullptr)
-                {
-                    return std::unexpected{TypeInferenceException(
-                        "Parameter '{}' expects a constant value argument, but received a type", expectedParam.name)};
-                }
-                if (!expectedParam.constraint.validate(valPtr->getType()))
-                {
-                    return std::unexpected{TypeInferenceException(
-                        "Value argument for parameter '{}' has invalid type", expectedParam.name)};
-                }
+                instantiated.emplace_back(
+                    expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), expectedParam.getDefault());
             }
-            bound.emplace_back(expectedParam.name, elem);
         }
-        return NESTypeParameters::named(Schema<NamedNESTypeParameter, Ordered>{std::move(bound)});
+        return InstantiatedNESTypeParameters{Schema<InstantiatedNESTypeParameter, Ordered>{std::move(instantiated)}};
     }
 
-    std::unordered_set<QualifiedIdentifier> consumed;
-    std::vector<NamedNESTypeParameter> bound;
+    const auto* namedSchema = passed.tryGetNamedSchema();
+    INVARIANT(namedSchema != nullptr, "Expected named NESTypeParameters");
+    if (const auto dup = findDuplicateFieldName(*namedSchema); dup.has_value())
+    {
+        return std::unexpected{TypeInferenceException("Duplicate named parameter '{}' passed to functor", *dup)};
+    }
+
+    std::unordered_set<NESParameterId, detail::NESParameterIdHash> matchedIds;
+    std::unordered_map<NESParameterId, ExplicitAny, detail::NESParameterIdHash> matchedValues;
+
+    for (const auto& passedParam : *namedSchema)
+    {
+        auto targetOpt = findExactNamedField(expectedParameters, passedParam.getFullyQualifiedName());
+        if (!targetOpt.has_value())
+        {
+            targetOpt = expectedParameters.getFieldByName(passedParam.getFullyQualifiedName());
+        }
+        if (!targetOpt.has_value())
+        {
+            return std::unexpected{
+                TypeInferenceException("Unknown named argument '{}' passed to functor", passedParam.getFullyQualifiedName())};
+        }
+        if (!matchedIds.insert(targetOpt->getOriginalParameterId()).second)
+        {
+            return std::unexpected{
+                TypeInferenceException("Duplicate named parameter '{}' passed to functor", targetOpt->getFullyQualifiedName())};
+        }
+        auto applied = targetOpt->apply(passedParam.getUnderlying());
+        if (!applied.has_value())
+        {
+            return std::unexpected{std::move(applied).error()};
+        }
+        matchedValues.emplace(targetOpt->getOriginalParameterId(), std::move(*applied));
+    }
+
     for (const auto& expectedParam : expectedParameters)
     {
-        const auto found = passed.getByName(expectedParam.name);
-        if (!found.has_value())
+        if (const auto it = matchedValues.find(expectedParam.getOriginalParameterId()); it != matchedValues.end())
         {
-            if (expectedParam.optional)
-            {
-                continue;
-            }
-            return std::unexpected{TypeInferenceException("Missing required parameter '{}'", expectedParam.name)};
+            instantiated.emplace_back(
+                expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), it->second);
         }
-        consumed.insert(expectedParam.name);
-        if (expectedParam.kind == ExpectedNESTypeParameter::Kind::TypeParameter)
+        else if (expectedParam.hasDefault())
         {
-            if (!found->isType())
-            {
-                return std::unexpected{TypeInferenceException(
-                    "Parameter '{}' expects a type argument, but received a value", expectedParam.name)};
-            }
-            if (!expectedParam.constraint.validate(*found->tryGetType()))
-            {
-                return std::unexpected{TypeInferenceException(
-                    "Type argument for parameter '{}' does not satisfy expected type class constraint", expectedParam.name)};
-            }
+            instantiated.emplace_back(
+                expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), expectedParam.getDefault());
+        }
+        else if (!expectedParam.isOptional())
+        {
+            return std::unexpected{TypeInferenceException("Missing required parameter '{}'", expectedParam.getFullyQualifiedName())};
+        }
+    }
+
+    return InstantiatedNESTypeParameters{Schema<InstantiatedNESTypeParameter, Ordered>{std::move(instantiated)}};
+}
+
+QualifiedErasedNESValueParameter::QualifiedErasedNESValueParameter(
+    QualifiedIdentifier name,
+    const NESParameterId originalParameterId,
+    std::function<NESTypeClass()> constraintSupplier,
+    std::function<std::expected<ExplicitAny, Exception>(const NESValue&)> factory,
+    std::optional<std::function<ExplicitAny()>> defaultSupplier,
+    std::string description)
+    : name(std::move(name))
+    , originalParameterId(originalParameterId)
+    , constraintSupplier(std::move(constraintSupplier))
+    , factory(std::move(factory))
+    , defaultSupplier(std::move(defaultSupplier))
+    , description(std::move(description))
+{
+}
+
+ExplicitAny QualifiedErasedNESValueParameter::getDefault() const
+{
+    PRECONDITION(defaultSupplier.has_value(), "Value parameter '{}' has no default supplier", name);
+    return (*defaultSupplier)();
+}
+
+std::expected<ExplicitAny, Exception> QualifiedErasedNESValueParameter::apply(const NESValue& val) const
+{
+    return factory(val);
+}
+
+bool QualifiedErasedNESValueParameter::operator==(const QualifiedErasedNESValueParameter& other) const noexcept
+{
+    return name == other.name && originalParameterId == other.originalParameterId;
+}
+
+std::ostream& operator<<(std::ostream& os, const QualifiedErasedNESValueParameter& obj)
+{
+    return os << fmt::format("QualifiedErasedNESValueParameter({})", obj.name);
+}
+
+InstantiatedNESValueParameter::InstantiatedNESValueParameter(
+    QualifiedIdentifier name, const NESParameterId originalParameterId, ExplicitAny value)
+    : name(std::move(name)), originalParameterId(originalParameterId), value(std::move(value))
+{
+    PRECONDITION(this->value.hasValue(), "InstantiatedNESValueParameter '{}' must hold a value", this->name);
+}
+
+bool InstantiatedNESValueParameter::operator==(const InstantiatedNESValueParameter& other) const noexcept
+{
+    return name == other.name && originalParameterId == other.originalParameterId;
+}
+
+std::ostream& operator<<(std::ostream& os, const InstantiatedNESValueParameter& obj)
+{
+    return os << fmt::format("InstantiatedNESValueParameter({})", obj.name);
+}
+
+InstantiatedNESValueParameters::InstantiatedNESValueParameters(const Schema<InstantiatedNESValueParameter, Ordered>& entries)
+{
+    values.reserve(entries.size());
+    for (const auto& entry : entries)
+    {
+        values.emplace(entry.getOriginalParameterId(), entry.getErasedValue());
+    }
+}
+
+const ExplicitAny* InstantiatedNESValueParameters::findRaw(const NESParameterId id) const noexcept
+{
+    if (const auto it = values.find(id); it != values.end())
+    {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+ExpectedNESValueArguments::ExpectedNESValueArguments(Schema<QualifiedErasedNESValueParameter, Ordered> expectedParameters)
+    : expectedParameters(std::move(expectedParameters))
+{
+    bool seenOptional = false;
+    for (const auto& param : this->expectedParameters)
+    {
+        if (param.hasDefault())
+        {
+            seenOptional = true;
         }
         else
         {
-            if (!found->isValue())
+            PRECONDITION(
+                !seenOptional,
+                "Required value parameter '{}' cannot follow an optional parameter",
+                param.getFullyQualifiedName());
+        }
+    }
+}
+
+const Schema<QualifiedErasedNESValueParameter, Ordered>& ExpectedNESValueArguments::getParameters() const noexcept
+{
+    return expectedParameters;
+}
+
+size_t ExpectedNESValueArguments::size() const noexcept
+{
+    return expectedParameters.size();
+}
+
+bool ExpectedNESValueArguments::empty() const noexcept
+{
+    return expectedParameters.size() == 0;
+}
+
+std::expected<InstantiatedNESValueParameters, Exception> ExpectedNESValueArguments::resolve(const NESValueParameters& passed) const
+{
+    const auto requiredCount = std::ranges::count_if(
+        expectedParameters, [](const QualifiedErasedNESValueParameter& param) { return !param.hasDefault(); });
+
+    std::vector<InstantiatedNESValueParameter> instantiated;
+    instantiated.reserve(expectedParameters.size());
+
+    if (!passed.isNamed())
+    {
+        if (passed.size() < static_cast<size_t>(requiredCount) || passed.size() > expectedParameters.size())
+        {
+            return std::unexpected{InvalidQuerySyntax(
+                "Constructor expects between {} and {} argument(s), but got {}", requiredCount, expectedParameters.size(), passed.size())};
+        }
+
+        for (size_t i = 0; i < expectedParameters.size(); ++i)
+        {
+            const auto expectedParam = expectedParameters[i].value();
+            if (i < passed.size())
             {
-                return std::unexpected{TypeInferenceException(
-                    "Parameter '{}' expects a constant value argument, but received a type", expectedParam.name)};
+                auto applied = expectedParam.apply(passed.at(i).value());
+                if (!applied.has_value())
+                {
+                    return std::unexpected{std::move(applied).error()};
+                }
+                instantiated.emplace_back(
+                    expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), std::move(*applied));
             }
-            if (!expectedParam.constraint.validate(found->tryGetValue()->getType()))
+            else if (expectedParam.hasDefault())
             {
-                return std::unexpected{TypeInferenceException(
-                    "Value argument for parameter '{}' has invalid type", expectedParam.name)};
+                instantiated.emplace_back(
+                    expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), expectedParam.getDefault());
             }
         }
-        bound.push_back(*found);
+        return InstantiatedNESValueParameters{Schema<InstantiatedNESValueParameter, Ordered>{std::move(instantiated)}};
     }
 
-    if (consumed.size() != passed.size())
+    const auto* namedSchema = passed.tryGetNamedSchema();
+    INVARIANT(namedSchema != nullptr, "Expected named NESValueParameters");
+    if (const auto dup = findDuplicateFieldName(*namedSchema); dup.has_value())
     {
-        return std::unexpected{TypeInferenceException(
-            "Unknown named argument(s) passed to functor (expected at most {} known arguments, got {})",
-            expectedParameters.size(),
-            passed.size())};
+        return std::unexpected{InvalidConfigParameter("Duplicate named argument '{}'", *dup)};
     }
 
-    return NESTypeParameters::named(Schema<NamedNESTypeParameter, Ordered>{std::move(bound)});
+    std::unordered_set<NESParameterId, detail::NESParameterIdHash> matchedIds;
+    std::unordered_map<NESParameterId, ExplicitAny, detail::NESParameterIdHash> matchedValues;
+
+    for (const auto& passedVal : *namedSchema)
+    {
+        auto targetOpt = findExactNamedField(expectedParameters, passedVal.getFullyQualifiedName());
+        if (!targetOpt.has_value())
+        {
+            targetOpt = expectedParameters.getFieldByName(passedVal.getFullyQualifiedName());
+        }
+        if (!targetOpt.has_value())
+        {
+            return std::unexpected{InvalidQuerySyntax("Unknown named argument '{}'", passedVal.getFullyQualifiedName())};
+        }
+        if (!matchedIds.insert(targetOpt->getOriginalParameterId()).second)
+        {
+            return std::unexpected{InvalidConfigParameter("Duplicate named argument '{}'", targetOpt->getFullyQualifiedName())};
+        }
+        auto applied = targetOpt->apply(passedVal.getValue());
+        if (!applied.has_value())
+        {
+            return std::unexpected{std::move(applied).error()};
+        }
+        matchedValues.emplace(targetOpt->getOriginalParameterId(), std::move(*applied));
+    }
+
+    for (const auto& expectedParam : expectedParameters)
+    {
+        if (const auto it = matchedValues.find(expectedParam.getOriginalParameterId()); it != matchedValues.end())
+        {
+            instantiated.emplace_back(
+                expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), it->second);
+        }
+        else if (expectedParam.hasDefault())
+        {
+            instantiated.emplace_back(
+                expectedParam.getFullyQualifiedName(), expectedParam.getOriginalParameterId(), expectedParam.getDefault());
+        }
+        else
+        {
+            return std::unexpected{InvalidQuerySyntax("Missing required argument '{}'", expectedParam.getFullyQualifiedName())};
+        }
+    }
+
+    return InstantiatedNESValueParameters{Schema<InstantiatedNESValueParameter, Ordered>{std::move(instantiated)}};
 }
 
 /// --- NESFunctor & NamedNESFunctor ---
 
 std::expected<NESType, Exception> NESFunctor::instantiate(const NESTypeParameters& params) const
 {
-    if (expectedArguments.has_value())
-    {
-        auto validated = expectedArguments->validateAndBind(params);
-        if (!validated.has_value())
-        {
-            return std::unexpected{std::move(validated).error()};
-        }
-        return typeConstructor(structure, *validated);
-    }
-    return typeConstructor(structure, params);
+    return self->instantiateRaw(params);
+}
+
+std::expected<NESType, Exception> NESFunctor::instantiate() const
+{
+    return instantiate(NESTypeParameters{});
 }
 
 const std::optional<ExpectedNESTypeArguments>& NESFunctor::getExpectedArguments() const noexcept
 {
-    return expectedArguments;
-}
-
-const ExplicitAny& NESFunctor::getStructure() const noexcept
-{
-    return structure;
+    return self->getExpectedArguments();
 }
 
 bool NESFunctor::operator==(const NESFunctor& other) const
 {
-    return typeStructureEquals(structure, other.structure);
+    if (self == other.self)
+    {
+        return true;
+    }
+    return self->equals(*other.self);
 }
 
 NamedNESFunctor::NamedNESFunctor(QualifiedIdentifier name, NESFunctor underlyingFunctor)
@@ -912,6 +1335,11 @@ const NESFunctor& NamedNESFunctor::getUnderlyingFunctor() const
 std::expected<NESType, Exception> NamedNESFunctor::instantiate(const NESTypeParameters& params) const
 {
     return underlyingFunctor.instantiate(params);
+}
+
+std::expected<NESType, Exception> NamedNESFunctor::instantiate() const
+{
+    return underlyingFunctor.instantiate();
 }
 
 bool NamedNESFunctor::operator==(const NamedNESFunctor& other) const

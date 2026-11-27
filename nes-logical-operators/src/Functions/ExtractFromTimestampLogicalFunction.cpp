@@ -21,6 +21,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -64,18 +65,20 @@ ExtractFromTimestampLogicalFunction ExtractFromTimestampLogicalFunction::withDat
     return copy;
 }
 
+std::expected<NESType, Exception> ExtractFromTimestampLogicalFunction::inferResultType(const NESType& input)
+{
+    const auto& inner = unwrapOptionalNESType(input);
+    if (inner.tryGetAs<UInt64Type>() == nullptr && inner.tryGetAs<UndefinedType>() == nullptr)
+    {
+        return std::unexpected{DifferentFieldTypeExpected("Timestamp extraction expects a UINT64 input")};
+    }
+    return wrapOptionalNESTypeIf(UInt64Type::makeNESType(), isOptionalNESType(input));
+}
+
 LogicalFunction ExtractFromTimestampLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto inferredChild = child.withInferredDataType(schema);
-    auto childDataType = inferredChild.getDataType();
-    if (childDataType.type != DataType::Type::UNDEFINED && childDataType.type != DataType::Type::UINT64)
-    {
-        throw DifferentFieldTypeExpected("{} expects a UINT64 input, but got {}", getType(), childDataType);
-    }
-
-    auto inferredOutput = childDataType;
-    inferredOutput.type = DataType::Type::UINT64;
-    inferredOutput.nullable = childDataType.nullable;
+    const auto inferredOutput = requireLegacyDataType(inferResultType(inferredChild.getDataType().toNESType()));
 
     auto copy = *this;
     copy.child = std::move(inferredChild);

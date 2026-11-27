@@ -61,23 +61,17 @@ DataType MulLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> MulLogicalFunction::inferResultType(const NESType& left, const NESType& right)
+{
+    return joinNumericNESTypes(left, right, NAME);
+}
+
 LogicalFunction MulLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-    if (!copy.left.getDataType().isNumeric() || !copy.right.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("Cannot apply multiplication to non-numeric input function left: {}, right: {}", copy.left, copy.right);
-    }
-    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
-
-    if (not newDataType.has_value())
-    {
-        throw CannotInferStamp("Cannot apply multiplication to input function left: {}, right: {}", copy.left, copy.right);
-    }
-    copy.dataType = std::move(newDataType).value();
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.left.getDataType().toNESType(), copy.right.getDataType().toNESType()));
     return copy;
 };
 

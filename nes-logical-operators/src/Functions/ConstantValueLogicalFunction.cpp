@@ -15,23 +15,28 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 
 #include <cstdint>
+#include <expected>
 #include <limits>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Types/NESType.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -39,102 +44,203 @@ namespace NES
 {
 namespace
 {
-DataType inferUnsignedIntegerLiteralDataType(const uint64_t value)
+NESValue makeNarrowestUnsignedNESValue(const uint64_t value)
 {
     if (value <= std::numeric_limits<uint8_t>::max())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::UINT8);
+        return UInt8Type::createValue(static_cast<uint8_t>(value));
     }
     if (value <= std::numeric_limits<uint16_t>::max())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::UINT16);
+        return UInt16Type::createValue(static_cast<uint16_t>(value));
     }
     if (value <= std::numeric_limits<uint32_t>::max())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::UINT32);
+        return UInt32Type::createValue(static_cast<uint32_t>(value));
     }
-    return DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    return UInt64Type::createValue(value);
 }
 
-DataType inferSignedIntegerLiteralDataType(const int64_t value)
+NESValue makeNarrowestSignedNESValue(const int64_t value)
 {
     if (value >= std::numeric_limits<int8_t>::min() and value <= std::numeric_limits<int8_t>::max())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::INT8);
+        return Int8Type::createValue(static_cast<int8_t>(value));
     }
     if (value >= std::numeric_limits<int16_t>::min() and value <= std::numeric_limits<int16_t>::max())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::INT16);
+        return Int16Type::createValue(static_cast<int16_t>(value));
     }
     if (value >= std::numeric_limits<int32_t>::min() and value <= std::numeric_limits<int32_t>::max())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::INT32);
+        return Int32Type::createValue(static_cast<int32_t>(value));
     }
-    return DataTypeProvider::provideDataType(DataType::Type::INT64);
+    return Int64Type::createValue(value);
 }
 
-DataType inferIntegerLiteralDataType(const std::string_view literal)
-{
-    if (!literal.empty() and literal.front() == '-')
-    {
-        const auto value = from_chars_with_exception<int64_t>(literal);
-        if (value < 0)
-        {
-            return inferSignedIntegerLiteralDataType(value);
-        }
-        return inferUnsignedIntegerLiteralDataType(static_cast<uint64_t>(value));
-    }
-    return inferUnsignedIntegerLiteralDataType(from_chars_with_exception<uint64_t>(literal));
-}
-
-DataType inferConstantValueDataType(const std::string_view literal)
+NESValue inferScalarNESValueFromLiteralString(const std::string_view literal)
 {
     if (literal.size() >= 2 and literal.front() == '\'' and literal.back() == '\'')
     {
-        return DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+        return VarSizedType::createValue(std::string{literal.substr(1, literal.size() - 2)});
     }
-    if (literal == "TRUE" or literal == "FALSE" or literal == "true" or literal == "false")
+    if (literal == "TRUE" or literal == "true")
     {
-        return DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+        return BooleanType::createValue(true);
+    }
+    if (literal == "FALSE" or literal == "false")
+    {
+        return BooleanType::createValue(false);
     }
     try
     {
-        return inferIntegerLiteralDataType(literal);
+        if (!literal.empty() and literal.front() == '-')
+        {
+            const auto signedVal = from_chars_with_exception<int64_t>(literal);
+            if (signedVal < 0)
+            {
+                return makeNarrowestSignedNESValue(signedVal);
+            }
+            return makeNarrowestUnsignedNESValue(static_cast<uint64_t>(signedVal));
+        }
+        return makeNarrowestUnsignedNESValue(from_chars_with_exception<uint64_t>(literal));
     }
     catch (const Exception&)
     {
-        from_chars_with_exception<double>(literal);
-        return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+        return Float64Type::createValue(from_chars_with_exception<double>(literal));
     }
+}
+
+NESValue wrapOptionalIfNullable(NESValue nonNullVal, const bool nullable)
+{
+    if (!nullable)
+    {
+        return nonNullVal;
+    }
+    auto optType = OptionalType::make(nonNullVal.getType());
+    auto constructed = optType.construct(NESValueParameters::positional({std::move(nonNullVal)}));
+    INVARIANT(constructed.has_value(), "Failed to wrap scalar NESValue in OptionalType: {}", constructed.error().what());
+    return std::move(*constructed);
+}
+
+NESValue createNESValueFromLegacyString(const DataType dataType, const std::string_view str, const bool isNull)
+{
+    if (isNull)
+    {
+        PRECONDITION(dataType.nullable, "Typed NULL ConstantValueLogicalFunction requires a nullable DataType, got {}", dataType);
+        const DataType innerDt{dataType.type, DataType::NULLABLE::NOT_NULLABLE};
+        return OptionalType::createNullValue(innerDt.toNESType());
+    }
+    if (dataType.type == DataType::Type::UNDEFINED)
+    {
+        return wrapOptionalIfNullable(inferScalarNESValueFromLiteralString(str), dataType.nullable);
+    }
+
+    switch (dataType.type)
+    {
+        case DataType::Type::UINT8:
+            return wrapOptionalIfNullable(UInt8Type::createValue(from_chars_with_exception<uint8_t>(str)), dataType.nullable);
+        case DataType::Type::UINT16:
+            return wrapOptionalIfNullable(UInt16Type::createValue(from_chars_with_exception<uint16_t>(str)), dataType.nullable);
+        case DataType::Type::UINT32:
+            return wrapOptionalIfNullable(UInt32Type::createValue(from_chars_with_exception<uint32_t>(str)), dataType.nullable);
+        case DataType::Type::UINT64:
+            return wrapOptionalIfNullable(UInt64Type::createValue(from_chars_with_exception<uint64_t>(str)), dataType.nullable);
+        case DataType::Type::INT8:
+            return wrapOptionalIfNullable(Int8Type::createValue(from_chars_with_exception<int8_t>(str)), dataType.nullable);
+        case DataType::Type::INT16:
+            return wrapOptionalIfNullable(Int16Type::createValue(from_chars_with_exception<int16_t>(str)), dataType.nullable);
+        case DataType::Type::INT32:
+            return wrapOptionalIfNullable(Int32Type::createValue(from_chars_with_exception<int32_t>(str)), dataType.nullable);
+        case DataType::Type::INT64:
+            return wrapOptionalIfNullable(Int64Type::createValue(from_chars_with_exception<int64_t>(str)), dataType.nullable);
+        case DataType::Type::FLOAT32:
+            return wrapOptionalIfNullable(Float32Type::createValue(from_chars_with_exception<float>(str)), dataType.nullable);
+        case DataType::Type::FLOAT64:
+            return wrapOptionalIfNullable(Float64Type::createValue(from_chars_with_exception<double>(str)), dataType.nullable);
+        case DataType::Type::BOOLEAN:
+            return wrapOptionalIfNullable(BooleanType::createValue(from_chars_with_exception<bool>(str)), dataType.nullable);
+        case DataType::Type::CHAR:
+            return wrapOptionalIfNullable(CharType::createValue(from_chars_with_exception<char>(str)), dataType.nullable);
+        case DataType::Type::VARSIZED:
+            return wrapOptionalIfNullable(VarSizedType::createValue(std::string{str}), dataType.nullable);
+        case DataType::Type::UNDEFINED:
+            std::unreachable();
+    }
+    std::unreachable();
 }
 }
 
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(DataType dataType, std::string constantValueAsString)
-    : constantValue(std::move(constantValueAsString)), dataType(std::move(dataType))
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(NESValue value) : value(std::move(value))
 {
+    PRECONDITION(
+        DataTypeRegistry::scalarDataTypeClass().validate(this->value.getType()),
+        "ConstantValueLogicalFunction requires a NESValue whose type satisfies ScalarDatatype");
+}
+
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(
+    const DataType dataType, const std::string_view constantValueAsString, const bool isNull)
+    : ConstantValueLogicalFunction(createNESValueFromLegacyString(dataType, constantValueAsString, isNull))
+{
+}
+
+std::expected<ConstantValueLogicalFunction, Exception> ConstantValueLogicalFunction::tryCreate(NESValue value)
+{
+    if (!DataTypeRegistry::scalarDataTypeClass().validate(value.getType()))
+    {
+        return std::unexpected{TypeInferenceException("ConstantValueLogicalFunction requires a ScalarDatatype NESValue")};
+    }
+    if (value.tryGetAs<std::monostate>() != nullptr && value.getType().tryGetAs<OptionalType>() == nullptr)
+    {
+        return std::unexpected{InvalidQuerySyntax("Cannot construct non-nullable scalar constant from NULL")};
+    }
+    return ConstantValueLogicalFunction{std::move(value)};
+}
+
+ConstantValueLogicalFunction ConstantValueLogicalFunction::createNull(const DataType dataType)
+{
+    PRECONDITION(dataType.nullable, "Typed NULL ConstantValueLogicalFunction requires a nullable DataType, got {}", dataType);
+    const DataType innerDt{dataType.type, DataType::NULLABLE::NOT_NULLABLE};
+    return ConstantValueLogicalFunction{OptionalType::createNullValue(innerDt.toNESType())};
+}
+
+const NESValue& ConstantValueLogicalFunction::getValue() const noexcept
+{
+    return value;
 }
 
 DataType ConstantValueLogicalFunction::getDataType() const
 {
-    return dataType;
-};
+    if (const auto* legacyTrait = value.getType().tryGetTypeTrait<LegacyDataTypeTrait>())
+    {
+        return legacyTrait->getDataType();
+    }
+    return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
+}
 
-ConstantValueLogicalFunction ConstantValueLogicalFunction::withDataType(const DataType& dataType) const
+ConstantValueLogicalFunction ConstantValueLogicalFunction::withDataType(const DataType& targetDataType) const
 {
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
+    if (isNullValue())
+    {
+        return createNull(targetDataType);
+    }
+    const auto targetNESType = targetDataType.toNESType();
+    if (auto constructed = targetNESType.construct(NESValueParameters::positional({value})); constructed.has_value())
+    {
+        return ConstantValueLogicalFunction{std::move(*constructed)};
+    }
+    return ConstantValueLogicalFunction{targetDataType, getConstantValue(), /*isNull=*/false};
+}
 
 std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const
 {
     return {};
-};
+}
 
 ConstantValueLogicalFunction ConstantValueLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
-};
+}
 
 std::string_view ConstantValueLogicalFunction::getType() const
 {
@@ -143,49 +249,59 @@ std::string_view ConstantValueLogicalFunction::getType() const
 
 bool ConstantValueLogicalFunction::operator==(const ConstantValueLogicalFunction& rhs) const
 {
-    return constantValue == rhs.constantValue;
+    return value == rhs.value;
 }
 
-std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) const
+std::string ConstantValueLogicalFunction::explain(const ExplainVerbosity verbosity) const
 {
+    const auto formatted = getConstantValue();
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ConstantValueLogicalFunction({} : {})", constantValue, dataType);
+        return fmt::format("ConstantValueLogicalFunction({} : {})", formatted, getDataType());
     }
-    return constantValue;
+    return formatted;
 }
 
 std::string ConstantValueLogicalFunction::getConstantValue() const
 {
-    return constantValue;
+    if (isNullValue())
+    {
+        return "NULL";
+    }
+    if (const auto* legacyTrait = value.getType().tryGetTypeTrait<LegacyDataTypeTrait>())
+    {
+        if (const auto formattedExp = legacyTrait->formatConstantValue(value); formattedExp.has_value() && formattedExp->has_value())
+        {
+            return **formattedExp;
+        }
+    }
+    return "<scalar>";
+}
+
+bool ConstantValueLogicalFunction::isNullValue() const noexcept
+{
+    return value.tryGetAs<std::monostate>() != nullptr;
 }
 
 LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema<Field, Unordered>&) const
 {
-    if (dataType.type != DataType::Type::UNDEFINED)
-    {
-        return *this;
-    }
-    auto inferredDataType = inferConstantValueDataType(constantValue);
-    if (inferredDataType.isType(DataType::Type::VARSIZED))
-    {
-        return ConstantValueLogicalFunction(std::move(inferredDataType), constantValue.substr(1, constantValue.size() - 2));
-    }
-    return ConstantValueLogicalFunction(std::move(inferredDataType), constantValue);
+    return *this;
 }
 
 Reflected
 Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValueLogicalFunction& function, const ReflectionContext& context) const
 {
-    return context.reflect(
-        detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .dataType = function.getDataType()});
+    return context.reflect(detail::ReflectedConstantValueLogicalFunction{
+        .value = function.getConstantValue(),
+        .dataType = function.getDataType(),
+        .isNull = function.isNullValue()});
 }
 
 ConstantValueLogicalFunction
 Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [value, dataType] = context.unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
-    return ConstantValueLogicalFunction{dataType, std::move(value)};
+    auto [value, dataType, isNull] = context.unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
+    return ConstantValueLogicalFunction{dataType, value, isNull};
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)

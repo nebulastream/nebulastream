@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include <any>
 #include <concepts>
 #include <cstdint>
 #include <expected>
 #include <functional>
+#include <memory>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -42,18 +42,88 @@ enum class InsertResult : uint8_t
     EntryTypeMismatch,
 };
 
-/// Default type descriptor and type-class helpers for nullary plugin registries whose entries
-/// wrap `Registry::EntryType` directly without custom SQL-level type parameters.
+/// Default `NESType`, `NESTypeClass`, and `NESFunctor` implementations for nullary plugin registries
+/// whose entries wrap `Registry::EntryType` directly without custom SQL-level type parameters.
 template <typename Registry>
-struct DefaultRegistryTypeDescriptor
+struct DefaultRegistryNESType
 {
+    std::shared_ptr<const int> identityToken;
     typename Registry::EntryType entry;
+
+    [[nodiscard]] std::expected<typename Registry::EntryType, Exception> construct(const NESValueParameters& params) const
+    {
+        if (!params.empty())
+        {
+            return std::unexpected{
+                InvalidQuerySyntax("Nullary registry type expects 0 value arguments, but got {}", params.size())};
+        }
+        return entry;
+    }
+
+    bool operator==(const DefaultRegistryNESType& other) const
+    {
+        if (identityToken == other.identityToken)
+        {
+            return true;
+        }
+        if constexpr (std::equality_comparable<typename Registry::EntryType>)
+        {
+            return entry == other.entry;
+        }
+        else
+        {
+            return false;
+        }
+    }
 };
 
 template <typename Registry>
-struct DefaultRegistryTypeClassTag
+struct DefaultRegistryNESTypeClass
 {
-    bool operator==(const DefaultRegistryTypeClassTag&) const = default;
+    bool operator==(const DefaultRegistryNESTypeClass&) const = default;
+
+    [[nodiscard]] bool validate(const NESType& type) const
+    {
+        return type.tryGetAs<DefaultRegistryNESType<Registry>>() != nullptr;
+    }
+};
+
+template <typename Registry>
+struct DefaultNullaryRegistryFunctor
+{
+    std::shared_ptr<const int> identityToken;
+    typename Registry::EntryType entry;
+    NESType cachedType;
+
+    [[nodiscard]] const typename Registry::EntryType& getRegistryEntry() const noexcept { return entry; }
+
+    [[nodiscard]] static ExpectedNESTypeArguments getExpectedArguments() { return ExpectedNESTypeArguments{}; }
+
+    [[nodiscard]] std::expected<NESType, Exception> instantiate(const NESTypeParameters& params) const
+    {
+        if (!params.empty())
+        {
+            return std::unexpected{
+                TypeInferenceException("Nullary functor expects 0 type arguments, but got {}", params.size())};
+        }
+        return cachedType;
+    }
+
+    bool operator==(const DefaultNullaryRegistryFunctor& other) const
+    {
+        if (identityToken == other.identityToken)
+        {
+            return true;
+        }
+        if constexpr (std::equality_comparable<typename Registry::EntryType>)
+        {
+            return entry == other.entry;
+        }
+        else
+        {
+            return false;
+        }
+    }
 };
 
 template <typename Registry>
@@ -61,33 +131,18 @@ NamedNESParametrizedTypeClass makeDefaultRegistryTypeClass(std::string_view type
 {
     return NamedNESParametrizedTypeClass::constant(
         QualifiedIdentifier::parse(typeClassName),
-        NESTypeClass{
-            DefaultRegistryTypeClassTag<Registry>{},
-            [](const DefaultRegistryTypeClassTag<Registry>&, const NESType& type)
-            { return type.tryGetDescriptorAs<DefaultRegistryTypeDescriptor<Registry>>() != nullptr; }});
+        NESTypeClass{DefaultRegistryNESTypeClass<Registry>{}});
 }
 
 template <typename Registry>
 NESFunctor makeDefaultNullaryRegistryFunctor(typename Registry::EntryType entry)
 {
-    using EntryT = typename Registry::EntryType;
-    return NESFunctor::nullary<EntryT>(
-        std::move(entry),
-        [](const EntryT& storedEntry) -> std::expected<NESType, Exception>
-        {
-            return NESType::create<DefaultRegistryTypeDescriptor<Registry>, EntryT>(
-                DefaultRegistryTypeDescriptor<Registry>{.entry = storedEntry},
-                [](const DefaultRegistryTypeDescriptor<Registry>& desc, const NESValueParameters& params)
-                    -> std::expected<EntryT, Exception>
-                {
-                    if (!params.empty())
-                    {
-                        return std::unexpected{
-                            InvalidQuerySyntax("Nullary registry type expects 0 value arguments, but got {}", params.size())};
-                    }
-                    return desc.entry;
-                });
-        });
+    auto token = std::make_shared<const int>(0);
+    NESType cachedType{DefaultRegistryNESType<Registry>{.identityToken = token, .entry = entry}};
+    return NESFunctor{DefaultNullaryRegistryFunctor<Registry>{
+        .identityToken = std::move(token),
+        .entry = std::move(entry),
+        .cachedType = std::move(cachedType)}};
 }
 
 /// A registry a plugin makes available to the plugin system. Carries the registry's name,
@@ -140,7 +195,7 @@ RegistryProvision provideRegistry(std::string_view registryClassName)
         .typeClasses = Registry::getParametrizedTypeClasses(),
         .insertEntry = [](const NamedNESFunctor& entry)
         {
-            const auto* typedEntry = entry.getUnderlyingFunctor().template tryGetStructureAs<typename Registry::EntryType>();
+            const auto* typedEntry = entry.getUnderlyingFunctor().template tryGetRegistryEntryAs<typename Registry::EntryType>();
             if (typedEntry == nullptr)
             {
                 return InsertResult::EntryTypeMismatch;
@@ -167,7 +222,10 @@ RegistryProvision provideRegistry(std::string_view registryClassName)
             {
                 return InsertResult::DuplicateKey;
             }
-            std::ignore = Registry::instance().addFunctor(key, entry);
+            if (!Registry::instance().addFunctor(key, entry))
+            {
+                return InsertResult::DuplicateKey;
+            }
             return InsertResult::Success;
         }};
 }

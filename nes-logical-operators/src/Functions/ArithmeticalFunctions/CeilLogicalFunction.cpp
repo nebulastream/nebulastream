@@ -23,6 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -45,18 +46,23 @@ DataType CeilLogicalFunction::getDataType() const
     return dataType;
 };
 
+/// ISO/IEC 9075-2 (<numeric value function>): CEILING of an exact numeric type is exact numeric, CEILING of an approximate numeric
+/// type is approximate numeric. PostgreSQL, MySQL, and SQLite implement this by preserving the input type: floats stay floats and
+/// integers pass through unchanged (CEIL of an integer is the identity), so we do the same and never cast to INT64.
+std::expected<NESType, Exception> CeilLogicalFunction::inferResultType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Cannot apply ceil function on non-numeric input type")};
+    }
+    return input;
+}
+
 LogicalFunction CeilLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     CeilLogicalFunction copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (!copy.child.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("Cannot apply ceil function on non-numeric input function {}", copy.child);
-    }
-    /// ISO/IEC 9075-2 (<numeric value function>): CEILING of an exact numeric type is exact numeric, CEILING of an approximate numeric
-    /// type is approximate numeric. PostgreSQL, MySQL, and SQLite implement this by preserving the input type: floats stay floats and
-    /// integers pass through unchanged (CEIL of an integer is the identity), so we do the same and never cast to INT64.
-    copy.dataType = copy.child.getDataType();
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 };
 

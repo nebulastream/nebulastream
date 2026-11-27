@@ -46,7 +46,7 @@ target_link_libraries(nes-logical-operators PUBLIC nes-schema nes-sources nes-si
 # Runtime registries: entries are static create members on the plugin classes.
 create_runtime_registry(AggregationLogicalFunction nes-logical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationLogicalFunction::create"
-        FUNCTOR_TEMPLATE "makeAggregationLogicalFunctionFunctor(\"\${KEY}\", &\${PLUGIN_NAME}AggregationLogicalFunction::create)"
+        FUNCTOR_TEMPLATE "\${PLUGIN_NAME}AggregationLogicalFunction::functor()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationLogicalFunction.hpp")
 
 create_runtime_registry(LogicalOperator nes-logical-operators
@@ -63,7 +63,7 @@ create_runtime_registry(Model nes-logical-operators
 # For example, ExtractFromTimestampLogicalFunction as Day_Of, Month_Of and Year_Of
 create_runtime_registry(LogicalFunction nes-logical-operators
         ENTRY_TEMPLATE "&\${PLUGIN_NAME}LogicalFunction::create\${KEY}"
-        FUNCTOR_TEMPLATE "makeLogicalFunctionFunctor(\"\${KEY}\", &\${PLUGIN_NAME}LogicalFunction::create\${KEY})"
+        FUNCTOR_TEMPLATE "([]<typename FnT = \${PLUGIN_NAME}LogicalFunction>() { if constexpr (requires { FnT::functor\${KEY}(); }) { return FnT::functor\${KEY}(); } else { return FnT::functor(); } })()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}LogicalFunction.hpp")
 
 add_tests_if_enabled(tests)

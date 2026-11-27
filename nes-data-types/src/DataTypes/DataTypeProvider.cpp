@@ -16,7 +16,10 @@
 
 #include <optional>
 #include <string>
+#include <utility>
+
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -34,11 +37,23 @@ std::optional<DataType> tryProvideDataType(const std::string& type, const DataTy
     auto typeNameExp = QualifiedIdentifier::tryParse(type);
     if (!typeNameExp.has_value())
     {
-        throw std::move(typeNameExp).error();
+        return std::nullopt;
     }
-    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(typeNameExp.value()))
+    const auto functorOpt = DataTypeRegistry::instance().find(typeNameExp.value());
+    if (!functorOpt.has_value())
     {
-        return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
+        return std::nullopt;
+    }
+    auto nesTypeExp = functorOpt->instantiate(NESTypeParameters{});
+    if (!nesTypeExp.has_value())
+    {
+        return std::nullopt;
+    }
+    auto finalType
+        = (isNullable == DataType::NULLABLE::IS_NULLABLE) ? OptionalType::make(std::move(*nesTypeExp)) : std::move(*nesTypeExp);
+    if (const auto* legacyTrait = finalType.tryGetTypeTrait<LegacyDataTypeTrait>())
+    {
+        return legacyTrait->getDataType();
     }
     return std::nullopt;
 }
@@ -55,9 +70,9 @@ DataType provideDataType(const std::string& type, const DataType::NULLABLE isNul
     {
         throw std::move(typeNameExp).error();
     }
-    if (const auto dataTypeFactory = DataTypeRegistry::instance().find(typeNameExp.value()))
+    if (const auto resolved = tryProvideDataType(type, isNullable))
     {
-        return (*dataTypeFactory)(DataTypeRegistryArguments{isNullable});
+        return *resolved;
     }
     throw UnknownPluginType("Unknown data type: {}", type);
 }

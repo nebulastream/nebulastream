@@ -14,8 +14,10 @@
 
 #include <Types/NESTypeCatalog.hpp>
 
+#include <mutex>
 #include <optional>
 #include <ranges>
+#include <shared_mutex>
 #include <vector>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -34,6 +36,7 @@ NESTypeCatalog& NESTypeCatalog::instance()
 
 bool NESTypeCatalog::registerTypeClass(const NamedNESParametrizedTypeClass& typeClass)
 {
+    std::unique_lock lock{mutex};
     const auto& key = typeClass.getFullyQualifiedName();
     if (const auto it = typeClasses.find(key); it != typeClasses.end())
     {
@@ -46,6 +49,7 @@ bool NESTypeCatalog::registerTypeClass(const NamedNESParametrizedTypeClass& type
 bool NESTypeCatalog::registerFunctor(
     const QualifiedIdentifier& registryName, const NamedNESFunctor& functor, const bool exposeToSqlScope)
 {
+    std::unique_lock lock{mutex};
     const auto& functorName = functor.getFullyQualifiedName();
     if (exposeToSqlScope && sqlExposedFunctors.contains(functorName))
     {
@@ -67,11 +71,13 @@ bool NESTypeCatalog::registerFunctor(
 
 bool NESTypeCatalog::unregisterSqlFunctor(const QualifiedIdentifier& functorName)
 {
+    std::unique_lock lock{mutex};
     return sqlExposedFunctors.erase(functorName) > 0;
 }
 
 bool NESTypeCatalog::unregisterFunctor(const QualifiedIdentifier& registryName, const QualifiedIdentifier& functorName)
 {
+    std::unique_lock lock{mutex};
     sqlExposedFunctors.erase(functorName);
     if (const auto regIt = functorsByRegistry.find(registryName); regIt != functorsByRegistry.end())
     {
@@ -82,11 +88,13 @@ bool NESTypeCatalog::unregisterFunctor(const QualifiedIdentifier& registryName, 
 
 bool NESTypeCatalog::unregisterTypeClass(const QualifiedIdentifier& typeClassName)
 {
+    std::unique_lock lock{mutex};
     return typeClasses.erase(typeClassName) > 0;
 }
 
 std::optional<NamedNESParametrizedTypeClass> NESTypeCatalog::findTypeClass(const QualifiedIdentifier& name) const
 {
+    std::shared_lock lock{mutex};
     if (const auto it = typeClasses.find(name); it != typeClasses.end())
     {
         return it->second;
@@ -96,12 +104,14 @@ std::optional<NamedNESParametrizedTypeClass> NESTypeCatalog::findTypeClass(const
 
 std::vector<NamedNESParametrizedTypeClass> NESTypeCatalog::getAllTypeClasses() const
 {
+    std::shared_lock lock{mutex};
     return typeClasses | std::views::values | std::ranges::to<std::vector>();
 }
 
 std::optional<NamedNESFunctor>
 NESTypeCatalog::findFunctorInRegistry(const QualifiedIdentifier& registryName, const QualifiedIdentifier& functorName) const
 {
+    std::shared_lock lock{mutex};
     if (const auto regIt = functorsByRegistry.find(registryName); regIt != functorsByRegistry.end())
     {
         if (const auto fnIt = regIt->second.find(functorName); fnIt != regIt->second.end())
@@ -114,6 +124,7 @@ NESTypeCatalog::findFunctorInRegistry(const QualifiedIdentifier& registryName, c
 
 std::vector<NamedNESFunctor> NESTypeCatalog::getFunctorsInRegistry(const QualifiedIdentifier& registryName) const
 {
+    std::shared_lock lock{mutex};
     if (const auto regIt = functorsByRegistry.find(registryName); regIt != functorsByRegistry.end())
     {
         return regIt->second | std::views::values | std::ranges::to<std::vector>();
@@ -123,6 +134,7 @@ std::vector<NamedNESFunctor> NESTypeCatalog::getFunctorsInRegistry(const Qualifi
 
 std::optional<NamedNESFunctor> NESTypeCatalog::findSqlFunctor(const QualifiedIdentifier& functorName) const
 {
+    std::shared_lock lock{mutex};
     if (const auto it = sqlExposedFunctors.find(functorName); it != sqlExposedFunctors.end())
     {
         return it->second;
@@ -132,11 +144,13 @@ std::optional<NamedNESFunctor> NESTypeCatalog::findSqlFunctor(const QualifiedIde
 
 std::vector<NamedNESFunctor> NESTypeCatalog::getAllSqlFunctors() const
 {
+    std::shared_lock lock{mutex};
     return sqlExposedFunctors | std::views::values | std::ranges::to<std::vector>();
 }
 
 Schema<NamedNESFunctor, Unordered> NESTypeCatalog::getSqlFunctorSchema() const
 {
+    std::shared_lock lock{mutex};
     return sqlExposedFunctors | std::views::values | std::ranges::to<Schema<NamedNESFunctor, Unordered>>();
 }
 

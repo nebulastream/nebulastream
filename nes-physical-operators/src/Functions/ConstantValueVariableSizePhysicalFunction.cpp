@@ -25,13 +25,15 @@
 
 namespace NES
 {
-ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size) : data(size)
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(
+    const int8_t* value, const size_t size, const bool nullable, const bool isNull)
+    : data(size), nullable(nullable), isNull(isNull)
 {
     /// We copy the value into the data vector owned by the function
     /// since the value might be destroyed during the lifetime of the function.
     /// In the constructor, we have allocated the memory for the value via the std::vector ctor.
     /// An empty value may come with a null pointer, which memcpy must not be given even for a size of zero.
-    if (size > 0)
+    if (size > 0 && value != nullptr)
     {
         std::memcpy(data.data(), value, size);
     }
@@ -42,6 +44,10 @@ VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRe
     /// NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
     VariableSizedData result(const_cast<int8_t*>(data.data()), data.size());
     /// NOLINTEND(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
+    if (nullable)
+    {
+        return VarVal{result, true, isNull};
+    }
     return result;
 }
 

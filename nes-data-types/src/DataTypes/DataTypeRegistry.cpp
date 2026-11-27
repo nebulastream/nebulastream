@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Types/NESType.hpp>
 
@@ -31,58 +32,22 @@ DataTypeRegistry& DataTypeRegistry::instance()
 
 NESTypeClass DataTypeRegistry::scalarDataTypeClass()
 {
-    return NESTypeClass::forTrait<ScalarTypeTrait>();
+    return NESTypeClass::forTypeTrait<ScalarTypeTrait>();
 }
 
 NESTypeClass DataTypeRegistry::numericDataTypeClass()
 {
-    return NESTypeClass{
-        NumericDataTypeClassTag{},
-        [](const NumericDataTypeClassTag&, const NESType& type)
-        {
-            if (const auto* trait = type.tryGetTrait<ScalarTypeTrait>())
-            {
-                if (const auto dt = trait->tryGetDataType(type.getDescriptor()))
-                {
-                    return dt->isNumeric();
-                }
-            }
-            return false;
-        }};
+    return NESTypeClass::forTypeTrait<NumericTypeTrait>();
 }
 
 NESTypeClass DataTypeRegistry::integerDataTypeClass()
 {
-    return NESTypeClass{
-        IntegerDataTypeClassTag{},
-        [](const IntegerDataTypeClassTag&, const NESType& type)
-        {
-            if (const auto* trait = type.tryGetTrait<ScalarTypeTrait>())
-            {
-                if (const auto dt = trait->tryGetDataType(type.getDescriptor()))
-                {
-                    return dt->isInteger();
-                }
-            }
-            return false;
-        }};
+    return NESTypeClass::forTypeTrait<IntegerTypeTrait>();
 }
 
 NESTypeClass DataTypeRegistry::floatDataTypeClass()
 {
-    return NESTypeClass{
-        FloatDataTypeClassTag{},
-        [](const FloatDataTypeClassTag&, const NESType& type)
-        {
-            if (const auto* trait = type.tryGetTrait<ScalarTypeTrait>())
-            {
-                if (const auto dt = trait->tryGetDataType(type.getDescriptor()))
-                {
-                    return dt->isFloat();
-                }
-            }
-            return false;
-        }};
+    return NESTypeClass::forTypeTrait<FloatTypeTrait>();
 }
 
 std::vector<NamedNESParametrizedTypeClass> DataTypeRegistry::getParametrizedTypeClasses()

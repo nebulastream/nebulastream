@@ -52,6 +52,11 @@ public:
 
     /// NOLINTNEXTLINE(readability-identifier-naming)
     static LogicalFunctionRegistryReturnType createCHAR_LENGTH(LogicalFunctionRegistryArguments arguments);
+    [[nodiscard]] static std::expected<NESType, Exception> inferResultType(const NESType& input);
+    [[nodiscard]] static NESFunctor functor()
+    {
+        return logicalFunctionFunctor<&CharLengthLogicalFunction::createCHAR_LENGTH, &CharLengthLogicalFunction::inferResultType>(NAME);
+    }
 
 private:
     DataType dataType;

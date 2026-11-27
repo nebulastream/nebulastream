@@ -23,6 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -55,17 +56,21 @@ DataType PowLogicalFunction::getDataType() const
     return dataType;
 };
 
+std::expected<NESType, Exception> PowLogicalFunction::inferResultType(const NESType& left, const NESType& right)
+{
+    if (!left.hasTypeTrait<NumericTypeTrait>() || !right.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Can only apply Pow to two numeric input types")};
+    }
+    return wrapOptionalNESTypeIf(Float64Type::makeNESType(), isOptionalNESType(left) || isOptionalNESType(right));
+}
+
 LogicalFunction PowLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-    if ((!copy.left.getDataType().isNumeric()) || (!copy.right.getDataType().isNumeric()))
-    {
-        throw CannotInferStamp("Can only apply pow to two numeric input function, but got left: {}, right: {}", copy.left, copy.right);
-    }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.left.getDataType().toNESType(), copy.right.getDataType().toNESType()));
     return copy;
 };
 

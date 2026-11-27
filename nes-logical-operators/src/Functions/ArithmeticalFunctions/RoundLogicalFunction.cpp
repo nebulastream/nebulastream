@@ -23,6 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/ScalarTypes.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -59,19 +60,23 @@ DataType RoundLogicalFunction::getDataType() const
     return dataType;
 };
 
+/// Single-argument ROUND is not part of ISO/IEC 9075, but PostgreSQL, DuckDB, MySQL, and SQLite agree on preserving the input
+/// type: floats stay floats and integers pass through unchanged (ROUND of an integer is the identity), so we do the same and
+/// never cast to INT64. Ties round half away from zero (see RoundPhysicalFunction).
+std::expected<NESType, Exception> RoundLogicalFunction::inferResultType(const NESType& input)
+{
+    if (!input.hasTypeTrait<NumericTypeTrait>())
+    {
+        return std::unexpected{CannotInferStamp("Cannot apply round function on non-numeric input type")};
+    }
+    return input;
+}
+
 LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.child = child.withInferredDataType(schema);
-    if (!copy.child.getDataType().isNumeric())
-    {
-        throw CannotInferStamp("Cannot apply round function on non-numeric input function {}", copy.child);
-    }
-    /// Single-argument ROUND is not part of ISO/IEC 9075, but PostgreSQL, DuckDB, MySQL, and SQLite agree on preserving the input
-    /// type: floats stay floats and integers pass through unchanged (ROUND of an integer is the identity), so we do the same and
-    /// never cast to INT64. Ties round half away from zero (see RoundPhysicalFunction).
-    copy.dataType = copy.child.getDataType();
-    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = requireLegacyDataType(inferResultType(copy.child.getDataType().toNESType()));
     return copy;
 };
 

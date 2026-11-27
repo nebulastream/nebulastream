@@ -270,11 +270,11 @@ TEST_F(TestFileParserTest, ReadsCreatesAndQueryWithExpectedRows)
 {
     const auto [path, statements] = readSlt(
         "CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
-        "CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;\n"
+        "CREATE PHYSICAL SOURCE FOR oneTuple TYPE FileSource;\n"
         "ATTACH INLINE\n"
         "1\n"
         "\n"
-        "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE File;\n"
+        "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE FileSink;\n"
         "\n"
         "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
         "----\n"
@@ -290,14 +290,14 @@ TEST_F(TestFileParserTest, ReadsCreatesAndQueryWithExpectedRows)
 
     const auto* physicalSource = std::get_if<CreateStatement>(&statements.at(1));
     ASSERT_NE(physicalSource, nullptr);
-    EXPECT_EQ(physicalSource->sql, "CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;");
+    EXPECT_EQ(physicalSource->sql, "CREATE PHYSICAL SOURCE FOR oneTuple TYPE FileSource;");
     const auto* inlineRows = physicalSource->attach.has_value() ? std::get_if<InlineRows>(&*physicalSource->attach) : nullptr;
     ASSERT_NE(inlineRows, nullptr);
     EXPECT_EQ(inlineRows->rows, (std::vector<std::string>{"1"}));
 
     const auto* sink = std::get_if<CreateStatement>(&statements.at(2));
     ASSERT_NE(sink, nullptr);
-    EXPECT_EQ(sink->sql, "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE File;");
+    EXPECT_EQ(sink->sql, "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE FileSink;");
     EXPECT_FALSE(sink->attach.has_value());
 
     const auto* query = std::get_if<SelectStatement>(&statements.at(3));
@@ -314,10 +314,10 @@ TEST_F(TestFileParserTest, ReadsFileAttach)
 {
     const auto [path, statements] = readSlt(
         "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-        "CREATE PHYSICAL SOURCE FOR stream TYPE File;\n"
+        "CREATE PHYSICAL SOURCE FOR stream TYPE FileSource;\n"
         "ATTACH FILE small/stream8.csv\n"
         "\n"
-        "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
+        "CREATE SINK out(id UINT64 NOT NULL) TYPE FileSink;\n"
         "\n"
         "SELECT id FROM stream INTO out;\n"
         "----\n"

@@ -8,7 +8,7 @@
 
 # Source definitions
 CREATE LOGICAL SOURCE smartGrid(creationTS UINT64 NOT NULL, value FLOAT32 NOT NULL, property FLOAT32 NOT NULL, plugId INT16 NOT NULL, householdId INT16 NOT NULL, houseId INT16 NOT NULL);
-CREATE PHYSICAL SOURCE FOR smartGrid TYPE File;
+CREATE PHYSICAL SOURCE FOR smartGrid TYPE FileSource;
 ATTACH FILE smartgrid/smartgrid-data_974K.csv
 
 
