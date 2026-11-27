@@ -18,4 +18,5 @@ add_subdirectory(Rules)
 add_source_files(nes-query-optimizer
         QueryOptimizer.cpp
         PlanRewriteUtils.cpp
+        QuerySourceCatalog.cpp
 )

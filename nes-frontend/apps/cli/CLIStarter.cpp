@@ -42,6 +42,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -73,6 +74,7 @@
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <QuerySourceCatalog.hpp>
 #include <QueryStateBackend.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
@@ -132,8 +134,11 @@ struct LogicalSource
     std::vector<SchemaField> schema;
 };
 
+/// A physical source entry either defines a physical source (logical, type, host, ...) or a query source (query).
+/// A query source is a query `SELECT ... FROM ... INTO <logical source>`; its result becomes a member of that logical source.
 struct PhysicalSource
 {
+    std::optional<std::string> query;
     std::string logical;
     std::string type;
     std::string host;
@@ -375,6 +380,12 @@ struct convert<NES::CLI::PhysicalSource>
 {
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
+        if (node["query"])
+        {
+            acceptKeys({"query"}, node);
+            rhs.query = getValue<std::string>(node, "query");
+            return true;
+        }
         acceptKeys({"logical", "type", "host", "parser_config", "source_config"}, node);
         rhs.logical = getValue<std::string>(node, "logical");
         rhs.type = getValue<std::string>(node, "type");
@@ -596,15 +607,20 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = bindIdentifierName(name), .schema = bindSchema(schemaFields)});
     }
 
-    for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
+    for (const auto& source : physical)
     {
+        if (source.query.has_value())
+        {
+            /// Query sources are registered by registerQuerySources, after all logical sources exist.
+            continue;
+        }
         statements.emplace_back(
             NES::CreatePhysicalSourceStatement{
-                .attachedTo = bindIdentifierName(logical),
-                .sourceType = bindIdentifierName(type),
-                .host = NES::Host(host),
-                .sourceConfig = bindConfig(sourceConfig),
-                .parserConfig = bindConfig(parserConfig)});
+                .attachedTo = bindIdentifierName(source.logical),
+                .sourceType = bindIdentifierName(source.type),
+                .host = NES::Host(source.host),
+                .sourceConfig = bindConfig(source.sourceConfig),
+                .parserConfig = bindConfig(source.parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
@@ -638,6 +654,38 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             NES::CreateModelStatement{.name = name, .path = path, .inputs = toModelFields(input), .outputs = toModelFields(output)});
     }
     return statements;
+}
+
+/// Registers every `query` entry of the physical sources as a query source of the logical source that its INTO clause names.
+/// Must run after the logical sources are created.
+void registerQuerySources(
+    const NES::CLI::QueryConfig& topologyConfig, const NES::SourceCatalog& sourceCatalog, NES::QuerySourceCatalog& querySourceCatalog)
+{
+    for (const auto& source : topologyConfig.physical)
+    {
+        if (!source.query.has_value())
+        {
+            continue;
+        }
+        const auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(*source.query);
+        const auto roots = plan.getRootOperators();
+        const auto sink = roots.size() == 1 ? roots.front().tryGetAs<NES::SinkLogicalOperator>() : std::nullopt;
+        if (!sink.has_value())
+        {
+            throw NES::InvalidConfigParameter("A query source must write INTO the name of a logical source: {}", *source.query);
+        }
+        const auto logicalSourceName = sink.value()->getSinkName();
+        if (!sourceCatalog.containsLogicalSource(logicalSourceName))
+        {
+            throw NES::UnknownSourceName("The query source writes INTO \"{}\", which is not a logical source", logicalSourceName);
+        }
+        const auto children = sink.value()->getChildren();
+        INVARIANT(children.size() == 1, "A sink must have exactly one child");
+        if (auto result = querySourceCatalog.addQuerySource(logicalSourceName, children.front()); !result)
+        {
+            throw std::move(result.error());
+        }
+    }
 }
 
 NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI::QueryConfig& topologyConfig)
@@ -751,11 +799,13 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    auto querySourceCatalog = std::make_shared<NES::QuerySourceCatalog>();
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, querySourceCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    registerQuerySources(topologyConfig, *sourceCatalog, *querySourceCatalog);
 
     if (program.is_subcommand_used("stop"))
     {
@@ -792,9 +842,11 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    auto querySourceCatalog = std::make_shared<NES::QuerySourceCatalog>();
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, querySourceCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler);
+    registerQuerySources(topologyConfig, *sourceCatalog, *querySourceCatalog);
 
     if (program.is_subcommand_used("start"))
     {

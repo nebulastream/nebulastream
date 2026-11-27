@@ -296,6 +296,9 @@ struct TypedLogicalOperator
 
     [[nodiscard]] TypedLogicalOperator withInferredSchema() const { return self->withInferredSchema().getAs<Checked>(); }
 
+    /// @return a copy of the operator with a new, unused operator id (e.g., to inline the same subplan more than once)
+    [[nodiscard]] TypedLogicalOperator withNewOperatorId() const { return withOperatorId(getNextLogicalOperatorId()); }
+
     using WeakSelfRefType = WeakLogicalOperator;
     template <LogicalOperatorConcept T>
     using ModelType = detail::OperatorModel<T>;

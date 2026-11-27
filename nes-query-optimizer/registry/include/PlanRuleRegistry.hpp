@@ -27,6 +27,7 @@
 
 namespace NES
 {
+class QuerySourceCatalog;
 
 using PlanRuleRegistryReturnType = Rule<LogicalPlan>;
 
@@ -36,6 +37,8 @@ struct PlanRuleRegistryArguments
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::shared_ptr<const ModelCatalog> modelCatalog;
+    /// Optional; nullptr means that no logical source has query sources.
+    std::shared_ptr<const QuerySourceCatalog> querySourceCatalog;
 };
 
 using PlanRuleFn = std::function<PlanRuleRegistryReturnType(PlanRuleRegistryArguments)>;

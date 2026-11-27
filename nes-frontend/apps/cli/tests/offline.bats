@@ -259,6 +259,17 @@ TOPEOF
   grep -i "duplicate worker" nes-cli.log
 }
 
+@test "query sources: expand nested query sources" {
+  run $NES_CLI -t tests/good/query-sources.yaml dump
+  [ "$status" -eq 0 ]
+}
+
+@test "query sources: reject a cycle" {
+  run $NES_CLI -d -t tests/bad/query-source-cycle.yaml dump
+  [ "$status" -eq 1 ]
+  grep "creates a cycle" nes-cli.log
+}
+
 @test "yaml parser should reject unknown keys" {
   run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys1.yaml dump
   [ "$status" -eq 1 ]

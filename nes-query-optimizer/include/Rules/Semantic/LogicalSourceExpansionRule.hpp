@@ -28,6 +28,7 @@
 #include <Rules/Rule.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
+#include <QuerySourceCatalog.hpp>
 
 namespace NES
 {
@@ -83,13 +84,20 @@ namespace NES
  * Given that logical source car has two physical sources: i.e. car1 and car2 and
  * logical source truck has two physical sources: i.e. truck1 and truck2
  *
+ * A logical source can also have query sources (see QuerySourceCatalog): members defined by a query fragment.
+ * The rule inlines each fragment (with new operator ids) as a child of the union and expands the logical sources
+ * that the fragment reads, recursively. A logical source that is read again while it is expanded is a cycle and an error.
  */
 class LogicalSourceExpansionRule
 {
 public:
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
 
-    explicit LogicalSourceExpansionRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit LogicalSourceExpansionRule(
+        std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const QuerySourceCatalog> querySourceCatalog = nullptr)
+        : sourceCatalog(std::move(sourceCatalog)), querySourceCatalog(std::move(querySourceCatalog))
+    {
+    }
 
     static constexpr std::string_view NAME = "LogicalSourceExpansionRule";
 
@@ -98,8 +106,12 @@ public:
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const QuerySourceCatalog> querySourceCatalog;
 
-    [[nodiscard]] LogicalOperator expandLogicalSource(const LogicalOperator& visiting, std::vector<LogicalOperator> children) const;
+    /// @param expansionStack the logical sources that are being expanded, to detect cycles between query sources
+    [[nodiscard]] LogicalPlan expandPlan(const LogicalPlan& plan, std::vector<Identifier>& expansionStack) const;
+    [[nodiscard]] LogicalOperator expandLogicalSource(
+        const LogicalOperator& visiting, std::vector<LogicalOperator> children, std::vector<Identifier>& expansionStack) const;
 };
 
 static_assert(RuleConcept<LogicalSourceExpansionRule, LogicalPlan>);

@@ -36,11 +36,13 @@ RuleBasedOptimizer::RuleBasedOptimizer(
     QueryOptimizerConfiguration defaultQueryOptimization,
     std::shared_ptr<const SourceCatalog> sourceCatalog,
     std::shared_ptr<const SinkCatalog> sinkCatalog,
-    std::shared_ptr<const ModelCatalog> modelCatalog)
+    std::shared_ptr<const ModelCatalog> modelCatalog,
+    std::shared_ptr<const QuerySourceCatalog> querySourceCatalog)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
     , modelCatalog(std::move(modelCatalog))
+    , querySourceCatalog(std::move(querySourceCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
 
@@ -50,6 +52,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(
         .sourceCatalog = this->sourceCatalog,
         .sinkCatalog = this->sinkCatalog,
         .modelCatalog = this->modelCatalog,
+        .querySourceCatalog = this->querySourceCatalog,
     };
 
     for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())

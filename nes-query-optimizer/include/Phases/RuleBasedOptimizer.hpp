@@ -26,6 +26,8 @@
 
 namespace NES
 {
+class QuerySourceCatalog;
+
 class RuleBasedOptimizer
 {
 public:
@@ -33,7 +35,8 @@ public:
         QueryOptimizerConfiguration defaultQueryOptimization,
         std::shared_ptr<const SourceCatalog> sourceCatalog,
         std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const ModelCatalog> modelCatalog);
+        std::shared_ptr<const ModelCatalog> modelCatalog,
+        std::shared_ptr<const QuerySourceCatalog> querySourceCatalog = nullptr);
 
     [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
 
@@ -43,6 +46,7 @@ private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
     std::shared_ptr<const ModelCatalog> modelCatalog;
+    std::shared_ptr<const QuerySourceCatalog> querySourceCatalog;
 };
 
 }
