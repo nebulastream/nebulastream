@@ -1,0 +1,79 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Several failure modes with overlapping windows, while workers cycle and queries run throughout.
+
+[[test]]
+title = "compound_failures"
+timeout = 85
+
+  # An initial pool, so every fault phase has a worker to target
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 6
+  end = 4
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 27
+  begin = 4
+  end = 40
+  create_weight = 3
+  drop_weight = 1
+
+  # Queries overlap with every fault phase
+  [[test.workload]]
+  name = "Query"
+  num_ops = 18
+  begin = 5
+  end = 50
+  create_weight = 3
+  drop_weight = 1
+
+  [[test.workload]]
+  name = "Degradation"
+  begin = 8
+  end = 18
+  latency_lo_ms = 100
+  latency_hi_ms = 1500
+  loss_rate = 0.05
+
+  [[test.workload]]
+  name = "NodeFault"
+  action = "Clog"
+  rate = 0.3
+  start = [12, 17]
+  end = [17, 22]
+
+  [[test.workload]]
+  name = "NodeFault"
+  action = "Kill"
+  rate = 0.3
+  start = 20
+  end = [22, 28]
+
+  [[test.workload]]
+  name = "NodeFault"
+  action = "Pause"
+  rate = 0.2
+  start = 25
+  end = 40
+
+  # Watches overlap with the workloads that change the queries they wait on.
+  [[test.workload]]
+  name = "Watch"
+  num_ops = 60
+  begin = 5
+  end = 45
+  timeout = [0, 12]
