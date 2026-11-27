@@ -21,6 +21,9 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
+
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 
@@ -45,6 +48,7 @@ struct DataType final
         CHAR,
         UNDEFINED,
         VARSIZED,
+        STRUCT
     };
 
     enum class NULLABLE : uint8_t
@@ -53,8 +57,11 @@ struct DataType final
         NOT_NULLABLE
     };
 
-    DataType(Type type, NULLABLE nullable);
     DataType();
+    /// Constructor for named leaf types. The name is decided by the plugin that registers this leaf type. May be unnamed as well.
+    DataType(Type type, NULLABLE nullable, std::optional<std::string> typeName);
+    /// Constructor for the STRUCT variant. Besides name and nullable, it obtains the underlying fields as vector.
+    DataType(Type type, NULLABLE nullable, std::string typeName, std::vector<std::pair<std::string, DataType>> fields);
 
     template <class T>
     [[nodiscard]] bool isSameDataType() const
@@ -130,10 +137,30 @@ struct DataType final
     [[nodiscard]] bool isSignedInteger() const;
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
+    [[nodiscard]] bool isFlat() const;
 
     Type type;
     bool nullable;
+    std::optional<std::string> typeName;
+    /// Only meaningful if Type == STRUCT
+    std::vector<std::pair<std::string, DataType>> fields;
 };
+
+
+namespace detail
+{
+/// Flat, reflectable mirror of DataType. All variant-specific members are always
+/// present; which ones are meaningful is decided by `type` on the way back
+/// (mirrors the DataType constructors). Reflecting an aggregate serializes to a
+/// named object, so the wire form is self-documenting and order-independent.
+struct ReflectedDataType
+{
+    DataType::Type type;
+    bool nullable;
+    std::optional<std::string> typeName;
+    std::vector<std::pair<std::string, DataType>> fields;
+};
+}
 
 template <>
 struct Reflector<DataType>
@@ -154,7 +181,17 @@ struct std::hash<NES::DataType>
 {
     size_t operator()(const NES::DataType& dataType) const noexcept
     {
-        return (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+        size_t h = (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+        if (dataType.typeName.has_value())
+        {
+            h ^= std::hash<std::string>{}(*dataType.typeName) << 1;
+        }
+        for (const auto& [name, field] : dataType.fields)
+        {
+            h ^= std::hash<std::string>{}(name) + 0x9e3779b9 + (h << 6) + (h >> 2);
+            h ^= std::hash<NES::DataType>{}(field) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
     }
 };
 

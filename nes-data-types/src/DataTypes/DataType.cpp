@@ -13,9 +13,11 @@
 */
 #include <DataTypes/DataType.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -123,12 +125,22 @@ std::optional<NES::DataType> inferNumericDataType(const NES::DataType& left, con
 namespace NES
 {
 
-DataType::DataType(const Type type, const NULLABLE nullable) : type(type), nullable(nullable == NULLABLE::IS_NULLABLE)
+DataType::DataType() : type(Type::UNDEFINED), nullable(true), typeName(std::nullopt)
 {
 }
 
-DataType::DataType() : type(Type::UNDEFINED), nullable(true)
+DataType::DataType(const Type type, const NULLABLE nullable, std::optional<std::string> typeName)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), typeName(std::move(typeName))
 {
+}
+
+DataType::DataType(const Type type, const NULLABLE nullable, std::string typeName, std::vector<std::pair<std::string, DataType>> fields)
+    : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), typeName(std::move(typeName)), fields(std::move(fields))
+{
+    if (type != Type::STRUCT)
+    {
+        throw DifferentFieldTypeExpected("The fields DataType constructor is for STRUCT only, but got: {}", magic_enum::enum_name(type));
+    }
 }
 
 /// NOLINTBEGIN(readability-magic-numbers)
@@ -156,6 +168,15 @@ uint32_t DataType::getSizeInBytesWithoutNull() const
         case Type::UINT64:
         case Type::FLOAT64:
             return 8;
+        case Type::STRUCT: {
+            /// Since a struct is stored inline field-by-field, the size is the sum over the field sizes.
+            uint32_t structSize = 0;
+            for (const auto& fieldType : fields | std::views::values)
+            {
+                structSize += fieldType.getSizeInBytesWithoutNull();
+            }
+            return structSize;
+        }
         case Type::UNDEFINED:
             return 0;
     }
@@ -195,6 +216,40 @@ bool DataType::isNumeric() const
     return isInteger() or isFloat();
 }
 
+bool DataType::isFlat() const
+{
+    switch (this->type)
+    {
+        case Type::INT8:
+        case Type::INT16:
+        case Type::INT32:
+        case Type::INT64:
+        case Type::UINT8:
+        case Type::UINT16:
+        case Type::UINT32:
+        case Type::UINT64:
+        case Type::FLOAT32:
+        case Type::FLOAT64:
+        case Type::BOOLEAN:
+        case Type::CHAR:
+        case Type::UNDEFINED:
+            return true;
+        case Type::VARSIZED:
+            return false;
+        case Type::STRUCT: {
+            /// A struct is flat / may be flattened, if it does not contain any non-flattable elements
+            for (const auto& fieldType : fields | std::views::values)
+            {
+                if (not fieldType.isFlat())
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+}
+
 DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
 {
     const auto isNullableResult
@@ -205,6 +260,26 @@ DataType::NULLABLE DataType::joinNullable(const DataType& otherDataType) const
 std::optional<DataType> DataType::join(const DataType& otherDataType) const
 {
     const auto isNullableResult = joinNullable(otherDataType);
+    /// Nominal Typing: DataTypes that do not share a name must not be joined.
+    if (typeName != otherDataType.typeName)
+    {
+        NES_WARNING("Cannot join {} and {}, as their names are not equal.", *this, otherDataType);
+        return std::nullopt;
+    }
+    if (typeName.has_value() && otherDataType.typeName.has_value())
+    {
+        /// Both types hold an equal name.
+        /// Their members (besides isNull) must all be equal.
+        if (this->fields != otherDataType.fields || this->type != otherDataType.type)
+        {
+            NES_WARNING("Cannot join {} and {}, as they have the same name but do not have equal properties", *this, otherDataType);
+            return std::nullopt;
+        }
+        /// Provide joined data type with the type name as key.
+        return {DataTypeProvider::provideDataType(*this->typeName, isNullableResult)};
+    }
+    /// Join conditions for unnamed types.
+
     if (this->type == Type::UNDEFINED)
     {
         return {DataTypeProvider::provideDataType(Type::UNDEFINED, isNullableResult)};
@@ -259,17 +334,45 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
 
 Reflected Reflector<DataType>::operator()(const DataType& field, const ReflectionContext& context) const
 {
-    return context.reflect(std::make_pair(field.type, field.nullable));
+    const detail::ReflectedDataType reflected{
+        .type = field.type, .nullable = field.nullable, .typeName = field.typeName, .fields = field.fields};
+    return context.reflect(reflected);
 }
 
 DataType Unreflector<DataType>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    const auto [type, nullable] = context.unreflect<std::pair<DataType::Type, bool>>(rfl);
-    return DataTypeProvider::provideDataType(type, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    const auto reflected = context.unreflect<detail::ReflectedDataType>(rfl);
+    const auto nullableEnum = reflected.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+    if (reflected.type == DataType::Type::STRUCT)
+    {
+        /// STRUCT types are always named, we can access the typeName without hasValue check.
+        return DataType{reflected.type, nullableEnum, *reflected.typeName, reflected.fields};
+    }
+    return DataType{reflected.type, nullableEnum, reflected.typeName};
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
 {
+    if (dataType.type == DataType::Type::STRUCT)
+    {
+        std::string fieldList;
+        bool first = true;
+        for (const auto& [name, field] : dataType.fields)
+        {
+            if (!first)
+            {
+                fieldList += ", ";
+            }
+            first = false;
+            fieldList += fmt::format("{}: {}", name, field);
+        }
+        return os << fmt::format("DataType(name: {} type: STRUCT{{{}}} nullable: {})", *dataType.typeName, fieldList, dataType.nullable);
+    }
+    if (dataType.typeName.has_value())
+    {
+        return os << fmt::format(
+                   "DataType(name: {} type: {} nullable: {})", *dataType.typeName, magic_enum::enum_name(dataType.type), dataType.nullable);
+    }
     return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.nullable);
 }
 

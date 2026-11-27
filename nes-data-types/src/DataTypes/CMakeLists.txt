@@ -11,26 +11,28 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
+        BasicDataTypes.cpp
         DataType.cpp
         DataTypeProvider.cpp
         DataTypeRegistry.cpp
         TimeUnit.cpp
         )
 
-# Register plugins
-add_registry_entry(DataType BOOLEAN)
-add_registry_entry(DataType CHAR)
-add_registry_entry(DataType FLOAT32)
-add_registry_entry(DataType FLOAT64)
-add_registry_entry(DataType INT8)
-add_registry_entry(DataType INT16)
-add_registry_entry(DataType INT32)
-add_registry_entry(DataType INT64)
-add_registry_entry(DataType UINT8)
-add_registry_entry(DataType UINT16)
-add_registry_entry(DataType UINT32)
-add_registry_entry(DataType UINT64)
-add_registry_entry(DataType UNDEFINED)
-add_registry_entry(DataType VARSIZED)
+# PRIVATE: lets this component's sources use <BasicDataTypes.hpp> without exposing src/DataTypes to consumers.
+target_include_directories(nes-data-types PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-
+# Register the built-in types.
+add_registry_entry(DataType BOOLEAN HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType CHAR HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType FLOAT32 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType FLOAT64 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType INT8 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType INT16 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType INT32 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType INT64 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType UINT8 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType UINT16 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType UINT32 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType UINT64 HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType UNDEFINED HEADER "BasicDataTypes.hpp")
+add_registry_entry(DataType VARSIZED HEADER "BasicDataTypes.hpp")

@@ -15,7 +15,11 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <string>
+#include <utility>
+#include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
