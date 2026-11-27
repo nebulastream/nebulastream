@@ -2,12 +2,16 @@
 name: 🔒✅ TASK (Maintainers only)
 description: A template about issues that can be closed by a single PR.
 title: "[TASK] "
+type: TASK
 body:
   - type: markdown
     attributes:
       value: |
         > [!IMPORTANT]
-        > - Set **Type** to TASK.
+        > - Set **Priority**.
+        > - Add **scope labels** (e.g. engine, optimizer, udf).
+        > - Add this issue as a **sub-issue** of its parent FEATURE or EPIC. If it has no parent, add the **ORPHAN** label.
+        > - A TASK has no sub-issues. If it needs to be split, make it a FEATURE instead.
   - type: textarea
     attributes:
       label: Description
@@ -19,13 +23,13 @@ body:
       label: Contribution to FEATURE/EPIC
       description: Is this task part of a bigger FEATURE or EPIC? If so, how does it contribute to it?
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Scope
       description: What is included in this task?
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Out of scope
@@ -34,10 +38,12 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Done when
-      description: How will we know this task is complete? When should it close?
+      label: Acceptance criteria
+      description: >-
+        One (ideally measurable) outcome per line, in simple yet comprehensive phrasing.
+        Outcomes should ideally be quantifiable using numbers and not too vague, as this is the lowest level of the issue hierarchy and should be closed using a single PR.
     validations:
-      required: true
+      required: false
   - type: textarea
     attributes:
       label: Open questions / risks
