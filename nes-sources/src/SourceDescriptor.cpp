@@ -32,8 +32,10 @@
 #include <Util/Any.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/Reflection/VectorReflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <SourceConfigRegistry.hpp>
@@ -46,6 +48,7 @@ SourceDescriptor::SourceDescriptor(
     Schema<UnqualifiedUnboundField, Ordered> schema,
     Host host,
     const std::optional<size_t> maxInflightBuffers,
+    std::vector<DecoderDescriptor> decoders,
     PluginSourceConfiguration pluginData,
     InputFormatterDescriptor inputFormatterDescriptor,
     std::optional<Identifier> logicalSourceName)
@@ -53,6 +56,7 @@ SourceDescriptor::SourceDescriptor(
     , schema(std::move(schema))
     , host(std::move(host))
     , maxInflightBuffers(maxInflightBuffers)
+    , decoders(std::move(decoders))
     , pluginSourceConfig(std::move(pluginData))
     , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
     , logicalSourceName(std::move(logicalSourceName))
@@ -89,6 +93,11 @@ std::optional<size_t> SourceDescriptor::getMaxInflightBuffers() const
     return maxInflightBuffers;
 }
 
+const std::vector<DecoderDescriptor>& SourceDescriptor::getDecoders() const
+{
+    return decoders;
+}
+
 const ExplicitAny& SourceDescriptor::getPluginData() const
 {
     return pluginSourceConfig.getPluginData();
@@ -122,11 +131,12 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, host: {}, inputFormatterDescriptor: {})",
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, host: {}, decoders: [{}], inputFormatterDescriptor: {})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.logicalSourceName,
                descriptor.getHost(),
+               fmt::join(descriptor.decoders, ", "),
                descriptor.getInputFormatterDescriptor());
 }
 
@@ -165,6 +175,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .schema = sourceDescriptor.schema,
         .host = sourceDescriptor.host,
         .maxInflightBuffers = sourceDescriptor.maxInflightBuffers,
+        .decoders = sourceDescriptor.decoders,
         .pluginSourceConfig = sourceDescriptor.pluginSourceConfig,
         .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
         .logicalSourceName = sourceDescriptor.logicalSourceName};
@@ -181,6 +192,7 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl,
         std::move(reflectedSourceDescriptor.schema),
         std::move(reflectedSourceDescriptor.host),
         reflectedSourceDescriptor.maxInflightBuffers,
+        std::move(reflectedSourceDescriptor.decoders),
         std::move(reflectedSourceDescriptor.pluginSourceConfig),
         std::move(reflectedSourceDescriptor.inputFormatterDescriptor),
         std::move(reflectedSourceDescriptor.logicalSourceName)};

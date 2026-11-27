@@ -201,6 +201,38 @@ function(add_e2e_test)
     )
 endfunction()
 
+# Adds the codec harness for the plugin's codec-test/<PLUGIN>CodecTest.cpp (see nes-codecs/codec-test/include/CodecHarness/Scenarios.hpp).
+# INPUTS: uncompressed files relative to nes-systests/testdata, added to the default ones; never store encoded data.
+function(add_codec_test)
+    cmake_parse_arguments(ARG "" "PLUGIN" "INPUTS;LIBRARIES" ${ARGN})
+    if (NOT ARG_PLUGIN)
+        message(FATAL_ERROR "add_codec_test requires PLUGIN")
+    endif ()
+    set(directory ${CMAKE_CURRENT_SOURCE_DIR}/codec-test)
+    if (NOT EXISTS ${directory}/${ARG_PLUGIN}CodecTest.cpp)
+        message(FATAL_ERROR "add_codec_test(${ARG_PLUGIN}): ${directory}/${ARG_PLUGIN}CodecTest.cpp does not exist")
+    endif ()
+    set(inputs)
+    foreach (input small/200x8-rows-fields.csv small/nexmark/bid_100K.csv small/nexmark/person_100K.csv small/medical-data.csv ${ARG_INPUTS})
+        set(path ${CMAKE_SOURCE_DIR}/nes-systests/testdata/${input})
+        if (NOT EXISTS ${path})
+            message(FATAL_ERROR "add_codec_test(${ARG_PLUGIN}): the input ${path} does not exist")
+        endif ()
+        list(APPEND inputs ${path})
+    endforeach ()
+    # The ENVIRONMENT property separates variables by semicolons, so the input paths are separated by commas.
+    list(JOIN inputs "," inputs)
+    if (NOT NES_ENABLES_TESTS)
+        return()
+    endif ()
+    add_executable(codec-harness-${ARG_PLUGIN} ${directory}/${ARG_PLUGIN}CodecTest.cpp)
+    target_link_libraries(codec-harness-${ARG_PLUGIN} PRIVATE codec-harness ${ARG_LIBRARIES})
+    add_test(NAME codectest-${ARG_PLUGIN} COMMAND codec-harness-${ARG_PLUGIN})
+    set_tests_properties(codectest-${ARG_PLUGIN} PROPERTIES
+            LABELS "CodecTest"
+            ENVIRONMENT "CODECTEST_CODEC=${ARG_PLUGIN};CODECTEST_CONFIGS_DIR=${directory}/configs;CODECTEST_INPUTS=${inputs}")
+endfunction()
+
 # Adds the connection tests of the connector whose conn-test/ directory is next to the caller.
 # The battery is added only with uv (ENABLE_CONN_TESTS) and Docker (ENABLE_DOCKER_TESTS).
 # The runner finds a connector only through this call.

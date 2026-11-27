@@ -50,6 +50,7 @@ struct Repl::Impl
 {
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
+    DecoderStatementHandler decoderStatementHandler;
     TopologyStatementHandler topologyStatementHandler;
     ModelStatementHandler modelStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
@@ -74,6 +75,7 @@ struct Repl::Impl
     Impl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        DecoderStatementHandler decoderStatementHandler,
         TopologyStatementHandler topologyStatementHandler,
         ModelStatementHandler modelStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
@@ -84,6 +86,7 @@ struct Repl::Impl
         std::stop_token stopToken)
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
+        , decoderStatementHandler(std::move(decoderStatementHandler))
         , topologyStatementHandler(std::move(topologyStatementHandler))
         , modelStatementHandler(std::move(modelStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
@@ -402,6 +405,10 @@ struct Repl::Impl
                 {
                     return sinkStatementHandler.apply(stmt);
                 }
+                else if constexpr (requires { decoderStatementHandler.apply(stmt); })
+                {
+                    return decoderStatementHandler.apply(stmt);
+                }
                 else if constexpr (requires { modelStatementHandler.apply(stmt); })
                 {
                     return modelStatementHandler.apply(stmt);
@@ -561,6 +568,7 @@ struct Repl::Impl
 Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
+    DecoderStatementHandler decoderStatementHandler,
     TopologyStatementHandler topologyStatementHandler,
     ModelStatementHandler modelStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
@@ -573,6 +581,7 @@ Repl::Repl(
           std::make_unique<Impl>(
               std::move(sourceStatementHandler),
               std::move(sinkStatementHandler),
+              std::move(decoderStatementHandler),
               std::move(topologyStatementHandler),
               std::move(modelStatementHandler),
               std::move(queryStatementHandler),

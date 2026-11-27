@@ -27,6 +27,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <Codecs/DecoderCatalog.hpp>
+#include <Codecs/DecoderDescriptor.hpp>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -48,6 +50,8 @@ struct GeneralSourceConfig
 {
     Host host;
     std::optional<size_t> maxInflightBuffers;
+    /// SOURCE.DECODERS, resolved by the SourceCatalog.
+    std::vector<Identifier> decoderNames;
     bool operator==(const GeneralSourceConfig&) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config);
@@ -65,6 +69,7 @@ public:
     std::expected<SourceDescriptor, Exception> build(
         PhysicalSourceId physicalSourceId,
         Schema<UnqualifiedUnboundField, Ordered> schema,
+        std::vector<DecoderDescriptor> decoders,
         std::optional<Identifier> logicalSourceName = std::nullopt) &&; /// NOLINT(fuchsia-default-arguments-declarations)
     PhysicalSourceBuilder(const PhysicalSourceBuilder& other) = delete;
     PhysicalSourceBuilder(PhysicalSourceBuilder&& other) noexcept = default;
@@ -77,6 +82,7 @@ private:
     PluginSourceConfiguration sourcePluginConfig;
     InputFormatterDescriptor inputFormatterPluginConfig;
     bool wasCalled = false;
+    friend class SourceCatalog;
 };
 
 class SourceConfigSchema
@@ -118,12 +124,17 @@ class SourceCatalog
 
 public:
     explicit SourceCatalog(Private);
+    /// Without a decoder catalog, physical sources cannot reference decoders.
+    SourceCatalog(Private, std::shared_ptr<const DecoderCatalog> decoderCatalog);
 
     /// Transitional: callers still construct the catalog directly (also by value in tests);
     /// goes away once everything moves to create().
     SourceCatalog() : SourceCatalog(Private{}) { }
 
+    explicit SourceCatalog(std::shared_ptr<const DecoderCatalog> decoderCatalog) : SourceCatalog(Private{}, std::move(decoderCatalog)) { }
+
     static SharedPtr<SourceCatalog> create();
+    static SharedPtr<SourceCatalog> create(std::shared_ptr<const DecoderCatalog> decoderCatalog);
     ~SourceCatalog() = default;
 
     SourceCatalog(const SourceCatalog&) = delete;
@@ -185,6 +196,10 @@ public:
 
 
 private:
+    /// TODO #2188: accepts at most one decoder until decoder chains are supported.
+    [[nodiscard]] std::expected<std::vector<DecoderDescriptor>, Exception> resolveDecoders(const std::vector<Identifier>& names) const;
+
+    std::shared_ptr<const DecoderCatalog> decoderCatalog;
     mutable std::recursive_mutex catalogMutex;
     mutable std::atomic<PhysicalSourceId::Underlying> nextPhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()};
     std::unordered_map<Identifier, LogicalSource> namesToLogicalSourceMapping;

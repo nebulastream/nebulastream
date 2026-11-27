@@ -259,6 +259,7 @@
               ++ [
                 pkgs.highs
                 pkgs.openssl.dev
+                pkgs.lz4.dev
                 pkgs.zstd.dev
                 pkgs.zlib.dev
                 pkgs.libdwarf.dev

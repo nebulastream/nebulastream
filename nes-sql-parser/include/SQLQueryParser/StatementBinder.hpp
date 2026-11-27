@@ -83,6 +83,26 @@ struct CreateSinkStatement
     std::unordered_map<Identifier, std::string> formatConfig;
 };
 
+/// CREATE DECODER <name> TYPE <codec> [SET (... AS "DECODER".<option>, ...)]
+struct CreateDecoderStatement
+{
+    Identifier name;
+    Identifier decoderType;
+    /// The options under the prefix DECODER, as config literals (strings quoted).
+    std::unordered_map<Identifier, std::string> decoderConfig;
+};
+
+struct ShowDecodersStatement
+{
+    std::optional<Identifier> name;
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropDecoderStatement
+{
+    Identifier name;
+};
+
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
 /// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
 struct ShowLogicalSourcesStatement
@@ -208,17 +228,20 @@ using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
+    CreateDecoderStatement,
     CreateModelStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
+    DropDecoderStatement,
     DropModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
+    ShowDecodersStatement,
     ShowModelsStatement,
     ShowVersionStatement,
     DropQueryStatement>;

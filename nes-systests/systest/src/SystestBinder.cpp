@@ -25,6 +25,7 @@
 
 #include <fmt/format.h>
 
+#include <Codecs/DecoderCatalog.hpp>
 #include <Config/Config.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -94,12 +95,14 @@ void throwOnError(std::expected<T, Exception> result)
 struct SystestBinder::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : sourceCatalog{std::make_shared<SourceCatalog>()}
+        : decoderCatalog{std::make_shared<DecoderCatalog>()}
+        , sourceCatalog{std::make_shared<SourceCatalog>(decoderCatalog)}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
+        , decoderHandler{decoderCatalog}
         , modelHandler{modelCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
@@ -155,8 +158,10 @@ private:
                 [&](const CreateLogicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
+                [&](const CreateDecoderStatement& statement) { throwOnError(decoderHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
-                [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
+                [&](const auto&)
+                { throw UnsupportedQuery("a setup statement has to declare a source, a sink, a decoder, or a model: {}", sql); }},
             binding);
     }
 
@@ -221,6 +226,7 @@ private:
     }
 
     /// One catalog set for the whole run, which the rewriter's prefixing keeps collision-free.
+    std::shared_ptr<DecoderCatalog> decoderCatalog;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
@@ -228,6 +234,7 @@ private:
 
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
+    DecoderStatementHandler decoderHandler;
     ModelStatementHandler modelHandler;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;

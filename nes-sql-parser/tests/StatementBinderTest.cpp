@@ -22,6 +22,7 @@
 #include <variant>
 #include <vector>
 
+#include <Codecs/DecoderCatalog.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -62,11 +63,13 @@ namespace
 class StatementBinderTest : public Testing::BaseUnitTest
 {
 public:
+    std::shared_ptr<DecoderCatalog> decoderCatalog;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<StatementBinder> binder;
     std::shared_ptr<SourceStatementHandler> sourceStatementHandler;
     std::shared_ptr<SinkStatementHandler> sinkStatementHandler;
+    std::shared_ptr<DecoderStatementHandler> decoderStatementHandler;
     std::shared_ptr<ModelStatementHandler> modelStatementHandler;
 
     /* Will be called before a test is executed. */
@@ -79,7 +82,8 @@ public:
     void SetUp() override
     {
         BaseUnitTest::SetUp();
-        sourceCatalog = std::make_shared<SourceCatalog>();
+        decoderCatalog = std::make_shared<DecoderCatalog>();
+        sourceCatalog = std::make_shared<SourceCatalog>(decoderCatalog);
         sinkCatalog = std::make_shared<SinkCatalog>();
         binder = std::make_shared<StatementBinder>(
             sourceCatalog,
@@ -88,6 +92,7 @@ public:
         sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog, DefaultHost{"localhost:9090"});
         sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
         modelStatementHandler = std::make_shared<ModelStatementHandler>(std::make_shared<ModelCatalog>());
+        decoderStatementHandler = std::make_shared<DecoderStatementHandler>(decoderCatalog);
     }
 };
 
@@ -600,6 +605,73 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_EQ(dropped.getSinkName(), Identifier::parse("TESTSINK"));
     auto remainingSinks = sinkCatalog->getAllSinkDescriptors();
     ASSERT_EQ(remainingSinks.size(), 0);
+}
+
+TEST_F(StatementBinderTest, BindDecoderStatementsWithoutCodec)
+{
+    const auto apply = [&]<typename StatementType>(const std::string& sql)
+    {
+        const auto statement = binder->parseAndBindSingle(sql);
+        EXPECT_TRUE(statement.has_value()) << sql;
+        return decoderStatementHandler->apply(std::get<StatementType>(*statement));
+    };
+
+    const auto shown = apply.operator()<ShowDecodersStatement>("SHOW DECODERS");
+    ASSERT_TRUE(shown.has_value());
+    EXPECT_TRUE(shown.value().decoders.empty());
+    const auto unknownCodec = apply.operator()<CreateDecoderStatement>("CREATE DECODER other TYPE NOT_A_CODEC");
+    ASSERT_FALSE(unknownCodec.has_value());
+    EXPECT_EQ(unknownCodec.error().code(), ErrorCode::UnknownDecoderType);
+    EXPECT_FALSE(binder->parseAndBindSingle(R"(CREATE DECODER other TYPE NOT_A_CODEC SET (3 AS "SINK".LEVEL))").has_value());
+    const auto droppedUnknown = apply.operator()<DropDecoderStatement>("DROP DECODER WHERE NAME = 'OTHER'");
+    ASSERT_FALSE(droppedUnknown.has_value());
+    EXPECT_EQ(droppedUnknown.error().code(), ErrorCode::UnknownDecoderName);
+}
+
+TEST_F(StatementBinderTest, BindCreateShowDropDecoder)
+{
+    const auto apply = [&]<typename StatementType>(const std::string& sql)
+    {
+        const auto statement = binder->parseAndBindSingle(sql);
+        EXPECT_TRUE(statement.has_value()) << sql;
+        return decoderStatementHandler->apply(std::get<StatementType>(*statement));
+    };
+
+    const auto created = apply.operator()<CreateDecoderStatement>("CREATE DECODER compressed TYPE ZSTD");
+    ASSERT_TRUE(created.has_value()) << created.error();
+    const auto [createdDecoder] = created.value();
+    EXPECT_EQ(createdDecoder.getName(), Identifier::parse("COMPRESSED"));
+    EXPECT_EQ(createdDecoder.getType(), Identifier::parse("ZSTD"));
+
+    ASSERT_TRUE(sourceStatementHandler
+                    ->apply(
+                        std::get<CreateLogicalSourceStatement>(
+                            *binder->parseAndBindSingle("CREATE LOGICAL SOURCE compressedSource(attribute1 UINT32)")))
+                    .has_value());
+    const auto physical = binder->parseAndBindSingle(
+        R"(CREATE PHYSICAL SOURCE FOR compressedSource TYPE File SET ('/dev/null' AS "SOURCE".FILE_PATH, 'compressed' AS "SOURCE"."DECODERS", 'CSV' AS INPUT_FORMATTER."TYPE"))");
+    ASSERT_TRUE(physical.has_value()) << physical.error();
+    const auto physicalResult = sourceStatementHandler->apply(std::get<CreatePhysicalSourceStatement>(*physical));
+    ASSERT_TRUE(physicalResult.has_value()) << physicalResult.error();
+    const auto& [physicalSource] = physicalResult.value();
+    ASSERT_EQ(physicalSource.getDecoders().size(), 1);
+    EXPECT_EQ(physicalSource.getDecoders().front(), createdDecoder);
+
+    const auto shownByName = apply.operator()<ShowDecodersStatement>("SHOW DECODERS WHERE NAME = 'COMPRESSED' FORMAT JSON");
+    ASSERT_TRUE(shownByName.has_value());
+    EXPECT_EQ(shownByName.value().decoders, std::vector{createdDecoder});
+
+    const auto duplicate = apply.operator()<CreateDecoderStatement>("CREATE DECODER compressed TYPE ZSTD");
+    ASSERT_FALSE(duplicate.has_value());
+    EXPECT_EQ(duplicate.error().code(), ErrorCode::DecoderAlreadyExists);
+    const auto unknownOption = apply.operator()<CreateDecoderStatement>(R"(CREATE DECODER other TYPE ZSTD SET (3 AS "DECODER".LEVEL))");
+    ASSERT_FALSE(unknownOption.has_value());
+    EXPECT_EQ(unknownOption.error().code(), ErrorCode::InvalidConfigParameter);
+
+    const auto dropped = apply.operator()<DropDecoderStatement>("DROP DECODER WHERE NAME = 'COMPRESSED'");
+    ASSERT_TRUE(dropped.has_value());
+    EXPECT_EQ(dropped.value().dropped, createdDecoder);
+    EXPECT_TRUE(decoderCatalog->getAllDecoders().empty());
 }
 
 /// TODO #764 Remove test when we have proper schema inference and don't require matching source names in sinks anymore

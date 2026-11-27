@@ -18,6 +18,7 @@
 #include <chrono>
 #include <cstddef>
 #include <exception>
+#include <expected>
 #include <functional>
 #include <future>
 #include <memory>
@@ -27,6 +28,8 @@
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <vector>
+#include <Codecs/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,10 +50,12 @@ SourceThread::SourceThread(
     BackpressureListener backpressureListener,
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::unique_ptr<Decoder> decoder)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
+    , decoder(std::move(decoder))
     , backpressureListener(std::move(backpressureListener))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
@@ -91,10 +96,24 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
 
+/// Decoded buffers are new buffers, so they always receive the source's metadata.
+void emitDecoded(std::expected<std::vector<TupleBuffer>, Exception> decoded, const EmitFn& emit)
+{
+    if (not decoded.has_value())
+    {
+        throw std::move(decoded).error();
+    }
+    for (auto& buffer : *decoded)
+    {
+        emit(std::move(buffer), true);
+    }
+}
+
 SourceImplementationTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
     BackpressureListener backpressureListener,
     Source& source,
+    Decoder* decoder,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
     const EmitFn& emit)
 {
@@ -138,13 +157,25 @@ SourceImplementationTermination dataSourceThreadRoutine(
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
-            emit(std::move(*emptyBuffer), requiresMetadata);
+            if (decoder == nullptr)
+            {
+                emit(std::move(*emptyBuffer), requiresMetadata);
+            }
+            else
+            {
+                emitDecoded(decoder->decode(*emptyBuffer, *bufferProvider), emit);
+            }
         }
         else
         {
             if (stopToken.stop_requested())
             {
                 return {SourceImplementationTermination::StopRequested};
+            }
+            if (decoder != nullptr)
+            {
+                /// The bytes that the decoder has not returned yet belong to the stream as well.
+                emitDecoded(decoder->flush(*bufferProvider), emit);
             }
 
             return {SourceImplementationTermination::EndOfStream};
@@ -158,6 +189,7 @@ void dataSourceThread(
     BackpressureListener backpressureListener,
     std::promise<SourceImplementationTermination> result,
     Source* source,
+    Decoder* decoder,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
@@ -181,7 +213,8 @@ void dataSourceThread(
     cpptrace::try_catch(
         [&]()
         {
-            const auto termination = dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, bufferProvider, dataEmit);
+            const auto termination
+                = dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, decoder, bufferProvider, dataEmit);
             if (termination.result == SourceImplementationTermination::EndOfStream)
             {
                 /// A stop request must be able to interrupt every wait of the source thread, as the owner joins it after requesting stop.
@@ -234,6 +267,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         backpressureListener,
         std::move(terminationPromise),
         sourceImplementation.get(),
+        decoder.get(),
         std::move(emitFunction),
         originId,
         localBufferManager);

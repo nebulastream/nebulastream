@@ -66,7 +66,7 @@ explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createDecoderDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -75,6 +75,8 @@ createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
 optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
+
+createDecoderDefinition: DECODER decoderName=identifier TYPE type=identifier optionsClause?;
 
 createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
 
@@ -93,7 +95,7 @@ nullableDefinition: NOT NULLTOKEN;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel | dropDecoder;
 dropModel: MODEL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
@@ -101,6 +103,7 @@ dropLogicalSourceSubject: LOGICAL SOURCE;
 dropPhysicalSourceSubject: PHYSICAL SOURCE;
 dropWorker: WORKER;
 dropSink: SINK;
+dropDecoder: DECODER;
 
 dropFilter: attr=strictIdentifier EQ value=constant;
 
@@ -110,6 +113,7 @@ showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
+    | DECODERS #showDecodersSubject
     | MODELS #showModelsSubject
     | VERSION #showVersionSubject;
 
@@ -653,6 +657,8 @@ LOGICAL: 'LOGICAL' | 'logical';
 PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
+DECODER : 'DECODER';
+DECODERS : 'DECODERS';
 VERSION : 'VERSION' | 'version';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,

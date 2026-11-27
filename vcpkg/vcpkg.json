@@ -56,6 +56,7 @@
     "highs",
     "libcuckoo",
     "libuuid",
+    "lz4",
     "magic-enum",
     "nameof",
     "nautilus",
@@ -74,6 +75,7 @@
     "simdjson",
     "spdlog",
     "yaml-cpp",
+    "zstd",
     "rapidcheck"
   ],
   "default-features": [

@@ -44,6 +44,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
@@ -60,7 +61,6 @@
 namespace NES
 {
 
-
 PhysicalSourceBuilder::PhysicalSourceBuilder(
     GeneralSourceConfig generalSourceConfig,
     PluginSourceConfiguration sourcePluginConfig,
@@ -72,7 +72,10 @@ PhysicalSourceBuilder::PhysicalSourceBuilder(
 }
 
 std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(
-    PhysicalSourceId physicalSourceId, Schema<UnqualifiedUnboundField, Ordered> schema, std::optional<Identifier> logicalSourceName) &&
+    PhysicalSourceId physicalSourceId,
+    Schema<UnqualifiedUnboundField, Ordered> schema,
+    std::vector<DecoderDescriptor> decoders,
+    std::optional<Identifier> logicalSourceName) &&
 {
     INVARIANT(!this->wasCalled, "PhysicalSourceBuilder called twice");
     this->wasCalled = true;
@@ -81,6 +84,7 @@ std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(
         std::move(schema),
         this->generalSourceConfig.host,
         this->generalSourceConfig.maxInflightBuffers,
+        std::move(decoders),
         std::move(this->sourcePluginConfig),
         std::move(this->inputFormatterPluginConfig),
         std::move(logicalSourceName)};
@@ -154,21 +158,61 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
     auto hostOpt = config.get(SourceDescriptor::HOST);
 
     auto maxFlightInBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
-
     return std::make_tuple(
-        GeneralSourceConfig{.host = hostOpt, .maxInflightBuffers = maxFlightInBuffers},
+        GeneralSourceConfig{
+            .host = hostOpt, .maxInflightBuffers = maxFlightInBuffers, .decoderNames = config.get(SourceDescriptor::DECODERS)},
         std::move(pluginSourceConfig),
         std::move(formatDescriptor),
         std::move(schema));
 }
 
-SourceCatalog::SourceCatalog(Private)
+SourceCatalog::SourceCatalog(Private) : decoderCatalog(std::make_shared<const DecoderCatalog>())
 {
+}
+
+SourceCatalog::SourceCatalog(Private, std::shared_ptr<const DecoderCatalog> decoderCatalog) : decoderCatalog(std::move(decoderCatalog))
+{
+    PRECONDITION(this->decoderCatalog != nullptr, "The decoder catalog of a source catalog must not be null");
 }
 
 SharedPtr<SourceCatalog> SourceCatalog::create()
 {
     return std::make_shared<SourceCatalog>(Private{});
+}
+
+SharedPtr<SourceCatalog> SourceCatalog::create(std::shared_ptr<const DecoderCatalog> decoderCatalog)
+{
+    return std::make_shared<SourceCatalog>(Private{}, std::move(decoderCatalog));
+}
+
+std::expected<std::vector<DecoderDescriptor>, Exception> SourceCatalog::resolveDecoders(const std::vector<Identifier>& names) const
+{
+    if (names.size() > 1)
+    {
+        return std::unexpected{InvalidConfigParameter(
+            "SOURCE.DECODERS names {} decoders ({}), but a source supports at most one decoder until decoder chains are supported",
+            names.size(),
+            fmt::join(names, ", "))};
+    }
+    std::vector<DecoderDescriptor> decoders;
+    for (const auto& name : names)
+    {
+        auto decoder = decoderCatalog->getDecoder(name);
+        if (not decoder.has_value())
+        {
+            auto defined = decoderCatalog->getAllDecoders()
+                | std::views::transform([](const DecoderDescriptor& descriptor) { return descriptor.getName(); })
+                | std::ranges::to<std::vector>();
+            return std::unexpected{UnknownDecoderName(
+                "SOURCE.DECODERS references the decoder '{}', which is not defined. Define it with CREATE DECODER {} TYPE <codec>. "
+                "Defined decoders: {}",
+                name,
+                name,
+                defined.empty() ? std::string{"none"} : fmt::format("{}", fmt::join(defined, ", ")))};
+        }
+        decoders.push_back(std::move(decoder).value());
+    }
+    return decoders;
 }
 
 std::optional<LogicalSource>
@@ -226,8 +270,17 @@ SourceCatalog::registerWithLogicalSource(PhysicalSourceBuilder builder, const Id
         logicalPhysicalIter != logicalToPhysicalSourceMapping.end(),
         "Source catalog corrupted, logical source name existed, but no mapping to physical sources found");
 
+    auto decoders = resolveDecoders(builder.generalSourceConfig.decoderNames);
+    if (not decoders.has_value())
+    {
+        return std::unexpected{std::move(decoders).error()};
+    }
     return std::move(builder)
-        .build(PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)}, *logicalSourceIter->second.getSchema(), logicalSourceName)
+        .build(
+            PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)},
+            *logicalSourceIter->second.getSchema(),
+            std::move(decoders).value(),
+            logicalSourceName)
         .transform(
             [this, &logicalPhysicalIter](SourceDescriptor descriptor)
             {
@@ -377,7 +430,11 @@ std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> SourceCa
 
 std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config)
 {
-    return os << fmt::format("GeneralSourceConfig(host: {}, maxInflightBuffers: {})", config.host, config.maxInflightBuffers);
+    return os << fmt::format(
+               "GeneralSourceConfig(host: {}, maxInflightBuffers: {}, decoderNames: [{}])",
+               config.host,
+               config.maxInflightBuffers,
+               fmt::join(config.decoderNames, ", "));
 }
 
 namespace
@@ -470,7 +527,9 @@ resolveLegacyConfigMaps(
         }
         return std::make_tuple(
             GeneralSourceConfig{
-                .host = config.get(SourceDescriptor::HOST), .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS)},
+                .host = config.get(SourceDescriptor::HOST),
+                .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS),
+                .decoderNames = config.get(SourceDescriptor::DECODERS)},
             PluginSourceConfiguration{sourceType, std::move(instantiatedPluginConfig).value()},
             InputFormatterDescriptor{inputFormatterType, ExplicitAny{std::any{std::monostate{}}}},
             config.get(SourceDescriptor::SCHEMA));
@@ -499,6 +558,11 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{std::move(resolved).error()};
     }
     auto& [generalConfig, pluginConfig, formatDescriptor, declaredSchema] = *resolved;
+    auto decoders = resolveDecoders(generalConfig.decoderNames);
+    if (not decoders.has_value())
+    {
+        return std::unexpected{std::move(decoders).error()};
+    }
 
     const std::unique_lock lock(catalogMutex);
     const auto logicalSourceIter = namesToLogicalSourceMapping.find(logicalSource.getLogicalSourceName());
@@ -517,6 +581,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         *logicalSourceIter->second.getSchema(),
         generalConfig.host,
         generalConfig.maxInflightBuffers,
+        std::move(decoders).value(),
         std::move(pluginConfig),
         std::move(formatDescriptor),
         logicalSource.getLogicalSourceName()};
@@ -542,12 +607,19 @@ std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
         return std::nullopt;
     }
     auto& [generalConfig, pluginConfig, formatDescriptor, declaredSchema] = *resolved;
+    auto decoders = resolveDecoders(generalConfig.decoderNames);
+    if (not decoders.has_value())
+    {
+        NES_ERROR("Could not create anonymous source: {}", decoders.error().what());
+        return std::nullopt;
+    }
     const auto physicalSourceId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
     return SourceDescriptor{
         physicalSourceId,
         schema,
         generalConfig.host,
         generalConfig.maxInflightBuffers,
+        std::move(decoders).value(),
         std::move(pluginConfig),
         std::move(formatDescriptor),
         std::nullopt};
@@ -569,8 +641,13 @@ std::expected<SourceDescriptor, Exception> SourceDescriptor::create(
         return std::unexpected{resolved.error()};
     }
     auto [generalConfig, pluginConfig, formatter, declaredSchema] = std::move(*resolved);
+    if (not generalConfig.decoderNames.empty())
+    {
+        return std::unexpected{
+            UnknownDecoderName("SOURCE.DECODERS references decoders, which only a SourceCatalog can resolve against its decoder catalog")};
+    }
     return PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(formatter)}.build(
-        id, *logicalSource.getSchema(), isAnonymous ? std::nullopt : std::optional{logicalSource.getLogicalSourceName()});
+        id, *logicalSource.getSchema(), {}, isAnonymous ? std::nullopt : std::optional{logicalSource.getLogicalSourceName()});
 }
 
 }
