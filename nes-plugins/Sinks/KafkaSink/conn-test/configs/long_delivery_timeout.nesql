@@ -1,0 +1,8 @@
+-- A Kafka sink whose messages wait up to 60 s for the broker's acknowledgement, not the default 5 s.
+-- A message that is in flight when the connection falls silent must outlast the silence.
+CREATE SINK kafka_long_delivery_timeout_output (data UINT8) TYPE Kafka SET (
+    'localhost:9092' AS "SINK".BROKERS,
+    'conntest'       AS "SINK".TOPIC,
+    'JSON'           AS "SINK".OUTPUT_FORMAT,
+    60000            AS "SINK".DELIVERY_TIMEOUT_MS
+);

@@ -22,6 +22,7 @@ import pytest
 from conntest_runner.config_rewrite import apply_overrides
 from conntest_runner.datamodel import SinkModel, SourceModel
 from conntest_runner.discovery import Kind, PluginEntry, binding_problems, discover_plugin, resolve_configs
+from conntest_runner.endpoint import split_endpoint
 from conntest_runner.harness import Sink, Source
 from conntest_runner.link import Link
 from conntest_runner.naming import unique_token
@@ -124,7 +125,14 @@ def test_scenario(
         pytest.fail(f"{plugin.name} has no compose service, so its loader must set its endpoint")
     link = None
     if scenario_needs_link(scenario.name):
-        link = Link(name=f"conntest-{plugin.name}-{worker_id}".lower(), upstream=connector_endpoint).create()
+        name = f"conntest-{plugin.name}-{worker_id}".lower()
+        if loader.link_endpoint is None:
+            link = Link(name=name, upstream=connector_endpoint).create()
+        else:
+            # The service gives out the proxy's address with this endpoint's port, so the proxy listens on that port number.
+            # Parallel pytest workers would all bind it, so this relies on the runner running one test at a time.
+            _, port = split_endpoint(loader.link_endpoint)
+            link = Link(name=name, upstream=loader.link_endpoint, listen_port=port).create()
         connector_endpoint = link.endpoint
     cfg_file = _render_config(loader, config_path, endpoint=connector_endpoint, target=target, out_dir=tmp_path)
     n_buffers = _buffers(scenario)

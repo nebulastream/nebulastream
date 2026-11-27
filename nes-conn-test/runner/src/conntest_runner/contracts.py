@@ -28,6 +28,13 @@ class Loader(ABC):
     # A connector whose endpoint is not ``host:port``, such as a device path, overrides it with one of its own kind,
     # so that the scenario fails on an endpoint the connector can parse.
     dead_endpoint: str = "127.0.0.1:1"
+    # The fault proxy forwards the connector's connection to this endpoint and listens on the same port number.
+    # When it is None, the proxy forwards to ``endpoint`` and listens on a port that toxiproxy chooses.
+    # Its port must be below the ephemeral range, which starts at 32768, because toxiproxy's own connections use that range.
+    # A Kafka broker tells its clients which address to connect to after their first request,
+    # so its loader sets this to a listener that gives out the proxy's address, such as `toxiproxy:19092` for port 19092.
+    # Without it, the connector would leave the proxy after its first request.
+    link_endpoint: str | None = None
 
     def __init__(self, endpoint: str | None) -> None:
         """``endpoint`` is the compose service's address, such as ``broker:1883``.

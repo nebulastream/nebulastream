@@ -12,7 +12,8 @@
 
 """A connection between the connector and its backend that a fault scenario can sever, slow down or silence.
 
-The connector's config points at the proxy, ``toxiproxy:<port>`` with a port that toxiproxy chooses, and toxiproxy forwards to the backend.
+The connector's config points at the proxy, ``toxiproxy:<port>`` with a port that toxiproxy chooses or that the caller sets,
+and toxiproxy forwards to the backend.
 The loader seeds the backend directly, so a fault affects only the connector's side.
 toxiproxy is controlled over HTTP at ``toxiproxy:8474`` by compose DNS, with the stdlib only.
 """
@@ -38,10 +39,11 @@ _DIRECTIONS = ("upstream", "downstream")
 
 
 class Link:
-    def __init__(self, *, name: str, upstream: str, control: str = _CONTROL) -> None:
+    def __init__(self, *, name: str, upstream: str, listen_port: int = 0, control: str = _CONTROL) -> None:
         self._base = f"http://{control}"
         self._host, _ = split_endpoint(control)
         self._name = name
+        self._listen = f"0.0.0.0:{listen_port}"
         self._upstream = upstream
         self._port: int | None = None
 
@@ -76,7 +78,7 @@ class Link:
     def create(self) -> Link:
         """A proxy of the same name left by an earlier run is replaced.
 
-        toxiproxy chooses the proxy's port, because a fixed one can be in use in the toxiproxy container.
+        Without a listen port, toxiproxy chooses the proxy's port, because a fixed one can be in use in the toxiproxy container.
         A backend's port is an example: a loader that listens on an ephemeral port shares that range with toxiproxy's own connections.
         """
         self._wait_ready()
@@ -88,7 +90,7 @@ class Link:
             if e.code != HTTPStatus.NOT_FOUND:
                 raise
         reply = self._request(
-            "POST", "/proxies", {"name": self._name, "listen": "0.0.0.0:0", "upstream": self._upstream, "enabled": True}
+            "POST", "/proxies", {"name": self._name, "listen": self._listen, "upstream": self._upstream, "enabled": True}
         )
         # The reply holds the address that the proxy listens on, such as `[::]:42267`.
         # A cut and a restore keep this port, so a connector that reconnects finds the proxy again.

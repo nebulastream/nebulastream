@@ -81,6 +81,10 @@ and a harness-origin error (infrastructure failure, step timeout) always fails.
 (`runner/toxiproxy.compose.yaml`, controlled by `conntest_runner/link.py`),
 which joins the stack only for a connector that binds one of them.
 The loader still reaches the service directly, so a fault affects only the connector's connection.
+A service that tells its clients which address to connect to next, such as a Kafka broker, would take the connector off the proxy after its first request.
+Its loader sets `link_endpoint` to a second listener of the service,
+and the proxy forwards to that listener and listens on the same port number, not on a port that toxiproxy chooses.
+That listener gives out the proxy's address with its own port, such as `toxiproxy:19092`, so the connector stays on the proxy.
 
 Data comes from one deterministic generator.
 It generates rows for the schema that the harness bound from the config and returned in its `BIND` reply.

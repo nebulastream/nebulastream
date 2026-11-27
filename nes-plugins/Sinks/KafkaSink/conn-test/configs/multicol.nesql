@@ -1,0 +1,6 @@
+-- A Kafka sink with a column of each kind that the JSON output format writes differently: an integer, a string and a float.
+CREATE SINK kafka_multi_output (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL) TYPE Kafka SET (
+    'localhost:9092' AS "SINK".BROKERS,
+    'conntest'       AS "SINK".TOPIC,
+    'JSON'           AS "SINK".OUTPUT_FORMAT
+);
