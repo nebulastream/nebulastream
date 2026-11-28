@@ -1,0 +1,59 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+//! Failure-injection workload that raises network latency and packet loss for a window, then restores a baseline.
+//!
+//! Targets the parts of the system that depend on a mostly working network: RPC retries and deadlines.
+
+use crate::harness::Harness;
+use serde::Deserialize;
+use std::time::Duration;
+use tokio::time::Instant;
+use tracing::info;
+
+/// Overlapping degradation windows overwrite each other, and the first one to end restores the defaults.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DegradationWorkload {
+    pub begin: u64,
+    pub end: u64,
+    pub latency_lo_ms: u64,
+    pub latency_hi_ms: u64,
+    pub loss_rate: f64,
+}
+
+impl DegradationWorkload {
+    pub async fn run(&self, harness: &Harness) {
+        info!(
+            "Degradation: ({}s..{}s) latency={}ms..{}ms loss={:.0}%",
+            self.begin,
+            self.end,
+            self.latency_lo_ms,
+            self.latency_hi_ms,
+            self.loss_rate * 100.0,
+        );
+
+        let start = Instant::now();
+        tokio::time::sleep_until(start + Duration::from_secs(self.begin)).await;
+        info!("Degradation: increasing latency and packet loss");
+        harness.degrade_network(
+            Duration::from_millis(self.latency_lo_ms)..Duration::from_millis(self.latency_hi_ms),
+            self.loss_rate,
+        );
+
+        tokio::time::sleep_until(start + Duration::from_secs(self.end)).await;
+        harness.restore_network();
+        info!("Degradation: restored network defaults");
+    }
+}
