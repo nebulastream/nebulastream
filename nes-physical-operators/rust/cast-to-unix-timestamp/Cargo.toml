@@ -19,6 +19,8 @@ edition.workspace = true
 path = "src/cast_to_unix_timestamp.rs"
 crate-type = ["rlib", "staticlib"]
 
+[lints]
+
 [dependencies]
 chrono = { workspace = true }
 cxx = { workspace = true }
