@@ -1,0 +1,124 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+use super::{ActiveModel, Column, Entity as SinkEntity, Model};
+use crate::ConnectorKind;
+use crate::Execute;
+use crate::error::{ErrorCode, catalog_write};
+use crate::name::{Config, Identifier, Schema};
+use crate::worker::endpoint::NetworkAddr;
+use anyhow::{Context, Result};
+use sea_orm::ActiveValue::{NotSet, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
+use serde::Deserialize;
+
+/// Creates a shared sink that queries refer to by name.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct CreateSink {
+    pub name: Identifier,
+    pub host_addr: NetworkAddr,
+    pub sink_type: Identifier,
+    pub schema: Schema,
+    #[serde(default)]
+    pub config: Config,
+    /// Return the existing row instead of erroring when a matching one already exists,
+    /// as with SQL `CREATE ... IF NOT EXISTS`.
+    #[serde(default)]
+    pub if_not_exists: bool,
+}
+
+impl From<CreateSink> for ActiveModel {
+    fn from(req: CreateSink) -> Self {
+        Self {
+            id: NotSet,
+            name: Set(Some(req.name.into())),
+            host_addr: Set(req.host_addr),
+            sink_type: Set(req.sink_type.into()),
+            schema: Set(req.schema.into()),
+            config: Set(req.config.into()),
+            kind: Set(ConnectorKind::Shared),
+            query_id: NotSet,
+        }
+    }
+}
+
+impl Execute for CreateSink {
+    type Response = Model;
+    async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
+        if self.if_not_exists {
+            let existing = SinkEntity::find()
+                .filter(Column::Name.eq(self.name.clone()))
+                .one(conn)
+                .await
+                .context("failed to load sink")?;
+            if let Some(existing) = existing {
+                return Ok(existing);
+            }
+        }
+        ActiveModel::from(self.clone())
+            .insert(conn)
+            .await
+            // A sink refers to the worker that it is placed on, which is the only reference that it can miss.
+            .map_err(catalog_write(
+                ErrorCode::SinkAlreadyExists,
+                ErrorCode::UnknownWorker,
+            ))
+            .context("failed to create sink")
+    }
+}
+
+/// Creates a sink without a name for a single query.
+/// Creating the query with this sink's id makes the query its owner.
+#[derive(Clone, Debug)]
+pub struct CreateAnonymousSink {
+    pub sink_type: Identifier,
+    pub schema: Schema,
+    pub config: Config,
+    pub host_addr: NetworkAddr,
+    pub internal: bool,
+}
+
+impl From<CreateAnonymousSink> for ActiveModel {
+    fn from(req: CreateAnonymousSink) -> Self {
+        Self {
+            id: NotSet,
+            name: Set(None),
+            host_addr: Set(req.host_addr),
+            sink_type: Set(req.sink_type.into()),
+            schema: Set(req.schema.into()),
+            config: Set(req.config.into()),
+            kind: Set(if req.internal {
+                ConnectorKind::Internal
+            } else {
+                ConnectorKind::Anonymous
+            }),
+            query_id: NotSet,
+        }
+    }
+}
+
+impl Execute for CreateAnonymousSink {
+    type Response = Model;
+    async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
+        ActiveModel::from(self.clone())
+            .insert(conn)
+            .await
+            .map_err(catalog_write(
+                ErrorCode::SinkAlreadyExists,
+                ErrorCode::UnknownWorker,
+            ))
+            .context("failed to create anonymous sink")
+    }
+}
